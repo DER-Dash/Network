@@ -75,6 +75,11 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .kpi .k{font:600 11px var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .kpi .v{font:600 17px var(--f-mono);font-variant-numeric:tabular-nums}
 .kpi .v.bad{color:var(--alarm)}
+.kpi .s{font:500 12px var(--f-body);color:var(--muted)}
+.kpi-firm{padding:2px 10px;border-left:3px solid var(--ok);background:var(--sunk);border-radius:3px}
+.kpi-firm.warn{border-left-color:var(--warn);background:var(--warn-bg)}
+.kpi-firm.bad{border-left-color:var(--alarm);background:var(--alarm-bg)}
+.kpi-firm.warn .s{color:var(--warn)}.kpi-firm.bad .s,.kpi-firm.bad .v{color:var(--alarm)}
 
 .banner{max-width:1280px;margin:0 auto 10px;margin-left:max(16px,env(safe-area-inset-left,0px));margin-right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-radius:5px;border:1px solid var(--rule);background:var(--sunk)}
 @media (min-width:1312px){.banner{margin-left:auto;margin-right:auto}}
@@ -260,7 +265,7 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
   .clock,#playBtn,.seg,.controls .chk{display:none}
   .brand h1{font-size:21px}
   .controls{margin-left:auto}
-  .kpis{width:100%;margin-left:0;justify-content:space-between;gap:10px;border-top:1px solid var(--rule);padding-top:8px}
+  .kpis{width:100%;margin-left:0;justify-content:space-between;flex-wrap:wrap;gap:10px;border-top:1px solid var(--rule);padding-top:8px}
   .kpi .v{font-size:15px}
   .desk{gap:12px;padding-block:12px 24px}
   .panel{padding:12px}
@@ -295,6 +300,7 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
       <button id="newBtn" class="btn" type="button">New shift</button>
     </div>
     <div class="kpis">
+      <div class="kpi kpi-firm" id="kFirmBox"><span class="k">Firm capacity</span><span class="v" id="kFirm">0 / 120 MW</span><span class="s" id="kFirmSub">120 MW headroom</span></div>
       <div class="kpi"><span class="k">Spend</span><span class="v" id="kSpend">£0</span></div>
       <div class="kpi"><span class="k">Faults</span><span class="v" id="kPen">0</span></div>
       <div class="kpi"><span class="k">N-1 insecure</span><span class="v" id="kIns">0 min</span></div>
@@ -610,7 +616,7 @@ function renderSec(){
   else if(sec.insecure){pill='alarm';ptxt='At risk';adv=`A fault right now would lose Ashwell: ${Math.ceil(sec.short)} MW would have to come off instantly. Arm at least ${Math.ceil(sec.short-sec.cover)} MW more of ${sec.dir==='export'?'generation turn-down':'generation turn-up'}.`;advL='warn';}
   else if(sec.short>.5){adv=`Covered: ${Math.round(sec.cover)} MW armed against a ${Math.ceil(sec.short)} MW shortfall if another transformer trips.`;}
   else adv=`The network could lose ${n===3?'any one':'another'} transformer without overloading.`;
-  const p=$('pill');p.className='pill '+pill;txt('pill',ptxt);const dp=$('dPill');dp.className='pill '+pill;txt('dPill',ptxt);
+  const p=$('pill');p.className='pill '+pill;txt('pill',ptxt);
   const nowDir=(over||sec.insecure)?(S.net>=0?'import':'export'):null,aDir=S.ahead&&S.ahead.uncAt!=null?S.ahead.uncDir:null;
   $('dotE').hidden=!(nowDir==='export'||aDir==='export');$('dotI').hidden=!(nowDir==='import'||aDir==='import');
   const outs=S.tx.map((t,i)=>t.out?i:-1).filter(i=>i>=0);
@@ -710,6 +716,14 @@ function render(force){
   txt('clock',fmtT(S.t));
   const spend=S.cost.arm+S.cost.use+S.cost.short+S.cost.curt,pen=S.cost.voll+S.cost.gen;
   txt('kSpend',gbp(spend));txt('kPen',String(S.faults));
+  {const n=S.n,abs=Math.abs(S.net||0);let fv,fs,fc,dt;
+    if(n>=2){const cap=(n-1)*R,hd=cap-abs;fv=`${Math.round(abs)} / ${cap} MW`;
+      if(hd>=0){fs=`${Math.round(hd)} MW headroom`;fc='ok';dt=`Firm +${Math.round(hd)} MW`;}
+      else{const cov=!(S.sec&&S.sec.insecure);fs=`${Math.round(-hd)} MW over · ${cov?'covered by flex':'not covered'}`;fc=cov?'warn':'bad';dt=`Firm −${Math.round(-hd)} MW`;}}
+    else if(n===1){fv=`${Math.round(abs)} / 0 MW`;fs='No firm capacity left';fc='bad';dt='No firm cap';}
+    else{fv='–';fs='Site off supply';fc='bad';dt='Site lost';}
+    txt('kFirm',fv);txt('kFirmSub',fs);const fb=$('kFirmBox');const want='kpi kpi-firm'+(fc==='ok'?'':' '+fc);if(fb.className!==want)fb.className=want;
+    const dp=$('dPill');const dc='pill '+(fc==='ok'?'ok':fc==='warn'?'warn':'alarm');if(dp.className!==dc)dp.className=dc;txt('dPill',dt);}
   txt('kIns',S.insecureMin+' min');$('kIns').classList.toggle('bad',S.insecureMin>0);
   renderMimic();renderCards();renderLog();
   const now=performance.now();if(force||now-lastChart>350){lastChart=now;drawChart();}
