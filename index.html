@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="A DSO control-room game: keep three grid transformers inside their rating through faults, planned outages and swings in generation.">
+<meta name="description" content="Steve's Sparks DSO control-room game: keep three grid transformers inside firm capacity through faults, planned outages and swings in generation.">
 <title>Firm Capacity</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -296,7 +296,7 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
     </div>
     <div class="kpis">
       <div class="kpi"><span class="k">Spend</span><span class="v" id="kSpend">£0</span></div>
-      <div class="kpi"><span class="k">Penalties</span><span class="v" id="kPen">£0</span></div>
+      <div class="kpi"><span class="k">Faults</span><span class="v" id="kPen">0</span></div>
       <div class="kpi"><span class="k">N-1 insecure</span><span class="v" id="kIns">0 min</span></div>
     </div>
   </div>
@@ -385,22 +385,20 @@ const SCENARIOS={
     blurb:'Low demand and strong sun push power back up into the grid. T2 is booked out for maintenance through the middle of the day.',
     demand:[[0,50],[4,45],[6,47],[8,58],[10,68],[12,74],[14,73],[16,76],[18,92],[19.5,104],[21,98],[22.5,78],[24,56]],
     solar:{peak:165,start:5.5,end:20.5,cloud:.07},wind:{mean:32,var:12},
-    build(r){const ev=[{tx:1,start:600,end:900,planned:true,cause:'Planned maintenance'}];
-      const s=Math.round(660+r()*180);ev.push({tx:r()<.5?0:2,start:s,end:s+Math.round(150+r()*90),planned:false,cause:pick(r,FAULTS)});return{events:ev,cutout:null};}},
+    faults:1.5,
+    build(r){return{events:[{tx:1,start:600,end:900,planned:true,cause:'Planned maintenance'}],cutout:null};}},
   jan:{title:'Cold Thursday',when:'Thursday 14 January',focus:'Peak demand',
     blurb:'A cold, still evening peak pulls hard on the transformers. T1 is out for maintenance in the morning. Watch the battery charge.',
     demand:[[0,84],[4,76],[6,82],[7.5,118],[9,134],[11,126],[13,124],[15,130],[16.5,152],[17.5,170],[18.5,166],[20,146],[21.5,122],[23,100],[24,88]],
     solar:{peak:35,start:7.8,end:16.2,cloud:.2},wind:{mean:22,var:12},
-    build(r){const ev=[{tx:0,start:540,end:780,planned:true,cause:'Planned maintenance'}];
-      const s=Math.round(960+r()*150);ev.push({tx:Math.floor(r()*3),start:s,end:s+Math.round(180+r()*120),planned:false,cause:pick(r,FAULTS)});return{events:ev,cutout:null};}},
+    faults:1.5,
+    build(r){return{events:[{tx:0,start:540,end:780,planned:true,cause:'Planned maintenance'}],cutout:null};}},
   storm:{title:'Storm day',when:'Monday 2 November',focus:'Faults and swings',
-    blurb:'Gale-force winds bring two line faults and gusty wind output that can shut down without warning. Both directions matter.',
+    blurb:'Gale-force winds make line faults twice as likely, and gusty wind output can shut down without warning. Both directions matter.',
     demand:[[0,72],[4,64],[6,70],[7.5,98],[9,112],[12,102],[15,106],[16.5,124],[17.5,142],[18.5,140],[20,124],[22,96],[24,74]],
     solar:{peak:90,start:6.9,end:17.1,cloud:.35},wind:{mean:48,var:14},
-    build(r){const a=Math.floor(r()*3),b=(a+1+Math.floor(r()*2))%3;const sa=Math.round(420+r()*240),sb=Math.round(930+r()*180);
-      const c=['Wind-borne debris on the overhead line','Tree contact on the overhead line','Conductor clash in high wind'];
-      return{events:[{tx:a,start:sa,end:sa+Math.round(120+r()*60),planned:false,cause:pick(r,c)},{tx:b,start:sb,end:sb+Math.round(180+r()*60),planned:false,cause:pick(r,c)}],
-        cutout:(()=>{const s=Math.round(1005+r()*105);return{start:s,end:s+75};})()};}}
+    faults:3,causes:['Wind-borne debris on the overhead line','Tree contact on the overhead line','Conductor clash in high wind','Lightning strike on the overhead line'],
+    build(r){return{events:[],cutout:(()=>{const s=Math.round(1005+r()*105);return{start:s,end:s+75};})()};}}
 };
 
 const SERVICES=[
@@ -422,14 +420,14 @@ function newGame(key){
     N:{d:makeNoise(rng,15),c1:makeNoise(rng,25),c2:makeNoise(rng,6),w1:makeNoise(rng,40),w2:makeNoise(rng,5)},
     tx:[0,1,2].map(()=>({temp:60,out:null,overT:0,L:0,flow:0})),manual:{},armed:{},soc:30,
     cost:{arm:0,use:0,short:0,curt:0,voll:0,gen:0},insecureMin:0,overloadMin:0,trips:0,unserved:0,black:false,
-    hist:[],log:[],running:false,paused:true,ended:false,silent:true};
+    hist:[],log:[],running:false,paused:true,ended:false,silent:true,rng,faults:0,lost:null,pendingLoss:null};
   SERVICES.forEach(s=>{S.manual[s.id]=0;S.armed[s.id]=0;});
   const c0=components(S.t,false),L0=Math.abs(netOf(c0,zeroD()))/3/R;S.tx.forEach(t=>t.temp=20+100*L0*L0);
   for(let i=0;i<60;i++)step();
   S.silent=false;S.cost={arm:0,use:0,short:0,curt:0,voll:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.log=[];queued=[];
   logE(START,`Shift starts. ${sc.when}: ${sc.blurb}`,'info');
   S.events.filter(e=>e.planned).forEach(e=>logE(START,`Notice: T${e.tx+1} planned outage ${fmtT(e.start)}–${fmtT(e.end)}.`,'warn'));
-  $('scnLabel').textContent='Ashwell 33 kV · '+sc.title;$('dayLabel').textContent=sc.when;
+  $('scnLabel').textContent="Steve's Sparks · "+sc.title;$('dayLabel').textContent=sc.when;
   hideBanner();buildCards();render(true);
 }
 const zeroD=()=>({solar:0,wind:0,bchg:0,bdis:0,chp:0,dsr:0});
@@ -458,6 +456,10 @@ function step(){
       if(e.planned){const s=`T${e.tx+1} switched out for planned maintenance until ${fmtT(e.end)}.`;logE(m,s,'warn');queueAlert(s,'warn',false);}
       else{const s=`Fault on circuit ${e.tx+1}: ${e.cause.toLowerCase()}. T${e.tx+1} tripped, repair expected by ${fmtT(e.end)}.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);}}
   }
+  if(!S.silent&&m>=START+20){const h=S.sc.faults/(3*(END-START));
+    S.tx.forEach((t,i)=>{if(t.out||S.rng()>=h)return;const cause=pick(S.rng,S.sc.causes||FAULTS),dur=Math.round(90+S.rng()*150);
+      t.out={kind:'fault',until:m+dur,label:cause};S.faults++;S.pendingLoss=`a fault on circuit ${i+1} (${cause.toLowerCase()})`;
+      const s=`Fault on circuit ${i+1}: ${cause.toLowerCase()}. T${i+1} tripped, repair expected by ${fmtT(m+dur)}.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);});}
   if(S.cutout&&!S.cutout.fired&&m>=S.cutout.start){S.cutout.fired=true;const s=`Fen Edge Wind Farm shut down on high wind speed. Restart expected around ${fmtT(S.cutout.end)}.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);}
   if(S.cutout&&S.cutout.fired&&!S.cutout.done&&m>=S.cutout.end){S.cutout.done=true;logE(m,'Fen Edge Wind Farm restarting.','ok');}
 
@@ -477,10 +479,12 @@ function step(){
   }else if(S.black){S.black=false;logE(m,'Supply restored to Ashwell customers.','ok');}
   S.c=c;S.av=av;S.del=del;S.auto=auto;S.net=net;S.net0=net0;S.n=n;
   S.tx.forEach(t=>{if(t.out){t.flow=0;t.L=0;}else{t.flow=net/n;t.L=Math.abs(t.flow)/R;}const target=t.out?22:20+100*t.L*t.L;t.temp+=(target-t.temp)/TAU;});
+  if(!S.silent&&(S.pendingLoss||n===0)){const why=S.pendingLoss||'the loss of the last transformer';S.pendingLoss=null;
+    if(n===0||S.tx.some(t=>!t.out&&t.L>1.0001)){loseSite(m,why,n,Math.abs(net0));return;}}
   const tripped=[];
   S.tx.forEach((t,i)=>{if(t.out)return;t.overT=t.L>1.5?t.overT+1:0;
     if(t.temp>=TRIP_T||t.overT>=3){const why=t.overT>=3?'overcurrent protection':'winding temperature protection';t.out={kind:'trip',until:m+90,label:why[0].toUpperCase()+why.slice(1)};t.overT=0;S.trips++;tripped.push(`T${i+1} (${why})`);}});
-  if(tripped.length){const s=`Overload trip: ${tripped.join(', ')}. Its share of the flow moves onto what is left. Back after inspection in 90 min.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);}
+  if(tripped.length){S.pendingLoss=`an overload trip of ${tripped.join(', ')}`;const s=`Overload trip: ${tripped.join(', ')}. Its share of the flow moves onto what is left. Back after inspection in 90 min.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);}
   if(S.tx.some(t=>!t.out&&t.L>1))S.overloadMin++;
   SERVICES.forEach(s=>{S.cost.arm+=S.armed[s.id]*s.arm/60;if(s.gen){S.cost.curt+=(del[s.id]+auto[s.id])*s.use/60;}else{S.cost.use+=auto[s.id]*s.use/60;S.cost.short+=del[s.id]*s.use*1.5/60;}});
   S.soc=clamp(S.soc+((del.bchg+auto.bchg)*.92-(del.bdis+auto.bdis))/60,0,SOC_MAX);
@@ -499,6 +503,12 @@ function security(net,n,av,del,auto){
   return{n,dir,abs,cover:cv,short,after:abs/(n-1)/R,insecure:short>cv+.5};
 }
 
+function loseSite(m,why,n,flow){
+  queued=[];const cap=n*R;S.lost={m,why,n,flow,cap};
+  logE(m,`Ashwell lost. After ${why}, ${n?`${Math.round(flow)} MW was more than the ${cap} MW the remaining ${n===1?'transformer':'transformers'} could carry. Protection tripped ${n===1?'it':'them'}`:'no transformers were left in service'} and the site went dark.`,'alarm');
+  S.tx.forEach(t=>{if(!t.out)t.out={kind:'trip',until:m+90,label:'Tripped in cascade'};t.L=0;t.flow=0;});
+  S.n=0;S.net=0;endShift();
+}
 function flushAlerts(){
   if(!queued.length)return;
   const top=queued.find(q=>q.lvl==='alarm')||queued[queued.length-1];
@@ -597,7 +607,7 @@ function renderSec(){
   if(n===0){pill='alarm';ptxt='Off supply';adv='Customers are off supply. Supply comes back when a transformer returns to service.';advL='alarm';}
   else if(over){pill='alarm';ptxt='Overloaded';const need=Math.ceil(Math.abs(S.net)-n*R);adv=`Over rating now. Cut ${dirW} by ${need} MW using the ${dirW==='export'?'turn-down':'turn-up'} services below, or the transformers will heat up and trip.`;advL='alarm';}
   else if(n===1){pill='alarm';ptxt='Exposed';adv='Only one transformer left. Another loss takes customers off supply, so keep its loading well inside 100%.';advL='warn';}
-  else if(sec.insecure){pill='warn';ptxt='N-1 insecure';adv=`If one more transformer tripped, ${Math.ceil(sec.short)} MW would have to come off straight away. Arm at least ${Math.ceil(sec.short-sec.cover)} MW more of ${sec.dir==='export'?'generation turn-down':'generation turn-up'}.`;advL='warn';}
+  else if(sec.insecure){pill='alarm';ptxt='At risk';adv=`A fault right now would lose Ashwell: ${Math.ceil(sec.short)} MW would have to come off instantly. Arm at least ${Math.ceil(sec.short-sec.cover)} MW more of ${sec.dir==='export'?'generation turn-down':'generation turn-up'}.`;advL='warn';}
   else if(sec.short>.5){adv=`Covered: ${Math.round(sec.cover)} MW armed against a ${Math.ceil(sec.short)} MW shortfall if another transformer trips.`;}
   else adv=`The network could lose ${n===3?'any one':'another'} transformer without overloading.`;
   const p=$('pill');p.className='pill '+pill;txt('pill',ptxt);const dp=$('dPill');dp.className='pill '+pill;txt('dPill',ptxt);
@@ -699,7 +709,7 @@ function renderLog(){if(!logDirty)return;logDirty=false;
 function render(force){
   txt('clock',fmtT(S.t));
   const spend=S.cost.arm+S.cost.use+S.cost.short+S.cost.curt,pen=S.cost.voll+S.cost.gen;
-  txt('kSpend',gbp(spend));txt('kPen',gbp(pen));$('kPen').classList.toggle('bad',pen>0);
+  txt('kSpend',gbp(spend));txt('kPen',String(S.faults));
   txt('kIns',S.insecureMin+' min');$('kIns').classList.toggle('bad',S.insecureMin>0);
   renderMimic();renderCards();renderLog();
   const now=performance.now();if(force||now-lastChart>350){lastChart=now;drawChart();}
@@ -719,50 +729,55 @@ function frame(now){
 /* ---------- Overlays ---------- */
 function startSheet(){
   const sc=Object.entries(SCENARIOS).map(([k,v])=>`<button type="button" class="scn" data-scn="${k}" aria-pressed="${k===chosen}"><span class="f">${v.focus}</span><b>${v.title}</b><span class="d">${v.when}</span><p>${v.blurb}</p></button>`).join('');
-  $('sheet').innerHTML=`<p class="eyebrow">DSO control room · Ashwell 33 kV</p>
+  $('sheet').innerHTML=`<p class="eyebrow">Steve's Sparks · DSO control room · Ashwell 33 kV</p>
   <h2>Keep every transformer inside its rating</h2>
   <ul class="rules">
     <li>Ashwell is fed from the 132 kV grid through three 60 MVA transformers. Net flow is local demand minus local generation, shared equally between the transformers in service.</li>
     <li>When generation beats demand, power flows back up to the grid (export). When demand wins, it flows down (import). Either way, keep each transformer under 100%.</li>
-    <li>Lose a transformer and the others take its share. Look ahead: if the next one tripped, could the rest cope? With three in service the N-1 limit is 120 MW.</li>
+    <li>Faults can hit any circuit at any moment. The others take its share. With three in service, firm capacity (N-1) is 120 MW.</li>
+    <li><b>If a fault leaves the remaining transformers over 100%, protection trips them, Ashwell goes dark and the game is over.</b> Instructions after the fault come too late, so stay inside firm capacity or hold enough automatic cover.</li>
     <li>Solar and wind run flat out on whatever the sun and wind give, and that costs you nothing. You only pay compensation for the energy you curtail.</li>
     <li>Set up cover in advance. Auto-curtail on the generators is free to hold ready. The battery, gas engine and demand response charge a small hourly fee per MW. Both switch in automatically the moment a transformer goes over. Dispatching paid services now works instantly but costs 1.5× their utilisation price.</li>
-    <li>Overloaded transformers heat up. At a 140 °C hot-spot, or above 150% load for 3 minutes, protection trips them and their flow lands on the others.</li>
+    <li>Running over rating heats transformers up. At a 140 °C hot-spot, or above 150% load for 3 minutes, protection trips them, and that counts as a loss too.</li>
   </ul>
   <h3>Choose a day</h3><div class="scns">${sc}</div>
   <div class="go"><label class="chk"><input type="checkbox" id="ovPause" ${autoPause?'checked':''}> Pause the game when a fault happens</label>
   <button id="startBtn" type="button" class="btn primary big">Start shift at 05:00</button></div>
-  <p class="fine">Shift runs 05:00–23:00, about 3½ minutes at 1×. MW and MVA are treated as equal (unity power factor). Forecasts show planned outages but not faults.</p>`;
+  <p class="fine">Shift runs 05:00–23:00, about 3½ minutes at 1×. MW and MVA are treated as equal (unity power factor). Forecasts show planned outages but not faults. No faults in the first 20 minutes, so you can set up.</p>`;
   $('overlay').hidden=false;
 }
 function endShift(){
   S.ended=true;S.running=false;S.paused=true;hideBanner();
-  const c=S.cost,spend=c.arm+c.use+c.short+c.curt,pen=c.voll+c.gen;
-  let g,gl,gd;
-  if(S.unserved>0){g='E';gl='alarm';gd='Customers lost supply. The next loss was not covered.';}
-  else if(S.trips>0){g='D';gl='alarm';gd='Overload protection operated, but customers stayed on.';}
-  else if(S.overloadMin>30||S.insecureMin>120){g='C';gl='warn';gd='No trips, but the network ran over rating or exposed for long stretches.';}
-  else if(S.insecureMin>20||S.overloadMin>0){g='B';gl='warn';gd='Kept the lights on with some exposure along the way.';}
-  else{g='A';gl='ok';gd='Secure for the whole shift. Now try to do it for less.';}
-  $('sheet').innerHTML=`<p class="eyebrow">End of shift · ${S.sc.title}, ${S.sc.when}</p>
-  <h2>Shift report</h2>
-  <div class="grade"><span class="lt ${gl}">${g}</span><p style="margin:0;max-width:44ch">${gd}</p></div>
-  <table class="sum"><tbody>
+  const c=S.cost,spend=c.arm+c.use+c.short+c.curt,L=S.lost;
+  const costs=`<table class="sum"><tbody>
     <tr><td>Curtailment compensation (solar, wind)</td><td>${gbp(c.curt)}</td></tr>
     <tr><td>Availability fees (armed flex)</td><td>${gbp(c.arm)}</td></tr>
     <tr><td>Utilisation (auto)</td><td>${gbp(c.use)}</td></tr>
     <tr><td>Short-notice dispatch</td><td>${gbp(c.short)}</td></tr>
-    <tr><td>Customer interruption penalty (${S.unserved.toFixed(1)} MWh unserved at £${VOLL.toLocaleString('en-GB')}/MWh)</td><td>${gbp(c.voll)}</td></tr>
-    <tr><td>Generator disconnection compensation</td><td>${gbp(c.gen)}</td></tr>
-    <tr class="tot"><td>Total cost</td><td>${gbp(spend+pen)}</td></tr>
-  </tbody></table>
+    <tr class="tot"><td>Total spend</td><td>${gbp(spend)}</td></tr></tbody></table>
   <table class="sum" style="margin-top:12px"><tbody>
-    <tr><td>Minutes N-1 insecure</td><td>${S.insecureMin}</td></tr>
-    <tr><td>Minutes with a transformer over 100%</td><td>${S.overloadMin}</td></tr>
-    <tr><td>Overload trips</td><td>${S.trips}</td></tr>
-  </tbody></table>
-  <div class="go"><button type="button" class="btn" id="againBtn">Choose another day</button><button type="button" class="btn primary big" id="replayBtn">Replay ${S.sc.title}</button></div>
+    <tr><td>Faults</td><td>${S.faults}</td></tr>
+    <tr><td>Minutes at risk (not N-1 secure)</td><td>${S.insecureMin}</td></tr>
+    <tr><td>Minutes with a transformer over 100%</td><td>${S.overloadMin}</td></tr></tbody></table>`;
+  const btns=`<div class="go"><button type="button" class="btn" id="againBtn">Choose another day</button><button type="button" class="btn primary big" id="replayBtn">${L?'Try again':'Replay '+S.sc.title}</button></div>
   <p class="fine">Fault times change each time you play.</p>`;
+  if(L){
+    $('sheet').innerHTML=`<p class="eyebrow">Steve's Sparks · ${S.sc.title}, ${S.sc.when}</p>
+    <h2>Ashwell lost at ${fmtT(L.m)}</h2>
+    <div class="grade"><span class="lt alarm">✕</span><p style="margin:0;max-width:48ch">After ${esc(L.why)}, ${L.n?`the net flow of <b>${Math.round(L.flow)} MW</b> was more than the <b>${L.cap} MW</b> the remaining ${L.n===1?'transformer':'transformers'} could carry. Protection tripped ${L.n===1?'it':'them'} and every customer on Ashwell lost supply.`:'there were no transformers left in service and every customer on Ashwell lost supply.'}</p></div>
+    <p style="margin:0 0 14px">You held on for ${Math.floor((L.m-START)/60)} h ${(L.m-START)%60} min. To survive, keep the flow inside firm capacity, or hold enough auto-curtail and armed flex to cover the gap.</p>
+    ${costs}${btns}`;
+  }else{
+    let g,gl,gd;
+    if(S.insecureMin===0&&S.overloadMin===0){g='A';gl='ok';gd='Secure for the whole shift. Now try to do it for less.';}
+    else if(S.insecureMin<=20){g='B';gl='ok';gd='You kept Ashwell on, with only brief moments at risk.';}
+    else if(S.insecureMin<=90){g='C';gl='warn';gd='You kept Ashwell on, but a fault at the wrong moment would have lost it.';}
+    else{g='D';gl='warn';gd='You survived, but mostly on luck. Long stretches were at risk.';}
+    $('sheet').innerHTML=`<p class="eyebrow">Steve's Sparks · ${S.sc.title}, ${S.sc.when}</p>
+    <h2>Shift complete</h2>
+    <div class="grade"><span class="lt ${gl}">${g}</span><p style="margin:0;max-width:44ch">${gd}</p></div>
+    ${costs}${btns}`;
+  }
   $('overlay').hidden=false;
 }
 
