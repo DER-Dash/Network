@@ -80,6 +80,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .btn.primary:hover{filter:brightness(1.08)}
 .btn.big{padding:12px 22px;font-size:16px}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.lock-note{margin:8px 0 0;font-size:13px;font-weight:600;color:var(--warn);text-align:right}
 .bar .btn,.dock .btn{background:var(--brand-2);border-color:var(--brand-line);color:var(--brand-ink)}
 .bar .btn:hover,.dock .btn:hover{border-color:var(--brand-muted)}
 .bar .btn.primary,.dock .btn.primary{background:var(--zap);border-color:var(--zap);color:var(--zap-ink)}
@@ -844,7 +846,7 @@ function endShift(){
     else if(S.insecureMin<=90){g='C';gl='warn';gd='You kept Blackout Canyon on, but a fault at the wrong moment would have lost it.';}
     else{g='D';gl='warn';gd='You survived, but mostly on luck. Long stretches were at risk.';}
   }
-  S.final={...sc,grade:L?'Lost':g,gl,gd,result:L?'lost':'complete'};S.submitted=null;
+  S.final={...sc,grade:L?'Lost':g,gl,gd,result:L?'lost':'complete'};S.submitted=null;S.unlocked=false;
   const base={scenario:S.key,spend_gbp:Math.round(sc.spend),faults:S.faults,minutes_at_risk:S.insecureMin,score:sc.total};
   if(L)track('site_lost',{...base,lost_at:fmtT(L.m)});else track('shift_complete',{...base,grade:g});
   showEnd();
@@ -867,11 +869,13 @@ function showEnd(){
       <tr><td>Full shift bonus</td><td>${sg(F.parts.bonus)}</td></tr>
       <tr><td>Minutes at risk (${S.insecureMin} × 20)</td><td>${sg(F.parts.risk)}</td></tr>
       <tr><td>Spend (${gbp(F.spend)} ÷ 10)</td><td>${sg(F.parts.spend)}</td></tr></tbody></table></div>
-  <div class="submit"><label for="pName">Your name on the scoreboard</label>
+  <div class="submit"><label for="pName">Your name on the scoreboard (required)</label>
     <div class="sub-row"><input id="pName" maxlength="20" autocomplete="nickname" placeholder="e.g. Sparky Sue" value="${esc(getName())}" ${S.submitted?'disabled':''}>
     <button id="submitScore" type="button" class="btn primary" ${S.submitted?'disabled':''}>${S.submitted?'Submitted':'Submit score'}</button></div>
     <p id="submitMsg" class="fine ${S.submitted?'ok':''}">${S.submitted?`Submitted. You're #${S.submitted.rank} of ${S.submitted.total} on ${S.sc.title}.`:''}</p></div>`;
-  const btns=`<div class="go"><button type="button" class="btn" id="againBtn">Choose another day</button><span style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" id="sheetBoardBtn">Scoreboard</button><button type="button" class="btn primary big" id="replayBtn">${L?'Try again':'Replay '+S.sc.title}</button></span></div>
+  const lk=S.unlocked?'':' disabled';
+  const btns=`<div class="go"><button type="button" class="btn" id="againBtn"${lk}>Choose another day</button><span style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" id="sheetBoardBtn"${lk}>Scoreboard</button><button type="button" class="btn primary big" id="replayBtn"${lk}>${L?'Try again':'Replay '+S.sc.title}</button></span></div>
+  <p class="lock-note" id="lockNote" ${S.unlocked?'hidden':''}>Enter your name and submit your score to carry on.</p>
   <p class="fine">Fault times change each time you play.</p>`;
   const head=L?`<h2>Blackout Canyon lost at ${fmtT(L.m)}</h2>
     <div class="grade"><span class="lt alarm">✕</span><p style="margin:0;max-width:48ch">After ${esc(L.why)}, ${L.n?`the net flow of <b>${Math.round(L.flow)} MW</b> was more than the <b>${L.cap} MW</b> the remaining ${L.n===1?'transformer':'transformers'} could carry. Protection tripped ${L.n===1?'it':'them'} and every customer on Blackout Canyon lost supply.`:'there were no transformers left in service and every customer on Blackout Canyon lost supply.'}</p></div>
@@ -881,20 +885,21 @@ function showEnd(){
   $('sheet').innerHTML=`${BAND}<p class="eyebrow">${S.sc.title}, ${S.sc.when}</p>${head}${score}${costs}${btns}`;
   $('overlay').hidden=false;
 }
+function unlockEnd(){S.unlocked=true;['againBtn','sheetBoardBtn','replayBtn'].forEach(i=>{const b=$(i);if(b)b.disabled=false;});const n=$('lockNote');if(n)n.hidden=true;}
 function setMsg(t,cls){const m=$('submitMsg');if(m){m.textContent=t;m.className='fine '+(cls||'');}}
 async function submitScore(){
   const inp=$('pName'),btn=$('submitScore');if(!inp||S.submitted)return;
   const nm=inp.value.trim().slice(0,20);if(!nm){setMsg('Enter a name first.','err');inp.focus();return;}
   saveName(nm);
-  if(!SCORE_URL){setMsg("The shared scoreboard isn't switched on yet.",'err');return;}
+  if(!SCORE_URL){setMsg("The shared scoreboard isn't switched on yet.",'err');unlockEnd();return;}
   const F=S.final;btn.disabled=true;setMsg('Sending…');
   try{
     const r=await fetch(SCORE_URL,{method:'POST',body:JSON.stringify({name:nm,day:S.key,result:F.result,survived:F.surv,spend:Math.round(F.spend),faults:S.faults,risk:S.insecureMin,grade:F.grade})});
     const j=await r.json();if(!j.ok)throw new Error(j.error||'rejected');
     S.submitted={rank:j.rank,total:j.total};lastSubmit={name:j.name||nm,score:j.score,day:S.key};
     track('score_submitted',{scenario:S.key,score:j.score});
-    inp.disabled=true;btn.textContent='Submitted';setMsg(`Submitted. You're #${j.rank} of ${j.total} on ${S.sc.title}.`,'ok');
-  }catch(e){btn.disabled=false;setMsg("Couldn't submit your score. Check your connection and try again.",'err');}
+    inp.disabled=true;btn.textContent='Submitted';setMsg(`Submitted. You're #${j.rank} of ${j.total} on ${S.sc.title}.`,'ok');unlockEnd();
+  }catch(e){btn.disabled=false;setMsg("Couldn't reach the scoreboard, so your score wasn't saved. Try again, or carry on without it.",'err');unlockEnd();}
 }
 function showBoard(day){
   boardDay=day||boardDay;
