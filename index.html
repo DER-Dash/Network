@@ -270,6 +270,29 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
 .go{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-top:20px}
 .fine{font-size:12.5px;color:var(--muted);margin:14px 0 0}
 .grade{display:flex;align-items:center;gap:16px;margin:4px 0 16px}
+.score{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 20px;align-items:center;margin:0 0 14px;padding:14px 16px;border-radius:6px;background:var(--sunk);border:1px solid var(--rule)}
+@media (max-width:520px){.score{grid-template-columns:minmax(0,1fr)}}
+.score-big small{display:block;font:600 12px var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.score-big b{font:700 44px/1.05 var(--f-mono);font-variant-numeric:tabular-nums;color:var(--accent)}
+.score .sum td{padding:3px 0;font-size:13.5px;border-bottom:0}
+.submit{display:grid;gap:6px;margin:0 0 18px}
+.submit label{font:600 12px var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.sub-row{display:flex;gap:8px;flex-wrap:wrap}
+.sub-row input{flex:1 1 180px;min-width:0;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--rule);border-radius:4px;background:var(--panel);color:var(--ink)}
+.submit .fine{margin:0}
+.submit .fine.ok{color:var(--ok);font-weight:600}.submit .fine.err{color:var(--alarm)}
+.board-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.board-tabs button{border:1px solid var(--rule);border-top:4px solid var(--sc);background:var(--sunk);padding:8px 12px;border-radius:4px;font:700 14px var(--f-display);letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
+.board-tabs button[aria-pressed="true"]{background:var(--panel);box-shadow:inset 0 0 0 1px var(--accent);border-color:var(--accent);border-top-color:var(--sc)}
+.board{overflow-x:auto;min-height:120px}
+.board-t{width:100%;border-collapse:collapse;font-size:14px}
+.board-t th{text-align:left;font:600 11px var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:6px 8px;border-bottom:2px solid var(--rule);white-space:nowrap}
+.board-t td{padding:8px;border-bottom:1px solid var(--rule)}
+.board-t td:nth-child(1),.board-t td:nth-child(3){font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.board-t td:nth-child(3){font-weight:600}
+.board-t tr.top td:first-child{color:var(--c-solar);font-weight:700}
+.board-t tr.me td{background:var(--warn-bg);font-weight:600}
+.board-t td.nm{max-width:16ch;overflow-wrap:anywhere}
 .grade .lt{font:700 64px/1 var(--f-display);width:76px;height:76px;display:grid;place-items:center;border-radius:6px;border:2px solid}
 .grade .lt.ok{color:var(--ok);border-color:var(--ok);background:var(--ok-bg)}
 .grade .lt.warn{color:var(--warn);border-color:var(--warn);background:var(--warn-bg)}
@@ -330,6 +353,7 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
         <button type="button" data-speed="4" aria-pressed="false">4×</button>
       </div>
       <label class="chk"><input type="checkbox" id="autoPause" checked> Pause on faults</label>
+      <button id="boardBtn" class="btn" type="button">Scoreboard</button>
       <button id="newBtn" class="btn" type="button">New shift</button>
     </div>
     <div class="kpis">
@@ -459,6 +483,10 @@ const BAND=`<div class="sheet-brand"><span class="logo">${LOGO}</span><div><p cl
 const capOf=s=>s.id==='solar'?Math.ceil(S.sc.solar.peak/5)*5:s.cap;
 
 const MQ=matchMedia('(max-width: 600px)');let CMP=MQ.matches;
+const SCORE_URL='';
+let lastSubmit=null,boardDay='may',boardFrom='start';
+function getName(){try{return localStorage.getItem('fc-name')||'';}catch(e){return '';}}
+function saveName(n){try{localStorage.setItem('fc-name',n);}catch(e){}}
 let S=null, speed=1, autoPause=true, chosen='may', acc=0, lastFrame=performance.now(), lastChart=0, logDirty=true, queued=[];
 
 function newGame(key){
@@ -797,47 +825,98 @@ function startSheet(){
   </ul>
   <h3>Choose a day</h3><div class="scns">${sc}</div>
   <div class="go"><label class="chk"><input type="checkbox" id="ovPause" ${autoPause?'checked':''}> Pause the game when a fault happens</label>
-  <button id="startBtn" type="button" class="btn primary big">Start shift at 05:00</button></div>
+  <span style="display:flex;gap:8px;flex-wrap:wrap"><button id="sheetBoardBtn" type="button" class="btn">Scoreboard</button><button id="startBtn" type="button" class="btn primary big">Start shift at 05:00</button></span></div>
   <p class="fine">Shift runs 05:00–23:00, about 3½ minutes at 1×. MW and MVA are treated as equal (unity power factor). Forecasts show planned outages but not faults. No faults in the first 20 minutes, so you can set up.</p>`;
   $('overlay').hidden=false;
 }
 function track(name,params){try{if(typeof window.gtag==='function')window.gtag('event',name,params);}catch(e){}}
+function computeScore(){
+  const c=S.cost,spend=c.arm+c.use+c.short+c.curt,L=S.lost,surv=(L?L.m:END)-START;
+  const parts={surv:surv*10,bonus:L?0:5000,risk:-S.insecureMin*20,spend:-Math.round(spend/10)};
+  return{total:Math.max(0,parts.surv+parts.bonus+parts.risk+parts.spend),parts,surv,spend};
+}
 function endShift(){
   S.ended=true;S.running=false;S.paused=true;hideBanner();
-  const c=S.cost,spend=c.arm+c.use+c.short+c.curt,L=S.lost;
+  const L=S.lost,sc=computeScore();let g='✕',gl='alarm',gd='';
+  if(!L){
+    if(S.insecureMin===0&&S.overloadMin===0){g='A';gl='ok';gd='Secure for the whole shift. Now try to do it for less.';}
+    else if(S.insecureMin<=20){g='B';gl='ok';gd='You kept Blackout Canyon on, with only brief moments at risk.';}
+    else if(S.insecureMin<=90){g='C';gl='warn';gd='You kept Blackout Canyon on, but a fault at the wrong moment would have lost it.';}
+    else{g='D';gl='warn';gd='You survived, but mostly on luck. Long stretches were at risk.';}
+  }
+  S.final={...sc,grade:L?'Lost':g,gl,gd,result:L?'lost':'complete'};S.submitted=null;
+  const base={scenario:S.key,spend_gbp:Math.round(sc.spend),faults:S.faults,minutes_at_risk:S.insecureMin,score:sc.total};
+  if(L)track('site_lost',{...base,lost_at:fmtT(L.m)});else track('shift_complete',{...base,grade:g});
+  showEnd();
+}
+function showEnd(){
+  const c=S.cost,F=S.final,L=S.lost,n=v=>Math.round(v).toLocaleString('en-GB'),sg=v=>(v<0?'−':'+')+n(Math.abs(v));
   const costs=`<table class="sum"><tbody>
     <tr><td>Curtailment compensation (solar, wind)</td><td>${gbp(c.curt)}</td></tr>
     <tr><td>Availability fees (armed flex)</td><td>${gbp(c.arm)}</td></tr>
     <tr><td>Utilisation (auto)</td><td>${gbp(c.use)}</td></tr>
     <tr><td>Short-notice dispatch</td><td>${gbp(c.short)}</td></tr>
-    <tr class="tot"><td>Total spend</td><td>${gbp(spend)}</td></tr></tbody></table>
+    <tr class="tot"><td>Total spend</td><td>${gbp(F.spend)}</td></tr></tbody></table>
   <table class="sum" style="margin-top:12px"><tbody>
     <tr><td>Faults</td><td>${S.faults}</td></tr>
     <tr><td>Minutes at risk (not N-1 secure)</td><td>${S.insecureMin}</td></tr>
     <tr><td>Minutes with a transformer over 100%</td><td>${S.overloadMin}</td></tr></tbody></table>`;
-  const btns=`<div class="go"><button type="button" class="btn" id="againBtn">Choose another day</button><button type="button" class="btn primary big" id="replayBtn">${L?'Try again':'Replay '+S.sc.title}</button></div>
+  const score=`<div class="score"><div class="score-big"><small>Score</small><b>${n(F.total)}</b></div>
+    <table class="sum"><tbody>
+      <tr><td>Time on supply (${F.surv} min × 10)</td><td>${sg(F.parts.surv)}</td></tr>
+      <tr><td>Full shift bonus</td><td>${sg(F.parts.bonus)}</td></tr>
+      <tr><td>Minutes at risk (${S.insecureMin} × 20)</td><td>${sg(F.parts.risk)}</td></tr>
+      <tr><td>Spend (${gbp(F.spend)} ÷ 10)</td><td>${sg(F.parts.spend)}</td></tr></tbody></table></div>
+  <div class="submit"><label for="pName">Your name on the scoreboard</label>
+    <div class="sub-row"><input id="pName" maxlength="20" autocomplete="nickname" placeholder="e.g. Sparky Sue" value="${esc(getName())}" ${S.submitted?'disabled':''}>
+    <button id="submitScore" type="button" class="btn primary" ${S.submitted?'disabled':''}>${S.submitted?'Submitted':'Submit score'}</button></div>
+    <p id="submitMsg" class="fine ${S.submitted?'ok':''}">${S.submitted?`Submitted. You're #${S.submitted.rank} of ${S.submitted.total} on ${S.sc.title}.`:''}</p></div>`;
+  const btns=`<div class="go"><button type="button" class="btn" id="againBtn">Choose another day</button><span style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" id="sheetBoardBtn">Scoreboard</button><button type="button" class="btn primary big" id="replayBtn">${L?'Try again':'Replay '+S.sc.title}</button></span></div>
   <p class="fine">Fault times change each time you play.</p>`;
-  const base={scenario:S.key,spend_gbp:Math.round(spend),faults:S.faults,minutes_at_risk:S.insecureMin};
-  if(L){
-    track('site_lost',{...base,lost_at:fmtT(L.m)});
-    $('sheet').innerHTML=`${BAND}<p class="eyebrow">${S.sc.title}, ${S.sc.when}</p>
-    <h2>Blackout Canyon lost at ${fmtT(L.m)}</h2>
+  const head=L?`<h2>Blackout Canyon lost at ${fmtT(L.m)}</h2>
     <div class="grade"><span class="lt alarm">✕</span><p style="margin:0;max-width:48ch">After ${esc(L.why)}, ${L.n?`the net flow of <b>${Math.round(L.flow)} MW</b> was more than the <b>${L.cap} MW</b> the remaining ${L.n===1?'transformer':'transformers'} could carry. Protection tripped ${L.n===1?'it':'them'} and every customer on Blackout Canyon lost supply.`:'there were no transformers left in service and every customer on Blackout Canyon lost supply.'}</p></div>
-    <p style="margin:0 0 14px">You held on for ${Math.floor((L.m-START)/60)} h ${(L.m-START)%60} min. To survive, keep the flow inside firm capacity, or hold enough auto-curtail and armed flex to cover the gap.</p>
-    ${costs}${btns}`;
-  }else{
-    let g,gl,gd;
-    if(S.insecureMin===0&&S.overloadMin===0){g='A';gl='ok';gd='Secure for the whole shift. Now try to do it for less.';}
-    else if(S.insecureMin<=20){g='B';gl='ok';gd='You kept Blackout Canyon on, with only brief moments at risk.';}
-    else if(S.insecureMin<=90){g='C';gl='warn';gd='You kept Blackout Canyon on, but a fault at the wrong moment would have lost it.';}
-    else{g='D';gl='warn';gd='You survived, but mostly on luck. Long stretches were at risk.';}
-    track('shift_complete',{...base,grade:g});
-    $('sheet').innerHTML=`${BAND}<p class="eyebrow">${S.sc.title}, ${S.sc.when}</p>
-    <h2>Shift complete</h2>
-    <div class="grade"><span class="lt ${gl}">${g}</span><p style="margin:0;max-width:44ch">${gd}</p></div>
-    ${costs}${btns}`;
-  }
+    <p style="margin:0 0 14px">You held on for ${Math.floor((L.m-START)/60)} h ${(L.m-START)%60} min. To survive, keep the flow inside firm capacity, or hold enough auto-curtail and armed flex to cover the gap.</p>`
+   :`<h2>Shift complete</h2>
+    <div class="grade"><span class="lt ${F.gl}">${F.grade}</span><p style="margin:0;max-width:44ch">${F.gd}</p></div>`;
+  $('sheet').innerHTML=`${BAND}<p class="eyebrow">${S.sc.title}, ${S.sc.when}</p>${head}${score}${costs}${btns}`;
   $('overlay').hidden=false;
+}
+function setMsg(t,cls){const m=$('submitMsg');if(m){m.textContent=t;m.className='fine '+(cls||'');}}
+async function submitScore(){
+  const inp=$('pName'),btn=$('submitScore');if(!inp||S.submitted)return;
+  const nm=inp.value.trim().slice(0,20);if(!nm){setMsg('Enter a name first.','err');inp.focus();return;}
+  saveName(nm);
+  if(!SCORE_URL){setMsg("The shared scoreboard isn't switched on yet.",'err');return;}
+  const F=S.final;btn.disabled=true;setMsg('Sending…');
+  try{
+    const r=await fetch(SCORE_URL,{method:'POST',body:JSON.stringify({name:nm,day:S.key,result:F.result,survived:F.surv,spend:Math.round(F.spend),faults:S.faults,risk:S.insecureMin,grade:F.grade})});
+    const j=await r.json();if(!j.ok)throw new Error(j.error||'rejected');
+    S.submitted={rank:j.rank,total:j.total};lastSubmit={name:j.name||nm,score:j.score,day:S.key};
+    track('score_submitted',{scenario:S.key,score:j.score});
+    inp.disabled=true;btn.textContent='Submitted';setMsg(`Submitted. You're #${j.rank} of ${j.total} on ${S.sc.title}.`,'ok');
+  }catch(e){btn.disabled=false;setMsg("Couldn't submit your score. Check your connection and try again.",'err');}
+}
+function showBoard(day){
+  boardDay=day||boardDay;
+  const tabs=Object.entries(SCENARIOS).map(([k,v])=>`<button type="button" data-board="${k}" style="--sc:${v.color}" aria-pressed="${k===boardDay}">${v.title}</button>`).join('');
+  $('sheet').innerHTML=`${BAND}<p class="eyebrow">Scoreboard</p><h2>Top control engineers</h2>
+    <div class="board-tabs" role="group" aria-label="Day">${tabs}</div>
+    <div class="board" id="boardList"></div>
+    <div class="go"><span></span><button type="button" class="btn primary" id="boardBack">Back</button></div>
+    <p class="fine">Score = 10 per minute on supply, 5,000 for finishing the shift, minus 20 per minute at risk and 1 per £10 spent.</p>`;
+  $('overlay').hidden=false;loadBoard(boardDay);
+}
+async function loadBoard(day){
+  const el=$('boardList');if(!el)return;
+  if(!SCORE_URL){el.innerHTML="<p class=\"empty\">The shared scoreboard isn't switched on yet.</p>";return;}
+  el.innerHTML='<p class="empty">Loading scores…</p>';
+  try{
+    const r=await fetch(SCORE_URL+'?day='+encodeURIComponent(day));const j=await r.json();
+    if(boardDay!==day||!$('boardList'))return;if(!j.ok)throw new Error('bad');
+    if(!j.scores.length){el.innerHTML='<p class="empty">No scores for this day yet. Be the first.</p>';return;}
+    el.innerHTML=`<table class="board-t"><thead><tr><th>#</th><th>Name</th><th>Score</th><th>Result</th><th>Grade</th></tr></thead><tbody>${
+      j.scores.slice(0,20).map((x,i)=>`<tr class="${i<3?'top':''}${lastSubmit&&lastSubmit.day===day&&x.name===lastSubmit.name&&x.score===lastSubmit.score?' me':''}"><td>${i+1}</td><td class="nm">${esc(x.name)}</td><td>${Number(x.score).toLocaleString('en-GB')}</td><td>${x.result==='complete'?'Full shift':'Lost at '+fmtT(START+Number(x.survived))}</td><td>${esc(x.grade)}</td></tr>`).join('')}</tbody></table>`;
+  }catch(e){if($('boardList'))el.innerHTML="<p class=\"empty\">Couldn't load the scoreboard. Check your connection and try again.</p>";}
 }
 
 /* ---------- Events ---------- */
@@ -846,7 +925,11 @@ document.addEventListener('click',e=>{
   const sc=e.target.closest('[data-scn]');if(sc){chosen=sc.dataset.scn;document.querySelectorAll('[data-scn]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.scn===chosen));newGame(chosen);return;}
   const sp=e.target.closest('[data-speed]');if(sp){speed=+sp.dataset.speed;document.querySelectorAll('[data-speed]').forEach(b=>b.setAttribute('aria-pressed',b===sp));txt('dSpeed',speed+'×');return;}
   const tb=e.target.closest('button[data-tab]');if(tb){$('groups').dataset.tab=tb.dataset.tab;document.querySelectorAll('button[data-tab]').forEach(b=>b.setAttribute('aria-selected',b===tb));return;}
+  const bb=e.target.closest('[data-board]');if(bb){boardDay=bb.dataset.board;document.querySelectorAll('[data-board]').forEach(b=>b.setAttribute('aria-pressed',b===bb));loadBoard(boardDay);return;}
   const id=e.target.id;
+  if(id==='boardBtn'||id==='sheetBoardBtn'){if(S.running&&!S.ended){S.paused=true;acc=0;}boardFrom=S.ended?'end':$('overlay').hidden?'game':'start';showBoard(S.key);return;}
+  if(id==='boardBack'){if(boardFrom==='end'&&S.ended)showEnd();else if(boardFrom==='game'){$('overlay').hidden=true;render(true);}else startSheet();return;}
+  if(id==='submitScore'){submitScore();return;}
   if(id==='dSpeed'){speed=speed===1?2:speed===2?4:1;document.querySelectorAll('[data-speed]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.speed===speed));txt('dSpeed',speed+'×');return;}
   if(id==='dPlay'){$('playBtn').click();return;}
   if(id==='startBtn'){autoPause=$('ovPause').checked;$('autoPause').checked=autoPause;if(S.key!==chosen||S.t!==START)newGame(chosen);$('overlay').hidden=true;S.running=true;S.paused=false;acc=0;track('shift_start',{scenario:S.key});render(true);}
@@ -857,7 +940,7 @@ document.addEventListener('click',e=>{
   if(id==='dismissBtn'){hideBanner();}
 });
 $('autoPause').addEventListener('change',e=>autoPause=e.target.checked);
-document.addEventListener('keydown',e=>{if(e.code==='Space'&&$('overlay').hidden&&!/INPUT|BUTTON/.test(document.activeElement.tagName)){e.preventDefault();$('playBtn').click();}});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.id==='pName'){e.preventDefault();submitScore();return;}if(e.code==='Space'&&$('overlay').hidden&&!/INPUT|BUTTON/.test(document.activeElement.tagName)){e.preventDefault();$('playBtn').click();}});
 
 MQ.addEventListener('change',()=>{CMP=MQ.matches;buildMimic();if(S)render(true);});
 buildMimic();newGame(chosen);startSheet();requestAnimationFrame(frame);
