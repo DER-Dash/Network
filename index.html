@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Steve's Sparks DSO control-room game: keep three grid transformers inside firm capacity through faults, planned outages and swings in generation.">
+<meta name="description" content="Shocking Steve Electricity control-room game: keep three grid transformers inside firm capacity through faults, planned outages and swings in generation.">
 <title>Firm Capacity</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,70 +18,85 @@ img{max-width:100%}
 <style>
 /* Layout: control-room desk. Mimic diagram + look-ahead chart on the left, contingency panel + event log on the right, flexibility register across the bottom. */
 :root{
-  --bg:#e6ebe8; --panel:#f8faf9; --sunk:#eef2f0; --ink:#17211e; --muted:#5a6964; --rule:#c5cfca;
-  --hv:#8a2f6b; --mv:#1b6a8a; --accent:#1b6a8a; --on-accent:#ffffff; --pulse:#ffffff;
+  --bg:#ecebf3; --panel:#fbfaff; --sunk:#f2f0f9; --ink:#1a1730; --muted:#5f5b78; --rule:#d3d0e3;
+  --hv:#8a2f6b; --mv:#1b6a8a; --accent:#4a35c4; --on-accent:#ffffff; --pulse:#ffffff;
+  --brand:#2a1a72; --brand-2:#3a2992; --brand-line:#5141b0; --brand-ink:#ffffff; --brand-muted:#cbc3f3; --zap:#ffc928; --zap-ink:#21154f; --ok-on-brand:#5fe0a0; --alarm-on-brand:#ff9384;
+  --c-solar:#d48c00; --c-wind:#0f9384; --c-batt:#6f4ce6; --c-gas:#dc5a24; --c-dsr:#c93d78; --c-cold:#2f7fd6; --c-storm:#6a48d6;
   --ok:#2c8a57; --warn:#b5730a; --alarm:#c4352b;
-  --ok-bg:#d8ede0; --warn-bg:#f5e6c6; --alarm-bg:#f6d6d1; --scrim:rgba(18,28,25,.55);
+  --ok-bg:#d8ede0; --warn-bg:#f5e6c6; --alarm-bg:#f6d6d1; --scrim:rgba(20,14,48,.6);
   --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
   --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#10181a; --panel:#172124; --sunk:#1d292c; --ink:#e2ebe8; --muted:#8fa19b; --rule:#2c3a3d;
-    --hv:#d281b6; --mv:#5db3d6; --accent:#5db3d6; --on-accent:#0c1416; --pulse:#0c1416;
+    --bg:#100e1d; --panel:#18152b; --sunk:#201c38; --ink:#e8e6f5; --muted:#9a95b8; --rule:#322b55;
+    --hv:#d281b6; --mv:#5db3d6; --accent:#a596ff; --on-accent:#120f22; --pulse:#0c1416;
+    --brand:#1f1452; --brand-2:#2d2072; --brand-line:#45369a;
+    --c-solar:#ffbf2e; --c-wind:#38c6b4; --c-batt:#a68bff; --c-gas:#ff8a55; --c-dsr:#ff6fa8; --c-cold:#6fb0ff; --c-storm:#a48cff;
     --ok:#52b886; --warn:#e2a840; --alarm:#f0675a;
     --ok-bg:#1d3a2c; --warn-bg:#3d3017; --alarm-bg:#47201c; --scrim:rgba(4,8,9,.7);
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#10181a; --panel:#172124; --sunk:#1d292c; --ink:#e2ebe8; --muted:#8fa19b; --rule:#2c3a3d;
-  --hv:#d281b6; --mv:#5db3d6; --accent:#5db3d6; --on-accent:#0c1416; --pulse:#0c1416;
+  --bg:#100e1d; --panel:#18152b; --sunk:#201c38; --ink:#e8e6f5; --muted:#9a95b8; --rule:#322b55;
+  --hv:#d281b6; --mv:#5db3d6; --accent:#a596ff; --on-accent:#120f22; --pulse:#0c1416;
+    --brand:#1f1452; --brand-2:#2d2072; --brand-line:#45369a;
+    --c-solar:#ffbf2e; --c-wind:#38c6b4; --c-batt:#a68bff; --c-gas:#ff8a55; --c-dsr:#ff6fa8; --c-cold:#6fb0ff; --c-storm:#a48cff;
   --ok:#52b886; --warn:#e2a840; --alarm:#f0675a;
   --ok-bg:#1d3a2c; --warn-bg:#3d3017; --alarm-bg:#47201c; --scrim:rgba(4,8,9,.7);
   color-scheme:dark;
 }
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--panel)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--brand)}
 button{font:inherit;color:inherit}
 button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 
-/* Header */
-.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--panel);border-bottom:1px solid var(--rule)}
+/* Header: company band */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--brand);color:var(--brand-ink);border-bottom:3px solid var(--zap)}
 .bar-in{max-width:1280px;margin:0 auto;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px}
-.brand{display:flex;align-items:center;gap:10px;min-width:0}
-.mark{font:600 13px var(--f-mono);border:2px solid var(--ink);padding:3px 6px;border-radius:3px;letter-spacing:.02em}
-.brand h1{margin:0;font:700 24px/1 var(--f-display);letter-spacing:.06em;text-transform:uppercase}
-.brand p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.logo{flex:none;width:46px;height:46px;display:block}
+.logo svg{width:100%;height:100%;display:block}
+.co{margin:0;font:700 12px var(--f-display);letter-spacing:.14em;text-transform:uppercase;color:var(--zap)}
+.brand h1{margin:1px 0 0;font:700 24px/1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--brand-ink)}
+#scnLabel{margin:3px 0 0;font-size:13px;color:var(--brand-muted)}
 .clock{display:flex;flex-direction:column;line-height:1.1}
-.clock b{font:600 28px var(--f-mono);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
-.clock span{font-size:12px;color:var(--muted)}
+.clock b{font:600 28px var(--f-mono);font-variant-numeric:tabular-nums;letter-spacing:-.02em;color:var(--zap)}
+.clock span{font-size:12px;color:var(--brand-muted)}
 .controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .btn{border:1px solid var(--rule);background:var(--sunk);padding:7px 14px;border-radius:4px;cursor:pointer;font-weight:600}
 .btn:hover{border-color:var(--muted)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .btn.primary:hover{filter:brightness(1.08)}
 .btn.big{padding:12px 22px;font-size:16px}
-.seg{display:inline-flex;border:1px solid var(--rule);border-radius:4px;overflow:hidden}
-.seg button{border:0;background:var(--sunk);padding:7px 11px;cursor:pointer;font:600 13px var(--f-mono)}
-.seg button+button{border-left:1px solid var(--rule)}
-.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.bar .btn,.dock .btn{background:var(--brand-2);border-color:var(--brand-line);color:var(--brand-ink)}
+.bar .btn:hover,.dock .btn:hover{border-color:var(--brand-muted)}
+.bar .btn.primary,.dock .btn.primary{background:var(--zap);border-color:var(--zap);color:var(--zap-ink)}
+.seg{display:inline-flex;border:1px solid var(--brand-line);border-radius:4px;overflow:hidden}
+.seg button{border:0;background:var(--brand-2);color:var(--brand-ink);padding:7px 11px;cursor:pointer;font:600 13px var(--f-mono)}
+.seg button+button{border-left:1px solid var(--brand-line)}
+.seg button[aria-pressed="true"]{background:var(--zap);color:var(--zap-ink)}
 .chk{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer}
+.bar .chk{color:var(--brand-muted)}
+.bar :focus-visible{outline-color:var(--zap)}
 .kpis{display:flex;gap:20px;margin-left:auto}
 .kpi{display:flex;flex-direction:column;line-height:1.15}
-.kpi .k{font:600 11px var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.kpi .v{font:600 17px var(--f-mono);font-variant-numeric:tabular-nums}
-.kpi .v.bad{color:var(--alarm)}
-.kpi .s{font:500 12px var(--f-body);color:var(--muted)}
-.kpi-firm{padding:2px 10px;border-left:3px solid var(--ok);background:var(--sunk);border-radius:3px}
-.kpi-firm.warn{border-left-color:var(--warn);background:var(--warn-bg)}
+.kpi .k{font:600 11px var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--brand-muted)}
+.kpi .v{font:600 17px var(--f-mono);font-variant-numeric:tabular-nums;color:var(--brand-ink)}
+.kpi .v.bad{color:var(--alarm-on-brand)}
+.kpi .s{font:500 12px var(--f-body);color:var(--brand-muted)}
+.kpi-firm{padding:3px 10px;border-left:4px solid var(--ok-on-brand);background:var(--brand-2);border-radius:3px}
+.kpi-firm.warn{border-left-color:var(--zap);background:var(--warn-bg)}
 .kpi-firm.bad{border-left-color:var(--alarm);background:var(--alarm-bg)}
-.kpi-firm.warn .s{color:var(--warn)}.kpi-firm.bad .s,.kpi-firm.bad .v{color:var(--alarm)}
+.kpi-firm.warn .k,.kpi-firm.bad .k{color:var(--muted)}
+.kpi-firm.warn .v{color:var(--ink)}.kpi-firm.warn .s{color:var(--warn)}
+.kpi-firm.bad .s,.kpi-firm.bad .v{color:var(--alarm)}
 
-.banner{max-width:1280px;margin:0 auto 10px;margin-left:max(16px,env(safe-area-inset-left,0px));margin-right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-radius:5px;border:1px solid var(--rule);background:var(--sunk)}
+.banner{color:var(--ink);max-width:1280px;margin:0 auto 10px;margin-left:max(16px,env(safe-area-inset-left,0px));margin-right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-radius:5px;border:1px solid var(--rule);background:var(--sunk)}
 @media (min-width:1312px){.banner{margin-left:auto;margin-right:auto}}
 .banner.alarm{background:var(--alarm-bg);border-color:var(--alarm)}
 .banner.warn{background:var(--warn-bg);border-color:var(--warn)}
@@ -95,7 +110,17 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 @media (max-width:920px){.desk{grid-template-columns:minmax(0,1fr);grid-template-areas:"mimic" "sec" "ahead" "flex" "log"}.kpis{margin-left:0}}
 .panel{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:14px 16px;min-width:0}
 .ph{display:flex;align-items:baseline;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin-bottom:8px}
-.ph h2{margin:0;font:600 15px var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.ph h2{margin:0;font:700 15px var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--ink);display:flex;align-items:center;gap:9px}
+.ph h2::before{content:"";width:10px;height:10px;border-radius:2px;background:var(--pc,var(--accent));transform:rotate(45deg)}
+.p-mimic{--pc:var(--mv)}.p-sec{--pc:var(--c-gas)}.p-ahead{--pc:var(--c-wind)}.p-log{--pc:var(--c-batt)}.p-flex{--pc:var(--c-solar)}
+.c-id{display:flex;gap:10px;align-items:center;min-width:0}
+.ico{flex:none;width:36px;height:36px;border-radius:8px;display:grid;place-items:center;color:var(--tc);background:var(--sunk);background:color-mix(in srgb,var(--tc) 15%,transparent)}
+.ico svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.asym .sym{fill:var(--sc)}.asym .sym-o{stroke:var(--sc)}.asym .sym-l{stroke:var(--sc)}.asym text{fill:var(--sc)}
+.sheet-brand{display:flex;gap:12px;align-items:center;background:var(--brand);color:var(--brand-ink);margin:-24px calc(-1 * clamp(16px,4vw,32px)) 20px;padding:16px clamp(16px,4vw,32px);border-radius:7px 7px 0 0;border-bottom:3px solid var(--zap)}
+.sheet-brand .tag{margin:2px 0 0;color:var(--brand-muted);font-size:13.5px}
+.scn{border-top:4px solid var(--sc)!important}
+.scn .f{color:var(--sc)!important}
 .legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted)}
 .legend i{display:inline-block;width:16px;height:0;border-top:2.5px solid;vertical-align:middle;margin-right:5px}
 .legend i.box{height:10px;border:0;width:12px}
@@ -264,13 +289,14 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
   .bar-in{gap:10px 14px}
   .clock,#playBtn,.seg,.controls .chk{display:none}
   .brand h1{font-size:21px}
+  .logo{width:40px;height:40px}
   .controls{margin-left:auto}
   .kpis{width:100%;margin-left:0;justify-content:space-between;flex-wrap:wrap;gap:10px;border-top:1px solid var(--rule);padding-top:8px}
   .kpi .v{font-size:15px}
   .desk{gap:12px;padding-block:12px 24px}
   .panel{padding:12px}
-  .dock{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:8;align-items:center;gap:10px;background:var(--panel);border-top:1px solid var(--rule);padding-top:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-  .dock b{font:600 20px var(--f-mono);font-variant-numeric:tabular-nums}
+  .dock{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:8;align-items:center;gap:10px;background:var(--brand);color:var(--brand-ink);border-top:3px solid var(--zap);padding-top:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .dock b{font:600 20px var(--f-mono);font-variant-numeric:tabular-nums;color:var(--zap)}
   .dock .pill{margin-right:auto;font-size:12px;padding:3px 8px}
   .dock .btn{padding:9px 14px}
   #dPlay{min-width:86px}
@@ -285,8 +311,8 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
 <header class="bar">
   <div class="bar-in">
     <div class="brand">
-      <span class="mark">N-1</span>
-      <div><h1>Firm Capacity</h1><p id="scnLabel">Ashwell 33 kV</p></div>
+      <span class="logo"><svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="11" fill="var(--zap)"/><path d="M27.5 5 13 26.5h9.5L19 43l16-23h-9.5L30 5z" fill="var(--brand)"/><path d="M8 13l3.5 2.3M6.5 22.5h4M40 35l-3.5-2.3M41.5 25.5h-4" stroke="var(--brand)" stroke-width="2.6" stroke-linecap="round"/></svg></span>
+      <div><p class="co">Shocking Steve Electricity</p><h1>Firm Capacity</h1><p id="scnLabel">Ashwell 33 kV</p></div>
     </div>
     <div class="clock"><b id="clock">05:00</b><span id="dayLabel"></span></div>
     <div class="controls">
@@ -387,19 +413,19 @@ const pick=(rng,a)=>a[Math.floor(rng()*a.length)];
 const FAULTS=['Lightning strike on the overhead line','Tree contact on the overhead line','Bird strike on the overhead line','Insulator flashover','Cable joint failure'];
 
 const SCENARIOS={
-  may:{title:'Sunny Sunday',when:'Sunday 17 May',focus:'Reverse power flow',
+  may:{color:'var(--c-solar)',title:'Sunny Sunday',when:'Sunday 17 May',focus:'Reverse power flow',
     blurb:'Low demand and strong sun push power back up into the grid. T2 is booked out for maintenance through the middle of the day.',
     demand:[[0,50],[4,45],[6,47],[8,58],[10,68],[12,74],[14,73],[16,76],[18,92],[19.5,104],[21,98],[22.5,78],[24,56]],
     solar:{peak:165,start:5.5,end:20.5,cloud:.07},wind:{mean:32,var:12},
     faults:1.5,
     build(r){return{events:[{tx:1,start:600,end:900,planned:true,cause:'Planned maintenance'}],cutout:null};}},
-  jan:{title:'Cold Thursday',when:'Thursday 14 January',focus:'Peak demand',
+  jan:{color:'var(--c-cold)',title:'Cold Thursday',when:'Thursday 14 January',focus:'Peak demand',
     blurb:'A cold, still evening peak pulls hard on the transformers. T1 is out for maintenance in the morning. Watch the battery charge.',
     demand:[[0,84],[4,76],[6,82],[7.5,118],[9,134],[11,126],[13,124],[15,130],[16.5,152],[17.5,170],[18.5,166],[20,146],[21.5,122],[23,100],[24,88]],
     solar:{peak:35,start:7.8,end:16.2,cloud:.2},wind:{mean:22,var:12},
     faults:1.5,
     build(r){return{events:[{tx:0,start:540,end:780,planned:true,cause:'Planned maintenance'}],cutout:null};}},
-  storm:{title:'Storm day',when:'Monday 2 November',focus:'Faults and swings',
+  storm:{color:'var(--c-storm)',title:'Storm day',when:'Monday 2 November',focus:'Faults and swings',
     blurb:'Gale-force winds make line faults twice as likely, and gusty wind output can shut down without warning. Both directions matter.',
     demand:[[0,72],[4,64],[6,70],[7.5,98],[9,112],[12,102],[15,106],[16.5,124],[17.5,142],[18.5,140],[20,124],[22,96],[24,74]],
     solar:{peak:90,start:6.9,end:17.1,cloud:.35},wind:{mean:48,var:14},
@@ -408,13 +434,21 @@ const SCENARIOS={
 };
 
 const SERVICES=[
-  {id:'solar',name:'Marsh Lane Solar Farm',kind:'Solar farm · runs at full output',dir:'export',arm:0,use:60,gen:true},
-  {id:'wind',name:'Fen Edge Wind Farm',kind:'Wind farm · runs at full output',dir:'export',arm:0,use:85,cap:60,gen:true},
-  {id:'bchg',name:'Kings Hill Battery',kind:'Battery · charge from grid',dir:'export',arm:6,use:35,cap:30,soc:true},
-  {id:'bdis',name:'Kings Hill Battery',kind:'Battery · discharge',dir:'import',arm:6,use:90,cap:30,soc:true},
-  {id:'chp',name:'Riverside CHP',kind:'Gas engine · normally off',dir:'import',arm:8,use:140,cap:25},
-  {id:'dsr',name:'Hartwell Industrial Estate',kind:'Demand response · reduce load',dir:'import',arm:5,use:200,cap:15},
+  {id:'solar',ic:'solar',tc:'var(--c-solar)',name:'Marsh Lane Solar Farm',kind:'Solar farm · runs at full output',dir:'export',arm:0,use:60,gen:true},
+  {id:'wind',ic:'wind',tc:'var(--c-wind)',name:'Fen Edge Wind Farm',kind:'Wind farm · runs at full output',dir:'export',arm:0,use:85,cap:60,gen:true},
+  {id:'bchg',ic:'batt',tc:'var(--c-batt)',name:'Kings Hill Battery',kind:'Battery · charge from grid',dir:'export',arm:6,use:35,cap:30,soc:true},
+  {id:'bdis',ic:'batt',tc:'var(--c-batt)',name:'Kings Hill Battery',kind:'Battery · discharge',dir:'import',arm:6,use:90,cap:30,soc:true},
+  {id:'chp',ic:'gas',tc:'var(--c-gas)',name:'Riverside CHP',kind:'Gas engine · normally off',dir:'import',arm:8,use:140,cap:25},
+  {id:'dsr',ic:'dsr',tc:'var(--c-dsr)',name:'Hartwell Industrial Estate',kind:'Demand response · reduce load',dir:'import',arm:5,use:200,cap:15},
 ];
+const ICONS={solar:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+  wind:'<path d="M12 11v11M12 11V2.5M12 11l8.2 4.8M12 11l-8.2 4.8M9 22h6"/>',
+  batt:'<rect x="2.5" y="7" width="17" height="10" rx="2"/><path d="M21.5 10.5v3M7 12h4M9 10v4"/>',
+  gas:'<path d="M12 2.5c2.5 3.5 6.5 6 6.5 11a6.5 6.5 0 0 1-13 0c0-3 1.8-4.6 3-6.5.8 1.8 1.6 2.8 3 3.2-.4-2.6-.2-5 .5-7.7z"/>',
+  dsr:'<path d="M3 21V10l5 3v-3l5 3V7l8 4v10zM3 21h18M8 17h2M13 17h2"/>'};
+const ACOL={demand:'var(--ink)',solar:'var(--c-solar)',wind:'var(--c-wind)',batt:'var(--c-batt)',chp:'var(--c-gas)',dsr:'var(--c-dsr)'};
+const LOGO='<svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="11" fill="var(--zap)"/><path d="M27.5 5 13 26.5h9.5L19 43l16-23h-9.5L30 5z" fill="var(--brand)"/><path d="M8 13l3.5 2.3M6.5 22.5h4M40 35l-3.5-2.3M41.5 25.5h-4" stroke="var(--brand)" stroke-width="2.6" stroke-linecap="round"/></svg>';
+const BAND=`<div class="sheet-brand"><span class="logo">${LOGO}</span><div><p class="co">Shocking Steve Electricity</p><p class="tag">Keeping Ashwell switched on. Mostly.</p></div></div>`;
 const capOf=s=>s.id==='solar'?Math.ceil(S.sc.solar.peak/5)*5:s.cap;
 
 const MQ=matchMedia('(max-width: 600px)');let CMP=MQ.matches;
@@ -433,7 +467,7 @@ function newGame(key){
   S.silent=false;S.cost={arm:0,use:0,short:0,curt:0,voll:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.log=[];queued=[];
   logE(START,`Shift starts. ${sc.when}: ${sc.blurb}`,'info');
   S.events.filter(e=>e.planned).forEach(e=>logE(START,`Notice: T${e.tx+1} planned outage ${fmtT(e.start)}–${fmtT(e.end)}.`,'warn'));
-  $('scnLabel').textContent="Steve's Sparks · "+sc.title;$('dayLabel').textContent=sc.when;
+  $('scnLabel').textContent=sc.title+' · Ashwell 33 kV';$('dayLabel').textContent=sc.when;
   hideBanner();buildCards();render(true);
 }
 const zeroD=()=>({solar:0,wind:0,bchg:0,bdis:0,chp:0,dsr:0});
@@ -570,8 +604,8 @@ function buildMimic(){
     if(a.id==='batt')sym=`<path class="sym-l" d="M${x-15} ${y} h30 M${x-8} ${y+6} h16 M${x-15} ${y+12} h30 M${x-8} ${y+18} h16" style="stroke-width:2.5"/>`;
     if(a.id==='chp')sym=`<circle class="sym-o" cx="${x}" cy="${y+14}" r="14"/><text x="${x}" y="${y+19}" text-anchor="middle" style="font:700 13px var(--f-display)">G~</text>`;
     s+=`<line class="cond mv" x1="${x}" y1="${by}" x2="${x}" y2="${y}"/><line id="fl_${a.id}" class="flow" x1="${x}" y1="${by+4}" x2="${x}" y2="${y}"/>
-      <rect class="brk" x="${x-6}" y="${by+13}" width="12" height="12"/>${sym}
-      <text class="a-name" x="${x}" y="${y+50}" text-anchor="middle">${a.name}</text>
+      <rect class="brk" x="${x-6}" y="${by+13}" width="12" height="12"/><g class="asym" style="--sc:${ACOL[a.id]}">${sym}</g>
+      <text class="a-name" x="${x}" y="${y+50}" text-anchor="middle" style="fill:${a.id==='demand'?'var(--muted)':ACOL[a.id]}">${a.name}</text>
       <text id="av_${a.id}" class="a-val" x="${x}" y="${y+67}" text-anchor="middle">0 MW</text>
       <text id="as_${a.id}" class="a-sub" x="${x}" y="${y+83}" text-anchor="middle"></text>`;});
   const el=$('mimic');el.setAttribute('viewBox',G.vb);el.innerHTML=s;
@@ -679,7 +713,7 @@ function drawChart(){
 /* ---------- Cards ---------- */
 function buildCards(){
   const mk=s=>`<article class="card" id="card-${s.id}">
-    <div class="c-top"><div><h4>${s.name}</h4><div class="kind">${s.kind}</div></div><div class="c-av"><small>Available now</small><span id="av-${s.id}">0 MW</span></div></div>
+    <div class="c-top"><div class="c-id"><span class="ico" style="--tc:${s.tc}"><svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[s.ic]}</svg></span><div><h4>${s.name}</h4><div class="kind">${s.kind}</div></div></div><div class="c-av"><small>Available now</small><span id="av-${s.id}">0 MW</span></div></div>
     ${s.gen?`<p class="prices"><span>Curtailment compensation <b>£${s.use}</b>/MWh</span><span>No fee to stand ready</span><span>Up to <b>${capOf(s)}</b> MW</span></p>`
       :`<p class="prices"><span>Arm <b>£${s.arm}</b>/MW/h</span><span>Use <b>£${s.use}</b>/MWh</span><span>Short notice <b>£${s.use*1.5}</b>/MWh</span><span>Up to <b>${capOf(s)}</b> MW</span></p>`}
     ${s.soc?`<div class="soc"><span>Charge</span><span class="trk"><i id="soc-${s.id}"></i></span><span id="socT-${s.id}">50%</span></div>`:''}
@@ -742,8 +776,8 @@ function frame(now){
 
 /* ---------- Overlays ---------- */
 function startSheet(){
-  const sc=Object.entries(SCENARIOS).map(([k,v])=>`<button type="button" class="scn" data-scn="${k}" aria-pressed="${k===chosen}"><span class="f">${v.focus}</span><b>${v.title}</b><span class="d">${v.when}</span><p>${v.blurb}</p></button>`).join('');
-  $('sheet').innerHTML=`<p class="eyebrow">Steve's Sparks · DSO control room · Ashwell 33 kV</p>
+  const sc=Object.entries(SCENARIOS).map(([k,v])=>`<button type="button" class="scn" data-scn="${k}" style="--sc:${v.color}" aria-pressed="${k===chosen}"><span class="f">${v.focus}</span><b>${v.title}</b><span class="d">${v.when}</span><p>${v.blurb}</p></button>`).join('');
+  $('sheet').innerHTML=`${BAND}<p class="eyebrow">DSO control room · Ashwell 33 kV</p>
   <h2>Keep every transformer inside its rating</h2>
   <ul class="rules">
     <li>Ashwell is fed from the 132 kV grid through three 60 MVA transformers. Net flow is local demand minus local generation, shared equally between the transformers in service.</li>
@@ -776,7 +810,7 @@ function endShift(){
   const btns=`<div class="go"><button type="button" class="btn" id="againBtn">Choose another day</button><button type="button" class="btn primary big" id="replayBtn">${L?'Try again':'Replay '+S.sc.title}</button></div>
   <p class="fine">Fault times change each time you play.</p>`;
   if(L){
-    $('sheet').innerHTML=`<p class="eyebrow">Steve's Sparks · ${S.sc.title}, ${S.sc.when}</p>
+    $('sheet').innerHTML=`${BAND}<p class="eyebrow">${S.sc.title}, ${S.sc.when}</p>
     <h2>Ashwell lost at ${fmtT(L.m)}</h2>
     <div class="grade"><span class="lt alarm">✕</span><p style="margin:0;max-width:48ch">After ${esc(L.why)}, ${L.n?`the net flow of <b>${Math.round(L.flow)} MW</b> was more than the <b>${L.cap} MW</b> the remaining ${L.n===1?'transformer':'transformers'} could carry. Protection tripped ${L.n===1?'it':'them'} and every customer on Ashwell lost supply.`:'there were no transformers left in service and every customer on Ashwell lost supply.'}</p></div>
     <p style="margin:0 0 14px">You held on for ${Math.floor((L.m-START)/60)} h ${(L.m-START)%60} min. To survive, keep the flow inside firm capacity, or hold enough auto-curtail and armed flex to cover the gap.</p>
@@ -787,7 +821,7 @@ function endShift(){
     else if(S.insecureMin<=20){g='B';gl='ok';gd='You kept Ashwell on, with only brief moments at risk.';}
     else if(S.insecureMin<=90){g='C';gl='warn';gd='You kept Ashwell on, but a fault at the wrong moment would have lost it.';}
     else{g='D';gl='warn';gd='You survived, but mostly on luck. Long stretches were at risk.';}
-    $('sheet').innerHTML=`<p class="eyebrow">Steve's Sparks · ${S.sc.title}, ${S.sc.when}</p>
+    $('sheet').innerHTML=`${BAND}<p class="eyebrow">${S.sc.title}, ${S.sc.when}</p>
     <h2>Shift complete</h2>
     <div class="grade"><span class="lt ${gl}">${g}</span><p style="margin:0;max-width:44ch">${gd}</p></div>
     ${costs}${btns}`;
