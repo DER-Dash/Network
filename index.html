@@ -319,7 +319,7 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
   <div class="bar-in">
     <div class="brand">
       <span class="logo"><svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="11" fill="var(--zap)"/><path d="M27.5 5 13 26.5h9.5L19 43l16-23h-9.5L30 5z" fill="var(--brand)"/><path d="M8 13l3.5 2.3M6.5 22.5h4M40 35l-3.5-2.3M41.5 25.5h-4" stroke="var(--brand)" stroke-width="2.6" stroke-linecap="round"/></svg></span>
-      <div><p class="co">Shocking Steve Electricity</p><h1>Firm Capacity</h1><p id="scnLabel">Ashwell 33 kV</p></div>
+      <div><p class="co">Shocking Steve Electricity</p><h1>Firm Capacity</h1><p id="scnLabel">Blackout Canyon 33 kV</p></div>
     </div>
     <div class="clock"><b id="clock">05:00</b><span id="dayLabel"></span></div>
     <div class="controls">
@@ -351,7 +351,7 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
     <div class="ph"><h2>Network</h2>
       <div class="legend"><span><i style="border-color:var(--hv)"></i>132 kV</span><span><i style="border-color:var(--mv)"></i>33 kV</span><span>■ breaker closed</span><span>□ open</span></div>
     </div>
-    <div class="scroll"><svg id="mimic" class="mimic-svg" viewBox="0 0 640 418" role="img" aria-label="Single-line diagram of Ashwell 33 kV substation"></svg></div>
+    <div class="scroll"><svg id="mimic" class="mimic-svg" viewBox="0 0 640 418" role="img" aria-label="Single-line diagram of Blackout Canyon 33 kV substation"></svg></div>
   </section>
 
   <section class="panel p-sec" aria-label="Security assessment">
@@ -442,7 +442,7 @@ const SCENARIOS={
 
 const SERVICES=[
   {id:'solar',ic:'solar',tc:'var(--c-solar)',name:'Marsh Lane Solar Farm',kind:'Solar farm · runs at full output',dir:'export',arm:0,use:60,gen:true},
-  {id:'wind',ic:'wind',tc:'var(--c-wind)',name:'Fen Edge Wind Farm',kind:'Wind farm · runs at full output',dir:'export',arm:0,use:85,cap:60,gen:true},
+  {id:'wind',ic:'wind',tc:'var(--c-wind)',name:'Spinney Windy Things',kind:'Wind farm · runs at full output',dir:'export',arm:0,use:85,cap:60,gen:true},
   {id:'bchg',ic:'batt',tc:'var(--c-batt)',name:'Kings Hill Battery',kind:'Battery · charge from grid',dir:'export',arm:6,use:35,cap:30,soc:true},
   {id:'bdis',ic:'batt',tc:'var(--c-batt)',name:'Kings Hill Battery',kind:'Battery · discharge',dir:'import',arm:6,use:90,cap:30,soc:true},
   {id:'chp',ic:'gas',tc:'var(--c-gas)',name:'Riverside CHP',kind:'Gas engine · normally off',dir:'import',arm:8,use:140,cap:25},
@@ -455,7 +455,7 @@ const ICONS={solar:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12
   dsr:'<path d="M3 21V10l5 3v-3l5 3V7l8 4v10zM3 21h18M8 17h2M13 17h2"/>'};
 const ACOL={demand:'var(--ink)',solar:'var(--c-solar)',wind:'var(--c-wind)',batt:'var(--c-batt)',chp:'var(--c-gas)',dsr:'var(--c-dsr)'};
 const LOGO='<svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="11" fill="var(--zap)"/><path d="M27.5 5 13 26.5h9.5L19 43l16-23h-9.5L30 5z" fill="var(--brand)"/><path d="M8 13l3.5 2.3M6.5 22.5h4M40 35l-3.5-2.3M41.5 25.5h-4" stroke="var(--brand)" stroke-width="2.6" stroke-linecap="round"/></svg>';
-const BAND=`<div class="sheet-brand"><span class="logo">${LOGO}</span><div><p class="co">Shocking Steve Electricity</p><p class="tag">Keeping Ashwell switched on. Mostly.</p></div></div>`;
+const BAND=`<div class="sheet-brand"><span class="logo">${LOGO}</span><div><p class="co">Shocking Steve Electricity</p><p class="tag">Keeping Blackout Canyon switched on. Mostly.</p></div></div>`;
 const capOf=s=>s.id==='solar'?Math.ceil(S.sc.solar.peak/5)*5:s.cap;
 
 const MQ=matchMedia('(max-width: 600px)');let CMP=MQ.matches;
@@ -474,7 +474,7 @@ function newGame(key){
   S.silent=false;S.cost={arm:0,use:0,short:0,curt:0,voll:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.log=[];queued=[];
   logE(START,`Shift starts. ${sc.when}: ${sc.blurb}`,'info');
   S.events.filter(e=>e.planned).forEach(e=>logE(START,`Notice: T${e.tx+1} planned outage ${fmtT(e.start)}–${fmtT(e.end)}.`,'warn'));
-  $('scnLabel').textContent=sc.title+' · Ashwell 33 kV';$('dayLabel').textContent=sc.when;
+  $('scnLabel').textContent=sc.title+' · Blackout Canyon 33 kV';$('dayLabel').textContent=sc.when;
   hideBanner();buildCards();render(true);
 }
 const zeroD=()=>({solar:0,wind:0,bchg:0,bdis:0,chp:0,dsr:0});
@@ -507,8 +507,8 @@ function step(){
     S.tx.forEach((t,i)=>{if(t.out||S.rng()>=h)return;const cause=pick(S.rng,S.sc.causes||FAULTS),dur=Math.round(90+S.rng()*150);
       t.out={kind:'fault',until:m+dur,label:cause};S.faults++;S.pendingLoss=`a fault on circuit ${i+1} (${cause.toLowerCase()})`;
       const s=`Fault on circuit ${i+1}: ${cause.toLowerCase()}. T${i+1} tripped, repair expected by ${fmtT(m+dur)}.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);});}
-  if(S.cutout&&!S.cutout.fired&&m>=S.cutout.start){S.cutout.fired=true;const s=`Fen Edge Wind Farm shut down on high wind speed. Restart expected around ${fmtT(S.cutout.end)}.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);}
-  if(S.cutout&&S.cutout.fired&&!S.cutout.done&&m>=S.cutout.end){S.cutout.done=true;logE(m,'Fen Edge Wind Farm restarting.','ok');}
+  if(S.cutout&&!S.cutout.fired&&m>=S.cutout.start){S.cutout.fired=true;const s=`Spinney Windy Things shut down on high wind speed. Restart expected around ${fmtT(S.cutout.end)}.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);}
+  if(S.cutout&&S.cutout.fired&&!S.cutout.done&&m>=S.cutout.end){S.cutout.done=true;logE(m,'Spinney Windy Things restarting.','ok');}
 
   const c=components(m,false),av=availability(c);
   const n=S.tx.filter(t=>!t.out).length;
@@ -522,8 +522,8 @@ function step(){
   }
   if(n===0){
     net=0;S.unserved+=c.demand/60;S.cost.voll+=c.demand/60*VOLL;S.cost.gen+=(c.solar+c.wind)/60*GENCOMP;
-    if(!S.black){S.black=true;const s='All three transformers are out. Ashwell customers are off supply and local generators have disconnected.';logE(m,s,'alarm');queueAlert(s,'alarm',true);}
-  }else if(S.black){S.black=false;logE(m,'Supply restored to Ashwell customers.','ok');}
+    if(!S.black){S.black=true;const s='All three transformers are out. Blackout Canyon customers are off supply and local generators have disconnected.';logE(m,s,'alarm');queueAlert(s,'alarm',true);}
+  }else if(S.black){S.black=false;logE(m,'Supply restored to Blackout Canyon customers.','ok');}
   S.c=c;S.av=av;S.del=del;S.auto=auto;S.net=net;S.net0=net0;S.n=n;
   S.tx.forEach(t=>{if(t.out){t.flow=0;t.L=0;}else{t.flow=net/n;t.L=Math.abs(t.flow)/R;}const target=t.out?22:20+100*t.L*t.L;t.temp+=(target-t.temp)/TAU;});
   if(!S.silent&&(S.pendingLoss||n===0)){const why=S.pendingLoss||'the loss of the last transformer';S.pendingLoss=null;
@@ -552,7 +552,7 @@ function security(net,n,av,del,auto){
 
 function loseSite(m,why,n,flow){
   queued=[];const cap=n*R;S.lost={m,why,n,flow,cap};
-  logE(m,`Ashwell lost. After ${why}, ${n?`${Math.round(flow)} MW was more than the ${cap} MW the remaining ${n===1?'transformer':'transformers'} could carry. Protection tripped ${n===1?'it':'them'}`:'no transformers were left in service'} and the site went dark.`,'alarm');
+  logE(m,`Blackout Canyon lost. After ${why}, ${n?`${Math.round(flow)} MW was more than the ${cap} MW the remaining ${n===1?'transformer':'transformers'} could carry. Protection tripped ${n===1?'it':'them'}`:'no transformers were left in service'} and the site went dark.`,'alarm');
   S.tx.forEach(t=>{if(!t.out)t.out={kind:'trip',until:m+90,label:'Tripped in cascade'};t.L=0;t.flow=0;});
   S.n=0;S.net=0;endShift();
 }
@@ -579,11 +579,11 @@ function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','
 const ASSETS=[{id:'demand',name:'Demand'},{id:'solar',name:'Solar'},{id:'wind',name:'Wind'},{id:'batt',name:'Battery'},{id:'chp',name:'CHP'},{id:'dsr',name:'DSR'}];
 function geo(){return CMP?{vb:'0 0 360 500',g:{x1:14,x2:346,y:36,lx:14,ly:20,t:'KESTREL GSP · 132 kV'},tx:[30,150,270],a1:[36,92],b1:46,w1:106,w2:124,wr:14,a2:[138,214],b2:188,
     L:{dx:18,subdx:24,name:116,load:136,flow:152,bar:160,temp:181},bolt:1,
-    buses:[{x1:14,x2:346,y:214,t:'ASHWELL · 33 kV',lx:74,ly:236,anc:'start'},{x1:14,x2:346,y:360,t:'SECTION 2',lx:74,ly:382,anc:'start'}],sect:{x:346,y1:214,y2:360},
+    buses:[{x1:14,x2:346,y:214,t:'BLACKOUT CANYON|33 kV',lx:74,ly:234,anc:'start',fs:11},{x1:14,x2:346,y:360,t:'SECTION 2',lx:74,ly:382,anc:'start'}],sect:{x:346,y1:214,y2:360},
     as:[[60,214],[180,214],[300,214],[60,360],[180,360],[300,360]]}
   :{vb:'0 0 640 418',g:{x1:50,x2:590,y:46,lx:50,ly:28,t:'KESTREL GRID SUPPLY POINT · 132 kV'},tx:[170,320,470],a1:[46,126],b1:60,w1:146,w2:170,wr:20,a2:[190,270],b2:228,
     L:{dx:30,subdx:26,name:140,load:162,flow:179,bar:188,temp:208},bolt:0,
-    buses:[{x1:34,x2:606,y:270,t:'ASHWELL · 33 kV',lx:606,ly:258,anc:'end'}],sect:null,
+    buses:[{x1:34,x2:606,y:270,t:'BLACKOUT CANYON|33 kV',lx:606,ly:244,anc:'end'}],sect:null,
     as:[[70,270],[172,270],[274,270],[376,270],[478,270],[580,270]]};}
 function buildMimic(){
   const G=geo(),Lb=G.L;const tagSt='style="font:700 11px var(--f-display);letter-spacing:.08em;fill:var(--alarm)"';
@@ -601,7 +601,7 @@ function buildMimic(){
     <text id="flow${i}" class="tx-flow" x="${x+Lb.dx}" y="${Lb.flow}">0 MW</text>
     <rect class="tbar" x="${x+Lb.dx}" y="${Lb.bar}" width="62" height="7" rx="2"/><rect id="tf${i}" class="tfill" x="${x+Lb.dx}" y="${Lb.bar}" width="0" height="7" rx="2"/>
     <text id="tt${i}" class="ttxt" x="${x+Lb.dx}" y="${Lb.temp}">60°C</text></g>`;});
-  G.buses.forEach(b=>{s+=`<line class="bus mv" x1="${b.x1}" y1="${b.y}" x2="${b.x2}" y2="${b.y}"/><text class="t-bus" x="${b.lx}" y="${b.ly}" text-anchor="${b.anc}">${b.t}</text>`;});
+  G.buses.forEach(b=>{s+=`<line class="bus mv" x1="${b.x1}" y1="${b.y}" x2="${b.x2}" y2="${b.y}"/><text class="t-bus" x="${b.lx}" y="${b.ly}" text-anchor="${b.anc}"${b.fs?` style="font-size:${b.fs}px"`:''}>${b.t.split('|').map((l,k)=>`<tspan x="${b.lx}" dy="${k?(b.fs?12:14):0}">${l}</tspan>`).join('')}</text>`;});
   if(G.sect){const k=G.sect,m=(k.y1+k.y2)/2;s+=`<line class="cond mv" x1="${k.x}" y1="${k.y1}" x2="${k.x}" y2="${k.y2}" style="stroke-width:5"/><rect class="brk" x="${k.x-6}" y="${m-6}" width="12" height="12"/>`;}
   G.as.forEach(([x,by],i)=>{const a=ASSETS[i],y=by+46;let sym='';
     if(a.id==='demand')sym=`<path class="sym" d="M${x-11} ${y} L${x+11} ${y} L${x} ${y+20} Z"/>`;
@@ -654,7 +654,7 @@ function renderSec(){
   if(n===0){pill='alarm';ptxt='Off supply';adv='Customers are off supply. Supply comes back when a transformer returns to service.';advL='alarm';}
   else if(over){pill='alarm';ptxt='Overloaded';const need=Math.ceil(Math.abs(S.net)-n*R);adv=`Over rating now. Cut ${dirW} by ${need} MW using the ${dirW==='export'?'turn-down':'turn-up'} services below, or the transformers will heat up and trip.`;advL='alarm';}
   else if(n===1){pill='alarm';ptxt='Exposed';adv='Only one transformer left. Another loss takes customers off supply, so keep its loading well inside 100%.';advL='warn';}
-  else if(sec.insecure){pill='alarm';ptxt='At risk';adv=`A fault right now would lose Ashwell: ${Math.ceil(sec.short)} MW would have to come off instantly. Arm at least ${Math.ceil(sec.short-sec.cover)} MW more of ${sec.dir==='export'?'generation turn-down':'generation turn-up'}.`;advL='warn';}
+  else if(sec.insecure){pill='alarm';ptxt='At risk';adv=`A fault right now would lose Blackout Canyon: ${Math.ceil(sec.short)} MW would have to come off instantly. Arm at least ${Math.ceil(sec.short-sec.cover)} MW more of ${sec.dir==='export'?'generation turn-down':'generation turn-up'}.`;advL='warn';}
   else if(sec.short>.5){adv=`Covered: ${Math.round(sec.cover)} MW armed against a ${Math.ceil(sec.short)} MW shortfall if another transformer trips.`;}
   else adv=`The network could lose ${n===3?'any one':'another'} transformer without overloading.`;
   const p=$('pill');p.className='pill '+pill;txt('pill',ptxt);
@@ -784,13 +784,13 @@ function frame(now){
 /* ---------- Overlays ---------- */
 function startSheet(){
   const sc=Object.entries(SCENARIOS).map(([k,v])=>`<button type="button" class="scn" data-scn="${k}" style="--sc:${v.color}" aria-pressed="${k===chosen}"><span class="f">${v.focus}</span><b>${v.title}</b><span class="d">${v.when}</span><p>${v.blurb}</p></button>`).join('');
-  $('sheet').innerHTML=`${BAND}<p class="eyebrow">DSO control room · Ashwell 33 kV</p>
+  $('sheet').innerHTML=`${BAND}<p class="eyebrow">DSO control room · Blackout Canyon 33 kV</p>
   <h2>Keep every transformer inside its rating</h2>
   <ul class="rules">
-    <li>Ashwell is fed from the 132 kV grid through three 60 MVA transformers. Net flow is local demand minus local generation, shared equally between the transformers in service.</li>
+    <li>Blackout Canyon is fed from the 132 kV grid through three 60 MVA transformers. Net flow is local demand minus local generation, shared equally between the transformers in service.</li>
     <li>When generation beats demand, power flows back up to the grid (export). When demand wins, it flows down (import). Either way, keep each transformer under 100%.</li>
     <li>Faults can hit any circuit at any moment. The others take its share. With three in service, firm capacity (N-1) is 120 MW.</li>
-    <li><b>If a fault leaves the remaining transformers over 100%, protection trips them, Ashwell goes dark and the game is over.</b> Instructions after the fault come too late, so stay inside firm capacity or hold enough automatic cover.</li>
+    <li><b>If a fault leaves the remaining transformers over 100%, protection trips them, Blackout Canyon goes dark and the game is over.</b> Instructions after the fault come too late, so stay inside firm capacity or hold enough automatic cover.</li>
     <li>Solar and wind run flat out on whatever the sun and wind give, and that costs you nothing. You only pay compensation for the energy you curtail.</li>
     <li>Set up cover in advance. Auto-curtail on the generators is free to hold ready. The battery, gas engine and demand response charge a small hourly fee per MW. Both switch in automatically the moment a transformer goes over. Dispatching paid services now works instantly but costs 1.5× their utilisation price.</li>
     <li>Running over rating heats transformers up. At a 140 °C hot-spot, or above 150% load for 3 minutes, protection trips them, and that counts as a loss too.</li>
@@ -821,15 +821,15 @@ function endShift(){
   if(L){
     track('site_lost',{...base,lost_at:fmtT(L.m)});
     $('sheet').innerHTML=`${BAND}<p class="eyebrow">${S.sc.title}, ${S.sc.when}</p>
-    <h2>Ashwell lost at ${fmtT(L.m)}</h2>
-    <div class="grade"><span class="lt alarm">✕</span><p style="margin:0;max-width:48ch">After ${esc(L.why)}, ${L.n?`the net flow of <b>${Math.round(L.flow)} MW</b> was more than the <b>${L.cap} MW</b> the remaining ${L.n===1?'transformer':'transformers'} could carry. Protection tripped ${L.n===1?'it':'them'} and every customer on Ashwell lost supply.`:'there were no transformers left in service and every customer on Ashwell lost supply.'}</p></div>
+    <h2>Blackout Canyon lost at ${fmtT(L.m)}</h2>
+    <div class="grade"><span class="lt alarm">✕</span><p style="margin:0;max-width:48ch">After ${esc(L.why)}, ${L.n?`the net flow of <b>${Math.round(L.flow)} MW</b> was more than the <b>${L.cap} MW</b> the remaining ${L.n===1?'transformer':'transformers'} could carry. Protection tripped ${L.n===1?'it':'them'} and every customer on Blackout Canyon lost supply.`:'there were no transformers left in service and every customer on Blackout Canyon lost supply.'}</p></div>
     <p style="margin:0 0 14px">You held on for ${Math.floor((L.m-START)/60)} h ${(L.m-START)%60} min. To survive, keep the flow inside firm capacity, or hold enough auto-curtail and armed flex to cover the gap.</p>
     ${costs}${btns}`;
   }else{
     let g,gl,gd;
     if(S.insecureMin===0&&S.overloadMin===0){g='A';gl='ok';gd='Secure for the whole shift. Now try to do it for less.';}
-    else if(S.insecureMin<=20){g='B';gl='ok';gd='You kept Ashwell on, with only brief moments at risk.';}
-    else if(S.insecureMin<=90){g='C';gl='warn';gd='You kept Ashwell on, but a fault at the wrong moment would have lost it.';}
+    else if(S.insecureMin<=20){g='B';gl='ok';gd='You kept Blackout Canyon on, with only brief moments at risk.';}
+    else if(S.insecureMin<=90){g='C';gl='warn';gd='You kept Blackout Canyon on, but a fault at the wrong moment would have lost it.';}
     else{g='D';gl='warn';gd='You survived, but mostly on luck. Long stretches were at risk.';}
     track('shift_complete',{...base,grade:g});
     $('sheet').innerHTML=`${BAND}<p class="eyebrow">${S.sc.title}, ${S.sc.when}</p>
