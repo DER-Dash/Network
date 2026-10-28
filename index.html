@@ -2,6 +2,13 @@
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-HXW96SRTWL"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-HXW96SRTWL');
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Shocking Steve Electricity control-room game: keep three grid transformers inside firm capacity through faults, planned outages and swings in generation.">
 <title>Firm Capacity</title>
@@ -794,6 +801,7 @@ function startSheet(){
   <p class="fine">Shift runs 05:00–23:00, about 3½ minutes at 1×. MW and MVA are treated as equal (unity power factor). Forecasts show planned outages but not faults. No faults in the first 20 minutes, so you can set up.</p>`;
   $('overlay').hidden=false;
 }
+function track(name,params){try{if(typeof window.gtag==='function')window.gtag('event',name,params);}catch(e){}}
 function endShift(){
   S.ended=true;S.running=false;S.paused=true;hideBanner();
   const c=S.cost,spend=c.arm+c.use+c.short+c.curt,L=S.lost;
@@ -809,7 +817,9 @@ function endShift(){
     <tr><td>Minutes with a transformer over 100%</td><td>${S.overloadMin}</td></tr></tbody></table>`;
   const btns=`<div class="go"><button type="button" class="btn" id="againBtn">Choose another day</button><button type="button" class="btn primary big" id="replayBtn">${L?'Try again':'Replay '+S.sc.title}</button></div>
   <p class="fine">Fault times change each time you play.</p>`;
+  const base={scenario:S.key,spend_gbp:Math.round(spend),faults:S.faults,minutes_at_risk:S.insecureMin};
   if(L){
+    track('site_lost',{...base,lost_at:fmtT(L.m)});
     $('sheet').innerHTML=`${BAND}<p class="eyebrow">${S.sc.title}, ${S.sc.when}</p>
     <h2>Ashwell lost at ${fmtT(L.m)}</h2>
     <div class="grade"><span class="lt alarm">✕</span><p style="margin:0;max-width:48ch">After ${esc(L.why)}, ${L.n?`the net flow of <b>${Math.round(L.flow)} MW</b> was more than the <b>${L.cap} MW</b> the remaining ${L.n===1?'transformer':'transformers'} could carry. Protection tripped ${L.n===1?'it':'them'} and every customer on Ashwell lost supply.`:'there were no transformers left in service and every customer on Ashwell lost supply.'}</p></div>
@@ -821,6 +831,7 @@ function endShift(){
     else if(S.insecureMin<=20){g='B';gl='ok';gd='You kept Ashwell on, with only brief moments at risk.';}
     else if(S.insecureMin<=90){g='C';gl='warn';gd='You kept Ashwell on, but a fault at the wrong moment would have lost it.';}
     else{g='D';gl='warn';gd='You survived, but mostly on luck. Long stretches were at risk.';}
+    track('shift_complete',{...base,grade:g});
     $('sheet').innerHTML=`${BAND}<p class="eyebrow">${S.sc.title}, ${S.sc.when}</p>
     <h2>Shift complete</h2>
     <div class="grade"><span class="lt ${gl}">${g}</span><p style="margin:0;max-width:44ch">${gd}</p></div>
@@ -838,10 +849,10 @@ document.addEventListener('click',e=>{
   const id=e.target.id;
   if(id==='dSpeed'){speed=speed===1?2:speed===2?4:1;document.querySelectorAll('[data-speed]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.speed===speed));txt('dSpeed',speed+'×');return;}
   if(id==='dPlay'){$('playBtn').click();return;}
-  if(id==='startBtn'){autoPause=$('ovPause').checked;$('autoPause').checked=autoPause;if(S.key!==chosen||S.t!==START)newGame(chosen);$('overlay').hidden=true;S.running=true;S.paused=false;acc=0;render(true);}
-  if(id==='replayBtn'){newGame(S.key);$('overlay').hidden=true;S.running=true;S.paused=false;acc=0;render(true);}
+  if(id==='startBtn'){autoPause=$('ovPause').checked;$('autoPause').checked=autoPause;if(S.key!==chosen||S.t!==START)newGame(chosen);$('overlay').hidden=true;S.running=true;S.paused=false;acc=0;track('shift_start',{scenario:S.key});render(true);}
+  if(id==='replayBtn'){newGame(S.key);$('overlay').hidden=true;S.running=true;S.paused=false;acc=0;track('shift_start',{scenario:S.key});render(true);}
   if(id==='againBtn'||id==='newBtn'){if(S.running){S.paused=true;}newGame(chosen);startSheet();}
-  if(id==='playBtn'){if(S.ended)return;if(!S.running){$('overlay').hidden=true;S.running=true;S.paused=false;}else{S.paused=!S.paused;if(!S.paused)hideBanner();}acc=0;render(true);}
+  if(id==='playBtn'){if(S.ended)return;if(!S.running){$('overlay').hidden=true;S.running=true;S.paused=false;track('shift_start',{scenario:S.key});}else{S.paused=!S.paused;if(!S.paused)hideBanner();}acc=0;render(true);}
   if(id==='resumeBtn'){S.paused=false;acc=0;hideBanner();render(true);}
   if(id==='dismissBtn'){hideBanner();}
 });
