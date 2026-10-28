@@ -483,7 +483,7 @@ const BAND=`<div class="sheet-brand"><span class="logo">${LOGO}</span><div><p cl
 const capOf=s=>s.id==='solar'?Math.ceil(S.sc.solar.peak/5)*5:s.cap;
 
 const MQ=matchMedia('(max-width: 600px)');let CMP=MQ.matches;
-const SCORE_URL='';
+const SCORE_URL='https://script.google.com/macros/s/AKfycbygDJlPQGiNoSfhk3vidNbnbKxzUNRwI5utAZEJPLsJxlWxQqWIKhh258mlJsn2c2qQdw/exec';
 let lastSubmit=null,boardDay='may',boardFrom='start';
 function getName(){try{return localStorage.getItem('fc-name')||'';}catch(e){return '';}}
 function saveName(n){try{localStorage.setItem('fc-name',n);}catch(e){}}
