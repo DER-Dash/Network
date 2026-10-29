@@ -18,3 +18,17 @@ an entry from the scoreboard.
 
 If you later change `Code.gs`, use **Deploy → Manage deployments → Edit →
 New version** so the URL stays the same.
+
+## Updating to version 2 (daily challenge boards and name filter)
+
+`Code.gs` now stores a **Mode** column (free play or the day's challenge),
+shows each player's best score only, and rejects rude names. To switch it on:
+
+1. Open the sheet, then **Extensions → Apps Script**.
+2. Replace all the code with the new `Code.gs` from this folder and save.
+3. Go to **Deploy → Manage deployments**, click the pencil icon on the
+   existing deployment, set **Version** to **New version**, and click
+   **Deploy**. Don't use **New deployment**, or the URL will change.
+
+Until this is done, the game still works: daily scores go on the free play
+board and the daily board shows "coming soon".

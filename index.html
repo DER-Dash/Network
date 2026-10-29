@@ -2,15 +2,24 @@
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-HXW96SRTWL"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-HXW96SRTWL');
-</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Shocking Steve Electricity control-room game: keep three grid transformers inside firm capacity through faults, planned outages and swings in generation.">
+<meta name="description" content="Shocking Steve Electricity control-room game: keep Blackout Canyon's transformers inside firm capacity through faults, storms and swings in generation.">
+<link rel="canonical" href="https://der-dash.github.io/Network/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Shocking Steve Electricity">
+<meta property="og:title" content="Firm Capacity: keep Blackout Canyon switched on">
+<meta property="og:description" content="Shocking Steve Electricity control-room game: keep Blackout Canyon's transformers inside firm capacity through faults, storms and swings in generation.">
+<meta property="og:url" content="https://der-dash.github.io/Network/">
+<meta property="og:image" content="https://der-dash.github.io/Network/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Firm Capacity by Shocking Steve Electricity: three transformers, one faulted, the others at 112%">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Firm Capacity: keep Blackout Canyon switched on">
+<meta name="twitter:description" content="Shocking Steve Electricity control-room game: keep Blackout Canyon's transformers inside firm capacity through faults, storms and swings in generation.">
+<meta name="twitter:image" content="https://der-dash.github.io/Network/og-image.png">
+<meta name="theme-color" content="#2a1a72">
+<script>window.FC_GA='G-HXW96SRTWL';</script>
 <title>Firm Capacity</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -329,7 +338,7 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
   .panel{padding:12px}
   .dock{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:8;align-items:center;gap:10px;background:var(--brand);color:var(--brand-ink);border-top:3px solid var(--zap);padding-top:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
   .dock b{font:600 20px var(--f-mono);font-variant-numeric:tabular-nums;color:var(--zap)}
-  .dock .pill{margin-right:auto;font-size:12px;padding:3px 8px}
+  .dock .pill{margin-right:auto;font-size:12px;padding:3px 8px;white-space:nowrap}
   .dock .btn{padding:9px 14px}
   #dPlay{min-width:86px}
   .banner{position:fixed;z-index:9;left:max(8px,env(safe-area-inset-left,0px));right:max(8px,env(safe-area-inset-right,0px));bottom:calc(64px + env(safe-area-inset-bottom,0px));margin:0;max-height:45vh;overflow-y:auto;font-size:14px;box-shadow:0 6px 24px rgba(0,0,0,.28)}
@@ -337,6 +346,123 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
   .log{max-height:240px}
   .c-top h4{font-size:15px}
 }
+/* ---------- v2 additions ---------- */
+[hidden]{display:none!important}
+.icon-btn{display:inline-grid;place-items:center;width:38px;height:34px;padding:0}
+.icon-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sky{flex:none;width:118px;height:46px;border-radius:6px;overflow:hidden;border:1px solid var(--brand-line)}
+.sky svg{width:100%;height:100%;display:block}
+.mode-tag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:3px;background:var(--zap);color:var(--zap-ink);font:700 11px var(--f-display);letter-spacing:.08em;text-transform:uppercase;vertical-align:1px}
+
+/* Mimic heat + emergency */
+.cond.h1{stroke:var(--ok)}.cond.h2{stroke:var(--warn)}.cond.h3{stroke:var(--alarm)}
+.tx-em{font:700 12px var(--f-display);letter-spacing:.06em;fill:var(--warn)}
+.tx-em.alarm{fill:var(--alarm)}
+.ic-k{font:600 11px var(--f-display);letter-spacing:.1em;fill:var(--muted)}
+.ic-v{font:600 12px var(--f-mono);fill:var(--muted)}
+.ic-v.on{fill:var(--c-wind)}
+.panel.flashing{animation:pflash .8s ease-out 2}
+@keyframes pflash{0%{box-shadow:0 0 0 0 var(--alarm);background:var(--alarm-bg)}100%{box-shadow:0 0 0 16px transparent}}
+.cct.tripflash .wdg{animation:wflash .3s steps(2) 5}
+@keyframes wflash{50%{fill:var(--alarm)}}
+@media (prefers-reduced-motion:reduce){.panel.flashing,.cct.tripflash .wdg{animation:none}}
+
+/* Phone asset chips */
+.chips{display:none}
+.chip{border:1px solid var(--rule);border-top:3px solid var(--tc);border-radius:6px;padding:6px 8px;display:grid;gap:1px;min-width:0;background:var(--sunk)}
+.chip .cn{font:700 11px var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--tc)}
+.chip .cv{font:600 14px var(--f-mono);font-variant-numeric:tabular-nums}
+.chip .cs{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip .cs.w{color:var(--warn);font-weight:600}
+@media (max-width:420px){.kpis .kpi:nth-child(3){display:none}}
+@media (max-width:600px){.chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}}
+
+/* Collapsible panels (phones) */
+.ph .tog{display:none}
+@media (max-width:700px){
+  .ph{flex-wrap:nowrap}
+  .ph .legend{display:none}
+  .ph .tog{display:inline-grid;place-items:center;margin-left:auto;flex:none;border:1px solid var(--rule);background:var(--sunk);border-radius:4px;width:34px;height:30px;cursor:pointer}
+  .ph .tog svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+  .panel.collapsed .ph{margin-bottom:0}
+  .panel.collapsed > :not(.ph){display:none!important}
+  .panel.collapsed .ph .tog svg{transform:rotate(-90deg)}
+  .dock b{padding:2px 8px;border-radius:4px;color:#ffffff;text-shadow:0 1px 2px rgba(0,0,0,.55)}
+  .sky{display:none}
+}
+
+/* Look-ahead extras */
+.fcband{fill:var(--ink);opacity:.08}
+.riskband{fill:var(--c-storm);opacity:.13}
+.risklbl{font:700 10px var(--f-display);letter-spacing:.1em;fill:var(--c-storm)}
+.weather{margin:8px 0 0;padding:8px 10px;border-radius:4px;border-left:4px solid var(--c-storm);background:var(--sunk);font-size:13.5px}
+.weather b{color:var(--c-storm)}
+
+/* Switching card */
+.xfer{margin:0 0 16px;border-left:4px solid var(--c-wind)}
+.xfer.on{background:var(--sunk);border-color:var(--c-wind)}
+.xbtns{display:flex;flex-wrap:wrap;gap:8px}
+.xbtns .btn{flex:1 1 220px;text-align:left;display:grid;gap:2px}
+.xbtns .btn small{font-weight:500;font-size:12.5px;color:var(--muted)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.card.failed{border-color:var(--alarm);background:var(--alarm-bg)}
+.card.failed .state{color:var(--alarm);font-weight:600}
+.allow{display:flex;align-items:center;gap:8px;font:500 12px var(--f-mono);color:var(--muted)}
+.allow .trk{flex:1;height:6px;background:var(--sunk);border:1px solid var(--rule);border-radius:3px;overflow:hidden}
+.allow .trk i{display:block;height:100%;background:var(--tc)}
+.allow.low{color:var(--warn)}
+
+/* Start sheet extras */
+.modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:520px){.modes{grid-template-columns:minmax(0,1fr)}}
+.mode{text-align:left;border:1px solid var(--rule);border-radius:6px;background:var(--sunk);padding:12px;cursor:pointer;display:grid;gap:3px;align-content:start}
+.mode[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--panel)}
+.mode b{font:700 18px var(--f-display);text-transform:uppercase;letter-spacing:.03em}
+.mode span{font-size:13px;color:var(--muted)}
+.diff{display:flex;align-items:center;gap:3px;font:600 11px var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.diff svg{width:10px;height:14px}
+.diff .on{fill:var(--sc)}.diff .off{fill:var(--rule)}
+.diff em{font-style:normal;margin-left:4px}
+.opts{display:flex;flex-wrap:wrap;gap:6px 18px}
+
+/* Replay */
+.replay{margin:0 0 16px}
+.replay .rp{width:100%;height:auto;display:block}
+.rp-ins{fill:var(--alarm);opacity:.16}
+.rp-net{stroke:var(--mv);stroke-width:2;fill:none;stroke-linejoin:round}
+.rp-f{fill:var(--alarm)}.rp-flex{fill:var(--c-solar)}.rp-x{fill:var(--c-wind)}.rp-fail{fill:var(--c-gas)}
+.rp-lost{stroke:var(--alarm);stroke-width:3;stroke-linecap:round}
+.rp-sum{margin:6px 0 0;font-size:13px;color:var(--muted)}
+
+/* Share */
+.share-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 16px}
+.share-row .fine{margin:0}
+.share-txt{width:100%;font:inherit;font-size:13px;padding:8px;border:1px solid var(--rule);border-radius:4px;background:var(--panel);color:var(--ink)}
+
+/* Board modes */
+.board-modes{display:inline-flex;border:1px solid var(--rule);border-radius:4px;overflow:hidden;margin:0 0 10px}
+.board-modes button{border:0;background:var(--sunk);padding:8px 12px;cursor:pointer;font:600 13px var(--f-body)}
+.board-modes button+button{border-left:1px solid var(--rule)}
+.board-modes button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+
+/* Tips */
+.tip{position:fixed;z-index:15;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(430px,calc(100vw - 32px));background:var(--brand);color:var(--brand-ink);border:2px solid var(--zap);border-radius:8px;padding:14px 16px;box-shadow:0 10px 30px rgba(0,0,0,.35);display:grid;gap:8px}
+.tip .tk{font:700 12px var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--zap)}
+.tip p{margin:0;line-height:1.45}
+.tip .row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.tip .btn{background:var(--brand-2);border-color:var(--brand-line);color:var(--brand-ink)}
+.tip .btn.primary{background:var(--zap);border-color:var(--zap);color:var(--zap-ink)}
+@media (max-width:700px){.tip{bottom:calc(74px + env(safe-area-inset-bottom,0px))}}
+.hl{outline:3px solid var(--zap)!important;outline-offset:3px;animation:hlp 1.2s ease-in-out infinite}
+@keyframes hlp{50%{outline-color:transparent}}
+@media (prefers-reduced-motion:reduce){.hl{animation:none}}
+
+/* Cookie banner + footer */
+.cookie{position:fixed;z-index:40;left:0;right:0;bottom:0;background:var(--panel);color:var(--ink);border-top:3px solid var(--zap);box-shadow:0 -6px 20px rgba(0,0,0,.2);padding-top:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 16px}
+.cookie p{margin:0;max-width:62ch;font-size:14px}
+.cookie .row{display:flex;gap:8px}
+.foot{max-width:1280px;margin:0 auto;padding-block:0 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 16px}
+.linkish{background:none;border:0;padding:0;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit}
 </style>
 </head>
 <body>
@@ -347,6 +473,7 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
       <div><p class="co">Shocking Steve Electricity</p><h1>Firm Capacity</h1><p id="scnLabel">Blackout Canyon 33 kV</p></div>
     </div>
     <div class="clock"><b id="clock">05:00</b><span id="dayLabel"></span></div>
+    <div class="sky" id="sky" aria-hidden="true"></div>
     <div class="controls">
       <button id="playBtn" class="btn primary" type="button">Start</button>
       <div class="seg" role="group" aria-label="Game speed">
@@ -355,6 +482,7 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
         <button type="button" data-speed="4" aria-pressed="false">4×</button>
       </div>
       <label class="chk"><input type="checkbox" id="autoPause" checked> Pause on faults</label>
+      <button id="muteBtn" class="btn icon-btn" type="button" aria-label="Sound on" aria-pressed="true"></button>
       <button id="boardBtn" class="btn" type="button">Scoreboard</button>
       <button id="newBtn" class="btn" type="button">New shift</button>
     </div>
@@ -362,7 +490,7 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
       <div class="kpi kpi-firm" id="kFirmBox"><span class="k">Firm capacity</span><span class="v" id="kFirm">0 / 120 MW</span><span class="s" id="kFirmSub">120 MW headroom</span></div>
       <div class="kpi"><span class="k">Spend</span><span class="v" id="kSpend">£0</span></div>
       <div class="kpi"><span class="k">Faults</span><span class="v" id="kPen">0</span></div>
-      <div class="kpi"><span class="k">N-1 insecure</span><span class="v" id="kIns">0 min</span></div>
+      <div class="kpi"><span class="k">At risk</span><span class="v" id="kIns">0 min</span></div>
     </div>
   </div>
   <div id="banner" class="banner" hidden>
@@ -373,15 +501,19 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
 </header>
 
 <main class="desk">
-  <section class="panel p-mimic" aria-label="Network mimic">
+  <section class="panel p-mimic" id="pMimic" aria-label="Network diagram">
     <div class="ph"><h2>Network</h2>
-      <div class="legend"><span><i style="border-color:var(--hv)"></i>132 kV</span><span><i style="border-color:var(--mv)"></i>33 kV</span><span>■ breaker closed</span><span>□ open</span></div>
+      <div class="legend"><span><i style="border-color:var(--hv)"></i>132 kV</span><span><i style="border-color:var(--mv)"></i>33 kV</span><span>Transformer feeds: <b style="color:var(--ok)">under 80%</b> · <b style="color:var(--warn)">80–100%</b> · <b style="color:var(--alarm)">over</b></span></div>
+      <button class="tog" type="button" data-tog="pMimic" aria-label="Show or hide the network"><svg viewBox="0 0 14 14"><path d="M3 5l4 4 4-4"/></svg></button>
     </div>
     <div class="scroll"><svg id="mimic" class="mimic-svg" viewBox="0 0 640 418" role="img" aria-label="Single-line diagram of Blackout Canyon 33 kV substation"></svg></div>
+    <div class="chips" id="chips"></div>
   </section>
 
-  <section class="panel p-sec" aria-label="Security assessment">
-    <div class="ph"><h2>Next-loss check</h2></div>
+  <section class="panel p-sec" id="pSec" aria-label="Next-loss check">
+    <div class="ph"><h2>Next-loss check</h2>
+      <button class="tog" type="button" data-tog="pSec" aria-label="Show or hide the next-loss check"><svg viewBox="0 0 14 14"><path d="M3 5l4 4 4-4"/></svg></button>
+    </div>
     <div class="sec-head"><span id="pill" class="pill ok">N-1 secure</span><span id="secSub" class="sec-sub"></span></div>
     <dl class="facts">
       <div><dt>In service</dt><dd id="fIn">3 of 3</dd></div>
@@ -394,30 +526,47 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
     <p id="advice" class="advice"></p>
     <p class="ahead-k">Next 6 hours</p>
     <p id="aheadTxt" class="ahead-t"></p>
+    <p id="weatherTxt" class="weather" hidden></p>
     <ul id="outs" class="outs"></ul>
   </section>
 
-  <section class="panel p-ahead" aria-label="Look-ahead">
+  <section class="panel p-ahead" id="pAhead" aria-label="Look-ahead">
     <div class="ph"><h2>Look-ahead</h2>
       <div class="legend">
         <span><i style="border-color:var(--mv)"></i>Actual</span>
-        <span><i style="border-color:var(--ink);border-top-style:dashed"></i>Forecast before flex</span>
+        <span><i style="border-color:var(--ink);border-top-style:dashed"></i>Forecast</span>
+        <span><i class="box" style="background:var(--ink);opacity:.15"></i>Uncertainty</span>
         <span><i style="border-color:var(--muted)"></i>Capacity</span>
-        <span><i style="border-color:var(--warn);border-top-style:dashed"></i>N-1 limit</span>
+        <span><i style="border-color:var(--warn);border-top-style:dashed"></i>Firm (N-1)</span>
         <span><i class="box" style="background:var(--alarm);opacity:.3"></i>Uncovered</span>
+        <span><i class="box" style="background:var(--c-storm);opacity:.3"></i>Weather warning</span>
       </div>
+      <button class="tog" type="button" data-tog="pAhead" aria-label="Show or hide the look-ahead"><svg viewBox="0 0 14 14"><path d="M3 5l4 4 4-4"/></svg></button>
     </div>
     <div class="scroll"><svg id="chart" class="chart-svg" viewBox="0 0 640 230" role="img" aria-label="Net flow forecast against transformer capacity for the next six hours"></svg></div>
   </section>
 
-  <section class="panel p-log" aria-label="Event log">
-    <div class="ph"><h2>Event log</h2></div>
+  <section class="panel p-log" id="pLog" aria-label="Event log">
+    <div class="ph"><h2>Event log</h2>
+      <button class="tog" type="button" data-tog="pLog" aria-label="Show or hide the event log"><svg viewBox="0 0 14 14"><path d="M3 5l4 4 4-4"/></svg></button>
+    </div>
     <ul id="log" class="log"></ul>
   </section>
 
-  <section class="panel p-flex" aria-label="Flexibility services">
-    <div class="ph"><h2>Flexibility services</h2></div>
-    <p class="intro">Solar and wind run at full output for free. You only pay compensation for energy you curtail. <b>Auto-curtail</b> and <b>armed</b> MW switch in the moment a transformer goes over its rating: generators stand ready at no cost, the battery, gas engine and demand response charge an hourly fee. <b>Curtail</b> or <b>dispatch now</b> takes effect straight away; for the paid services it costs 1.5× the utilisation price.</p>
+  <section class="panel p-flex" id="pFlex" aria-label="Flexibility and switching">
+    <div class="ph"><h2>Flexibility and switching</h2>
+      <button class="tog" type="button" data-tog="pFlex" aria-label="Show or hide flexibility"><svg viewBox="0 0 14 14"><path d="M3 5l4 4 4-4"/></svg></button>
+    </div>
+    <p class="intro">Solar and wind run at full output for free, but each can only be curtailed up to its allowance. <b>Auto-curtail</b> and <b>armed</b> MW switch in when a transformer goes over 100%. They ramp up over a minute or more, and any provider can fail to respond. <b>Curtail</b> or <b>dispatch now</b> starts straight away; paid services cost 1.5× for that.</p>
+    <article class="card xfer" id="xferCard">
+      <div class="c-top"><div class="c-id"><span class="ico" style="--tc:var(--c-wind)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h13l-3-3M21 17H8l3 3"/></svg></span><div><h4>Kestrel North interconnector</h4><div class="kind">33 kV network switching · 8 min to switch · £150/h while transferred</div></div></div><div class="c-av"><small>Transfers left</small><span id="xLeft">2</span></div></div>
+      <div class="xbtns">
+        <button type="button" class="btn" id="xLoad"><span>Transfer demand</span><small>Hartwell feeders, about 14% of demand. Cuts import.</small></button>
+        <button type="button" class="btn" id="xGen"><span>Transfer solar feeder</span><small>30% of Marsh Lane solar. Cuts export.</small></button>
+        <button type="button" class="btn" id="xBack" hidden><span>Return to Blackout Canyon</span><small>Takes 8 minutes. Doesn't use a transfer.</small></button>
+      </div>
+      <p class="state" id="xState">Interconnector open. Nothing transferred.</p>
+    </article>
     <div class="tabs" role="tablist" aria-label="Flexibility direction"><button type="button" role="tab" data-tab="export" aria-selected="true">Too much export<i id="dotE" hidden></i><small>turn generation down</small></button><button type="button" role="tab" data-tab="import" aria-selected="false">Too much import<i id="dotI" hidden></i><small>turn generation up</small></button></div>
     <div class="groups" id="groups" data-tab="export">
       <div class="grp" id="grpE"><h3><span class="dir-ico">↑</span>Too much export <small>turn generation down</small></h3><div class="cards" id="cardsExport"></div></div>
@@ -425,87 +574,169 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
     </div>
   </section>
 </main>
-<nav class="dock" aria-label="Game controls"><b id="dClock">05:00</b><span id="dPill" class="pill ok">N-1 secure</span><button id="dSpeed" type="button" class="btn" aria-label="Change speed">1×</button><button id="dPlay" type="button" class="btn primary">Start</button></nav>
+<footer class="foot"><span>Shocking Steve Electricity, Blackout Canyon and every site in this game are made up.</span><button type="button" class="linkish" id="cookieSettings" hidden>Cookie settings</button></footer>
+
+<nav class="dock" aria-label="Game controls"><b id="dClock">05:00</b><span id="dPill" class="pill ok">N-1 secure</span><button id="dMute" type="button" class="btn icon-btn" aria-label="Sound on"></button><button id="dSpeed" type="button" class="btn" aria-label="Change speed">1×</button><button id="dPlay" type="button" class="btn primary">Start</button></nav>
+
+<div id="tip" class="tip" role="dialog" aria-live="polite" hidden><span class="tk" id="tipK">Tip</span><p id="tipP"></p><div class="row"><button type="button" class="btn" id="tipSkip">Turn off tips</button><button type="button" class="btn primary" id="tipOk">Got it</button></div></div>
+
+<div id="cookie" class="cookie" role="dialog" aria-label="Cookies" hidden><p>Can we use Google Analytics cookies to count how many people play and how games go? Nothing is used for advertising.</p><div class="row"><button type="button" class="btn" id="cookieNo">No thanks</button><button type="button" class="btn primary" id="cookieYes">Accept</button></div></div>
 
 <div id="overlay" class="overlay"><div class="sheet" id="sheet"></div></div>
 
 <script>
 (function(){
 const $=id=>document.getElementById(id);
-const R=60, START=300, END=1380, TAU=45, TRIP_T=140, ALARM_T=125, VOLL=6000, GENCOMP=300, SOC_MAX=60;
+const R=60, START=300, END=1380, TAU=45, TRIP_T=140, SOC_MAX=60;
+const EMERG=1.2, EMERG_MIN=30, SHORT=1.5, SHORT_MIN=3, SWITCH_MIN=8, XFER_COST=150;
 const RATE={1:5,2:10,4:20};
+const SITE_URL='https://der-dash.github.io/Network/';
+const SCORE_URL='https://script.google.com/macros/s/AKfycbygDJlPQGiNoSfhk3vidNbnbKxzUNRwI5utAZEJPLsJxlWxQqWIKhh258mlJsn2c2qQdw/exec';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const fmtT=m=>{m=Math.round(m);m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');};
 const gbp=x=>'£'+Math.round(x).toLocaleString('en-GB');
 const mw=x=>Math.round(x)+' MW';
+const nf=v=>Math.round(v).toLocaleString('en-GB');
+const ucf=s=>s[0].toUpperCase()+s.slice(1);
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
 
 function rngFrom(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h|0;}
 function makeNoise(rng,step){const n=Math.ceil(1500/step)+3;const p=Array.from({length:n},()=>rng()*2-1);return m=>{const x=Math.max(0,m)/step,i=Math.floor(x),f=x-i,w=(1-Math.cos(Math.PI*f))/2;return p[i]*(1-w)+p[i+1]*w;};}
 function interp(k,h){for(let i=1;i<k.length;i++){if(h<=k[i][0]){const[h0,v0]=k[i-1],[h1,v1]=k[i];return v0+(v1-v0)*(h-h0)/(h1-h0);}}return k[k.length-1][1];}
 const pick=(rng,a)=>a[Math.floor(rng()*a.length)];
+function todayUK(){try{return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}catch(e){return new Date().toISOString().slice(0,10);}}
+function fmtDate(d){const[y,mo,da]=d.split('-').map(Number);return new Date(Date.UTC(y,mo-1,da)).toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'UTC'});}
 const FAULTS=['Lightning strike on the overhead line','Tree contact on the overhead line','Bird strike on the overhead line','Insulator flashover','Cable joint failure'];
 
 const SCENARIOS={
-  may:{color:'var(--c-solar)',title:'Sunny Sunday',when:'Sunday 17 May',focus:'Reverse power flow',
-    blurb:'Low demand and strong sun push power back up into the grid. T2 is booked out for maintenance through the middle of the day.',
+  may:{color:'var(--c-solar)',diff:1,title:'Sunny Sunday',when:'Sunday 17 May',focus:'Reverse power flow',soc0:20,
+    blurb:'Low demand and strong sun push power back up into the grid. T2 is out for maintenance through the middle of the day, and thunderstorms may build in the afternoon.',
     demand:[[0,50],[4,45],[6,47],[8,58],[10,68],[12,74],[14,73],[16,76],[18,92],[19.5,104],[21,98],[22.5,78],[24,56]],
-    solar:{peak:165,start:5.5,end:20.5,cloud:.07},wind:{mean:32,var:12},
-    faults:1.5,
-    build(r){return{events:[{tx:1,start:600,end:900,planned:true,cause:'Planned maintenance'}],cutout:null};}},
-  jan:{color:'var(--c-cold)',title:'Cold Thursday',when:'Thursday 14 January',focus:'Peak demand',
-    blurb:'A cold, still evening peak pulls hard on the transformers. T1 is out for maintenance in the morning. Watch the battery charge.',
-    demand:[[0,84],[4,76],[6,82],[7.5,118],[9,134],[11,126],[13,124],[15,130],[16.5,152],[17.5,170],[18.5,166],[20,146],[21.5,122],[23,100],[24,88]],
-    solar:{peak:35,start:7.8,end:16.2,cloud:.2},wind:{mean:22,var:12},
-    faults:1.5,
-    build(r){return{events:[{tx:0,start:540,end:780,planned:true,cause:'Planned maintenance'}],cutout:null};}},
-  storm:{color:'var(--c-storm)',title:'Storm day',when:'Monday 2 November',focus:'Faults and swings',
-    blurb:'Gale-force winds make line faults twice as likely, and gusty wind output can shut down without warning. Both directions matter.',
+    solar:{peak:165,start:5.5,end:20.5,cloud:.07},wind:{mean:32,var:12},faults:1.5,
+    causes:['Lightning strike on the overhead line','Tree contact on the overhead line','Bird strike on the overhead line','Insulator flashover'],
+    build(r){const s=780+Math.round(r()*180);return{events:[{tx:1,start:600,end:900,planned:true,cause:'Planned maintenance'}],cutout:null,
+      risk:[{start:s,end:s+180,mult:4,label:'Thunderstorm risk'}]};}},
+  jan:{color:'var(--c-cold)',diff:3,title:'Cold Thursday',when:'Thursday 14 January',focus:'Peak demand',soc0:45,
+    blurb:'A cold, still evening peak pulls hard on the transformers. T1 is out for maintenance in the morning, when icy lines are most likely to fault. Watch the battery charge.',
+    demand:[[0,80],[4,72],[6,78],[7.5,106],[9,116],[11,112],[13,110],[15,114],[16.5,134],[17.5,150],[18.5,146],[20,130],[21.5,112],[23,94],[24,84]],
+    solar:{peak:35,start:7.8,end:16.2,cloud:.2},wind:{mean:22,var:12},faults:1.5,
+    causes:['Ice build-up on the overhead line','Conductor clash in icy wind','Cable joint failure','Insulator flashover'],
+    build(r){return{events:[{tx:0,start:570,end:750,planned:true,cause:'Planned maintenance'}],cutout:null,risk:[{start:360,end:540,mult:3,label:'Ice and snow'}]};}},
+  storm:{color:'var(--c-storm)',diff:2,title:'Storm day',when:'Monday 2 November',focus:'Faults and swings',soc0:30,
+    blurb:'Two bands of gale-force wind make line faults far more likely, and gusty wind output can shut down without warning. Both directions matter.',
     demand:[[0,72],[4,64],[6,70],[7.5,98],[9,112],[12,102],[15,106],[16.5,124],[17.5,142],[18.5,140],[20,124],[22,96],[24,74]],
-    solar:{peak:90,start:6.9,end:17.1,cloud:.35},wind:{mean:48,var:14},
-    faults:3,causes:['Wind-borne debris on the overhead line','Tree contact on the overhead line','Conductor clash in high wind','Lightning strike on the overhead line'],
-    build(r){return{events:[],cutout:(()=>{const s=Math.round(1005+r()*105);return{start:s,end:s+75};})()};}}
+    solar:{peak:90,start:6.9,end:17.1,cloud:.35},wind:{mean:48,var:14},faults:3,
+    causes:['Wind-borne debris on the overhead line','Tree contact on the overhead line','Conductor clash in high wind','Lightning strike on the overhead line'],
+    build(r){const a=420+Math.round(r()*180),b=900+Math.round(r()*120),s=1005+Math.round(r()*105);
+      return{events:[],cutout:{start:s,end:s+75},risk:[{start:a,end:a+180,mult:3,label:'Severe gale'},{start:b,end:b+180,mult:3,label:'Severe gale'}]};}}
 };
 
 const SERVICES=[
-  {id:'solar',ic:'solar',tc:'var(--c-solar)',name:'Marsh Lane Solar Farm',kind:'Solar farm · runs at full output',dir:'export',arm:0,use:60,gen:true},
-  {id:'wind',ic:'wind',tc:'var(--c-wind)',name:'Spinney Windy Things',kind:'Wind farm · runs at full output',dir:'export',arm:0,use:85,cap:60,gen:true},
-  {id:'bchg',ic:'batt',tc:'var(--c-batt)',name:'Kings Hill Battery',kind:'Battery · charge from grid',dir:'export',arm:6,use:35,cap:30,soc:true},
-  {id:'bdis',ic:'batt',tc:'var(--c-batt)',name:'Kings Hill Battery',kind:'Battery · discharge',dir:'import',arm:6,use:90,cap:30,soc:true},
-  {id:'chp',ic:'gas',tc:'var(--c-gas)',name:'Riverside CHP',kind:'Gas engine · normally off',dir:'import',arm:8,use:140,cap:25},
-  {id:'dsr',ic:'dsr',tc:'var(--c-dsr)',name:'Hartwell Industrial Estate',kind:'Demand response · reduce load',dir:'import',arm:5,use:200,cap:15},
+  {id:'solar',ic:'solar',tc:'var(--c-solar)',name:'Marsh Lane Solar Farm',kind:'Solar farm · runs at full output',dir:'export',arm:0,use:60,gen:true,ramp:15,fail:.05,allow:90},
+  {id:'wind',ic:'wind',tc:'var(--c-wind)',name:'Spinney Windy Things',kind:'Wind farm · runs at full output',dir:'export',arm:0,use:85,cap:60,gen:true,ramp:10,fail:.05,allow:50},
+  {id:'bchg',ic:'batt',tc:'var(--c-batt)',name:'Kings Hill Battery',kind:'Battery · charge from grid',dir:'export',arm:6,use:35,cap:30,soc:true,ramp:30,fail:.03},
+  {id:'bdis',ic:'batt',tc:'var(--c-batt)',name:'Kings Hill Battery',kind:'Battery · discharge',dir:'import',arm:6,use:90,cap:30,soc:true,ramp:30,fail:.03},
+  {id:'chp',ic:'gas',tc:'var(--c-gas)',name:'Riverside CHP',kind:'Gas engine · normally off',dir:'import',arm:8,use:140,cap:25,ramp:8,fail:.10},
+  {id:'dsr',ic:'dsr',tc:'var(--c-dsr)',name:'Hartwell Industrial Estate',kind:'Demand response · reduce load',dir:'import',arm:5,use:200,cap:15,ramp:5,fail:.12},
 ];
+const XFER={load:{name:'Hartwell feeder group',short:'demand'},gen:{name:'Marsh Lane solar feeder',short:'solar feeder'}};
 const ICONS={solar:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
   wind:'<path d="M12 11v11M12 11V2.5M12 11l8.2 4.8M12 11l-8.2 4.8M9 22h6"/>',
   batt:'<rect x="2.5" y="7" width="17" height="10" rx="2"/><path d="M21.5 10.5v3M7 12h4M9 10v4"/>',
   gas:'<path d="M12 2.5c2.5 3.5 6.5 6 6.5 11a6.5 6.5 0 0 1-13 0c0-3 1.8-4.6 3-6.5.8 1.8 1.6 2.8 3 3.2-.4-2.6-.2-5 .5-7.7z"/>',
-  dsr:'<path d="M3 21V10l5 3v-3l5 3V7l8 4v10zM3 21h18M8 17h2M13 17h2"/>'};
+  dsr:'<path d="M3 21V10l5 3v-3l5 3V7l8 4v10zM3 21h18M8 17h2M13 17h2"/>',
+  demand:'<path d="M3 11l9-7 9 7M5 10v10h14V10M10 20v-5h4v5"/>'};
 const ACOL={demand:'var(--ink)',solar:'var(--c-solar)',wind:'var(--c-wind)',batt:'var(--c-batt)',chp:'var(--c-gas)',dsr:'var(--c-dsr)'};
 const LOGO='<svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="11" fill="var(--zap)"/><path d="M27.5 5 13 26.5h9.5L19 43l16-23h-9.5L30 5z" fill="var(--brand)"/><path d="M8 13l3.5 2.3M6.5 22.5h4M40 35l-3.5-2.3M41.5 25.5h-4" stroke="var(--brand)" stroke-width="2.6" stroke-linecap="round"/></svg>';
 const BAND=`<div class="sheet-brand"><span class="logo">${LOGO}</span><div><p class="co">Shocking Steve Electricity</p><p class="tag">Keeping Blackout Canyon switched on. Mostly.</p></div></div>`;
+const SPK_ON='<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
+const SPK_OFF='<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
 const capOf=s=>s.id==='solar'?Math.ceil(S.sc.solar.peak/5)*5:s.cap;
 
-const MQ=matchMedia('(max-width: 600px)');let CMP=MQ.matches;
-const SCORE_URL='https://script.google.com/macros/s/AKfycbygDJlPQGiNoSfhk3vidNbnbKxzUNRwI5utAZEJPLsJxlWxQqWIKhh258mlJsn2c2qQdw/exec';
-let lastSubmit=null,boardDay='may',boardFrom='start';
-function getName(){try{return localStorage.getItem('fc-name')||'';}catch(e){return '';}}
-function saveName(n){try{localStorage.setItem('fc-name',n);}catch(e){}}
-let S=null, speed=1, autoPause=true, chosen='may', acc=0, lastFrame=performance.now(), lastChart=0, logDirty=true, queued=[];
+/* Name filter */
+const r13=s=>s.replace(/[a-z]/g,c=>String.fromCharCode((c.charCodeAt(0)-84)%26+97));
+const BAD_SUB=r13('shpx,fuvg,phag,jnax,gjng,obyybpx,onfgneq,ovgpu,avtt,snttbg,ergneq,juber,fyhg,chffl,anmv,uvgyre,zbgures,nffubyr,nefrubyr,qvyqb,wvmm,fcnfgvp,oryyraq,abapr,cnrqb,crqb').split(',');
+const BAD_TOK=r13('qvpx,pbpx,cevpx,nefr,nff,gvgf,gvg,cvff,penc,xabo,abo,encr,snt,cnxv,pbba,puvax,xvxr,genaal,fcnm,phz,cbea,frk,nany,cbb,gheq').split(',');
+function rude(n){const s=n.toLowerCase().replace(/[@4]/g,'a').replace(/3/g,'e').replace(/[1!|]/g,'i').replace(/0/g,'o').replace(/[5$]/g,'s').replace(/7/g,'t');
+  const flat=s.replace(/[^a-z]/g,'').replace(/scunthorpe|snigger|shiitake|shitake|penistone/g,'');if(BAD_SUB.some(w=>flat.includes(w)))return true;
+  return s.split(/[^a-z]+/).some(t=>BAD_TOK.includes(t));}
 
+const MQ=matchMedia('(max-width: 600px)');let CMP=MQ.matches;
+let S=null,speed=1,autoPause=true,chosen=ls('fc-day')||'may',mode=ls('fc-mode')||'daily',acc=0,lastFrame=performance.now(),lastChart=0,logDirty=true,queued=[];
+if(!SCENARIOS[chosen])chosen='may';if(mode!=='daily'&&mode!=='free')mode='daily';
+let lastSubmit=null,boardDay='may',boardMode='daily',boardFrom='start';
+let tipsOn=ls('fc-tips')!=='off';
+
+/* ---------- Sound ---------- */
+const SND={on:ls('fc-sound')!=='off',ctx:null,hum:null};
+function audio(){if(!SND.on)return null;try{if(!SND.ctx){const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;SND.ctx=new A();}if(SND.ctx.state==='suspended')SND.ctx.resume();}catch(e){return null;}return SND.ctx;}
+function tone(f,dur,when,type,vol,f2){const a=audio();if(!a)return;const t=a.currentTime+(when||0);const o=a.createOscillator(),g=a.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol||.08,t+.015);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+dur+.05);}
+function clunk(){const a=audio();if(!a)return;const t=a.currentTime;const len=Math.floor(a.sampleRate*.22),b=a.createBuffer(1,len,a.sampleRate),d=b.getChannelData(0);
+  for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,5);const s=a.createBufferSource();s.buffer=b;const f=a.createBiquadFilter();f.type='lowpass';f.frequency.value=1200;const g=a.createGain();g.gain.value=.5;
+  s.connect(f);f.connect(g);g.connect(a.destination);s.start(t);tone(95,.3,0,'sine',.45,38);}
+const sfx={
+  fault(){clunk();[0,.25,.5].forEach((d,i)=>tone(i%2?660:880,.18,.15+d,'square',.045));},
+  trip(){clunk();tone(440,.35,.1,'sawtooth',.05,220);},
+  emerg(){[0,.2].forEach(d=>tone(990,.12,d,'square',.04));},
+  warn(){tone(620,.14,0,'sine',.07);tone(820,.18,.16,'sine',.07);},
+  ok(){tone(660,.12,0,'triangle',.08);tone(990,.16,.12,'triangle',.08);},
+  lost(){clunk();tone(320,1.4,.15,'sawtooth',.07,50);},
+  done(){[523,659,784,1047].forEach((f,i)=>tone(f,.3,i*.13,'triangle',.11));},
+  click(){tone(1400,.04,0,'square',.025);}
+};
+function play(k){if(S&&S.silent)return;try{sfx[k]&&sfx[k]();}catch(e){}}
+function humTo(level){const a=SND.ctx;if(!a)return;try{
+  if(!SND.hum){const g=a.createGain();g.gain.value=0;const f=a.createBiquadFilter();f.type='lowpass';f.frequency.value=700;
+    const o1=a.createOscillator();o1.frequency.value=100;const o2=a.createOscillator();o2.type='triangle';o2.frequency.value=200;const g2=a.createGain();g2.gain.value=.4;
+    o1.connect(g);o2.connect(g2);g2.connect(g);g.connect(f);f.connect(a.destination);o1.start();o2.start();SND.hum={g,o2};}
+  const v=(!SND.on||level<=0)?0:.004+.045*clamp((level-.5)/.9,0,1);SND.hum.g.gain.setTargetAtTime(v,a.currentTime,.25);
+  SND.hum.o2.frequency.setTargetAtTime(200+80*clamp(level-1,0,.5),a.currentTime,.3);}catch(e){}}
+function setSound(on){SND.on=on;ls('fc-sound',on?'on':'off');[$('muteBtn'),$('dMute')].forEach(b=>{b.innerHTML=on?SPK_ON:SPK_OFF;b.setAttribute('aria-label',on?'Sound on. Turn sound off':'Sound off. Turn sound on');b.setAttribute('aria-pressed',String(on));});
+  if(on)audio();else humTo(0);}
+
+/* ---------- Analytics consent ---------- */
+const GA=window.FC_GA||null;
+function loadGA(){if(!GA||window.__gaLoaded)return;window.__gaLoaded=true;window['ga-disable-'+GA]=false;window.dataLayer=window.dataLayer||[];window.gtag=function(){window.dataLayer.push(arguments);};
+  window.gtag('js',new Date());window.gtag('config',GA);const s=document.createElement('script');s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id='+GA;document.head.appendChild(s);}
+function track(name,params){try{if(GA&&ls('fc-consent')==='yes'&&typeof window.gtag==='function')window.gtag('event',name,params);}catch(e){}}
+function initConsent(){if(!GA)return;$('cookieSettings').hidden=false;const c=ls('fc-consent');if(c==='yes')loadGA();else if(c!=='no')$('cookie').hidden=false;}
+function setConsent(yes){ls('fc-consent',yes?'yes':'no');$('cookie').hidden=true;if(yes)loadGA();else{window['ga-disable-'+GA]=true;
+  document.cookie.split(';').map(c=>c.split('=')[0].trim()).filter(n=>/^_ga/.test(n)).forEach(n=>{document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.'+location.hostname;});}}
+
+/* ---------- Game setup ---------- */
+function genFaults(rng,sc,risk){
+  const mult=m=>{let k=1;risk.forEach(w=>{if(m>=w.start&&m<w.end)k=Math.max(k,w.mult);});return k;};
+  let integ=0;for(let m=START+20;m<END;m++)integ+=mult(m);
+  const base=sc.faults/(3*integ),out=[];
+  for(let i=0;i<3;i++)for(let m=START+20;m<END;m++){if(rng()<base*mult(m)){const dur=Math.round(90+rng()*150);out.push({tx:i,m,dur,cause:pick(rng,sc.causes||FAULTS),done:false});m+=dur;}}
+  return out.sort((a,b)=>a.m-b.m);
+}
 function newGame(key){
-  const sc=SCENARIOS[key];const rng=rngFrom((Math.random()*2**31)|0);const b=sc.build(rng);
-  S={key,sc,t:START-60,events:b.events.map(e=>({...e,fired:false,noticed:false})),cutout:b.cutout?{...b.cutout,fired:false,done:false}:null,
-    N:{d:makeNoise(rng,15),c1:makeNoise(rng,25),c2:makeNoise(rng,6),w1:makeNoise(rng,40),w2:makeNoise(rng,5)},
-    tx:[0,1,2].map(()=>({temp:60,out:null,overT:0,L:0,flow:0})),manual:{},armed:{},soc:30,
-    cost:{arm:0,use:0,short:0,curt:0,voll:0,gen:0},insecureMin:0,overloadMin:0,trips:0,unserved:0,black:false,
-    hist:[],log:[],running:false,paused:true,ended:false,silent:true,rng,faults:0,lost:null,pendingLoss:null};
-  SERVICES.forEach(s=>{S.manual[s.id]=0;S.armed[s.id]=0;});
+  const sc=SCENARIOS[key],date=todayUK(),daily=mode==='daily';
+  const seed=daily?hashStr(date+'|'+key+'|fc2'):((Math.random()*2**31)|0);
+  const rng=rngFrom(seed),b=sc.build(rng);
+  const N={d:makeNoise(rng,15),c1:makeNoise(rng,25),c2:makeNoise(rng,6),w1:makeNoise(rng,40),w2:makeNoise(rng,5)};
+  const sched=genFaults(rng,sc,b.risk);
+  S={key,sc,mode,date,seed,t:START-60,events:b.events.map(e=>({...e,fired:false,noticed:false})),cutout:b.cutout?{...b.cutout,fired:false,done:false}:null,
+    risk:b.risk,sched,N,rng2:rngFrom(seed^0x5bd1e995),
+    tx:[0,1,2].map(()=>({temp:60,out:null,em:0,sh:0,L:0,flow:0})),manual:{},armed:{},act:{},autoP:{},manP:{},called:{},fail:{},allow:{},allowLogged:{},
+    soc:sc.soc0,xf:{kind:null,state:'idle',at:0,uses:2},
+    cost:{arm:0,use:0,short:0,curt:0,xfer:0},insecureMin:0,overloadMin:0,trips:0,faults:0,peakL:0,
+    hist:[],full:[],marks:[],log:[],chain:[],lastLoad:null,running:false,paused:true,ended:false,silent:true,lost:null,emergOn:false,autoOn:false,tipShown:{}};
+  SERVICES.forEach(s=>{S.manual[s.id]=0;S.armed[s.id]=0;S.act[s.id]=0;S.autoP[s.id]=0;S.manP[s.id]=0;S.called[s.id]=false;S.fail[s.id]=0;S.allow[s.id]=s.allow||0;});
   const c0=components(S.t,false),L0=Math.abs(netOf(c0,zeroD()))/3/R;S.tx.forEach(t=>t.temp=20+100*L0*L0);
   for(let i=0;i<60;i++)step();
-  S.silent=false;S.cost={arm:0,use:0,short:0,curt:0,voll:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.log=[];queued=[];
+  S.silent=false;S.cost={arm:0,use:0,short:0,curt:0,xfer:0};S.insecureMin=0;S.overloadMin=0;S.peakL=0;S.log=[];S.full=[];S.marks=[];queued=[];
   logE(START,`Shift starts. ${sc.when}: ${sc.blurb}`,'info');
+  if(daily)logE(START,`Today's challenge (${fmtDate(date)}): everyone gets the same weather and fault times.`,'info');
   S.events.filter(e=>e.planned).forEach(e=>logE(START,`Notice: T${e.tx+1} planned outage ${fmtT(e.start)}–${fmtT(e.end)}.`,'warn'));
-  $('scnLabel').textContent=sc.title+' · Blackout Canyon 33 kV';$('dayLabel').textContent=sc.when;
-  hideBanner();buildCards();render(true);
+  S.risk.forEach(w=>logE(START,`Weather warning: ${w.label.toLowerCase()} ${fmtT(w.start)}–${fmtT(w.end)}. Faults are ${w.mult}× more likely.`,'warn'));
+  $('scnLabel').innerHTML=esc(sc.title+' · Blackout Canyon 33 kV')+(daily?`<span class="mode-tag">Daily ${esc(fmtDate(date))}</span>`:'');
+  $('dayLabel').textContent=sc.when;
+  hideBanner();hideTip();buildCards();lastSky='';render(true);
 }
 const zeroD=()=>({solar:0,wind:0,bchg:0,bdis:0,chp:0,dsr:0});
 
@@ -518,121 +749,156 @@ function components(m,fc){
   if(!fc&&S.cutout&&m>=S.cutout.start&&m<S.cutout.end){const k=Math.min(1,(m-S.cutout.start)/4,(S.cutout.end-m)/10);wind*=1-clamp(k,0,1);}
   return{demand,solar,wind};
 }
-function availability(c){return{solar:c.solar,wind:c.wind,bchg:S.soc<SOC_MAX-.3?30:0,bdis:S.soc>.3?Math.min(30,S.soc*60):0,chp:25,dsr:15};}
+const xfOn=X=>X.state==='on'||X.state==='returning';
+function applyX(c,kind){if(kind==='load')c.demand*=.86;if(kind==='gen')c.solar*=.7;return c;}
+function availability(c,m){const a={solar:c.solar,wind:c.wind,bchg:S.soc<SOC_MAX-.3?30:0,bdis:S.soc>.3?Math.min(30,S.soc*60):0,chp:25,dsr:15};
+  SERVICES.forEach(s=>{if(s.gen&&S.allow[s.id]<=0)a[s.id]=0;if(S.fail[s.id]>m)a[s.id]=0;});return a;}
 function netOf(c,d){return c.demand-d.dsr-(c.solar-d.solar)-(c.wind-d.wind)+d.bchg-d.bdis-d.chp;}
 
-function logE(m,text,lvl){S.log.unshift({m,text,lvl});if(S.log.length>40)S.log.pop();logDirty=true;}
+function logE(m,text,lvl){S.log.unshift({m,text,lvl});if(S.log.length>50)S.log.pop();logDirty=true;}
+function mark(m,type,label){if(!S.silent)S.marks.push({m,type,label});}
 function queueAlert(text,lvl,pause){if(!S.silent)queued.push({text,lvl,pause,m:S.t});}
 
+/* ---------- Simulation step (1 game minute) ---------- */
 function step(){
-  const m=S.t;
-  S.tx.forEach((t,i)=>{if(t.out&&m>=t.out.until){const k=t.out.kind;t.out=null;t.overT=0;logE(m,`T${i+1} back in service${k==='trip'?' after inspection':''}.`,'ok');}});
+  const m=S.t,X=S.xf;
+  S.tx.forEach((t,i)=>{if(t.out&&m>=t.out.until){const k=t.out.kind;t.out=null;t.em=0;t.sh=0;logE(m,`T${i+1} back in service${k==='trip'?' after inspection':k==='fault'?' after repair':''}.`,'ok');play('ok');}});
+  if(S.tx.every(t=>!t.out))S.chain=[];
   for(const e of S.events){
-    if(e.planned&&!e.noticed&&m>=e.start-60&&m<e.start){e.noticed=true;logE(m,`T${e.tx+1} planned outage starts in an hour, at ${fmtT(e.start)}.`,'warn');}
-    if(!e.fired&&m>=e.start){e.fired=true;const t=S.tx[e.tx];t.out={kind:e.planned?'planned':'fault',until:e.end,label:e.cause};
-      if(e.planned){const s=`T${e.tx+1} switched out for planned maintenance until ${fmtT(e.end)}.`;logE(m,s,'warn');queueAlert(s,'warn',false);}
-      else{const s=`Fault on circuit ${e.tx+1}: ${e.cause.toLowerCase()}. T${e.tx+1} tripped, repair expected by ${fmtT(e.end)}.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);}}
+    if(!e.noticed&&m>=e.start-60&&m<e.start){e.noticed=true;logE(m,`T${e.tx+1} planned outage starts in an hour, at ${fmtT(e.start)}.`,'warn');}
+    if(!e.fired&&m>=e.start){e.fired=true;const t=S.tx[e.tx];
+      if(!t.out){t.out={kind:'planned',until:e.end,label:e.cause};mark(m,'planned',`T${e.tx+1} out`);const s=`T${e.tx+1} switched out for planned maintenance until ${fmtT(e.end)}.`;logE(m,s,'warn');queueAlert(s,'warn',false);play('warn');}}
   }
-  if(!S.silent&&m>=START+20){const h=S.sc.faults/(3*(END-START));
-    S.tx.forEach((t,i)=>{if(t.out||S.rng()>=h)return;const cause=pick(S.rng,S.sc.causes||FAULTS),dur=Math.round(90+S.rng()*150);
-      t.out={kind:'fault',until:m+dur,label:cause};S.faults++;S.pendingLoss=`a fault on circuit ${i+1} (${cause.toLowerCase()})`;
-      const s=`Fault on circuit ${i+1}: ${cause.toLowerCase()}. T${i+1} tripped, repair expected by ${fmtT(m+dur)}.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);});}
-  if(S.cutout&&!S.cutout.fired&&m>=S.cutout.start){S.cutout.fired=true;const s=`Spinney Windy Things shut down on high wind speed. Restart expected around ${fmtT(S.cutout.end)}.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);}
+  if(!S.silent)for(const f of S.sched){if(f.done||m<f.m)continue;f.done=true;const t=S.tx[f.tx];if(t.out)continue;
+    t.out={kind:'fault',until:m+f.dur,label:f.cause};S.faults++;S.chain.push(`a fault on circuit ${f.tx+1} (${f.cause.toLowerCase()})`);mark(m,'fault',`T${f.tx+1} fault`);
+    const s=`Fault on circuit ${f.tx+1}: ${f.cause.toLowerCase()}. T${f.tx+1} tripped, repair expected by ${fmtT(m+f.dur)}.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);fxTrip(f.tx,'fault');}
+  if(S.cutout&&!S.cutout.fired&&m>=S.cutout.start){S.cutout.fired=true;mark(m,'fail','Wind stop');const s=`Spinney Windy Things shut down on high wind speed. Restart expected around ${fmtT(S.cutout.end)}.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);play('warn');}
   if(S.cutout&&S.cutout.fired&&!S.cutout.done&&m>=S.cutout.end){S.cutout.done=true;logE(m,'Spinney Windy Things restarting.','ok');}
+  if(X.state==='switching'&&m>=X.at){X.state='on';mark(m,'xfer','Transfer on');logE(m,`Switching complete: ${XFER[X.kind].name} now fed from Kestrel North.`,'ok');play('ok');}
+  if(X.state==='returning'&&m>=X.at){logE(m,`${XFER[X.kind].name} back on Blackout Canyon.`,'ok');X.state='idle';X.kind=null;}
 
-  const c=components(m,false),av=availability(c);
-  const n=S.tx.filter(t=>!t.out).length;
-  const del={},auto={};
-  SERVICES.forEach(s=>{del[s.id]=n?Math.min(S.manual[s.id],av[s.id]):0;auto[s.id]=0;});
-  const net0=netOf(c,del);let net=net0;const C=n*R;
+  const c=components(m,false);if(xfOn(X))applyX(c,X.kind);
+  const av=availability(c,m),n=S.tx.filter(t=>!t.out).length;
+  if(n===0&&!S.silent){S.c=c;S.av=av;loseSite(m);return;}
+  const manT={},autoT={};
+  SERVICES.forEach(s=>{manT[s.id]=n?Math.min(S.manual[s.id],av[s.id]):0;autoT[s.id]=0;});
+  const net0=netOf(c,manT),C=n*R;
   if(n>0&&Math.abs(net0)>C*.98){
     const dir=net0>0?'import':'export';let need=Math.abs(net0)-C*.96;
-    SERVICES.filter(s=>s.dir===dir&&S.armed[s.id]>0).sort((a,b)=>a.use-b.use).forEach(s=>{if(need<=0)return;const room=Math.max(0,Math.min(S.armed[s.id],av[s.id]-del[s.id]));const u=Math.min(room,need);auto[s.id]=u;need-=u;});
-    const tot={};SERVICES.forEach(s=>tot[s.id]=del[s.id]+auto[s.id]);net=netOf(c,tot);
-  }
-  if(n===0){
-    net=0;S.unserved+=c.demand/60;S.cost.voll+=c.demand/60*VOLL;S.cost.gen+=(c.solar+c.wind)/60*GENCOMP;
-    if(!S.black){S.black=true;const s='All three transformers are out. Blackout Canyon customers are off supply and local generators have disconnected.';logE(m,s,'alarm');queueAlert(s,'alarm',true);}
-  }else if(S.black){S.black=false;logE(m,'Supply restored to Blackout Canyon customers.','ok');}
-  S.c=c;S.av=av;S.del=del;S.auto=auto;S.net=net;S.net0=net0;S.n=n;
+    SERVICES.filter(s=>s.dir===dir&&S.armed[s.id]>0).sort((a,b)=>a.use-b.use).forEach(s=>{if(need<=0)return;
+      const room=Math.max(0,Math.min(S.armed[s.id],av[s.id]-manT[s.id]));if(room<=0)return;
+      if(!S.called[s.id]){S.called[s.id]=true;if(!S.silent&&S.rng2()<s.fail){S.fail[s.id]=m+30;mark(m,'fail',s.name);
+        const msg=s.gen?`${s.name} didn't respond to the curtailment signal (communications fault). It's unavailable until ${fmtT(m+30)}.`:`${s.name} failed to ${s.id==='chp'?'start':'respond'}. It's unavailable until ${fmtT(m+30)}.`;
+        logE(m,msg,'alarm');queueAlert(msg,'alarm',false);return;}}
+      const u=Math.min(room,need);autoT[s.id]=u;need-=u;});
+  }else if(Math.abs(net0)<C*.9)SERVICES.forEach(s=>S.called[s.id]=false);
+  SERVICES.forEach(s=>{const tgt=n?manT[s.id]+autoT[s.id]:0,a=S.act[s.id];let v=tgt>a?Math.min(tgt,a+s.ramp):Math.max(tgt,a-s.ramp);v=Math.min(v,av[s.id]);S.act[s.id]=Math.max(0,v);});
+  const net=n?netOf(c,S.act):0;
+  S.c=c;S.av=av;S.net=net;S.net0=net0;S.n=n;
   S.tx.forEach(t=>{if(t.out){t.flow=0;t.L=0;}else{t.flow=net/n;t.L=Math.abs(t.flow)/R;}const target=t.out?22:20+100*t.L*t.L;t.temp+=(target-t.temp)/TAU;});
-  if(!S.silent&&(S.pendingLoss||n===0)){const why=S.pendingLoss||'the loss of the last transformer';S.pendingLoss=null;
-    if(n===0||S.tx.some(t=>!t.out&&t.L>1.0001)){loseSite(m,why,n,Math.abs(net0));return;}}
   const tripped=[];
-  S.tx.forEach((t,i)=>{if(t.out)return;t.overT=t.L>1.5?t.overT+1:0;
-    if(t.temp>=TRIP_T||t.overT>=3){const why=t.overT>=3?'overcurrent protection':'winding temperature protection';t.out={kind:'trip',until:m+90,label:why[0].toUpperCase()+why.slice(1)};t.overT=0;S.trips++;tripped.push(`T${i+1} (${why})`);}});
-  if(tripped.length){S.pendingLoss=`an overload trip of ${tripped.join(', ')}`;const s=`Overload trip: ${tripped.join(', ')}. Its share of the flow moves onto what is left. Back after inspection in 90 min.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);}
-  if(S.tx.some(t=>!t.out&&t.L>1))S.overloadMin++;
-  SERVICES.forEach(s=>{S.cost.arm+=S.armed[s.id]*s.arm/60;if(s.gen){S.cost.curt+=(del[s.id]+auto[s.id])*s.use/60;}else{S.cost.use+=auto[s.id]*s.use/60;S.cost.short+=del[s.id]*s.use*1.5/60;}});
-  S.soc=clamp(S.soc+((del.bchg+auto.bchg)*.92-(del.bdis+auto.bdis))/60,0,SOC_MAX);
-  S.sec=security(net,n,av,del,auto);if(S.sec.insecure)S.insecureMin++;
+  S.tx.forEach((t,i)=>{if(t.out)return;let why=null;
+    if(t.L>SHORT)why='instantaneous overcurrent protection';
+    else{t.sh=t.L>EMERG?t.sh+1:0;t.em=t.L>1.0001?t.em+1:Math.max(0,t.em-1);
+      if(t.sh>=SHORT_MIN)why='overcurrent protection';else if(t.em>=EMERG_MIN)why='overload protection, with its emergency rating used up';else if(t.temp>=TRIP_T)why='winding temperature protection';}
+    if(why){t.out={kind:'trip',until:m+90,label:ucf(why)};t.em=0;t.sh=0;S.trips++;tripped.push({i,why});}});
+  if(tripped.length){
+    const names=tripped.map(x=>'T'+(x.i+1)).join(' and ');S.lastLoad={flow:Math.abs(net),cap:n*R};
+    S.chain.push(`${names} tripping on ${tripped[0].why}`);
+    if(!S.silent){mark(m,'trip',names+' trip');const s=`Overload trip: ${names} (${tripped[0].why}). The flow moves onto what is left. Back after inspection in 90 min.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);tripped.forEach(x=>fxTrip(x.i,'trip'));}
+    if(S.tx.every(t=>t.out)&&!S.silent){loseSite(m);return;}
+  }
+  const maxL=Math.max(0,...S.tx.map(t=>t.out?0:t.L));S.peakL=Math.max(S.peakL,maxL);
+  const emerg=maxL>1;if(emerg)S.overloadMin++;
+  if(emerg&&!S.emergOn&&!S.silent){play('emerg');mark(m,'emerg','Emergency rating');}S.emergOn=emerg;
+  let autoTot=0;
+  SERVICES.forEach(s=>{const a=S.act[s.id],mp=Math.min(a,manT[s.id]),ap=a-mp;S.manP[s.id]=mp;S.autoP[s.id]=ap;autoTot+=ap;
+    S.cost.arm+=S.armed[s.id]*s.arm/60;
+    if(s.gen){S.cost.curt+=a*s.use/60;S.allow[s.id]=Math.max(0,S.allow[s.id]-a/60);
+      if(S.allow[s.id]<=0&&!S.allowLogged[s.id]&&!S.silent){S.allowLogged[s.id]=true;const msg=`${s.name} has used its curtailment allowance. It can't be curtailed again this shift.`;logE(m,msg,'warn');queueAlert(msg,'warn',false);}}
+    else{S.cost.use+=ap*s.use/60;S.cost.short+=mp*s.use*1.5/60;}});
+  if(autoTot>.5&&!S.autoOn)mark(m,'flex','Flex in');S.autoOn=autoTot>.5;
+  if(xfOn(X))S.cost.xfer+=XFER_COST/60;
+  S.soc=clamp(S.soc+(S.act.bchg*.92-S.act.bdis)/60,0,SOC_MAX);
+  S.sec=security(net,n,av);if(S.sec.insecure&&!S.silent)S.insecureMin++;
   S.hist.push({m,net,n});if(S.hist.length>70)S.hist.shift();
+  if(!S.silent)S.full.push({m,net,n,ins:S.sec.insecure});
   S.t++;
   flushAlerts();
   if(S.t>=END&&!S.silent)endShift();
 }
 
-function cover(dir,av,del,auto){let c=0;SERVICES.forEach(s=>{if(s.dir!==dir)return;c+=Math.max(0,Math.min(S.armed[s.id]-auto[s.id],av[s.id]-del[s.id]-auto[s.id]));});return c;}
-function security(net,n,av,del,auto){
-  const dir=net>=0?'import':'export',abs=Math.abs(net),cv=cover(dir,av,del,auto);
-  if(n<2)return{n,dir,abs,cover:cv,short:0,after:null,insecure:false};
-  const capAfter=(n-1)*R,short=Math.max(0,abs-capAfter);
-  return{n,dir,abs,cover:cv,short,after:abs/(n-1)/R,insecure:short>cv+.5};
+function security(net,n,av){
+  const dir=net>=0?'import':'export',abs=Math.abs(net);let cv=0;
+  SERVICES.forEach(s=>{if(s.dir!==dir)return;cv+=Math.max(0,Math.min(S.armed[s.id]-S.autoP[s.id],av[s.id]-S.act[s.id]));});
+  if(n<2)return{n,dir,abs,cover:cv,short:0,after:null,post:null,insecure:false};
+  const cap=(n-1)*R,short=Math.max(0,abs-cap);
+  return{n,dir,abs,cover:cv,short,after:abs/cap,post:Math.max(0,abs-cv)/cap,insecure:short>cv+.5};
 }
 
-function loseSite(m,why,n,flow){
-  queued=[];const cap=n*R;S.lost={m,why,n,flow,cap};
-  logE(m,`Blackout Canyon lost. After ${why}, ${n?`${Math.round(flow)} MW was more than the ${cap} MW the remaining ${n===1?'transformer':'transformers'} could carry. Protection tripped ${n===1?'it':'them'}`:'no transformers were left in service'} and the site went dark.`,'alarm');
+function loseSite(m){
+  queued=[];const ch=S.chain.length?S.chain:['the loss of the last transformer'];
+  const why=ch.length>1?ch.slice(0,-1).join(', ')+' and then '+ch[ch.length-1]:ch[0];
+  S.lost={m,why,last:S.lastLoad};mark(m,'lost','Site lost');
+  logE(m,`Blackout Canyon lost. After ${why}, no transformers were left in service and the site went dark.`,'alarm');
   S.tx.forEach(t=>{if(!t.out)t.out={kind:'trip',until:m+90,label:'Tripped in cascade'};t.L=0;t.flow=0;});
-  S.n=0;S.net=0;endShift();
+  S.n=0;S.net=0;play('lost');flashPanel();endShift();
+}
+function guidance(){
+  if(!S.n)return 'Customers are off supply.';
+  const pct=Math.round(Math.abs(S.net)/S.n/R*100),dirCut=S.net>0?'Cut import':'Cut export',need=Math.ceil(Math.abs(S.net)-S.n*R),t=S.tx.find(x=>!x.out);
+  const autoTot=SERVICES.reduce((a,s)=>a+S.autoP[s.id],0);
+  if(pct>120)return `Transformers at ${pct}%, above the 120% emergency rating. Protection trips in ${SHORT_MIN-t.sh} min. ${dirCut} by at least ${need} MW now.`;
+  if(pct>100)return `Transformers at ${pct}% on their emergency rating: ${EMERG_MIN-t.em} min to get under 100%. ${dirCut} by at least ${need} MW.`;
+  if(autoTot>.5)return `Armed flexibility is switching in: ${Math.round(autoTot)} MW so far. Loading is ${pct}%.`;
+  return `Loading is ${pct}%. Check the next-loss panel.`;
 }
 function flushAlerts(){
   if(!queued.length)return;
   const top=queued.find(q=>q.lvl==='alarm')||queued[queued.length-1];
   const pause=queued.some(q=>q.pause);queued=[];
-  const autoTot=SERVICES.reduce((a,s)=>a+S.auto[s.id],0);
-  const over=S.tx.filter(t=>!t.out&&t.L>1);let g;
-  const pct=S.n?Math.round(Math.abs(S.net)/S.n/R*100):0;
-  if(S.n===0)g='Customers are off supply until a transformer comes back.';
-  else if(over.length){const need=Math.ceil(Math.abs(S.net)-S.n*R);g=`${S.n===1?'T'+(S.tx.findIndex(t=>!t.out)+1)+' is':'Remaining transformers are'} at ${pct}%. ${S.net>0?'Cut import':'Cut export'} by at least ${need} MW now.`;}
-  else if(autoTot>.5)g=`Armed flexibility switched in: ${Math.round(autoTot)} MW. Loading held at ${pct}%.`;
-  else g=`Loading is ${pct}%. Check the next-loss panel.`;
-  showBanner(top,g);
+  showBanner(top,guidance());
   if(pause&&autoPause&&S.running){S.paused=true;acc=0;}
 }
 function showBanner(a,g){const b=$('banner');b.className='banner '+(a.lvl==='alarm'?'alarm':a.lvl==='warn'?'warn':'');
   $('bannerMsg').innerHTML=`<b>${fmtT(a.m)}</b>${esc(a.text)}<span class="g">${esc(g)}</span>`;b.hidden=false;$('resumeBtn').hidden=!(S.paused&&S.running);}
 function hideBanner(){$('banner').hidden=true;}
-function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+/* ---------- Effects ---------- */
+function flashPanel(){if(S.silent)return;const p=$('pMimic');p.classList.remove('flashing');void p.offsetWidth;p.classList.add('flashing');}
+function fxTrip(i,kind){if(S.silent)return;play(kind);flashPanel();const g=$('cct'+i);if(g){g.classList.remove('tripflash');void g.getBBox;setTimeout(()=>{g.classList.add('tripflash');setTimeout(()=>g.classList.remove('tripflash'),1800);},10);}}
 
 /* ---------- Mimic ---------- */
 const ASSETS=[{id:'demand',name:'Demand'},{id:'solar',name:'Solar'},{id:'wind',name:'Wind'},{id:'batt',name:'Battery'},{id:'chp',name:'CHP'},{id:'dsr',name:'DSR'}];
-function geo(){return CMP?{vb:'0 0 360 500',g:{x1:14,x2:346,y:36,lx:14,ly:20,t:'KESTREL GSP · 132 kV'},tx:[30,150,270],a1:[36,92],b1:46,w1:106,w2:124,wr:14,a2:[138,214],b2:188,
-    L:{dx:18,subdx:24,name:116,load:136,flow:152,bar:160,temp:181},bolt:1,
-    buses:[{x1:14,x2:346,y:214,t:'BLACKOUT CANYON|33 kV',lx:74,ly:234,anc:'start',fs:11},{x1:14,x2:346,y:360,t:'SECTION 2',lx:74,ly:382,anc:'start'}],sect:{x:346,y1:214,y2:360},
-    as:[[60,214],[180,214],[300,214],[60,360],[180,360],[300,360]]}
+function geo(){return CMP?{vb:'0 0 360 318',g:{x1:14,x2:346,y:30,lx:14,ly:18,t:'KESTREL GSP · 132 kV'},tx:[60,180,300],a1:[30,72],b1:40,w1:90,w2:110,wr:17,a2:[127,196],b2:160,
+    L:{cx:true,name:222,load:246,flow:264,bar:274,temp:296,em:313},bolt:2,
+    buses:[{x1:14,x2:346,y:196,t:'33 kV',lx:120,ly:188,anc:'middle',fs:11}],ic:null,as:[]}
   :{vb:'0 0 640 418',g:{x1:50,x2:590,y:46,lx:50,ly:28,t:'KESTREL GRID SUPPLY POINT · 132 kV'},tx:[170,320,470],a1:[46,126],b1:60,w1:146,w2:170,wr:20,a2:[190,270],b2:228,
-    L:{dx:30,subdx:26,name:140,load:162,flow:179,bar:188,temp:208},bolt:0,
-    buses:[{x1:34,x2:606,y:270,t:'BLACKOUT CANYON|33 kV',lx:606,ly:244,anc:'end'}],sect:null,
+    L:{dx:30,subdx:26,name:140,load:162,flow:179,bar:188,temp:208,em:224},bolt:0,
+    buses:[{x1:34,x2:606,y:270,t:'BLACKOUT CANYON|33 kV',lx:606,ly:247,anc:'end',fs:11}],ic:{x:38,y:236},
     as:[[70,270],[172,270],[274,270],[376,270],[478,270],[580,270]]};}
 function buildMimic(){
   const G=geo(),Lb=G.L;const tagSt='style="font:700 11px var(--f-display);letter-spacing:.08em;fill:var(--alarm)"';
   let s=`<line class="bus hv" x1="${G.g.x1}" y1="${G.g.y}" x2="${G.g.x2}" y2="${G.g.y}"/><text class="t-bus" x="${G.g.lx}" y="${G.g.ly}">${G.g.t}</text>`;
-  G.tx.forEach((x,i)=>{const bolt=G.bolt?`<path class="bolt" d="M${x+31} 54 l-8 14 h7 l-5 13 l12 -17 h-7 l6 -10 z"/><text id="tag${i}" x="${x+38}" y="72" ${tagSt}>FAULT</text>`
+  G.tx.forEach((x,i)=>{
+    const bolt=G.bolt===2?`<path class="bolt" d="M${x+30} 40 l-8 14 h7 l-5 13 l12 -17 h-7 l6 -10 z"/><text id="tag${i}" x="${x+20}" y="80" ${tagSt}>FAULT</text>`
       :`<path class="bolt" d="M${x-26} 84 l-8 14 h7 l-5 13 l12 -17 h-7 l6 -10 z"/><text id="tag${i}" x="${x-38}" y="100" text-anchor="end" ${tagSt}>FAULT</text>`;
+    const lx=Lb.cx?x:x+Lb.dx,anc=Lb.cx?' text-anchor="middle"':'',bx=Lb.cx?x-31:x+Lb.dx;
     s+=`<g id="cct${i}" class="cct" data-lvl="ok">
-    <line class="cond hv" x1="${x}" y1="${G.a1[0]}" x2="${x}" y2="${G.a1[1]}"/><line id="fa${i}" class="flow" x1="${x}" y1="${G.a1[0]+4}" x2="${x}" y2="${G.a1[1]}"/>
+    <line id="ca${i}" class="cond hv" x1="${x}" y1="${G.a1[0]}" x2="${x}" y2="${G.a1[1]}"/><line id="fa${i}" class="flow" x1="${x}" y1="${G.a1[0]+4}" x2="${x}" y2="${G.a1[1]}"/>
     <rect class="brk" x="${x-6}" y="${G.b1}" width="12" height="12"/><g id="bolt${i}" hidden>${bolt}</g>
     <circle class="wdg hv" cx="${x}" cy="${G.w1}" r="${G.wr}"/><circle class="wdg mv" cx="${x}" cy="${G.w2}" r="${G.wr}"/>
-    <line class="cond mv" x1="${x}" y1="${G.a2[0]}" x2="${x}" y2="${G.a2[1]}"/><line id="fb${i}" class="flow" x1="${x}" y1="${G.a2[0]}" x2="${x}" y2="${G.a2[1]-4}"/>
+    <line id="cb${i}" class="cond mv" x1="${x}" y1="${G.a2[0]}" x2="${x}" y2="${G.a2[1]}"/><line id="fb${i}" class="flow" x1="${x}" y1="${G.a2[0]}" x2="${x}" y2="${G.a2[1]-4}"/>
     <rect class="brk" x="${x-6}" y="${G.b2}" width="12" height="12"/>
-    <text class="tx-name" x="${x+Lb.dx}" y="${Lb.name}">T${i+1}</text><text class="tx-sub" x="${x+Lb.dx+Lb.subdx}" y="${Lb.name}">60 MVA</text>
-    <text id="load${i}" class="tx-load" x="${x+Lb.dx}" y="${Lb.load}">0%</text>
-    <text id="flow${i}" class="tx-flow" x="${x+Lb.dx}" y="${Lb.flow}">0 MW</text>
-    <rect class="tbar" x="${x+Lb.dx}" y="${Lb.bar}" width="62" height="7" rx="2"/><rect id="tf${i}" class="tfill" x="${x+Lb.dx}" y="${Lb.bar}" width="0" height="7" rx="2"/>
-    <text id="tt${i}" class="ttxt" x="${x+Lb.dx}" y="${Lb.temp}">60°C</text></g>`;});
+    ${Lb.cx?`<text class="tx-name" x="${x}" y="${Lb.name}" text-anchor="middle">T${i+1} <tspan class="tx-sub">60 MVA</tspan></text>`
+      :`<text class="tx-name" x="${lx}" y="${Lb.name}">T${i+1}</text><text class="tx-sub" x="${lx+Lb.subdx}" y="${Lb.name}">60 MVA</text>`}
+    <text id="load${i}" class="tx-load" x="${lx}" y="${Lb.load}"${anc}${Lb.cx?' style="font-size:19px"':''}>0%</text>
+    <text id="flow${i}" class="tx-flow" x="${lx}" y="${Lb.flow}"${anc}>0 MW</text>
+    <rect class="tbar" x="${bx}" y="${Lb.bar}" width="62" height="7" rx="2"/><rect id="tf${i}" class="tfill" x="${bx}" y="${Lb.bar}" width="0" height="7" rx="2"/>
+    <text id="tt${i}" class="ttxt" x="${lx}" y="${Lb.temp}"${anc}>60°C</text>
+    <text id="em${i}" class="tx-em" x="${lx}" y="${Lb.em}"${anc}></text></g>`;});
   G.buses.forEach(b=>{s+=`<line class="bus mv" x1="${b.x1}" y1="${b.y}" x2="${b.x2}" y2="${b.y}"/><text class="t-bus" x="${b.lx}" y="${b.ly}" text-anchor="${b.anc}"${b.fs?` style="font-size:${b.fs}px"`:''}>${b.t.split('|').map((l,k)=>`<tspan x="${b.lx}" dy="${k?(b.fs?12:14):0}">${l}</tspan>`).join('')}</text>`;});
-  if(G.sect){const k=G.sect,m=(k.y1+k.y2)/2;s+=`<line class="cond mv" x1="${k.x}" y1="${k.y1}" x2="${k.x}" y2="${k.y2}" style="stroke-width:5"/><rect class="brk" x="${k.x-6}" y="${m-6}" width="12" height="12"/>`;}
+  if(G.ic)s+=`<text class="ic-k" x="${G.ic.x}" y="${G.ic.y}">KESTREL NORTH</text><text id="icV" class="ic-v" x="${G.ic.x}" y="${G.ic.y+15}">open</text>`;
   G.as.forEach(([x,by],i)=>{const a=ASSETS[i],y=by+46;let sym='';
     if(a.id==='demand')sym=`<path class="sym" d="M${x-11} ${y} L${x+11} ${y} L${x} ${y+20} Z"/>`;
     if(a.id==='dsr')sym=`<path class="sym-o" d="M${x-11} ${y} L${x+11} ${y} L${x} ${y+20} Z"/>`;
@@ -646,49 +912,68 @@ function buildMimic(){
       <text id="av_${a.id}" class="a-val" x="${x}" y="${y+67}" text-anchor="middle">0 MW</text>
       <text id="as_${a.id}" class="a-sub" x="${x}" y="${y+83}" text-anchor="middle"></text>`;});
   const el=$('mimic');el.setAttribute('viewBox',G.vb);el.innerHTML=s;
+  $('chips').innerHTML=ASSETS.map(a=>`<div class="chip" style="--tc:${a.id==='demand'?'var(--muted)':ACOL[a.id]}"><span class="cn">${a.name}</span><span class="cv" id="cv_${a.id}">0 MW</span><span class="cs" id="cs_${a.id}"></span></div>`).join('');
 }
-function sub(id,v,w){txt(id,v);$(id).classList.toggle('muted',!w);}
+function txt(id,v){const e=$(id);if(e&&e.textContent!==v)e.textContent=v;}
+function sub(id,v,w){txt(id,v);const e=$(id);if(e)e.classList.toggle('muted',!w);}
+function chip(id,v,s,w){txt('cv_'+id,v);txt('cs_'+id,s);const e=$('cs_'+id);if(e)e.classList.toggle('w',!!w);}
 function setFlow(el,v){if(!el)return;if(Math.abs(v)<.5){el.classList.add('idle');return;}el.classList.remove('idle');el.classList.toggle('rev',v<0);
   const d=Math.max(.35,2.2-Math.abs(v)/60).toFixed(1)+'s';if(el.style.animationDuration!==d)el.style.animationDuration=d;}
-function txt(id,v){const e=$(id);if(e&&e.textContent!==v)e.textContent=v;}
+function setAttr(e,k,v){if(e&&e.getAttribute(k)!==v)e.setAttribute(k,v);}
 
 function renderMimic(){
   S.tx.forEach((t,i)=>{
-    const g=$('cct'+i);g.classList.toggle('out',!!t.out);g.classList.toggle('planned',!!t.out&&t.out.kind==='planned');
+    const g=$('cct'+i);if(!g)return;g.classList.toggle('out',!!t.out);g.classList.toggle('planned',!!t.out&&t.out.kind==='planned');
     g.dataset.lvl=t.out?'':t.L>1?'alarm':t.L>.9?'warn':'ok';
     const b=$('bolt'+i);if(t.out&&t.out.kind!=='planned'){b.removeAttribute('hidden');txt('tag'+i,t.out.kind==='trip'?'TRIPPED':'FAULT');}else b.setAttribute('hidden','');
+    const hc=t.out?'':t.L>1?' h3':t.L>.8?' h2':' h1',w=t.out?'':(3.5+2.5*Math.min(t.L,1.5)).toFixed(1);
+    [['ca','hv'],['cb','mv']].forEach(([p,v])=>{const e=$(p+i);setAttr(e,'class','cond '+v+hc);if(e&&e.style.strokeWidth!==(w?w+'px':''))e.style.strokeWidth=w?w+'px':'';});
     txt('load'+i,t.out?(t.out.kind==='planned'?(CMP?'PLANNED':'PLANNED OUT'):t.out.kind==='trip'?'TRIPPED':'FAULTED'):Math.round(t.L*100)+'%');
     txt('flow'+i,t.out?'Back '+fmtT(t.out.until):`${Math.round(Math.abs(t.flow))} MW ${t.flow>=0?(CMP?'▼':'▼ import'):(CMP?'▲':'▲ export')}`);
-    const f=clamp((t.temp-20)/(TRIP_T-20),0,1);const tf=$('tf'+i);tf.setAttribute('width',(62*f).toFixed(1));
-    tf.setAttribute('class','tfill'+(t.temp>=TRIP_T-8?' alarm':t.temp>=ALARM_T-10?' warn':''));
+    const f=clamp((t.temp-20)/(TRIP_T-20),0,1);const tf=$('tf'+i);setAttr(tf,'width',(62*f).toFixed(1));
+    setAttr(tf,'class','tfill'+(t.temp>=TRIP_T-8?' alarm':t.temp>=TRIP_T-25?' warn':''));
     txt('tt'+i,CMP?Math.round(t.temp)+'°C':`Hot-spot ${Math.round(t.temp)}°C`);
+    const emT=t.out||t.L<=1?'':t.L>EMERG?`TRIP IN ${SHORT_MIN-t.sh} MIN`:`EMERG · ${EMERG_MIN-t.em} MIN`;
+    txt('em'+i,emT);setAttr($('em'+i),'class','tx-em'+(t.L>EMERG?' alarm':''));
     setFlow($('fa'+i),t.out?0:t.flow);setFlow($('fb'+i),t.out?0:t.flow);
   });
-  const c=S.c,d=S.del,a=S.auto,on=S.n>0,tot=k=>d[k]+a[k];
-  const dem=on?c.demand-tot('dsr'):0,sol=on?c.solar-tot('solar'):0,wnd=on?c.wind-tot('wind'):0,bat=on?tot('bchg')-tot('bdis'):0,chp=on?tot('chp'):0;
-  txt('av_demand',on?mw(dem):'Off supply');setFlow($('fl_demand'),dem);
-  txt('av_solar',mw(sol));setFlow($('fl_solar'),-sol);sub('as_solar',tot('solar')>.5?`−${Math.round(tot('solar'))} curtailed`:(sol>.5?'full output':''),tot('solar')>.5);
-  txt('av_wind',mw(wnd));setFlow($('fl_wind'),-wnd);const cut=!!(S.cutout&&S.cutout.fired&&!S.cutout.done);sub('as_wind',tot('wind')>.5?`−${Math.round(tot('wind'))} curtailed`:(cut?'high-wind stop':(wnd>.5?'full output':'')),tot('wind')>.5||cut);
-  $('blades').classList.toggle('still',wnd<1);
-  txt('av_batt',Math.abs(bat)<.5?'Idle':(bat>0?'Charge ':'Disch. ')+mw(Math.abs(bat)));setFlow($('fl_batt'),bat);txt('as_batt',`${Math.round(S.soc/SOC_MAX*100)}% full`);
-  txt('av_chp',chp>.5?mw(chp):'Standby');setFlow($('fl_chp'),-chp);txt('as_chp','');
-  txt('av_dsr',tot('dsr')>.5?`−${Math.round(tot('dsr'))} MW`:'Standby');setFlow($('fl_dsr'),0);txt('as_dsr','');
-  txt('as_demand','');
+  const c=S.c,a=S.act,on=S.n>0,X=S.xf;
+  const dem=on?c.demand-a.dsr:0,sol=on?c.solar-a.solar:0,wnd=on?c.wind-a.wind:0,bat=on?a.bchg-a.bdis:0,chp=on?a.chp:0;
+  const cut=!!(S.cutout&&S.cutout.fired&&!S.cutout.done);
+  const solS=a.solar>.5?`−${Math.round(a.solar)} curtailed`:(sol>.5?'full output':''),wndS=a.wind>.5?`−${Math.round(a.wind)} curtailed`:(cut?'high-wind stop':(wnd>.5?'full output':''));
+  const batV=Math.abs(bat)<.5?'Idle':(bat>0?'Charge ':'Disch. ')+mw(Math.abs(bat)),batS=`${Math.round(S.soc/SOC_MAX*100)}% full`;
+  txt('av_demand',on?mw(dem):'Off supply');setFlow($('fl_demand'),dem);txt('as_demand',xfOn(X)&&X.kind==='load'?'14% transferred':'');
+  txt('av_solar',mw(sol));setFlow($('fl_solar'),-sol);sub('as_solar',xfOn(X)&&X.kind==='gen'&&!(a.solar>.5)?'30% transferred':solS,a.solar>.5);
+  txt('av_wind',mw(wnd));setFlow($('fl_wind'),-wnd);sub('as_wind',wndS,a.wind>.5||cut);
+  const bl=$('blades');if(bl)bl.classList.toggle('still',wnd<1);
+  txt('av_batt',batV);setFlow($('fl_batt'),bat);txt('as_batt',batS);
+  txt('av_chp',chp>.5?mw(chp):'Standby');setFlow($('fl_chp'),-chp);
+  txt('av_dsr',a.dsr>.5?`−${Math.round(a.dsr)} MW`:'Standby');setFlow($('fl_dsr'),0);
+  chip('demand',on?mw(dem):'Off',xfOn(X)&&X.kind==='load'?'14% transferred':'',false);chip('solar',mw(sol),solS,a.solar>.5);chip('wind',mw(wnd),wndS,a.wind>.5||cut);
+  chip('batt',batV,batS,false);chip('chp',chp>.5?mw(chp):'Standby','',false);chip('dsr',a.dsr>.5?`−${Math.round(a.dsr)} MW`:'Standby','',false);
+  const icv=$('icV');if(icv){const st=X.state==='idle'?'link open':X.state==='switching'?'switching…':X.state==='returning'?'returning…':X.kind==='load'?'demand moved':'solar moved';txt('icV',st);icv.classList.toggle('on',X.state!=='idle');}
 }
 
 /* ---------- Security panel ---------- */
 function renderSec(){
   const sec=S.sec,n=S.n,dirW=S.net>=0?'import':'export';
-  const over=S.tx.some(t=>!t.out&&t.L>1);
+  const live=S.tx.filter(t=>!t.out),maxL=live.length?Math.max(...live.map(t=>t.L)):0,t0=live[0];
   let pill='ok',ptxt='N-1 secure',adv='',advL='';
-  if(n===0){pill='alarm';ptxt='Off supply';adv='Customers are off supply. Supply comes back when a transformer returns to service.';advL='alarm';}
-  else if(over){pill='alarm';ptxt='Overloaded';const need=Math.ceil(Math.abs(S.net)-n*R);adv=`Over rating now. Cut ${dirW} by ${need} MW using the ${dirW==='export'?'turn-down':'turn-up'} services below, or the transformers will heat up and trip.`;advL='alarm';}
+  const fixTxt=`${dirW==='export'?'turn-down':'turn-up'} services or switching`;
+  if(n===0){pill='alarm';ptxt='Off supply';adv='Customers are off supply.';advL='alarm';}
+  else if(maxL>1){pill='alarm';ptxt='Emergency';const need=Math.ceil(Math.abs(S.net)-n*R);
+    adv=maxL>EMERG?`Above the 120% emergency rating at ${Math.round(maxL*100)}%. Protection trips in ${SHORT_MIN-t0.sh} min. Cut ${dirW} by ${need} MW now.`
+      :`On the emergency rating at ${Math.round(maxL*100)}%: ${EMERG_MIN-t0.em} min left to get under 100%. Cut ${dirW} by ${need} MW using ${fixTxt}.`;advL='alarm';}
   else if(n===1){pill='alarm';ptxt='Exposed';adv='Only one transformer left. Another loss takes customers off supply, so keep its loading well inside 100%.';advL='warn';}
-  else if(sec.insecure){pill='alarm';ptxt='At risk';adv=`A fault right now would lose Blackout Canyon: ${Math.ceil(sec.short)} MW would have to come off instantly. Arm at least ${Math.ceil(sec.short-sec.cover)} MW more of ${sec.dir==='export'?'generation turn-down':'generation turn-up'}.`;advL='warn';}
-  else if(sec.short>.5){adv=`Covered: ${Math.round(sec.cover)} MW armed against a ${Math.ceil(sec.short)} MW shortfall if another transformer trips.`;}
+  else if(sec.insecure){pill='alarm';ptxt='At risk';const p=Math.round(sec.post*100),more=Math.ceil(sec.short-sec.cover);
+    const what=sec.post>SHORT?`would lose Blackout Canyon straight away: the remaining ${n-1===1?'transformer':'transformers'} would hit ${p}%`
+      :sec.post>EMERG?`would push the others to ${p}%, and protection would trip them within 3 minutes`
+      :`would push the others to ${p}%. You'd have 30 minutes on the emergency rating to fix it`;
+    adv=`A fault now ${what}. Arm at least ${more} MW more of ${dirW==='export'?'generation turn-down':'generation turn-up'}, or use switching.`;advL='warn';}
+  else if(sec.short>.5)adv=`Covered: ${Math.round(sec.cover)} MW armed against a ${Math.ceil(sec.short)} MW shortfall if another transformer trips. Slow units take a few minutes to ramp.`;
   else adv=`The network could lose ${n===3?'any one':'another'} transformer without overloading.`;
-  const p=$('pill');p.className='pill '+pill;txt('pill',ptxt);
-  const nowDir=(over||sec.insecure)?(S.net>=0?'import':'export'):null,aDir=S.ahead&&S.ahead.uncAt!=null?S.ahead.uncDir:null;
+  const p=$('pill');setAttr(p,'class','pill '+pill);txt('pill',ptxt);
+  const nowDir=(maxL>1||sec.insecure)?dirW:null,aDir=S.ahead&&S.ahead.uncAt!=null?S.ahead.uncDir:null;
   $('dotE').hidden=!(nowDir==='export'||aDir==='export');$('dotI').hidden=!(nowDir==='import'||aDir==='import');
   const outs=S.tx.map((t,i)=>t.out?i:-1).filter(i=>i>=0);
   txt('secSub',outs.length?(outs.some(i=>S.tx[i].out.kind!=='planned')?'Post-fault running':'Planned outage running'):'Intact network');
@@ -696,13 +981,16 @@ function renderSec(){
   txt('fLoad',n?Math.round(Math.abs(S.net)/n/R*100)+'%':'–');
   txt('fAfter',sec.after==null?(n===1?'Off supply':'–'):`${n-1} left at ${Math.round(sec.after*100)}%`);
   txt('fShort',mw(sec.short));txt('fCover',mw(sec.cover));
-  const ad=$('advice');ad.className='advice '+advL;txt('advice',adv);
+  const ad=$('advice');setAttr(ad,'class','advice '+advL);txt('advice',adv);
   const A=S.ahead;let at='';
   if(A){if(A.uncAt!=null)at=`Uncovered N-1 shortfall from ${fmtT(A.uncAt)}, peaking at ${Math.ceil(A.worstUnc)} MW of ${A.uncDir} around ${fmtT(A.worstUncAt)}. Arm more ${A.uncDir==='export'?'turn-down':'turn-up'} before then.`;
     else if(A.worstShort>.5)at=`Shortfall of up to ${Math.ceil(A.worstShort)} MW (${A.worstDir}) around ${fmtT(A.worstAt)}, covered by what you have armed or dispatched.`;
-    else at='No N-1 shortfall forecast. Unplanned faults are not in the forecast.';
+    else at='No N-1 shortfall forecast. Faults themselves are never forecast.';
     if(A.overAt!=null)at=`Overload forecast at ${fmtT(A.overAt)} even with armed flex. `+at;}
   txt('aheadTxt',at);
+  const w=S.risk.filter(r=>r.end>S.t&&r.start<S.t+360);const wt=$('weatherTxt');
+  const wh=w.map(r=>`<b>${esc(r.label)}</b> ${r.start<=S.t?'now, until '+fmtT(r.end):fmtT(r.start)+'–'+fmtT(r.end)}: faults ${r.mult}× more likely.`).join(' ');
+  if(wt.innerHTML!==wh)wt.innerHTML=wh;wt.hidden=!w.length;
   const ul=$('outs');const html=outs.map(i=>{const o=S.tx[i].out;return`<li><b>T${i+1}</b> · ${esc(o.label)} · back ${fmtT(o.until)}</li>`;}).join('')+
     S.events.filter(e=>e.planned&&!e.fired).map(e=>`<li><b>T${e.tx+1}</b> · planned outage ${fmtT(e.start)}–${fmtT(e.end)}</li>`).join('');
   if(ul.innerHTML!==html)ul.innerHTML=html;
@@ -711,10 +999,12 @@ function renderSec(){
 /* ---------- Look-ahead ---------- */
 function outAt(i,m){const t=S.tx[i];if(t.out&&t.out.until>m)return true;return S.events.some(e=>e.planned&&!e.fired&&e.tx===i&&m>=e.start&&m<e.end);}
 const nAt=m=>[0,1,2].filter(i=>!outAt(i,m)).length;
+function xfAt(m){const X=S.xf;if(X.state==='on')return X.kind;if(X.state==='switching'&&m>=X.at)return X.kind;if(X.state==='returning'&&m<X.at)return X.kind;return null;}
 function computeAhead(){
   const pts=[];let A={worstShort:0,worstAt:null,worstDir:'',worstUnc:0,worstUncAt:null,uncAt:null,uncDir:'',overAt:null};
   for(let m=S.t;m<=Math.min(S.t+360,1440);m+=5){
-    const c=components(m,true),av={solar:c.solar,wind:c.wind,bchg:S.soc<SOC_MAX-.3?30:0,bdis:S.soc>.3?30:0,chp:25,dsr:15};
+    const c=components(m,true);const xk=xfAt(m);if(xk)applyX(c,xk);
+    const av=availability(c,m);av.bdis=S.soc>.3?30:0;
     const fc=netOf(c,zeroD());const del={};SERVICES.forEach(s=>del[s.id]=Math.min(S.manual[s.id],av[s.id]));
     const net=netOf(c,del),dir=net>=0?'import':'export',abs=Math.abs(net),n=nAt(m);
     const arm=SERVICES.filter(s=>s.dir===dir).reduce((a,s)=>a+Math.max(0,Math.min(S.armed[s.id],av[s.id]-del[s.id])),0);
@@ -724,7 +1014,9 @@ function computeAhead(){
     if(unc>.5&&A.uncAt==null){A.uncAt=m;A.uncDir=dir;}
     if(unc>A.worstUnc){A.worstUnc=unc;A.worstUncAt=m;A.uncDir=dir;}
     if(over>.5&&A.overAt==null)A.overAt=m;
-    pts.push({m,fc,n,unc,over});
+    const hrs=(m-S.t)/60,sc=S.sc;
+    const band=(2+.03*c.demand+.6*sc.solar.cloud*c.solar+.35*sc.wind.var)*Math.min(1,Math.pow(hrs/4,.7));
+    pts.push({m,fc,n,unc,over,band});
   }
   S.ahead=A;return pts;
 }
@@ -732,10 +1024,14 @@ function drawChart(){
   const W=CMP?360:640,H=230,L=CMP?32:40,Rr=12,T=12,B=26,x0=S.t-60,span=420,Y=200;
   const X=m=>L+(m-x0)/span*(W-L-Rr),Yv=v=>T+(Y-v)/(2*Y)*(H-T-B);
   const pts=computeAhead();let s='';
+  S.risk.forEach(r=>{const a=Math.max(r.start,x0),b=Math.min(r.end,x0+span);if(b<=a)return;
+    s+=`<rect class="riskband" x="${X(a).toFixed(1)}" y="${T}" width="${(X(b)-X(a)).toFixed(1)}" height="${H-T-B}"/><text class="risklbl" x="${(X(a)+4).toFixed(1)}" y="${H-B-20}">${esc(r.label.toUpperCase())}</text>`;});
   pts.forEach(p=>{const w=(X(p.m+5)-X(p.m)+.5).toFixed(1);if(p.over>.5)s+=`<rect class="band-over" x="${X(p.m).toFixed(1)}" y="${T}" width="${w}" height="${H-T-B}"/>`;else if(p.unc>.5)s+=`<rect class="band-insec" x="${X(p.m).toFixed(1)}" y="${T}" width="${w}" height="${H-T-B}"/>`;});
   [-180,-120,-60,0,60,120,180].forEach(v=>{s+=`<line class="${v?'gl':'g0'}" x1="${L}" x2="${W-Rr}" y1="${Yv(v)}" y2="${Yv(v)}"/><text class="ax" x="${L-6}" y="${Yv(v)+3.5}" text-anchor="end">${Math.abs(v)}</text>`;});
   s+=`<text class="zone" x="${L+6}" y="${T+12}">IMPORT ▼</text><text class="zone" x="${L+6}" y="${H-B-6}">EXPORT ▲</text>`;
   const tk=CMP?120:60;for(let h=Math.ceil(x0/tk)*tk;h<=x0+span;h+=tk){const x=X(h);s+=`<line class="gl" x1="${x}" x2="${x}" y1="${H-B}" y2="${H-B+4}"/><text class="ax" x="${x}" y="${H-8}" text-anchor="middle">${fmtT(h)}</text>`;}
+  if(pts.length>1){const up=pts.map(p=>X(p.m).toFixed(1)+' '+Yv(clamp(p.fc+p.band,-Y,Y)).toFixed(1)),dn=pts.slice().reverse().map(p=>X(p.m).toFixed(1)+' '+Yv(clamp(p.fc-p.band,-Y,Y)).toFixed(1));
+    s+=`<path class="fcband" d="M${up.join(' L')} L${dn.join(' L')} Z"/>`;}
   const capPts=[...S.hist.map(h=>({m:h.m,n:h.n})),...pts.map(p=>({m:p.m,n:p.n}))];
   const stepPath=f=>{let d='';capPts.forEach((p,i)=>{const x=X(p.m).toFixed(1),y=Yv(f(p.n)).toFixed(1);d+=i?` H${x} V${y}`:`M${x} ${y}`;});return d;};
   s+=`<path class="capN" d="${stepPath(n=>n*R)}"/><path class="capN" d="${stepPath(n=>-n*R)}"/>`;
@@ -751,8 +1047,9 @@ function drawChart(){
 function buildCards(){
   const mk=s=>`<article class="card" id="card-${s.id}">
     <div class="c-top"><div class="c-id"><span class="ico" style="--tc:${s.tc}"><svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[s.ic]}</svg></span><div><h4>${s.name}</h4><div class="kind">${s.kind}</div></div></div><div class="c-av"><small>Available now</small><span id="av-${s.id}">0 MW</span></div></div>
-    ${s.gen?`<p class="prices"><span>Curtailment compensation <b>£${s.use}</b>/MWh</span><span>No fee to stand ready</span><span>Up to <b>${capOf(s)}</b> MW</span></p>`
-      :`<p class="prices"><span>Arm <b>£${s.arm}</b>/MW/h</span><span>Use <b>£${s.use}</b>/MWh</span><span>Short notice <b>£${s.use*1.5}</b>/MWh</span><span>Up to <b>${capOf(s)}</b> MW</span></p>`}
+    ${s.gen?`<p class="prices"><span>Compensation <b>£${s.use}</b>/MWh</span><span>No fee to stand ready</span><span>Ramps <b>${s.ramp}</b> MW/min</span><span>Up to <b>${capOf(s)}</b> MW</span></p>`
+      :`<p class="prices"><span>Arm <b>£${s.arm}</b>/MW/h</span><span>Use <b>£${s.use}</b>/MWh</span><span>Now <b>£${s.use*1.5}</b>/MWh</span><span>Ramps <b>${s.ramp}</b> MW/min</span></p>`}
+    ${s.gen?`<div class="allow" id="alw-${s.id}" style="--tc:${s.tc}"><span>Allowance</span><span class="trk"><i id="alwB-${s.id}"></i></span><span id="alwT-${s.id}">${s.allow} MWh</span></div>`:''}
     ${s.soc?`<div class="soc"><span>Charge</span><span class="trk"><i id="soc-${s.id}"></i></span><span id="socT-${s.id}">50%</span></div>`:''}
     <div class="ctrls">
       <div class="ctl"><span class="lbl">${s.gen?'Auto-curtail':'Armed'} <em>· on overload</em></span><div class="stepper"><button type="button" data-f="arm" data-id="${s.id}" data-d="-5" aria-label="Arm 5 MW less">−</button><output id="arm-${s.id}">0</output><button type="button" data-f="arm" data-id="${s.id}" data-d="5" aria-label="Arm 5 MW more">+</button></div></div>
@@ -762,41 +1059,97 @@ function buildCards(){
   $('cardsExport').innerHTML=SERVICES.filter(s=>s.dir==='export').map(mk).join('');
   $('cardsImport').innerHTML=SERVICES.filter(s=>s.dir==='import').map(mk).join('');
 }
-function adjust(f,id,d){const s=SERVICES.find(x=>x.id===id);const o=f==='arm'?S.armed:S.manual;o[id]=clamp(o[id]+d,0,capOf(s));
+function adjust(f,id,d){if(!S||S.ended)return;const s=SERVICES.find(x=>x.id===id);const o=f==='arm'?S.armed:S.manual;o[id]=clamp(o[id]+d,0,capOf(s));
   if(f==='man'&&d>0){if(id==='bchg')S.manual.bdis=0;if(id==='bdis')S.manual.bchg=0;}
-  renderCards();lastChart=0;}
+  play('click');renderCards();lastChart=0;}
 function renderCards(){
-  SERVICES.forEach(s=>{const id=s.id,av=S.av?S.av[id]:0,arm=S.armed[id],man=S.manual[id],del=S.del?S.del[id]:0,au=S.auto?S.auto[id]:0;
-    txt('av-'+id,mw(av));
-    $('arm-'+id).innerHTML=`${arm}<small>MW</small>`;$('man-'+id).innerHTML=`${man}<small>MW</small>`;
+  SERVICES.forEach(s=>{const id=s.id,av=S.av?S.av[id]:0,arm=S.armed[id],man=S.manual[id],act=S.act[id],mp=S.manP[id],au=S.autoP[id],failed=S.fail[id]>S.t;
+    txt('av-'+id,failed?'Not responding':mw(av));
+    const ao=$('arm-'+id),mo=$('man-'+id),ah=`${arm}<small>MW</small>`,mh=`${man}<small>MW</small>`;if(ao.innerHTML!==ah)ao.innerHTML=ah;if(mo.innerHTML!==mh)mo.innerHTML=mh;
     let st=s.gen?(av>.5?'Running at full output · no cost':'No output right now'):'Standby',cls='';const price=s.gen?s.use:s.use*1.5;
-    if(au>.5&&del>.5){st=`${s.gen?'Curtailing':'Delivering'} ${Math.round(del)} MW + auto ${Math.round(au)} MW`;cls='auto';}
+    if(failed){st=`Not responding until ${fmtT(S.fail[id])}`;cls='failed';}
+    else if(s.gen&&S.allow[id]<=0){st='Curtailment allowance used up for this shift';cls='';}
+    else if(au>.5&&mp>.5){st=`${s.gen?'Curtailing':'Delivering'} ${Math.round(mp)} MW + auto ${Math.round(au)} MW`;cls='auto';}
     else if(au>.5){st=`${s.gen?'Auto-curtailing':'Auto-delivering'} ${Math.round(au)} MW · £${Math.round(au*s.use)}/h`;cls='auto';}
-    else if(del>.5){st=`${s.gen?'Curtailing':'Delivering'} ${Math.round(del)} MW · £${Math.round(del*price)}/h`+(del<man-.5?` (only ${Math.round(av)} MW available)`:'');cls='active';}
+    else if(act>.5){st=`${s.gen?'Curtailing':'Delivering'} ${Math.round(act)} MW · £${Math.round(act*price)}/h`+(act<man-.5?(av<man-.5?` (only ${Math.round(av)} MW available)`:' (ramping up)'):'');cls='active';}
     else if(man>0){st='Instructed, but nothing available right now';cls='active';}
     else if(arm>0){st=s.gen?`Auto-curtail ready up to ${arm} MW · no fee`:`Armed ${arm} MW · £${arm*s.arm}/h availability`;cls='armed';}
-    const c=$('card-'+id);const want='card'+(cls?' '+cls:'');if(c.className!==want)c.className=want;txt('st-'+id,st);
+    setAttr($('card-'+id),'class','card'+(cls?' '+cls:''));txt('st-'+id,st);
     if(s.soc){const p=Math.round(S.soc/SOC_MAX*100);$('soc-'+id).style.width=p+'%';txt('socT-'+id,`${p}% · ${Math.round(S.soc)} MWh`);}
+    if(s.gen){const left=S.allow[id],p=clamp(left/s.allow*100,0,100);$('alwB-'+id).style.width=p.toFixed(1)+'%';txt('alwT-'+id,`${Math.round(left)} of ${s.allow} MWh`);$('alw-'+id).classList.toggle('low',p<30);}
   });
+  const X=S.xf,busy=X.state==='switching'||X.state==='returning';
+  txt('xLeft',String(X.uses));
+  $('xLoad').hidden=X.state!=='idle';$('xGen').hidden=X.state!=='idle';$('xBack').hidden=X.state!=='on';
+  $('xLoad').disabled=$('xGen').disabled=X.uses<=0||S.ended;$('xBack').disabled=S.ended;
+  txt('xState',X.state==='idle'?(X.uses>0?'Interconnector open. Nothing transferred.':'No transfers left this shift.')
+    :X.state==='switching'?`Switching ${XFER[X.kind].name} to Kestrel North. Ready at ${fmtT(X.at)}.`
+    :X.state==='returning'?`Returning ${XFER[X.kind].name}. Back at ${fmtT(X.at)}.`
+    :`${XFER[X.kind].name} is fed from Kestrel North · £${XFER_COST}/h.`);
+  setAttr($('xferCard'),'class','card xfer'+(X.state!=='idle'?' on':'')+(tipActive&&tipActive.el==='xferCard'?' hl':''));
 }
+function doXfer(kind){if(!S||S.ended)return;const X=S.xf;
+  if(kind==='back'){if(X.state!=='on')return;X.state='returning';X.at=S.t+SWITCH_MIN;logE(S.t,`Switching started: returning ${XFER[X.kind].name} to Blackout Canyon, ready ${fmtT(X.at)}.`,'info');}
+  else{if(X.state!=='idle'||X.uses<=0)return;X.kind=kind;X.state='switching';X.at=S.t+SWITCH_MIN;X.uses--;logE(S.t,`Switching started: moving ${XFER[kind].name} to Kestrel North, ready ${fmtT(X.at)}.`,'info');}
+  play('click');renderCards();lastChart=0;}
+
+/* ---------- Sky ---------- */
+let lastSky='';
+const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const mixC=(a,b,f)=>{const A=hex(a),B=hex(b);return'#'+A.map((v,i)=>Math.round(v+(B[i]-v)*f).toString(16).padStart(2,'0')).join('');};
+function skyAt(m){const sc=S.sc,r=sc.solar.start,st=sc.solar.end,h=m/60;
+  const K=[[r-2,'#0c1238','#1c2152'],[r-.6,'#1d2160','#5a3f80'],[r+.3,'#4a5aa6','#f29a62'],[r+1.8,'#4f93dc','#cfe6ff'],[st-1.8,'#4f93dc','#cfe6ff'],[st-.2,'#4a55a0','#f59a5e'],[st+.8,'#252b6a','#6b4a8e'],[st+2,'#0c1238','#1c2152']];
+  let top=K[0][1],bot=K[0][2];
+  if(h>=K[K.length-1][0]){top=K[K.length-1][1];bot=K[K.length-1][2];}
+  else for(let i=1;i<K.length;i++){if(h<=K[i][0]){const f=clamp((h-K[i-1][0])/(K[i][0]-K[i-1][0]),0,1);top=mixC(K[i-1][1],K[i][1],f);bot=mixC(K[i-1][2],K[i][2],f);break;}}
+  const day=h>r&&h<st,grey=sc.solar.cloud>.3&&day?.45:sc.solar.cloud>.15&&day?.2:0;
+  if(grey){top=mixC(top,'#7a8190',grey);bot=mixC(bot,'#aeb4bf',grey);}
+  return{top,bot,day,f:(h-r)/(st-r),cloud:sc.solar.cloud};}
+function renderSky(){const k=S.key+'|'+Math.floor(S.t/3);if(k===lastSky)return;lastSky=k;const s=skyAt(S.t);
+  let body='';
+  if(s.day){const x=8+102*s.f,y=40-30*Math.sin(Math.PI*s.f);body+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9" fill="#ffd54a" opacity=".35"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5.5" fill="#ffe27a"/>`;}
+  else body+=`<circle cx="96" cy="13" r="6" fill="#ecebff"/><circle cx="99" cy="11" r="5.5" fill="${s.top}"/><circle cx="20" cy="10" r=".9" fill="#fff"/><circle cx="44" cy="18" r=".7" fill="#fff"/><circle cx="66" cy="8" r=".8" fill="#fff"/>`;
+  if(s.cloud>.15){const cc=s.cloud>.3?'#c9ced8':'#ffffff',op=s.cloud>.3?.9:.7;body+=`<g fill="${cc}" opacity="${op}"><ellipse cx="34" cy="26" rx="14" ry="6"/><ellipse cx="44" cy="22" rx="9" ry="6"/><ellipse cx="82" cy="32" rx="12" ry="5"/></g>`;
+    if(s.cloud>.3)body+=`<path d="M30 33l-2 6M38 33l-2 6M46 33l-2 6" stroke="#dfe7ff" stroke-width="1.2" opacity=".8"/>`;}
+  $('sky').innerHTML=`<svg viewBox="0 0 118 46" preserveAspectRatio="none"><defs><linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s.top}"/><stop offset="1" stop-color="${s.bot}"/></linearGradient></defs><rect width="118" height="46" fill="url(#skyG)"/>${body}<rect y="42" width="118" height="4" fill="#1b2a1f" opacity=".55"/></svg>`;
+  $('dClock').style.background=`linear-gradient(${s.top},${s.bot})`;}
+
+/* ---------- Tips ---------- */
+const TIPS=[
+  {id:'firm',el:'kFirmBox',when:()=>true,text:'This is firm capacity: how much flow the network can carry if one more transformer trips. Keep the flow inside it, or hold enough automatic cover.'},
+  {id:'ahead',el:'pAhead',when:()=>S.t>=START+4,text:'The look-ahead shows the next 6 hours. The grey band is forecast uncertainty, purple stripes are weather warnings, and red shading means a fault then would lose the site.'},
+  {id:'flex',el:'pFlex',when:()=>S.t>=START+10,text:'Arm flexibility here. Armed MW switch in automatically when a transformer overloads, but slow units take a few minutes to ramp up and any provider can fail to respond. Spread your cover.'},
+  {id:'outage',el:'pSec',when:()=>S.events.some(e=>e.planned&&!e.fired&&e.start-S.t<=60),text:'A planned outage starts within the hour. Firm capacity will drop by 60 MW, so set up cover before it starts.'},
+  {id:'fault',el:'pMimic',when:()=>S.faults>0,text:'A transformer has tripped. If the others go over 100% they run on their emergency rating: up to 120% for 30 minutes, or 120–150% for 3 minutes. Above 150% they trip straight away.'},
+  {id:'switch',el:'xferCard',when:()=>S.t>=START+45,text:'Switching moves part of the network onto Kestrel North. It takes 8 minutes to switch and you get two transfers per shift, so use them for the hard parts of the day.'}
+];
+let tipActive=null;
+function checkTips(){if(!tipsOn||tipActive||!S.running||S.ended||!$('overlay').hidden)return;
+  const t=TIPS.find(x=>!S.tipShown[x.id]&&x.when());if(!t)return;S.tipShown[t.id]=true;tipActive=t;
+  const done=TIPS.filter(x=>S.tipShown[x.id]).length;txt('tipK',`Tip ${done} of ${TIPS.length}`);txt('tipP',t.text);$('tip').hidden=false;
+  const el=$(t.el);if(el){el.classList.add('hl');if(!CMP||t.el!=='kFirmBox')el.scrollIntoView({block:'nearest',behavior:'smooth'});}
+  S.tipPause=!S.paused;S.paused=true;acc=0;}
+function hideTip(){if(tipActive){const el=$(tipActive.el);if(el)el.classList.remove('hl');}tipActive=null;$('tip').hidden=true;}
+function tipOk(){const wasPause=S.tipPause;hideTip();if(TIPS.every(x=>S.tipShown[x.id]))ls('fc-tips','off');if(wasPause&&S.running&&!S.ended&&$('banner').hidden){S.paused=false;acc=0;}}
 
 /* ---------- Render ---------- */
 function renderLog(){if(!logDirty)return;logDirty=false;
   $('log').innerHTML=S.log.length?S.log.map(l=>`<li class="${l.lvl}"><time>${fmtT(l.m)}</time><span>${esc(l.text)}</span></li>`).join(''):'<li class="empty">Nothing yet.</li>';}
+const spendOf=c=>c.arm+c.use+c.short+c.curt+c.xfer;
 function render(force){
   txt('clock',fmtT(S.t));
-  const spend=S.cost.arm+S.cost.use+S.cost.short+S.cost.curt,pen=S.cost.voll+S.cost.gen;
-  txt('kSpend',gbp(spend));txt('kPen',String(S.faults));
-  {const n=S.n,abs=Math.abs(S.net||0);let fv,fs,fc,dt;
+  txt('kSpend',gbp(spendOf(S.cost)));txt('kPen',String(S.faults));
+  {const n=S.n,abs=Math.abs(S.net||0),live=S.tx.filter(t=>!t.out),maxL=live.length?Math.max(...live.map(t=>t.L)):0;let fv,fs,fc,dt;
     if(n>=2){const cap=(n-1)*R,hd=cap-abs;fv=`${Math.round(abs)} / ${cap} MW`;
-      if(hd>=0){fs=`${Math.round(hd)} MW headroom`;fc='ok';dt=`Firm +${Math.round(hd)} MW`;}
-      else{const cov=!(S.sec&&S.sec.insecure);fs=`${Math.round(-hd)} MW over · ${cov?'covered by flex':'not covered'}`;fc=cov?'warn':'bad';dt=`Firm −${Math.round(-hd)} MW`;}}
+      if(hd>=0){fs=`${Math.round(hd)} MW headroom`;fc='ok';dt=`Firm +${Math.round(hd)}`;}
+      else{const cov=!(S.sec&&S.sec.insecure);fs=`${Math.round(-hd)} MW over · ${cov?'covered by flex':'not covered'}`;fc=cov?'warn':'bad';dt=`Firm −${Math.round(-hd)}`;}}
     else if(n===1){fv=`${Math.round(abs)} / 0 MW`;fs='No firm capacity left';fc='bad';dt='No firm cap';}
     else{fv='–';fs='Site off supply';fc='bad';dt='Site lost';}
-    txt('kFirm',fv);txt('kFirmSub',fs);const fb=$('kFirmBox');const want='kpi kpi-firm'+(fc==='ok'?'':' '+fc);if(fb.className!==want)fb.className=want;
-    const dp=$('dPill');const dc='pill '+(fc==='ok'?'ok':fc==='warn'?'warn':'alarm');if(dp.className!==dc)dp.className=dc;txt('dPill',dt);}
+    if(maxL>1){fc='bad';dt=maxL>EMERG?'Trip imminent':`Emerg ${EMERG_MIN-live[0].em}m`;}
+    txt('kFirm',fv);txt('kFirmSub',fs);setAttr($('kFirmBox'),'class','kpi kpi-firm'+(fc==='ok'?'':' '+fc)+(tipActive&&tipActive.el==='kFirmBox'?' hl':''));
+    setAttr($('dPill'),'class','pill '+(fc==='ok'?'ok':fc==='warn'?'warn':'alarm'));txt('dPill',dt);}
   txt('kIns',S.insecureMin+' min');$('kIns').classList.toggle('bad',S.insecureMin>0);
-  renderMimic();renderCards();renderLog();
+  renderMimic();renderCards();renderLog();renderSky();
   const now=performance.now();if(force||now-lastChart>350){lastChart=now;drawChart();}
   renderSec();
   const pl=S.ended?'Shift over':!S.running?'Start':S.paused?'Resume':'Pause';txt('playBtn',pl);txt('dPlay',pl);txt('dClock',fmtT(S.t));
@@ -807,148 +1160,207 @@ let lastRender=0;
 function frame(now){
   const dt=Math.min(.25,(now-lastFrame)/1000);lastFrame=now;
   if(S&&S.running&&!S.paused&&!S.ended){acc+=dt*RATE[speed];while(acc>=1&&!S.paused&&!S.ended){acc-=1;step();}}
-  if(S&&now-lastRender>90){lastRender=now;render(false);}
+  if(S&&now-lastRender>90){lastRender=now;checkTips();render(false);
+    const live=S.tx.filter(t=>!t.out);humTo(S.running&&!S.paused&&!S.ended&&live.length?Math.max(...live.map(t=>t.L)):0);}
   requestAnimationFrame(frame);
 }
 
-/* ---------- Overlays ---------- */
+/* ---------- Start sheet ---------- */
+const BOLT='M7 0 0 8h4l-2 6 7-9H5l2-5z';
+const diffHtml=(d,c)=>`<span class="diff" style="--sc:${c}">${[1,2,3].map(k=>`<svg viewBox="0 0 9 14" aria-hidden="true"><path class="${k<=d?'on':'off'}" d="${BOLT}"/></svg>`).join('')}<em>${['','Easier','Medium','Hardest'][d]}</em></span>`;
 function startSheet(){
-  const sc=Object.entries(SCENARIOS).map(([k,v])=>`<button type="button" class="scn" data-scn="${k}" style="--sc:${v.color}" aria-pressed="${k===chosen}"><span class="f">${v.focus}</span><b>${v.title}</b><span class="d">${v.when}</span><p>${v.blurb}</p></button>`).join('');
+  const date=todayUK();
+  const sc=Object.entries(SCENARIOS).map(([k,v])=>`<button type="button" class="scn" data-scn="${k}" style="--sc:${v.color}" aria-pressed="${k===chosen}"><span class="f">${v.focus}</span><b>${v.title}</b>${diffHtml(v.diff,v.color)}<span class="d">${v.when}</span><p>${v.blurb}</p></button>`).join('');
   $('sheet').innerHTML=`${BAND}<p class="eyebrow">DSO control room · Blackout Canyon 33 kV</p>
   <h2>Keep every transformer inside its rating</h2>
   <ul class="rules">
-    <li>Blackout Canyon is fed from the 132 kV grid through three 60 MVA transformers. Net flow is local demand minus local generation, shared equally between the transformers in service.</li>
-    <li>When generation beats demand, power flows back up to the grid (export). When demand wins, it flows down (import). Either way, keep each transformer under 100%.</li>
-    <li>Faults can hit any circuit at any moment. The others take its share. With three in service, firm capacity (N-1) is 120 MW.</li>
-    <li><b>If a fault leaves the remaining transformers over 100%, protection trips them, Blackout Canyon goes dark and the game is over.</b> Instructions after the fault come too late, so stay inside firm capacity or hold enough automatic cover.</li>
-    <li>Solar and wind run flat out on whatever the sun and wind give, and that costs you nothing. You only pay compensation for the energy you curtail.</li>
-    <li>Set up cover in advance. Auto-curtail on the generators is free to hold ready. The battery, gas engine and demand response charge a small hourly fee per MW. Both switch in automatically the moment a transformer goes over. Dispatching paid services now works instantly but costs 1.5× their utilisation price.</li>
-    <li>Running over rating heats transformers up. At a 140 °C hot-spot, or above 150% load for 3 minutes, protection trips them, and that counts as a loss too.</li>
+    <li>Blackout Canyon is fed from the 132 kV grid through three 60 MVA transformers. Net flow (demand minus local generation) is shared equally between those in service. Keep each under 100%, in either direction.</li>
+    <li>Faults can hit any circuit, and weather warnings make them more likely. <b>Firm capacity</b> is what's left if one more transformer trips: 120 MW with all three in.</li>
+    <li>After a loss the others run on their <b>emergency rating</b>: up to 120% for 30 minutes, 120–150% for 3 minutes, and above 150% they trip at once. If every transformer trips, Blackout Canyon goes dark and the game is over.</li>
+    <li>Solar and wind run flat out for free. Curtailing them costs compensation and uses up their limited allowance.</li>
+    <li>Arm flexibility in advance and it switches in on overload. It ramps up over a few minutes, and any provider can fail to respond, so don't rely on just one. Dispatching paid services straight away costs 1.5×.</li>
+    <li><b>Switching</b> moves part of the network onto Kestrel North: 8 minutes to switch, two transfers per shift.</li>
   </ul>
+  <h3>Mode</h3><div class="modes">
+    <button type="button" class="mode" data-mode="daily" aria-pressed="${mode==='daily'}"><b>Today's challenge · ${esc(fmtDate(date))}</b><span>Same weather and fault times for everyone today, with its own scoreboard. New challenge at midnight.</span></button>
+    <button type="button" class="mode" data-mode="free" aria-pressed="${mode==='free'}"><b>Free play</b><span>Random faults every game. Good for practice.</span></button></div>
   <h3>Choose a day</h3><div class="scns">${sc}</div>
-  <div class="go"><label class="chk"><input type="checkbox" id="ovPause" ${autoPause?'checked':''}> Pause the game when a fault happens</label>
+  <div class="go"><div class="opts"><label class="chk"><input type="checkbox" id="ovPause" ${autoPause?'checked':''}> Pause when a fault happens</label><label class="chk"><input type="checkbox" id="ovTips" ${tipsOn?'checked':''}> Show tips</label></div>
   <span style="display:flex;gap:8px;flex-wrap:wrap"><button id="sheetBoardBtn" type="button" class="btn">Scoreboard</button><button id="startBtn" type="button" class="btn primary big">Start shift at 05:00</button></span></div>
-  <p class="fine">Shift runs 05:00–23:00, about 3½ minutes at 1×. MW and MVA are treated as equal (unity power factor). Forecasts show planned outages but not faults. No faults in the first 20 minutes, so you can set up.</p>`;
+  <p class="fine">Shift runs 05:00–23:00, about 3½ minutes at 1×. MW and MVA are treated as equal. Forecasts show planned outages and weather warnings, but never the faults themselves. No faults in the first 20 minutes, so you can set up.</p>`;
   $('overlay').hidden=false;
 }
-function track(name,params){try{if(typeof window.gtag==='function')window.gtag('event',name,params);}catch(e){}}
+
+/* ---------- End of shift ---------- */
 function computeScore(){
-  const c=S.cost,spend=c.arm+c.use+c.short+c.curt,L=S.lost,surv=(L?L.m:END)-START;
+  const spend=spendOf(S.cost),L=S.lost,surv=(L?L.m:END)-START;
   const parts={surv:surv*10,bonus:L?0:5000,risk:-S.insecureMin*20,spend:-Math.round(spend/10)};
   return{total:Math.max(0,parts.surv+parts.bonus+parts.risk+parts.spend),parts,surv,spend};
 }
 function endShift(){
-  S.ended=true;S.running=false;S.paused=true;hideBanner();
+  S.ended=true;S.running=false;S.paused=true;hideBanner();hideTip();humTo(0);
   const L=S.lost,sc=computeScore();let g='✕',gl='alarm',gd='';
   if(!L){
     if(S.insecureMin===0&&S.overloadMin===0){g='A';gl='ok';gd='Secure for the whole shift. Now try to do it for less.';}
     else if(S.insecureMin<=20){g='B';gl='ok';gd='You kept Blackout Canyon on, with only brief moments at risk.';}
     else if(S.insecureMin<=90){g='C';gl='warn';gd='You kept Blackout Canyon on, but a fault at the wrong moment would have lost it.';}
     else{g='D';gl='warn';gd='You survived, but mostly on luck. Long stretches were at risk.';}
+    play('done');
   }
-  S.final={...sc,grade:L?'Lost':g,gl,gd,result:L?'lost':'complete'};S.submitted=null;S.unlocked=false;
-  const base={scenario:S.key,spend_gbp:Math.round(sc.spend),faults:S.faults,minutes_at_risk:S.insecureMin,score:sc.total};
+  S.final={...sc,grade:L?'Lost':g,gl,gd,result:L?'lost':'complete'};S.submitted=null;S.unlocked=false;S.shareMsg='';
+  const base={scenario:S.key,mode:S.mode,spend_gbp:Math.round(sc.spend),faults:S.faults,minutes_at_risk:S.insecureMin,score:sc.total};
   if(L)track('site_lost',{...base,lost_at:fmtT(L.m)});else track('shift_complete',{...base,grade:g});
   showEnd();
 }
+function drawReplay(){
+  const F=S.full;if(F.length<2)return'';
+  const W=CMP?360:640,H=210,L=CMP?30:38,Rr=10,T=22,B=24,span=END-START;
+  let Y=120;F.forEach(p=>{Y=Math.max(Y,Math.abs(p.net)+10,p.n*R);});Y=Math.min(240,Math.ceil(Y/60)*60);
+  const X=m=>L+(m-START)/span*(W-L-Rr),Yv=v=>T+(Y-clamp(v,-Y,Y))/(2*Y)*(H-T-B);let s='';
+  let run=null;F.forEach((p,i)=>{if(p.ins&&run==null)run=p.m;if(run!=null&&(!p.ins||i===F.length-1)){s+=`<rect class="rp-ins" x="${X(run).toFixed(1)}" y="${T}" width="${Math.max(1,X(p.m)-X(run)).toFixed(1)}" height="${H-T-B}"/>`;run=null;}});
+  for(let v=-Y;v<=Y;v+=60)s+=`<line class="${v?'gl':'g0'}" x1="${L}" x2="${W-Rr}" y1="${Yv(v)}" y2="${Yv(v)}"/><text class="ax" x="${L-5}" y="${Yv(v)+3.5}" text-anchor="end">${Math.abs(v)}</text>`;
+  const tk=CMP?360:180;for(let h=START;h<=END;h+=tk)s+=`<text class="ax" x="${X(h)}" y="${H-8}" text-anchor="middle">${fmtT(h)}</text>`;
+  const step=f=>{let d='';F.forEach((p,i)=>{const x=X(p.m).toFixed(1),y=Yv(f(p.n)).toFixed(1);d+=i?` H${x} V${y}`:`M${x} ${y}`;});return d;};
+  s+=`<path class="capN" d="${step(n=>n*R)}"/><path class="capN" d="${step(n=>-n*R)}"/><path class="capN1" d="${step(n=>Math.max(0,n-1)*R)}"/><path class="capN1" d="${step(n=>-Math.max(0,n-1)*R)}"/>`;
+  s+=`<path class="rp-net" d="${F.map((p,i)=>(i?'L':'M')+X(p.m).toFixed(1)+' '+Yv(p.net).toFixed(1)).join(' ')}"/>`;
+  S.marks.forEach(k=>{const x=X(k.m);
+    if(k.type==='fault'||k.type==='trip')s+=`<path class="rp-f" transform="translate(${(x-4).toFixed(1)} 3)" d="${BOLT}"><title>${esc(fmtT(k.m)+' '+k.label)}</title></path>`;
+    else if(k.type==='flex')s+=`<rect class="rp-flex" x="${(x-3.5).toFixed(1)}" y="${H-B-8}" width="7" height="7" transform="rotate(45 ${x.toFixed(1)} ${H-B-4.5})"><title>${esc(fmtT(k.m)+' armed flex switched in')}</title></rect>`;
+    else if(k.type==='xfer')s+=`<rect class="rp-x" x="${(x-3.5).toFixed(1)}" y="${H-B-8}" width="7" height="7"><title>${esc(fmtT(k.m)+' switching complete')}</title></rect>`;
+    else if(k.type==='fail')s+=`<path class="rp-fail" d="M${(x-4).toFixed(1)} ${H-B-1} l4 -7 l4 7z"><title>${esc(fmtT(k.m)+' '+k.label+' did not respond')}</title></path>`;
+    else if(k.type==='lost'){const last=F[F.length-1],y=Yv(last.net);s+=`<path class="rp-lost" d="M${x-7} ${y-7}l14 14M${x+7} ${y-7}l-14 14"/>`;}});
+  const legend=`<span><i style="border-color:var(--mv)"></i>Net flow</span><span><i style="border-color:var(--warn);border-top-style:dashed"></i>Firm capacity</span><span><i class="box" style="background:var(--alarm);opacity:.3"></i>At risk</span><span style="color:var(--alarm)">⚡ Fault or trip</span><span style="color:var(--c-solar)">◆ Flex switched in</span><span style="color:var(--c-wind)">■ Switching</span><span style="color:var(--c-gas)">▲ No response</span>`;
+  return `<div class="replay"><h3>Your shift</h3><div class="scroll"><svg class="rp" viewBox="0 0 ${W} ${H}" role="img" aria-label="Net flow through the shift against capacity, with faults marked">${s}</svg></div><div class="legend" style="margin-top:6px">${legend}</div>
+    <p class="rp-sum">Peak loading ${Math.round(S.peakL*100)}% · ${S.faults} ${S.faults===1?'fault':'faults'} · ${S.insecureMin} min at risk · ${S.overloadMin} min on emergency rating</p></div>`;
+}
 function showEnd(){
-  const c=S.cost,F=S.final,L=S.lost,n=v=>Math.round(v).toLocaleString('en-GB'),sg=v=>(v<0?'−':'+')+n(Math.abs(v));
+  const c=S.cost,F=S.final,L=S.lost,sg=v=>(v<0?'−':'+')+nf(Math.abs(v));
+  const modeTxt=S.mode==='daily'?`Today's challenge, ${fmtDate(S.date)}`:'Free play';
   const costs=`<table class="sum"><tbody>
     <tr><td>Curtailment compensation (solar, wind)</td><td>${gbp(c.curt)}</td></tr>
     <tr><td>Availability fees (armed flex)</td><td>${gbp(c.arm)}</td></tr>
     <tr><td>Utilisation (auto)</td><td>${gbp(c.use)}</td></tr>
     <tr><td>Short-notice dispatch</td><td>${gbp(c.short)}</td></tr>
-    <tr class="tot"><td>Total spend</td><td>${gbp(F.spend)}</td></tr></tbody></table>
-  <table class="sum" style="margin-top:12px"><tbody>
-    <tr><td>Faults</td><td>${S.faults}</td></tr>
-    <tr><td>Minutes at risk (not N-1 secure)</td><td>${S.insecureMin}</td></tr>
-    <tr><td>Minutes with a transformer over 100%</td><td>${S.overloadMin}</td></tr></tbody></table>`;
-  const score=`<div class="score"><div class="score-big"><small>Score</small><b>${n(F.total)}</b></div>
+    <tr><td>Network switching</td><td>${gbp(c.xfer)}</td></tr>
+    <tr class="tot"><td>Total spend</td><td>${gbp(F.spend)}</td></tr></tbody></table>`;
+  const score=`<div class="score"><div class="score-big"><small>Score</small><b>${nf(F.total)}</b></div>
     <table class="sum"><tbody>
       <tr><td>Time on supply (${F.surv} min × 10)</td><td>${sg(F.parts.surv)}</td></tr>
       <tr><td>Full shift bonus</td><td>${sg(F.parts.bonus)}</td></tr>
       <tr><td>Minutes at risk (${S.insecureMin} × 20)</td><td>${sg(F.parts.risk)}</td></tr>
       <tr><td>Spend (${gbp(F.spend)} ÷ 10)</td><td>${sg(F.parts.spend)}</td></tr></tbody></table></div>
   <div class="submit"><label for="pName">Your name on the scoreboard (required)</label>
-    <div class="sub-row"><input id="pName" maxlength="20" autocomplete="nickname" placeholder="e.g. Sparky Sue" value="${esc(getName())}" ${S.submitted?'disabled':''}>
+    <div class="sub-row"><input id="pName" maxlength="20" autocomplete="nickname" placeholder="e.g. Sparky Sue" value="${esc(ls('fc-name')||'')}" ${S.submitted?'disabled':''}>
     <button id="submitScore" type="button" class="btn primary" ${S.submitted?'disabled':''}>${S.submitted?'Submitted':'Submit score'}</button></div>
-    <p id="submitMsg" class="fine ${S.submitted?'ok':''}">${S.submitted?`Submitted. You're #${S.submitted.rank} of ${S.submitted.total} on ${S.sc.title}.`:''}</p></div>`;
+    <p id="submitMsg" class="fine ${S.submitted?'ok':''}">${S.submitted?`Submitted. You're #${S.submitted.rank} of ${S.submitted.total} on ${S.sc.title}.`:''}</p></div>
+  <div class="share-row"><button type="button" class="btn" id="shareBtn">Share my score</button><p class="fine" id="shareMsg">${esc(S.shareMsg||'')}</p></div>`;
   const lk=S.unlocked?'':' disabled';
   const btns=`<div class="go"><button type="button" class="btn" id="againBtn"${lk}>Choose another day</button><span style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" id="sheetBoardBtn"${lk}>Scoreboard</button><button type="button" class="btn primary big" id="replayBtn"${lk}>${L?'Try again':'Replay '+S.sc.title}</button></span></div>
   <p class="lock-note" id="lockNote" ${S.unlocked?'hidden':''}>Enter your name and submit your score to carry on.</p>
-  <p class="fine">Fault times change each time you play.</p>`;
+  <p class="fine">${S.mode==='daily'?"Today's challenge keeps the same faults if you try again. Free play changes them every game.":'Fault times change each time you play.'}</p>`;
+  const last=L&&L.last?` When the last transformers tripped, ${Math.round(L.last.flow)} MW was flowing through ${L.last.cap} MW of transformer rating.`:'';
   const head=L?`<h2>Blackout Canyon lost at ${fmtT(L.m)}</h2>
-    <div class="grade"><span class="lt alarm">✕</span><p style="margin:0;max-width:48ch">After ${esc(L.why)}, ${L.n?`the net flow of <b>${Math.round(L.flow)} MW</b> was more than the <b>${L.cap} MW</b> the remaining ${L.n===1?'transformer':'transformers'} could carry. Protection tripped ${L.n===1?'it':'them'} and every customer on Blackout Canyon lost supply.`:'there were no transformers left in service and every customer on Blackout Canyon lost supply.'}</p></div>
-    <p style="margin:0 0 14px">You held on for ${Math.floor((L.m-START)/60)} h ${(L.m-START)%60} min. To survive, keep the flow inside firm capacity, or hold enough auto-curtail and armed flex to cover the gap.</p>`
+    <div class="grade"><span class="lt alarm">✕</span><p style="margin:0;max-width:52ch">After ${esc(L.why)}, no transformers were left in service and every customer on Blackout Canyon lost supply.${esc(last)}</p></div>
+    <p style="margin:0 0 14px">You held on for ${Math.floor((L.m-START)/60)} h ${(L.m-START)%60} min. To survive, keep the flow inside firm capacity, or hold enough fast cover from more than one provider.</p>`
    :`<h2>Shift complete</h2>
     <div class="grade"><span class="lt ${F.gl}">${F.grade}</span><p style="margin:0;max-width:44ch">${F.gd}</p></div>`;
-  $('sheet').innerHTML=`${BAND}<p class="eyebrow">${S.sc.title}, ${S.sc.when}</p>${head}${score}${costs}${btns}`;
+  $('sheet').innerHTML=`${BAND}<p class="eyebrow">${esc(S.sc.title)}, ${esc(S.sc.when)} · ${esc(modeTxt)}</p>${head}${drawReplay()}${score}${costs}${btns}`;
   $('overlay').hidden=false;
 }
 function unlockEnd(){S.unlocked=true;['againBtn','sheetBoardBtn','replayBtn'].forEach(i=>{const b=$(i);if(b)b.disabled=false;});const n=$('lockNote');if(n)n.hidden=true;}
 function setMsg(t,cls){const m=$('submitMsg');if(m){m.textContent=t;m.className='fine '+(cls||'');}}
+const modeKey=()=>S.mode==='daily'?'daily-'+S.date:'free';
 async function submitScore(){
   const inp=$('pName'),btn=$('submitScore');if(!inp||S.submitted)return;
-  const nm=inp.value.trim().slice(0,20);if(!nm){setMsg('Enter a name first.','err');inp.focus();return;}
-  saveName(nm);
-  if(!SCORE_URL){setMsg("The shared scoreboard isn't switched on yet.",'err');unlockEnd();return;}
+  const nm=inp.value.trim().replace(/\s+/g,' ').slice(0,20);if(!nm){setMsg('Enter a name first.','err');inp.focus();return;}
+  if(rude(nm)){setMsg('Please choose a different name.','err');inp.focus();return;}
+  ls('fc-name',nm);
   const F=S.final;btn.disabled=true;setMsg('Sending…');
   try{
-    const r=await fetch(SCORE_URL,{method:'POST',body:JSON.stringify({name:nm,day:S.key,result:F.result,survived:F.surv,spend:Math.round(F.spend),faults:S.faults,risk:S.insecureMin,grade:F.grade})});
-    const j=await r.json();if(!j.ok)throw new Error(j.error||'rejected');
-    S.submitted={rank:j.rank,total:j.total};lastSubmit={name:j.name||nm,score:j.score,day:S.key};
-    track('score_submitted',{scenario:S.key,score:j.score});
+    const r=await fetch(SCORE_URL,{method:'POST',body:JSON.stringify({name:nm,day:S.key,mode:modeKey(),result:F.result,survived:F.surv,spend:Math.round(F.spend),faults:S.faults,risk:S.insecureMin,grade:F.grade})});
+    const j=await r.json();if(!j.ok){if(j.error==='name'){btn.disabled=false;setMsg('Please choose a different name.','err');return;}throw new Error(j.error||'rejected');}
+    S.submitted={rank:j.rank,total:j.total};lastSubmit={name:j.name||nm,score:j.score,day:S.key,mode:S.mode};
+    track('score_submitted',{scenario:S.key,mode:S.mode,score:j.score});
     inp.disabled=true;btn.textContent='Submitted';setMsg(`Submitted. You're #${j.rank} of ${j.total} on ${S.sc.title}.`,'ok');unlockEnd();
   }catch(e){btn.disabled=false;setMsg("Couldn't reach the scoreboard, so your score wasn't saved. Try again, or carry on without it.",'err');unlockEnd();}
 }
+async function shareScore(){
+  const F=S.final,t=`I scored ${nf(F.total)} on Firm Capacity (${S.sc.title}${S.mode==='daily'?", today's challenge":''}) for Shocking Steve Electricity${S.lost?'':' and kept Blackout Canyon on all shift'}. Can you beat it?`;
+  const msg=v=>{S.shareMsg=v;txt('shareMsg',v);};
+  try{if(navigator.share){await navigator.share({title:'Firm Capacity',text:t,url:SITE_URL});msg('Shared.');track('share',{method:'native'});return;}}catch(e){if(e&&e.name==='AbortError')return;}
+  try{await navigator.clipboard.writeText(t+' '+SITE_URL);msg('Copied. Paste it into a message or post.');track('share',{method:'copy'});return;}catch(e){}
+  const row=$('shareBtn').parentNode;if(!$('shareTxt')){const ta=document.createElement('textarea');ta.id='shareTxt';ta.className='share-txt';ta.rows=3;ta.readOnly=true;ta.value=t+' '+SITE_URL;row.appendChild(ta);}
+  $('shareTxt').select();msg('Copy this text to share it.');
+}
+
+/* ---------- Scoreboard ---------- */
 function showBoard(day){
   boardDay=day||boardDay;
   const tabs=Object.entries(SCENARIOS).map(([k,v])=>`<button type="button" data-board="${k}" style="--sc:${v.color}" aria-pressed="${k===boardDay}">${v.title}</button>`).join('');
   $('sheet').innerHTML=`${BAND}<p class="eyebrow">Scoreboard</p><h2>Top control engineers</h2>
+    <div class="board-modes" role="group" aria-label="Mode"><button type="button" data-bmode="daily" aria-pressed="${boardMode==='daily'}">Today's challenge · ${esc(fmtDate(todayUK()))}</button><button type="button" data-bmode="free" aria-pressed="${boardMode==='free'}">Free play</button></div>
     <div class="board-tabs" role="group" aria-label="Day">${tabs}</div>
     <div class="board" id="boardList"></div>
     <div class="go"><span></span><button type="button" class="btn primary" id="boardBack">Back</button></div>
-    <p class="fine">Score = 10 per minute on supply, 5,000 for finishing the shift, minus 20 per minute at risk and 1 per £10 spent.</p>`;
-  $('overlay').hidden=false;loadBoard(boardDay);
+    <p class="fine">Each player's best score. Score = 10 per minute on supply, 5,000 for finishing the shift, minus 20 per minute at risk and 1 per £10 spent.</p>`;
+  $('overlay').hidden=false;loadBoard();
 }
-async function loadBoard(day){
-  const el=$('boardList');if(!el)return;
-  if(!SCORE_URL){el.innerHTML="<p class=\"empty\">The shared scoreboard isn't switched on yet.</p>";return;}
+async function loadBoard(){
+  const el=$('boardList'),day=boardDay,bm=boardMode;if(!el)return;
   el.innerHTML='<p class="empty">Loading scores…</p>';
+  const mk=bm==='daily'?'daily-'+todayUK():'free';
   try{
-    const r=await fetch(SCORE_URL+'?day='+encodeURIComponent(day));const j=await r.json();
-    if(boardDay!==day||!$('boardList'))return;if(!j.ok)throw new Error('bad');
-    if(!j.scores.length){el.innerHTML='<p class="empty">No scores for this day yet. Be the first.</p>';return;}
+    const r=await fetch(SCORE_URL+'?day='+encodeURIComponent(day)+'&mode='+encodeURIComponent(mk));const j=await r.json();
+    if(boardDay!==day||boardMode!==bm||!$('boardList'))return;if(!j.ok)throw new Error('bad');
+    if(bm==='daily'&&j.version!==2){el.innerHTML="<p class=\"empty\">Daily scoreboards are coming soon. Daily scores are counted on the free play board for now.</p>";return;}
+    let rows=j.scores;if(j.version!==2){const seen=new Set();rows=rows.filter(x=>{const k=String(x.name).toLowerCase();if(seen.has(k))return false;seen.add(k);return true;});}
+    if(!rows.length){el.innerHTML=`<p class="empty">No scores for ${bm==='daily'?"today's challenge":'this day'} yet. Be the first.</p>`;return;}
     el.innerHTML=`<table class="board-t"><thead><tr><th>#</th><th>Name</th><th>Score</th><th>Result</th><th>Grade</th></tr></thead><tbody>${
-      j.scores.slice(0,20).map((x,i)=>`<tr class="${i<3?'top':''}${lastSubmit&&lastSubmit.day===day&&x.name===lastSubmit.name&&x.score===lastSubmit.score?' me':''}"><td>${i+1}</td><td class="nm">${esc(x.name)}</td><td>${Number(x.score).toLocaleString('en-GB')}</td><td>${x.result==='complete'?'Full shift':'Lost at '+fmtT(START+Number(x.survived))}</td><td>${esc(x.grade)}</td></tr>`).join('')}</tbody></table>`;
+      rows.slice(0,20).map((x,i)=>`<tr class="${i<3?'top':''}${lastSubmit&&lastSubmit.day===day&&lastSubmit.mode===bm&&x.name===lastSubmit.name?' me':''}"><td>${i+1}</td><td class="nm">${esc(x.name)}</td><td>${Number(x.score).toLocaleString('en-GB')}</td><td>${x.result==='complete'?'Full shift':'Lost at '+fmtT(START+Number(x.survived))}</td><td>${esc(x.grade)}</td></tr>`).join('')}</tbody></table>`;
   }catch(e){if($('boardList'))el.innerHTML="<p class=\"empty\">Couldn't load the scoreboard. Check your connection and try again.</p>";}
 }
 
+/* ---------- Panels (phones) ---------- */
+let collapsed={};try{collapsed=JSON.parse(ls('fc-col')||'null')||{pLog:true};}catch(e){collapsed={pLog:true};}
+function applyCollapsed(){Object.keys(collapsed).forEach(id=>{const p=$(id);if(p)p.classList.toggle('collapsed',!!collapsed[id]);});}
+
 /* ---------- Events ---------- */
+function begin(){$('overlay').hidden=true;S.running=true;S.paused=false;acc=0;audio();track('shift_start',{scenario:S.key,mode:S.mode});render(true);}
 document.addEventListener('click',e=>{
   const st=e.target.closest('[data-f]');if(st){adjust(st.dataset.f,st.dataset.id,+st.dataset.d);return;}
-  const sc=e.target.closest('[data-scn]');if(sc){chosen=sc.dataset.scn;document.querySelectorAll('[data-scn]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.scn===chosen));newGame(chosen);return;}
+  const sc=e.target.closest('[data-scn]');if(sc){chosen=sc.dataset.scn;ls('fc-day',chosen);document.querySelectorAll('[data-scn]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.scn===chosen));newGame(chosen);return;}
+  const md=e.target.closest('[data-mode]');if(md){mode=md.dataset.mode;ls('fc-mode',mode);document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===mode));newGame(chosen);return;}
   const sp=e.target.closest('[data-speed]');if(sp){speed=+sp.dataset.speed;document.querySelectorAll('[data-speed]').forEach(b=>b.setAttribute('aria-pressed',b===sp));txt('dSpeed',speed+'×');return;}
   const tb=e.target.closest('button[data-tab]');if(tb){$('groups').dataset.tab=tb.dataset.tab;document.querySelectorAll('button[data-tab]').forEach(b=>b.setAttribute('aria-selected',b===tb));return;}
-  const bb=e.target.closest('[data-board]');if(bb){boardDay=bb.dataset.board;document.querySelectorAll('[data-board]').forEach(b=>b.setAttribute('aria-pressed',b===bb));loadBoard(boardDay);return;}
-  const id=e.target.id;
-  if(id==='boardBtn'||id==='sheetBoardBtn'){if(S.running&&!S.ended){S.paused=true;acc=0;}boardFrom=S.ended?'end':$('overlay').hidden?'game':'start';showBoard(S.key);return;}
+  const bb=e.target.closest('[data-board]');if(bb){boardDay=bb.dataset.board;document.querySelectorAll('[data-board]').forEach(b=>b.setAttribute('aria-pressed',b===bb));loadBoard();return;}
+  const bmo=e.target.closest('[data-bmode]');if(bmo){boardMode=bmo.dataset.bmode;document.querySelectorAll('[data-bmode]').forEach(b=>b.setAttribute('aria-pressed',b===bmo));loadBoard();return;}
+  const tg=e.target.closest('[data-tog]');if(tg){const id=tg.dataset.tog;collapsed[id]=!collapsed[id];ls('fc-col',JSON.stringify(collapsed));applyCollapsed();return;}
+  const btn=e.target.closest('button');const id=btn?btn.id:'';
+  if(id==='muteBtn'||id==='dMute'){setSound(!SND.on);return;}
+  if(id==='xLoad'){doXfer('load');return;}if(id==='xGen'){doXfer('gen');return;}if(id==='xBack'){doXfer('back');return;}
+  if(id==='tipOk'){tipOk();return;}
+  if(id==='tipSkip'){tipsOn=false;ls('fc-tips','off');tipOk();return;}
+  if(id==='cookieYes'){setConsent(true);return;}if(id==='cookieNo'){setConsent(false);return;}if(id==='cookieSettings'){$('cookie').hidden=false;return;}
+  if(id==='shareBtn'){shareScore();return;}
+  if(id==='boardBtn'||id==='sheetBoardBtn'){if(S.running&&!S.ended){S.paused=true;acc=0;}boardFrom=S.ended?'end':$('overlay').hidden?'game':'start';boardMode=S.mode;showBoard(S.key);return;}
   if(id==='boardBack'){if(boardFrom==='end'&&S.ended)showEnd();else if(boardFrom==='game'){$('overlay').hidden=true;render(true);}else startSheet();return;}
   if(id==='submitScore'){submitScore();return;}
   if(id==='dSpeed'){speed=speed===1?2:speed===2?4:1;document.querySelectorAll('[data-speed]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.speed===speed));txt('dSpeed',speed+'×');return;}
   if(id==='dPlay'){$('playBtn').click();return;}
-  if(id==='startBtn'){autoPause=$('ovPause').checked;$('autoPause').checked=autoPause;if(S.key!==chosen||S.t!==START)newGame(chosen);$('overlay').hidden=true;S.running=true;S.paused=false;acc=0;track('shift_start',{scenario:S.key});render(true);}
-  if(id==='replayBtn'){newGame(S.key);$('overlay').hidden=true;S.running=true;S.paused=false;acc=0;track('shift_start',{scenario:S.key});render(true);}
-  if(id==='againBtn'||id==='newBtn'){if(S.running){S.paused=true;}newGame(chosen);startSheet();}
-  if(id==='playBtn'){if(S.ended)return;if(!S.running){$('overlay').hidden=true;S.running=true;S.paused=false;track('shift_start',{scenario:S.key});}else{S.paused=!S.paused;if(!S.paused)hideBanner();}acc=0;render(true);}
-  if(id==='resumeBtn'){S.paused=false;acc=0;hideBanner();render(true);}
-  if(id==='dismissBtn'){hideBanner();}
+  if(id==='startBtn'){autoPause=$('ovPause').checked;$('autoPause').checked=autoPause;tipsOn=$('ovTips').checked;ls('fc-tips',tipsOn?'on':'off');if(S.key!==chosen||S.t!==START||S.mode!==mode)newGame(chosen);begin();return;}
+  if(id==='replayBtn'){newGame(S.key);begin();return;}
+  if(id==='againBtn'||id==='newBtn'){if(S.running){S.paused=true;}hideTip();newGame(chosen);startSheet();return;}
+  if(id==='playBtn'){if(S.ended)return;if(!S.running){begin();}else{S.paused=!S.paused;if(!S.paused){hideBanner();if(tipActive)hideTip();}acc=0;render(true);}return;}
+  if(id==='resumeBtn'){S.paused=false;acc=0;hideBanner();render(true);return;}
+  if(id==='dismissBtn'){hideBanner();return;}
 });
 $('autoPause').addEventListener('change',e=>autoPause=e.target.checked);
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.id==='pName'){e.preventDefault();submitScore();return;}if(e.code==='Space'&&$('overlay').hidden&&!/INPUT|BUTTON/.test(document.activeElement.tagName)){e.preventDefault();$('playBtn').click();}});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.id==='pName'){e.preventDefault();submitScore();return;}if(e.code==='Space'&&$('overlay').hidden&&!/INPUT|BUTTON|TEXTAREA/.test(document.activeElement.tagName)){e.preventDefault();$('playBtn').click();}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)humTo(0);});
 
 MQ.addEventListener('change',()=>{CMP=MQ.matches;buildMimic();if(S)render(true);});
-buildMimic();newGame(chosen);startSheet();requestAnimationFrame(frame);
+setSound(SND.on);applyCollapsed();buildMimic();newGame(chosen);startSheet();initConsent();requestAnimationFrame(frame);
+
 })();
 </script>
 </body>
