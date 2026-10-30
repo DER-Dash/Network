@@ -1,5 +1,7 @@
 /**
- * Firm Capacity scoreboard (Shocking Steve Electricity), version 2.
+ * Firm Capacity scoreboard (Shocking Steve Electricity), version 3.
+ * Serves both games: the generation game (game 'fc', the default) and the
+ * control room switching game (game 'cr', modes prefixed 'cr-').
  * Google Apps Script web app that stores scores in this spreadsheet.
  *
  * GET  ?day=may|jan|storm&mode=free|daily-YYYY-MM-DD
@@ -11,12 +13,13 @@
  * formula as the game, so the sheet never trusts a score sent by the browser.
  * Rows saved before version 2 have no mode and count as free play.
  */
-const VERSION = 2;
+const VERSION = 3;
 const SHEET_NAME = 'Scores';
 const DAYS = ['may', 'jan', 'storm'];
+const CR_DAYS = ['jan', 'storm', 'grid', 'mesh'];
 const SHIFT_MINUTES = 1080; // 05:00 to 23:00
 const HEADERS = ['Submitted', 'Name', 'Day', 'Score', 'Result', 'Minutes on supply',
-  'Spend (£)', 'Faults', 'Minutes at risk', 'Grade', 'Mode'];
+  'Spend (£)', 'Faults', 'Minutes at risk', 'Grade', 'Mode', 'Customers off (MW·min)', 'Switching incidents'];
 
 // Name filter, kept in ROT13 so the word list isn't plain text in the code.
 const r13_ = s => s.replace(/[a-z]/g, c => String.fromCharCode((c.charCodeAt(0) - 84) % 26 + 97));
@@ -56,7 +59,10 @@ function rows_() {
   return sh.getRange(2, 1, sh.getLastRow() - 1, HEADERS.length).getValues();
 }
 
-function modeOk_(mode) {
+function modeOk_(mode, game) {
+  const pre = game === 'cr' ? 'cr-' : '';
+  if (mode.indexOf(pre) !== 0) return false;
+  mode = mode.slice(pre.length);
   if (mode === 'free') return true;
   const m = /^daily-(\d{4})-(\d{2})-(\d{2})$/.exec(mode);
   if (!m) return false;
@@ -84,7 +90,7 @@ function best_(rows, day, mode) {
 function doGet(e) {
   const p = (e && e.parameter) || {};
   const day = String(p.day || 'may');
-  const mode = String(p.mode || 'free');
+  const mode = String(p.mode || (p.game === 'cr' ? 'cr-free' : 'free'));
   return json_({ ok: true, version: VERSION, scores: best_(rows_(), day, mode).slice(0, 50) });
 }
 
@@ -97,8 +103,12 @@ function doPost(e) {
     // names starting with "=" being treated as spreadsheet formulas.
     const name = String(d.name || '').replace(/[^\p{L}\p{N} '_.-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 20);
     if (name && rude_(name)) return json_({ ok: false, error: 'name' });
-    const day = DAYS.indexOf(d.day) >= 0 ? d.day : null;
-    const mode = modeOk_(String(d.mode || 'free')) ? String(d.mode || 'free') : null;
+    const game = d.game === 'cr' ? 'cr' : 'fc';
+    const day = (game === 'cr' ? CR_DAYS : DAYS).indexOf(d.day) >= 0 ? d.day : null;
+    const rawMode = String(d.mode || (game === 'cr' ? 'cr-free' : 'free'));
+    const mode = modeOk_(rawMode, game) ? rawMode : null;
+    const ens = game === 'cr' ? Math.round(Number(d.ens)) : 0;
+    const incidents = game === 'cr' ? Math.round(Number(d.incidents)) : 0;
     const survived = Math.round(Number(d.survived));
     const spend = Math.round(Number(d.spend));
     const faults = Math.round(Number(d.faults));
@@ -111,12 +121,13 @@ function doPost(e) {
       (!complete || survived === SHIFT_MINUTES) &&
       risk >= 0 && risk <= survived &&
       spend >= 0 && spend < 10000000 &&
-      faults >= 0 && faults <= 50 && grade !== '';
+      faults >= 0 && faults <= 50 && grade !== '' &&
+      ens >= 0 && ens < 1000000 && incidents >= 0 && incidents <= 50;
     if (!valid) return json_({ ok: false, error: 'Invalid score' });
 
-    const score = Math.max(0, survived * 10 + (complete ? 5000 : 0) - risk * 20 - Math.round(spend / 10));
+    const score = Math.max(0, survived * 10 + (complete ? 5000 : 0) - risk * 20 - Math.round(spend / 10) - ens - incidents * 500);
     sheet_().appendRow([new Date(), name, day, score, complete ? 'complete' : 'lost',
-      survived, spend, faults, risk, grade, mode]);
+      survived, spend, faults, risk, grade, mode, game === 'cr' ? ens : '', game === 'cr' ? incidents : '']);
 
     const board = best_(rows_(), day, mode);
     const others = board.filter(x => x.name.toLowerCase() !== name.toLowerCase());

@@ -574,7 +574,7 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
     </div>
   </section>
 </main>
-<footer class="foot"><span>Shocking Steve Electricity, Blackout Canyon and every site in this game are made up.</span><button type="button" class="linkish" id="cookieSettings" hidden>Cookie settings</button></footer>
+<footer class="foot"><span>Shocking Steve Electricity, Blackout Canyon and every site in this game are made up.</span><a id="otherGame" href="control-room/" hidden>Try the control room switching game</a><button type="button" class="linkish" id="cookieSettings" hidden>Cookie settings</button></footer>
 
 <nav class="dock" aria-label="Game controls"><b id="dClock">05:00</b><span id="dPill" class="pill ok">N-1 secure</span><button id="dMute" type="button" class="btn icon-btn" aria-label="Sound on"></button><button id="dSpeed" type="button" class="btn" aria-label="Change speed">1×</button><button id="dPlay" type="button" class="btn primary">Start</button></nav>
 
@@ -702,7 +702,7 @@ const GA=window.FC_GA||null;
 function loadGA(){if(!GA||window.__gaLoaded)return;window.__gaLoaded=true;window['ga-disable-'+GA]=false;window.dataLayer=window.dataLayer||[];window.gtag=function(){window.dataLayer.push(arguments);};
   window.gtag('js',new Date());window.gtag('config',GA);const s=document.createElement('script');s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id='+GA;document.head.appendChild(s);}
 function track(name,params){try{if(GA&&ls('fc-consent')==='yes'&&typeof window.gtag==='function')window.gtag('event',name,params);}catch(e){}}
-function initConsent(){if(!GA)return;$('cookieSettings').hidden=false;const c=ls('fc-consent');if(c==='yes')loadGA();else if(c!=='no')$('cookie').hidden=false;}
+function initConsent(){if(!GA)return;$('cookieSettings').hidden=false;$('otherGame').hidden=false;const c=ls('fc-consent');if(c==='yes')loadGA();else if(c!=='no')$('cookie').hidden=false;}
 function setConsent(yes){ls('fc-consent',yes?'yes':'no');$('cookie').hidden=true;if(yes)loadGA();else{window['ga-disable-'+GA]=true;
   document.cookie.split(';').map(c=>c.split('=')[0].trim()).filter(n=>/^_ga/.test(n)).forEach(n=>{document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.'+location.hostname;});}}
 
@@ -1312,8 +1312,8 @@ async function loadBoard(){
   try{
     const r=await fetch(SCORE_URL+'?day='+encodeURIComponent(day)+'&mode='+encodeURIComponent(mk));const j=await r.json();
     if(boardDay!==day||boardMode!==bm||!$('boardList'))return;if(!j.ok)throw new Error('bad');
-    if(bm==='daily'&&j.version!==2){el.innerHTML="<p class=\"empty\">Daily scoreboards are coming soon. Daily scores are counted on the free play board for now.</p>";return;}
-    let rows=j.scores;if(j.version!==2){const seen=new Set();rows=rows.filter(x=>{const k=String(x.name).toLowerCase();if(seen.has(k))return false;seen.add(k);return true;});}
+    if(bm==='daily'&&!(j.version>=2)){el.innerHTML="<p class=\"empty\">Daily scoreboards are coming soon. Daily scores are counted on the free play board for now.</p>";return;}
+    let rows=j.scores;if(!(j.version>=2)){const seen=new Set();rows=rows.filter(x=>{const k=String(x.name).toLowerCase();if(seen.has(k))return false;seen.add(k);return true;});}
     if(!rows.length){el.innerHTML=`<p class="empty">No scores for ${bm==='daily'?"today's challenge":'this day'} yet. Be the first.</p>`;return;}
     el.innerHTML=`<table class="board-t"><thead><tr><th>#</th><th>Name</th><th>Score</th><th>Result</th><th>Grade</th></tr></thead><tbody>${
       rows.slice(0,20).map((x,i)=>`<tr class="${i<3?'top':''}${lastSubmit&&lastSubmit.day===day&&lastSubmit.mode===bm&&x.name===lastSubmit.name?' me':''}"><td>${i+1}</td><td class="nm">${esc(x.name)}</td><td>${Number(x.score).toLocaleString('en-GB')}</td><td>${x.result==='complete'?'Full shift':'Lost at '+fmtT(START+Number(x.survived))}</td><td>${esc(x.grade)}</td></tr>`).join('')}</tbody></table>`;

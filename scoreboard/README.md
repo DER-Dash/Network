@@ -32,3 +32,14 @@ shows each player's best score only, and rejects rude names. To switch it on:
 
 Until this is done, the game still works: daily scores go on the free play
 board and the daily board shows "coming soon".
+
+## Updating to version 3 (control room game)
+
+Version 3 adds scoreboards for the control room switching game at
+`/control-room/`, alongside the generation game. It stores two extra
+columns: customers off (MW·min) and switching incidents.
+
+Update it the same way: paste the new `Code.gs` into Apps Script, save, then
+**Deploy → Manage deployments → Edit (pencil) → Version: New version →
+Deploy**. Until then, the control room game shows its scoreboard as "coming
+soon" and players can still carry on after a shift.
