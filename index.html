@@ -1019,7 +1019,7 @@ const wBC=k=>k==='bc'?1:k==='par'?.5:0;
 function genFaults(rng,sc,risk){
   const mult=m=>{let k=1;risk.forEach(w=>{if(m>=w.start&&m<w.end)k=Math.max(k,w.mult);});return k;};
   let integ=0;for(let m=START+20;m<END;m++)integ+=mult(m);
-  const comps=['tx:0','tx:1','tx:2',...PIDS.filter(p=>PR[p].fd).map(p=>'fd:'+p),...ITIDS.filter(k=>ITS[k].nc).map(k=>'ic:'+k)],base=sc.faults/(comps.length*integ),out=[];
+  const comps=GAME==='fc'?['tx:0','tx:1','tx:2']:['tx:0','tx:1','tx:2',...PIDS.filter(p=>PR[p].fd).map(p=>'fd:'+p),...ITIDS.filter(k=>ITS[k].nc).map(k=>'ic:'+k)],base=sc.faults/(comps.length*integ),out=[];
   comps.forEach(k=>{for(let m=START+20;m<END;m++){if(rng()<base*mult(m)){const dur=Math.round(90+rng()*150);out.push({k,m,dur,cause:pick(rng,sc.causes||FAULTS),done:false});m+=dur;}}});
   return out.sort((a,b)=>a.m-b.m);
 }
@@ -1093,6 +1093,7 @@ const elOf=id=>{const[t,k]=id.split(':');return t==='bs'?'bsg_'+k:t==='bc'||t===
 function step(){
   const m=S.t;
   S.tx.forEach((t,i)=>{if(t.out&&!t.out.ready&&m>=t.out.until){t.out.ready=true;
+    if(GAME==='fc'){t.out=null;t.em=0;t.sh=0;mark(m,'xfer',`T${i+1} restored`);const msg=`T${i+1} is back in service.`;logE(m,msg,'ok');queueAlert(msg,'ok',false);play('ok');return;}
     const msg=t.out.kind==='planned'?`T${i+1} maintenance is finished. Close the T${i+1} breaker to put it back in service.`:t.out.kind==='trip'?`T${i+1} has been inspected after its trip. Close the T${i+1} breaker to put it back in service.`:`T${i+1} has been repaired. Close the T${i+1} breaker to put it back in service.`;
     logE(m,msg,'ok');queueAlert(msg,'ok',false);play('ok');}});
   ITIDS.forEach(k=>{const f=S.it[k];if(f.fault&&!f.fault.ready&&m>=f.fault.until){f.fault.ready=true;const msg=`The ${devName('it:'+k)} has been repaired. It can be closed again.`;logE(m,msg,'ok');queueAlert(msg,'ok',false);play('ok');}});
@@ -1169,7 +1170,7 @@ function step(){
   // circuit ratings
   S.spare={kn:spareOf('kn',m),fm:spareOf('fm',m)};const edL={};
   sol.E.forEach(e=>{let L=Math.abs(sol.flows[e.id]||0)/e.r;if(e.id.startsWith('tie:')){const nb=PR[e.id.slice(4)].nb;L=Math.max(L,Math.abs(sol.inj[nb])/Math.max(1,S.spare[nb]));}edL[e.id]=L;
-    S.ov[e.id]=L>1.0001?(S.ov[e.id]||0)+1:0;
+    S.ov[e.id]=GAME==='cr'&&L>1.0001?(S.ov[e.id]||0)+1:0;
     if(S.ov[e.id]>=OV_MIN&&!S.silent){S.ov[e.id]=0;openEdge(e.id);S.trips++;S.chain.push(`the ${devName(e.id)} tripping`);mark(m,'trip',devName(e.id)+' trip');
       const why=e.id.startsWith('tie:')?`${NBS[PR[e.id.slice(4)].nb].name} ran out of spare capacity or the tie was over its ${e.r} MW rating`:`it was over its ${e.r} MW rating`;
       const s=`Overload trip: the ${devName(e.id)} opened because ${why}.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);play('trip');fx(elOf(e.id));}});
@@ -1244,7 +1245,7 @@ function opLabel(k,act){const[type,id]=k.split(':');
   if(type==='bs')return `${act==='close'?'Close':'Open'} the ${devName(k)}`;
   if(type==='tie')return `${act==='close'?'Close':'Open'} ${NBS[PR[id].nb].name} tie to ${PR[id].name}`;
   return `${act==='close'?'Close':'Open'} ${PR[ITS[id].a].name} – ${PR[ITS[id].b].name} interconnector`;}
-function issueOp(k,act){if(!S||S.ended)return;
+function issueOp(k,act){if(!S||S.ended||GAME==='fc')return;
   if(S.op){showBanner({m:S.t,text:`Wait for the current operation (${opLabel(S.op.k,S.op.act).toLowerCase()}) to finish.`,lvl:'warn'},'Each operation takes one minute.');return;}
   S.op={k,act,at:S.t+1};logE(S.t,`Operating: ${opLabel(k,act).toLowerCase()}.`,'info');play('click');lastInsp='';render(true);}
 function doOp(op,m){const[type,id]=op.k.split(':');play('op');
@@ -1293,10 +1294,10 @@ function guidance(){
   const off=PIDS.filter(p=>S.sup[p]==='off');
   if(off.length){const p=off[0];return `${PR[p].name} is off supply. Restore it through ${PR[p].fd?'its Blackout Canyon breaker, ':''}${PR[p].nb?'the '+NBS[PR[p].nb].name+' tie or ':''}an interconnector, if that route is healthy.`;}
   const over=Object.keys(S.edL).filter(k=>S.edL[k]>1);
-  if(over.length){const k=over[0];return `The ${devName(k)} is overloaded and trips in ${OV_MIN-(S.ov[k]||0)} min. Move some load off it.`;}
+  if(over.length){const k=over[0];return `The ${devName(k)} is overloaded and trips in ${OV_MIN-(S.ov[k]||0)} min. ${GAME==='fc'?'Change the generation or flexibility on it.':'Move some load off it.'}`;}
   const wi=worstIsl();if(!wi)return 'Blackout Canyon has no transformers in service. Only substations fed from a neighbour have supply.';
   const pct=Math.round(wi.L*100),dirCut=wi.inj>0?'Cut import':'Cut export',need=Math.ceil(Math.abs(wi.inj)-wi.k*R),t=S.tx[wi.txs[0]];
-  const autoTot=SERVICES.reduce((a,s)=>a+S.autoP[s.id],0),how=NOGEN()?'Move a substation onto a neighbour':'or move a substation onto a neighbour';
+  const autoTot=SERVICES.reduce((a,s)=>a+S.autoP[s.id],0),how=NOGEN()?'Move a substation onto a neighbour':GAME==='fc'?'using generation and flexibility':'or move a substation onto a neighbour';
   if(pct>120)return `Transformers at ${pct}%, above the 120% emergency rating. Protection trips in ${SHORT_MIN-t.sh} min. ${NOGEN()?how+' now: at least '+need+' MW.':dirCut+' by at least '+need+' MW now, '+how+'.'}`;
   if(pct>100)return `Transformers at ${pct}% on their emergency rating: ${EMERG_MIN-t.em} min to get under 100%. ${NOGEN()?how+': at least '+need+' MW.':dirCut+' by at least '+need+' MW, '+how+'.'}`;
   if(autoTot>.5)return `Armed flexibility is switching in: ${Math.round(autoTot)} MW so far. Loading is ${pct}%.`;
@@ -1406,6 +1407,7 @@ function buildMimic(){
     if(a.type!=='load')s+=adjBtn(a.id,x+19,y-4,1)+adjBtn(a.id,x+19,y+18,-1);
     SELBOX['as:'+a.id]=[x-32,y-10,a.type==='load'?64:76,96];});
   s+=`<rect id="selbox" class="selbox" x="0" y="0" width="0" height="0" rx="6" visibility="hidden"/>`;
+  if(GAME==='fc')s=s.replace(/<rect class="hit" data-sel="(?:bc|in|tie|it|bs|lf|nb):[^"]*"[^>]*\/>/g,'');
   const el=$('mimic');el.setAttribute('viewBox',PIDS.includes('kc')?'0 0 1200 640':'0 0 1200 610');el.innerHTML=s;
 }
 function txt(id,v){const e=$(id);if(e&&e.textContent!==v)e.textContent=v;}
@@ -1484,7 +1486,7 @@ let lastInsp='';
 const ico=(k,c)=>`<span class="ico" style="--tc:${c||'var(--accent)'}"><svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[k]}</svg></span>`;
 const facts=rows=>`<dl class="facts">${rows.map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`;
 const back=`<div class="i-back"><button type="button" class="linkish" data-sel="none" data-k="back">← All controls</button></div>`;
-function opBtn(k,act,label){const pend=S.op&&S.op.k===k,dis=S.ended||(S.op&&!pend);
+function opBtn(k,act,label){if(GAME==='fc')return '';const pend=S.op&&S.op.k===k,dis=S.ended||(S.op&&!pend);
   return `<button type="button" class="btn primary op-btn" data-op="${k}:${act}" data-k="op-${k}"${dis||pend?' disabled':''}>${pend?'Operating… ready '+fmtT(S.op.at):esc(label)}</button>`;}
 function stepper(f,id,val,label,k,signed){return `<div class="ctl"><span class="lbl">${label}</span><div class="stepper"><button type="button" data-f="${f}" data-id="${id}" data-d="-5" data-k="${k}-" aria-label="5 MW less">−</button><output>${signed?sgn(val):val}<small>MW</small></output><button type="button" data-f="${f}" data-id="${id}" data-d="5" data-k="${k}+" aria-label="5 MW more">+</button></div></div>`;}
 function supTxt(p){const s=S.sup[p];return s==='bc'?'From Blackout Canyon':s==='par'?`Paralleled with Ampy Place · ${PAR_MAX-S.parMin} min left`:s==='kn'?'From Ampy Place':s==='fm'?'From Watts This':'Off supply';}
@@ -1604,7 +1606,7 @@ function assetHtml(id){const a=ASB[id];
 function inspHtml(){const sel=S.sel;if(!sel)return summaryHtml();const[type,id]=sel.split(':');
   if(type==='tx')return txHtml(+id);if(type==='bc'||type==='in')return bcHtml(id);if(type==='lf')return assetHtml('load_'+id.slice(0,2));if(type==='tie')return tieHtml(id);if(type==='it')return itHtml(id);if(type==='bs')return bsHtml(id);if(type==='nb')return nbHtml(id);if(type==='prim')return primHtml(id);if(type==='as'&&ASB[id]&&(!NOGEN()||ASB[id].type==='load'))return assetHtml(id);return summaryHtml();}
 function renderInsp(){const h=inspHtml();if(h===lastInsp)return;lastInsp=h;const el=$('inspBody'),ae=document.activeElement,k=ae&&el.contains(ae)&&ae.dataset?ae.dataset.k:null;el.innerHTML=h;if(k){const f=el.querySelector(`[data-k="${k}"]`);if(f)f.focus();}}
-const QP_T=['tx','bc','in','tie','it','bs','lf'],isSw=k=>!!k&&QP_T.includes(k.split(':')[0]);
+const QP_T=GAME==='fc'?[]:['tx','bc','in','tie','it','bs','lf'],isSw=k=>!!k&&QP_T.includes(k.split(':')[0]);
 function select(k,fromDiagram){S.sel=k==='none'?null:k;S.qp=!!fromDiagram&&isSw(S.sel);lastInsp='';
   if(PHONE){if(S.qp)closeSheet();else if(S.sel)openSheet();}render(true);}
 let lastQP='';
@@ -1654,7 +1656,7 @@ function renderSec(){
   const sec=S.sec,n=S.n,dirW=S.net>=0?'import':'export';
   const live=S.tx.filter(t=>!t.out),maxL=live.length?Math.max(...live.map(t=>t.L)):0,t0=live[0];
   let pill='ok',ptxt='N-1 secure',adv='',advL='';
-  const fixTxt=NOGEN()?'switching':`${dirW==='export'?'turn-down':'turn-up'} or switching`;
+  const fixTxt=NOGEN()?'switching':GAME==='fc'?(dirW==='export'?'turn-down':'turn-up'):`${dirW==='export'?'turn-down':'turn-up'} or switching`;
   if(n===0){pill='alarm';ptxt='No supply';adv='Blackout Canyon has no transformers in service. Only substations fed from a neighbour have supply.';advL='alarm';}
   else if(maxL>1){pill='alarm';ptxt='Emergency';const wi=worstIsl(),need=Math.ceil(Math.abs(wi.inj)-wi.k*R);
     adv=maxL>EMERG?`Above the 120% emergency rating at ${Math.round(maxL*100)}%. Protection trips in ${SHORT_MIN-t0.sh} min. Take ${need} MW off Blackout Canyon now.`
@@ -1664,7 +1666,7 @@ function renderSec(){
     const what=sec.post>SHORT?`would trip the remaining ${sec.n-1===1?'transformer':'transformers'} straight away (${p}%)`
       :sec.post>EMERG?`would push the others to ${p}%, and protection would trip them within ${SHORT_MIN} minutes`
       :`would push the others to ${p}%. You'd have 30 minutes on the emergency rating to fix it`;
-    adv=NOGEN()?`A fault now ${what}. Move about ${more} MW onto Ampy Place or Watts This.`:`A fault now ${what}. Arm at least ${more} MW more ${dirW==='export'?'turn-down':'turn-up'}, or move a substation onto a neighbour.`;advL='warn';}
+    adv=NOGEN()?`A fault now ${what}. Move about ${more} MW onto Ampy Place or Watts This.`:`A fault now ${what}. Arm at least ${more} MW more ${dirW==='export'?'turn-down':'turn-up'}${GAME==='fc'?'':', or move a substation onto a neighbour'}.`;advL='warn';}
   else if(sec.short>.5)adv=`Covered: ${Math.round(sec.cover)} MW armed against a ${Math.ceil(sec.short)} MW shortfall if another transformer trips.`;
   else adv=`${ucfirst(secName(sec.secs||[]))} could lose ${sec.n===3?'any one':'another'} transformer without overloading.`+(S.split?' The busbar is split.':'');
   const off=PIDS.filter(p=>S.sup[p]==='off');
@@ -1682,7 +1684,7 @@ function renderSec(){
   const A=S.ahead;let at='';
   if(A){if(A.uncAt!=null)at=`Uncovered N-1 shortfall from ${fmtT(A.uncAt)}, peaking at ${Math.ceil(A.worstUnc)} MW of ${A.uncDir} around ${fmtT(A.worstUncAt)}.`;
     else if(A.worstShort>.5)at=`Shortfall of up to ${Math.ceil(A.worstShort)} MW (${A.worstDir}) around ${fmtT(A.worstAt)}, covered by what you have armed or dispatched.`;
-    else at='No N-1 shortfall forecast with the current switching. Faults themselves are never forecast.';
+    else at=`No N-1 shortfall forecast ${GAME==='fc'?'with the current generation and flexibility':'with the current switching'}. Faults themselves are never forecast.`;
     if(A.overAt!=null)at=`Overload forecast at ${fmtT(A.overAt)}${NOGEN()?'':' even with armed flex'}. `+at;}
   txt('aheadTxt',at);
   const w=S.risk.filter(r=>r.end>S.t&&r.start<S.t+360);const wt=$('weatherTxt');
@@ -1772,6 +1774,11 @@ const TIPS=[
   {id:'outage',el:'pSec',when:()=>S.events.some(e=>e.planned&&!e.fired&&e.start-S.t<=60),text:()=>{const e=S.events.find(x=>x.planned&&!x.fired);return e&&e.fd?`Field staff will open the ${PR[e.fd].name} breaker within the hour. Move ${PR[e.fd].name}, and anything fed through it, onto another route before then, or those customers lose supply.`:'A planned outage starts within the hour and firm capacity will drop by 60 MW. Set up switching first. When the work is finished, you have to close the transformer breaker yourself.';}},
   {id:'fault',el:'pMimic',when:()=>S.faults>0,text:'Something has tripped. Equipment must be repaired before you close it again, or it trips and counts as an incident. Customers on a faulted feeder can be restored through a tie or an interconnector.'}
 ];
+if(GAME==='fc'){const FT={diagram:'Everything is shown on this diagram. Select a transformer, substation or generator for its details. Breakers and ties are run from the control room game, so here you keep the network in balance with generation and flexibility.',
+  firm:'Firm capacity is what Blackout Canyon could carry if one more transformer tripped. Keep the flow inside it by turning generation and flexibility up or down, and arm responses for when a transformer trips.',
+  outage:'A planned transformer outage starts within the hour and firm capacity will drop by 60 MW. Arm flexibility or adjust generation before it starts. The transformer comes back by itself when the work is finished.',
+  fault:'A transformer has tripped. The others now carry the load and can run on their emergency rating for a while. Bring the flow down with generation and flexibility before they trip too. It comes back by itself once repaired.'};
+  for(let i=TIPS.length-1;i>=0;i--){const t=TIPS[i];if(t.id==='switch'||t.id==='ics')TIPS.splice(i,1);else if(FT[t.id])t.text=FT[t.id];}}
 let tipActive=null;
 function checkTips(){if(!tipsOn||tipActive||!S.running||S.ended||!$('overlay').hidden)return;
   const t=TIPS.find(x=>!S.tipShown[x.id]&&x.when());if(!t)return;S.tipShown[t.id]=true;tipActive=t;
@@ -1817,13 +1824,19 @@ function frame(now){
 /* ---------- Start sheet ---------- */
 const BOLT='M7 0 0 8h4l-2 6 7-9H5l2-5z';
 const diffHtml=(d,c)=>`<span class="diff" style="--sc:${c}">${[1,2,3].map(k=>`<svg viewBox="0 0 9 14" aria-hidden="true"><path class="${k<=d?'on':'off'}" d="${BOLT}"/></svg>`).join('')}<em>${['','Easier','Medium','Hardest'][d]}</em></span>`;
+const FC_RULES=`
+    <li>Blackout Canyon takes power from the Steve Towers 132 kV grid supply point through three 60 MVA transformers, and feeds <b>Hartwell</b>, <b>Marsh Lane</b>, <b>Ohm No</b> and <b>Joule Street</b>. Keep each transformer under 100%, in either direction.</li>
+    <li><b>Generation and flexibility</b> are your only tools. Marsh Lane has a solar farm, Ohm No has a wind farm and a gas CHP, and Hartwell has the Kings Hill battery and demand response. Strong sun or wind pushes power back up through the transformers, and peaks pull hard the other way.</li>
+    <li><b>▲ ▼</b> beside a generator turn it up or down now. Select one to <b>arm</b> an automatic response that switches in by itself if a transformer overloads. Arming and using flexibility costs money, and spending costs points.</li>
+    <li><b>Firm capacity</b> is what's left if one more transformer trips. After a loss the others can run at up to 120% for 30 minutes, or 120–150% for ${SHORT_MIN} minutes. Above that they trip, so be ready before a fault, not after it.</li>
+    <li>Transformer faults and planned work come back by themselves when they're finished. The breakers, ties and interconnectors on the diagram are run from the control room game.</li>
+    <li>If every transformer trips, Blackout Canyon is lost and the shift ends.</li>`;
 function startSheet(){
   const date=todayUK();
   const sc=Object.entries(SCENARIOS).map(([k,v])=>`<button type="button" class="scn" data-scn="${k}" style="--sc:${v.color}" aria-pressed="${k===chosen}"><span class="f">${v.focus}</span><b>${v.title}</b>${diffHtml(v.diff,v.color)}<span class="d">${v.when}</span><p>${v.blurb}</p></button>`).join('');
   $('sheet').innerHTML=`${BAND}<p class="eyebrow">${CFG.eyebrow}</p>
   <h2>${CFG.h2}</h2>
-  <ul class="rules">${GAME==='fc'?`
-    <li><b>Generation and flexibility:</b> Marsh Lane has a solar farm, Ohm No has a wind farm and a gas CHP, and Hartwell has the Kings Hill battery and demand response. Strong sun or wind can push power back up through the transformers, and peaks pull hard the other way. Turn things up or down with ▲ ▼, or select one to arm an automatic response that switches in on overload. Spending money costs points, so use only what you need.</li>`:''}
+  <ul class="rules">${GAME==='fc'?FC_RULES:`
     <li>Blackout Canyon takes power from the Steve Towers 132 kV grid supply point through three 60 MVA transformers, and feeds four substations: <b>Hartwell</b>, <b>Marsh Lane</b>, <b>Ohm No</b> and <b>Joule Street</b>.${GAME==='cr'?' On the Interconnected shift, <b>Kilowatt Close</b> is fed through Marsh Lane, with a backup route from Ohm No.':''} Keep each transformer under 100%, in either direction.</li>
     <li>The 33 kV busbar has two normally closed <b>bus section breakers</b> (BS), between T1 and T2 and between T2 and T3. Opening one splits the busbar, so each section is supplied only by its own transformers. Arrows on the diagram show which way power is flowing.</li>
     <li><b>Firm capacity</b> is what's left if one more transformer trips. After a loss the others can run at up to 120% for 30 minutes, or 120–150% for ${SHORT_MIN} minutes. Above that they trip.</li>
@@ -1834,7 +1847,7 @@ function startSheet(){
     <li><b>Feeders have a breaker at each end:</b> one at Blackout Canyon and an incomer at the substation. A feeder fault trips both, and the feeder only carries power again once both are closed.</li>
     <li>Planned work and faulted equipment must be finished before you close it again. Closing either end of a feeder before then is an incident. Repaired transformers and feeders stay out until you close their breakers. Each operation takes one minute.</li>
     <li>Customers off supply cost points every minute. If every substation is off supply at once, Blackout Canyon is lost and the shift ends.</li>
-  </ul>
+  `}</ul>
   <h3>Mode</h3><div class="modes">
     <button type="button" class="mode" data-mode="daily" aria-pressed="${mode==='daily'}"><b>Today's challenge · ${esc(fmtDate(date))}</b><span>Same weather and fault times for everyone today.</span></button>
     <button type="button" class="mode" data-mode="free" aria-pressed="${mode==='free'}"><b>Free play</b><span>Random faults every game. Good for practice.</span></button></div>
@@ -1918,7 +1931,7 @@ function showEnd(){
   <p class="fine">Spotted a bug or got an idea? <button type="button" class="linkish" data-feedback>Send feedback</button></p>`;
   const head=L?`<h2>Blackout Canyon lost at ${fmtT(L.m)}</h2>
     <div class="grade"><span class="lt alarm">✕</span><p style="margin:0;max-width:52ch">After ${esc(L.why)}, all ${PIDS.length===5?'five':'four'} substations were off supply at once.</p></div>
-    <p style="margin:0 0 14px">You held on for ${Math.floor((L.m-START)/60)} h ${(L.m-START)%60} min. Keep Blackout Canyon inside firm capacity, and use the ties and interconnectors to keep substations on when things trip.</p>`
+    <p style="margin:0 0 14px">You held on for ${Math.floor((L.m-START)/60)} h ${(L.m-START)%60} min. Keep Blackout Canyon inside firm capacity${GAME==='fc'?', and arm flexibility so it switches in when a transformer trips':', and use the ties and interconnectors to keep substations on when things trip'}.</p>`
    :`<h2>Shift complete</h2><div class="grade"><span class="lt ${F.gl}">${F.grade}</span><p style="margin:0;max-width:44ch">${F.gd}</p></div>`;
   $('sheet').innerHTML=`${BAND}<p class="eyebrow">${esc(S.sc.title)}, ${esc(S.sc.when)} · ${S.mode==='daily'?"Today's challenge, "+fmtDate(S.date):'Free play'}</p>${head}${drawReplay()}${score}${sub}${costs}${btns}`;
   $('overlay').hidden=false;
@@ -1943,7 +1956,7 @@ async function submitScore(){
   }catch(e){btn.disabled=false;setMsg("Couldn't reach the scoreboard, so your score wasn't saved. Try again, or carry on without it.",'err');unlockEnd();}
 }
 async function shareScore(){
-  const F=S.final,t=`I scored ${nf(F.total)} on ${CFG.share} (${S.sc.title}${S.mode==='daily'?", today's challenge":''}) for Shocking Steve Electricity${S.lost?'':' with '+S.incidents+' switching incidents'}. Can you beat it?`;
+  const F=S.final,t=`I scored ${nf(F.total)} on ${CFG.share} (${S.sc.title}${S.mode==='daily'?", today's challenge":''}) for Shocking Steve Electricity${S.lost||GAME==='fc'?'':' with '+S.incidents+' switching incidents'}. Can you beat it?`;
   const msg=v=>{S.shareMsg=v;txt('shareMsg',v);};
   try{if(navigator.share){await navigator.share({title:CFG.share,text:t,url:SITE_URL});msg('Shared.');track('share',{method:'native'});return;}}catch(e){if(e&&e.name==='AbortError')return;}
   try{await navigator.clipboard.writeText(t+' '+SITE_URL);msg('Copied. Paste it into a message or post.');track('share',{method:'copy'});return;}catch(e){}
