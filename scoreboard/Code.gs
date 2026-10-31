@@ -1,5 +1,6 @@
 /**
- * Firm Capacity scoreboard (Shocking Steve Electricity), version 4.
+ * Firm Capacity scoreboard (Shocking Steve Electricity), version 5.
+ * The control room game runs a 12-hour shift (08:00 to 20:00).
  * Each game keeps its scores on its own tab: 'Scores' for the generation
  * game and 'Control room scores' for the control room game.
  * Serves both games: the generation game (game 'fc', the default) and the
@@ -15,13 +16,14 @@
  * formula as the game, so the sheet never trusts a score sent by the browser.
  * Rows saved before version 2 have no mode and count as free play.
  */
-const VERSION = 4;
+const VERSION = 5;
 const SHEET_NAME = 'Scores';
 const CR_SHEET_NAME = 'Control room scores';
 const sheetFor_ = game => game === 'cr' ? CR_SHEET_NAME : SHEET_NAME;
 const DAYS = ['may', 'jan', 'storm'];
 const CR_DAYS = ['jan', 'storm', 'grid', 'mesh'];
-const SHIFT_MINUTES = 1080; // 05:00 to 23:00
+const SHIFT_MINUTES = 1080; // generation game: 05:00 to 23:00
+const CR_SHIFT_MINUTES = 720; // control room game: 08:00 to 20:00
 const HEADERS = ['Submitted', 'Name', 'Day', 'Score', 'Result', 'Minutes on supply',
   'Spend (£)', 'Faults', 'Minutes at risk', 'Grade', 'Mode', 'Customers off (MW·min)', 'Switching incidents'];
 
@@ -124,9 +126,10 @@ function doPost(e) {
     const complete = d.result === 'complete';
     const grade = complete ? (['A', 'B', 'C', 'D'].indexOf(d.grade) >= 0 ? d.grade : '') : 'Lost';
 
+    const shift = game === 'cr' ? CR_SHIFT_MINUTES : SHIFT_MINUTES;
     const valid = name && day && mode &&
-      survived >= 0 && survived <= SHIFT_MINUTES &&
-      (!complete || survived === SHIFT_MINUTES) &&
+      survived >= 0 && survived <= shift &&
+      (!complete || survived === shift) &&
       risk >= 0 && risk <= survived &&
       spend >= 0 && spend < 10000000 &&
       faults >= 0 && faults <= 50 && grade !== '' &&

@@ -564,6 +564,39 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .other-game{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0 0;padding:12px 14px;border-radius:6px;border:1px dashed var(--accent);background:var(--sunk)}
 .other-game p{margin:0;flex:1 1 240px;font-size:14px}
+
+/* Alarm list */
+.desk{grid-template-areas:"mimic insp" "mimic alarm" "mimic sec" "ahead log"}
+.p-alarm{grid-area:alarm;--pc:var(--alarm)}
+@media (max-width:920px){.desk{grid-template-areas:"mimic" "alarm" "insp" "sec" "ahead" "log"}}
+.al-count{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;font:700 12px var(--f-mono);letter-spacing:0}
+.al-count:empty{display:none}
+.al-count.high{background:var(--warn);color:#fff}
+.al-count.over{background:var(--alarm);color:#fff}
+.p-alarm .ph .btn{padding:4px 10px;font-size:13px}
+.al-list{list-style:none;margin:0;padding:0;display:grid;gap:5px}
+.al button{width:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 10px;align-items:center;text-align:left;border:1px solid var(--rule);border-left:5px solid var(--warn);background:var(--warn-bg);border-radius:4px;padding:6px 10px;cursor:pointer;font-size:13.5px}
+.al.over button{border-left-color:var(--alarm);background:var(--alarm-bg)}
+.al-l{font:700 11px var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--warn)}
+.al.over .al-l{color:var(--alarm)}
+.al-n{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.al-v{font:700 14px var(--f-mono);font-variant-numeric:tabular-nums}
+.al-t{grid-column:1/-1;font-size:12px;color:var(--muted)}
+.al.unack button{animation:alb 1s steps(2) infinite}
+@keyframes alb{50%{border-left-color:transparent}}
+.p-alarm.ringing{box-shadow:0 0 0 2px var(--warn)}
+@media (prefers-reduced-motion:reduce){.al.unack button{animation:none}}
+.dock .al-count{margin-left:-4px}
+.desk{grid-template-areas:"mimic alarm" "mimic insp" "mimic sec" "ahead log"}
+@media (max-width:920px){.desk{grid-template-areas:"mimic" "alarm" "insp" "sec" "ahead" "log"}}
+.p-alarm #alBody{max-height:220px;overflow-y:auto}
+@media (max-width:700px){
+  .dock{gap:6px}
+  .dock b{font-size:17px}
+  .dock .pill{font-size:11px;padding:3px 6px}
+  #dPlay{min-width:0;padding:9px 12px}
+  .dock .btn{padding:9px 11px}
+}
 </style>
 </head>
 <body>
@@ -573,7 +606,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
       <span class="logo"><svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="11" fill="var(--zap)"/><path d="M27.5 5 13 26.5h9.5L19 43l16-23h-9.5L30 5z" fill="var(--brand)"/><path d="M8 13l3.5 2.3M6.5 22.5h4M40 35l-3.5-2.3M41.5 25.5h-4" stroke="var(--brand)" stroke-width="2.6" stroke-linecap="round"/></svg></span>
       <div><p class="co">Shocking Steve Electricity</p><h1>Firm Capacity <span class="mode-tag">Control room</span></h1><p id="scnLabel">Blackout Canyon 33 kV</p></div>
     </div>
-    <div class="clock"><b id="clock">05:00</b><span id="dayLabel"></span></div>
+    <div class="clock"><b id="clock">08:00</b><span id="dayLabel"></span></div>
     <div class="sky" id="sky" aria-hidden="true"></div>
     <div class="controls">
       <button id="playBtn" class="btn primary" type="button">Start</button>
@@ -582,7 +615,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
         <button type="button" data-speed="2" aria-pressed="false">2×</button>
         <button type="button" data-speed="4" aria-pressed="false">4×</button>
       </div>
-      <label class="chk"><input type="checkbox" id="autoPause" checked> Pause on faults</label>
+      <label class="chk"><input type="checkbox" id="autoPause" checked> Pause on faults and overloads</label>
       <button id="muteBtn" class="btn icon-btn" type="button" aria-label="Sound on" aria-pressed="true"></button>
       <button id="boardBtn" class="btn" type="button">Scoreboard</button>
       <a class="btn" href="https://der-dash.github.io/Network/" target="_top">Generation game →</a>
@@ -614,6 +647,11 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
   <section class="panel p-insp" id="pInsp" aria-label="Control panel">
     <div class="ph"><h2>Control</h2><button class="i-close" type="button" id="inspClose" aria-label="Close the control panel">×</button></div>
     <div id="inspBody"></div>
+  </section>
+
+  <section class="panel p-alarm" id="pAlarm" aria-label="Alarms">
+    <div class="ph"><h2>Alarms <span id="alCount" class="al-count"></span></h2><button type="button" class="btn" id="ackBtn" hidden>Acknowledge</button></div>
+    <div id="alBody"></div>
   </section>
 
   <section class="panel p-sec" id="pSec" aria-label="Next-loss check">
@@ -661,7 +699,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 </main>
 <footer class="foot"><span>Shocking Steve Electricity, Blackout Canyon and every site in this game are made up.</span><a id="otherGame" href="https://der-dash.github.io/Network/" target="_top">Play the generation game</a><button type="button" class="linkish" id="cookieSettings" hidden>Cookie settings</button></footer>
 
-<nav class="dock" aria-label="Game controls"><b id="dClock">05:00</b><span id="dPill" class="pill ok">N-1 secure</span><button id="dCtl" type="button" class="btn icon-btn" aria-label="Open the control panel"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button><button id="dSpeed" type="button" class="btn" aria-label="Change speed">1×</button><button id="dPlay" type="button" class="btn primary">Start</button></nav>
+<nav class="dock" aria-label="Game controls"><b id="dClock">08:00</b><span id="dPill" class="pill ok">N-1 secure</span><span id="dAl" class="al-count"></span><button id="dCtl" type="button" class="btn icon-btn" aria-label="Open the control panel"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button><button id="dSpeed" type="button" class="btn" aria-label="Change speed">1×</button><button id="dPlay" type="button" class="btn primary">Start</button></nav>
 
 <div id="tip" class="tip" role="dialog" aria-live="polite" hidden><span class="tk" id="tipK">Tip</span><p id="tipP"></p><div class="row"><button type="button" class="btn" id="tipSkip">Turn off tips</button><button type="button" class="btn primary" id="tipOk">Got it</button></div></div>
 
@@ -672,9 +710,9 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 <script>
 (function(){
 const $=id=>document.getElementById(id);
-const R=60,START=300,END=1380,TAU=45,TRIP_T=140,SOC_MAX=60;
-const EMERG=1.2,EMERG_MIN=30,SHORT=1.5,SHORT_MIN=3,PAR_MAX=30,OV_MIN=3,INCIDENT_PTS=500;
-const RATE={1:5,2:10,4:20};
+const R=60,START=480,END=1200,TAU=45,TRIP_T=140,SOC_MAX=60;
+const EMERG=1.2,EMERG_MIN=30,SHORT=1.5,SHORT_MIN=5,PAR_MAX=30,OV_MIN=10,INCIDENT_PTS=500,AL_ON=.8,AL_OFF=.75;
+const RATE={1:3.4,2:6.8,4:13.6};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const fmtT=m=>{m=Math.round(m);m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');};
 const gbp=x=>'£'+Math.round(x).toLocaleString('en-GB');
@@ -702,20 +740,20 @@ const SCENARIOS={
     demand:[[0,80],[4,72],[6,78],[7.5,106],[9,116],[11,112],[13,110],[15,114],[16.5,134],[17.5,150],[18.5,146],[20,130],[21.5,112],[23,94],[24,84]],
     solar:{peak:35,start:7.8,end:16.2,cloud:.2},wind:{mean:22,var:12},faults:2,
     causes:['Ice build-up on the overhead line','Conductor clash in icy wind','Cable joint failure','Insulator flashover'],
-    build(r){return{events:[{tx:0,start:570,end:750,planned:true,cause:'Planned maintenance'}],cutout:null,risk:[{start:360,end:540,mult:3,label:'Ice and snow'}]};}},
+    build(r){return{events:[{tx:0,start:570,end:750,planned:true,cause:'Planned maintenance'}],cutout:null,risk:[{start:480,end:600,mult:3,label:'Ice and snow'}]};}},
   storm:{color:'var(--c-storm)',diff:2,title:'Storm day',when:'Monday 2 November',focus:'Faults and switching',soc0:30,nbShape:'demand',
     blurb:'Two bands of gale-force wind bring faults on transformers and feeders, and gusty wind output can shut down without warning. Expect to switch.',
     demand:[[0,72],[4,64],[6,70],[7.5,98],[9,112],[12,102],[15,106],[16.5,124],[17.5,142],[18.5,140],[20,124],[22,96],[24,74]],
     solar:{peak:90,start:6.9,end:17.1,cloud:.35},wind:{mean:48,var:14},faults:4,
     causes:['Wind-borne debris on the overhead line','Tree contact on the overhead line','Conductor clash in high wind','Lightning strike on the overhead line'],
-    build(r){const a=420+Math.round(r()*180),b=900+Math.round(r()*120),s=1005+Math.round(r()*105);
+    build(r){const a=540+Math.round(r()*120),b=900+Math.round(r()*90),s=1005+Math.round(r()*90);
       return{events:[],cutout:{start:s,end:s+75},risk:[{start:a,end:a+180,mult:3,label:'Severe gale'},{start:b,end:b+180,mult:3,label:'Severe gale'}]};}},
   grid:{color:'var(--mv)',diff:2,title:'Switching shift',when:'Tuesday 8 December',focus:'Switching only',soc0:0,nbShape:'demand',noGen:true,
     blurb:'No generation and no flexibility, just switching. T3 is out for maintenance in the afternoon and the evening peak pushes past firm capacity. Move load between substations and onto the neighbours.',
     demand:[[0,88],[4,78],[6,84],[7.5,114],[9,124],[11,118],[13,116],[15,122],[16.5,144],[17.5,160],[18.5,156],[20,140],[21.5,120],[23,100],[24,92]],
     solar:{peak:0,start:7.8,end:16.2,cloud:0},wind:{mean:0,var:0},faults:2.5,nb:{kn:{base:72,dip:26},fm:{base:70,dip:24}},
     causes:['Cable joint failure','Insulator flashover','Tree contact on the overhead line','Digger strike on the underground cable'],
-    build(r){return{events:[{tx:2,start:780,end:900,planned:true,cause:'Planned maintenance'}],cutout:null,risk:[{start:1020,end:1200,mult:2,label:'Freezing fog'}]};}},
+    build(r){return{events:[{tx:2,start:780,end:900,planned:true,cause:'Planned maintenance'}],cutout:null,risk:[{start:1020,end:1190,mult:2,label:'Freezing fog'}]};}},
   mesh:{color:'var(--c-kn)',diff:3,title:'Interconnected',when:'Friday 22 January',focus:'Switching · 5 substations',soc0:0,nbShape:'demand',noGen:true,mesh:true,
     blurb:'Kilowatt Close joins the network, normally fed through Marsh Lane, with a backup route from Ohm No. The Marsh Lane feeder is out for planned work all morning, and the evening peak is the biggest yet. No generation, just switching.',
     demand:[[0,92],[4,82],[6,88],[7.5,120],[9,132],[11,126],[13,122],[15,128],[16.5,152],[17.5,174],[18.5,170],[20,152],[21.5,128],[23,106],[24,96]],
@@ -822,6 +860,7 @@ const sfx={
   trip(){clunk();tone(440,.35,.1,'sawtooth',.05,220);},
   incident(){clunk();[0,.18,.36,.54].forEach((d,i)=>tone(i%2?520:780,.14,.1+d,'square',.05));},
   emerg(){[0,.2].forEach(d=>tone(990,.12,d,'square',.04));},
+  alarm(){tone(740,.12,0,'triangle',.07);tone(740,.12,.22,'triangle',.07);},
   warn(){tone(620,.14,0,'sine',.07);tone(820,.18,.16,'sine',.07);},
   ok(){tone(660,.12,0,'triangle',.08);tone(990,.16,.12,'triangle',.08);},
   op(){clunk(.25);},
@@ -872,7 +911,7 @@ function genFaults(rng,sc,risk){
 const zeroD=()=>({solar:0,wind:0,bchg:0,bdis:0,chp:0,dsr:0});
 function newGame(key){
   const sc=SCENARIOS[key],date=todayUK(),daily=mode==='daily';
-  const seed=daily?hashStr(date+'|'+key+'|fc4'):((Math.random()*2**31)|0);
+  const seed=daily?hashStr(date+'|'+key+'|fc5'):((Math.random()*2**31)|0);
   const rng=rngFrom(seed),b=sc.build(rng);
   const N={d:makeNoise(rng,15),c1:makeNoise(rng,25),c2:makeNoise(rng,6),w1:makeNoise(rng,40),w2:makeNoise(rng,5)};
   PIDS=sc.mesh?['hw','ml','rv','js','kc']:['hw','ml','rv','js'];ITIDS=sc.mesh?['hm','mr','rj','mk','rk']:['hm','mr','rj'];
@@ -885,7 +924,7 @@ function newGame(key){
     share,fd:Object.fromEntries(PIDS.map(p=>[p,{brk:!!PR[p].fd,fault:null}])),
     tie:Object.fromEntries(PIDS.map(p=>[p,{closed:false}])),
     it:Object.fromEntries(ITIDS.map(k=>[k,{closed:!!ITS[k].nc,fault:null}])),
-    ov:{},edL:{},flows:{},inj:{BC:0,kn:0,fm:0},parMin:0,
+    ov:{},edL:{},flows:{},alarms:{},inj:{BC:0,kn:0,fm:0},parMin:0,
     sup:Object.fromEntries(PIDS.map(p=>[p,'bc'])),pn:Object.fromEntries(PIDS.map(p=>[p,0])),wB:Object.fromEntries(PIDS.map(p=>[p,1])),spare:{kn:65,fm:60},
     manual:{},armed:{},act:{},autoP:{},manP:{},called:{},fail:{},allow:{},allowLogged:{},
     soc:sc.soc0,op:null,sel:null,
@@ -895,7 +934,7 @@ function newGame(key){
   const c0=comps(S.t,false),L0=Math.abs(PIDS.reduce((a,p)=>a+netP(c0,p,zeroD()),0))/3/R;S.tx.forEach(t=>t.temp=20+100*L0*L0);
   buildMimic();
   for(let i=0;i<60;i++)step();
-  S.silent=false;S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.peakL=0;S.ens=0;S.log=[];S.full=[];S.marks=[];S.chain=[];queued=[];
+  S.silent=false;S.alarms={};S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.peakL=0;S.ens=0;S.log=[];S.full=[];S.marks=[];S.chain=[];queued=[];
   logE(START,`Shift starts. ${sc.when}: ${sc.blurb}`,'info');
   if(daily)logE(START,`Today's challenge (${fmtDate(date)}): everyone gets the same weather and fault times.`,'info');
   S.events.filter(e=>e.planned).forEach(e=>logE(START,e.fd?`Notice: ${PR[e.fd].name} feeder planned outage ${fmtT(e.start)}–${fmtT(e.end)}. Field staff will open its breaker at Blackout Canyon at ${fmtT(e.start)}, so move ${PR[e.fd].name} and anything fed through it beforehand.`:`Notice: T${e.tx+1} planned outage ${fmtT(e.start)}–${fmtT(e.end)}. Field staff will switch it out; you restore it afterwards.`,'warn'));
@@ -1013,6 +1052,7 @@ function step(){
       const why=e.id.startsWith('tie:')?`${NBS[PR[e.id.slice(4)].nb].name} ran out of spare capacity or the tie was over its ${e.r} MW rating`:`it was over its ${e.r} MW rating`;
       const s=`Overload trip: the ${devName(e.id)} opened because ${why}.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);play('trip');fx(elOf(e.id));}});
   Object.keys(S.ov).forEach(k=>{if(!(k in edL))S.ov[k]=0;});S.edL=edL;
+  if(!S.silent)updateAlarms(m,sol);
   let allOff=true;
   PIDS.forEach(p=>{if(sup[p]==='off'){S.ens+=c.demand*S.share[p];if(p==='ml')S.cost.gen+=c.solar*SV.solar.use/60;if(p==='rv')S.cost.gen+=c.wind*SV.wind.use/60;}else allOff=false;});
   if(allOff&&!S.silent){loseSite(m);return;}
@@ -1043,6 +1083,33 @@ function security(net,n,av){
   const cap=(n-1)*R,short=Math.max(0,abs-cap);
   return{n,dir,abs,cover:cv,short,after:abs/cap,post:Math.max(0,abs-cv)/cap,insecure:short>cv+.5};
 }
+
+/* ---------- Alarms ---------- */
+function alarmCands(sol){const c=[];
+  S.tx.forEach((t,i)=>{if(!t.out)c.push({id:'tx:'+i,sel:'tx:'+i,name:`Transformer T${i+1}`,L:t.L,trip:t.L>EMERG?SHORT_MIN-t.sh:t.L>1?EMERG_MIN-t.em:null});});
+  sol.E.forEach(e=>{const L=Math.abs(sol.flows[e.id]||0)/e.r;c.push({id:e.id,sel:e.id,name:ucfirst(devName(e.id)),L:e.id.startsWith('tie:')?Math.abs(sol.flows[e.id]||0)/e.r:L,trip:(S.ov[e.id]||0)>0?OV_MIN-S.ov[e.id]:null});});
+  ['kn','fm'].forEach(k=>{if(Math.abs(sol.inj[k])>.5)c.push({id:'nb:'+k,sel:'nb:'+k,name:`${NBS[k].name} spare capacity`,L:Math.abs(sol.inj[k])/Math.max(1,S.spare[k]),trip:null});});
+  return c;}
+function updateAlarms(m,sol){const A=S.alarms,seen={};
+  alarmCands(sol).forEach(c=>{const a=A[c.id];seen[c.id]=1;
+    if(!a&&c.L>=AL_ON){A[c.id]={...c,since:m,lvl:c.L>1?'over':'high',ack:false};
+      if(c.L>1){const s=`Overload alarm: ${c.name} at ${Math.round(c.L*100)}%.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);play('emerg');}
+      else{logE(m,`High load alarm: ${c.name} at ${Math.round(c.L*100)}% of its rating.`,'warn');play('alarm');}}
+    else if(a){if(c.L<AL_OFF){delete A[c.id];logE(m,`Alarm cleared: ${c.name}.`,'ok');return;}
+      const lvl=c.L>1?'over':'high';
+      if(lvl==='over'&&a.lvl!=='over'){a.ack=false;const s=`Overload alarm: ${c.name} at ${Math.round(c.L*100)}%.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);play('emerg');}
+      Object.assign(a,{L:c.L,trip:c.trip,lvl,name:c.name});}});
+  Object.keys(A).forEach(k=>{if(!seen[k])delete A[k];});}
+const anyOver=()=>S&&Object.values(S.alarms).some(a=>a.lvl==='over');
+let lastAl='';
+function renderAlarms(){const list=Object.values(S.alarms).sort((a,b)=>(b.lvl==='over')-(a.lvl==='over')||b.L-a.L),un=list.filter(a=>!a.ack).length;
+  const h=list.length?`<ul class="al-list">${list.map(a=>`<li class="al ${a.lvl}${a.ack?'':' unack'}"><button type="button" data-sel="${a.sel}" data-k="al-${a.id}"><span class="al-l">${a.lvl==='over'?'Overload':'High load'}</span><span class="al-n">${esc(a.name)}</span><span class="al-v">${Math.round(a.L*100)}%</span><span class="al-t">since ${fmtT(a.since)}${a.trip!=null?' · trips in '+a.trip+' min':a.lvl==='over'&&a.id.startsWith('nb:')?' · ties trip in '+OV_MIN+' min if it stays over':''}</span></button></li>`).join('')}</ul>`
+    :'<p class="empty">No alarms. Anything above 80% of its rating shows here.</p>';
+  const k=h+'|'+un;if(k!==lastAl){lastAl=k;$('alBody').innerHTML=h;}
+  txt('alCount',list.length?String(list.length):'');setAttr($('alCount'),'class','al-count'+(list.some(a=>a.lvl==='over')?' over':list.length?' high':''));
+  $('ackBtn').hidden=!un;setAttr($('pAlarm'),'class','panel p-alarm'+(un?' ringing':''));
+  setAttr($('dAl'),'class','al-count'+(list.some(a=>a.lvl==='over')?' over':list.length?' high':''));txt('dAl',list.length?String(list.length):'');}
+function ackAll(){Object.values(S.alarms).forEach(a=>a.ack=true);lastAl='';render(true);}
 
 /* ---------- Switching ---------- */
 function opLabel(k,act){const[type,id]=k.split(':');
@@ -1403,7 +1470,7 @@ function renderSec(){
   else if(n===1){pill='alarm';ptxt='Exposed';adv='Only one transformer left. Another loss takes every substation fed from Blackout Canyon off supply.';advL='warn';}
   else if(sec.insecure){pill='alarm';ptxt='At risk';const p=Math.round(sec.post*100),more=Math.ceil(sec.short-sec.cover);
     const what=sec.post>SHORT?`would trip the remaining ${n-1===1?'transformer':'transformers'} straight away (${p}%)`
-      :sec.post>EMERG?`would push the others to ${p}%, and protection would trip them within 3 minutes`
+      :sec.post>EMERG?`would push the others to ${p}%, and protection would trip them within ${SHORT_MIN} minutes`
       :`would push the others to ${p}%. You'd have 30 minutes on the emergency rating to fix it`;
     adv=NOGEN()?`A fault now ${what}. Move about ${more} MW onto Ampy Place or Watts This.`:`A fault now ${what}. Arm at least ${more} MW more ${dirW==='export'?'turn-down':'turn-up'}, or move a substation onto a neighbour.`;advL='warn';}
   else if(sec.short>.5)adv=`Covered: ${Math.round(sec.cover)} MW armed against a ${Math.ceil(sec.short)} MW shortfall if another transformer trips.`;
@@ -1509,7 +1576,7 @@ const TIPS=[
   {id:'adj',el:'pMimic',when:()=>S.t>=START+3&&!NOGEN(),text:'The ▲ and ▼ buttons beside each generator turn it up or down straight away. Select a generator to arm an automatic response too: it switches in if a transformer overloads.'},
   {id:'firm',el:'kFirmBox',when:()=>S.t>=START+6,text:'Firm capacity is what Blackout Canyon could carry if one more transformer tripped. Keep the flow inside it by moving substations onto Ampy Place or Watts This'+'.'},
   {id:'switch',el:'pMimic',when:()=>S.t>=START+12,text:`Switching order matters. Ampy Place shares our grid supply: close the new route first, then open the old one within ${PAR_MAX} minutes. Watts This is on a different grid supply: open the old route first, then close the new one. Never parallel with Watts This.`},
-  {id:'ics',el:'pMimic',when:()=>S.t>=START+20,text:'The dashed links between substations are interconnectors. Close one to feed a substation from its neighbour when its own feeder is out. Each is rated 30 MW, and feeders have ratings too: anything over its rating for 3 minutes trips.'},
+  {id:'ics',el:'pMimic',when:()=>S.t>=START+20,text:'The dashed links between substations are interconnectors. Close one to feed a substation from its neighbour when its own feeder is out. Each is rated 30 MW, and feeders have ratings too: anything over its rating for '+OV_MIN+' minutes trips. The alarm list warns you at 80%.'},
   {id:'outage',el:'pSec',when:()=>S.events.some(e=>e.planned&&!e.fired&&e.start-S.t<=60),text:()=>{const e=S.events.find(x=>x.planned&&!x.fired);return e&&e.fd?`Field staff will open the ${PR[e.fd].name} breaker within the hour. Move ${PR[e.fd].name}, and anything fed through it, onto another route before then, or those customers lose supply.`:'A planned outage starts within the hour and firm capacity will drop by 60 MW. Set up switching first. When the work is finished, you have to close the transformer breaker yourself.';}},
   {id:'fault',el:'pMimic',when:()=>S.faults>0,text:'Something has tripped. Equipment must be repaired before you close it again, or it trips and counts as an incident. Customers on a faulted feeder can be restored through a tie or an interconnector.'}
 ];
@@ -1540,7 +1607,7 @@ function render(force){
     txt('kFirm',fv);txt('kFirmSub',fs);setAttr($('kFirmBox'),'class','kpi kpi-firm'+(fc==='ok'?'':' '+fc)+(tipActive&&tipActive.el==='kFirmBox'?' hl':''));
     setAttr($('dPill'),'class','pill '+(fc==='ok'?'ok':fc==='warn'?'warn':'alarm'));txt('dPill',dt);}
   txt('kIns',S.insecureMin+' min');$('kIns').classList.toggle('bad',S.insecureMin>0);
-  renderMimic();renderInsp();renderLog();renderSky();
+  renderMimic();renderInsp();renderAlarms();renderLog();renderSky();
   const now=performance.now();if(force||now-lastChart>350){lastChart=now;drawChart();}
   renderSec();
   const pl=S.ended?'Shift over':!S.running?'Start':S.paused?'Resume':'Pause';txt('playBtn',pl);txt('dPlay',pl);txt('dClock',fmtT(S.t));
@@ -1549,7 +1616,7 @@ function render(force){
 let lastRender=0;
 function frame(now){
   const dt=Math.min(.25,(now-lastFrame)/1000);lastFrame=now;
-  if(S&&S.running&&!S.paused&&!S.ended){acc+=dt*RATE[speed];while(acc>=1&&!S.paused&&!S.ended){acc-=1;step();}}
+  if(S&&S.running&&!S.paused&&!S.ended){acc+=dt*RATE[speed]*(anyOver()?.5:1);while(acc>=1&&!S.paused&&!S.ended){acc-=1;step();}}
   if(S&&now-lastRender>90){lastRender=now;checkTips();render(false);
     const live=S.tx.filter(t=>!t.out);humTo(S.running&&!S.paused&&!S.ended&&live.length?Math.max(...live.map(t=>t.L)):0);}
   requestAnimationFrame(frame);
@@ -1565,10 +1632,10 @@ function startSheet(){
   <h2>Run the Blackout Canyon network</h2>
   <ul class="rules">
     <li>Blackout Canyon takes power from the Steve Towers 132 kV grid supply point through three 60 MVA transformers, and feeds four substations: <b>Hartwell</b>, <b>Marsh Lane</b>, <b>Ohm No</b> and <b>Joule Street</b>. On the Interconnected shift, <b>Kilowatt Close</b> is fed through Marsh Lane, with a backup route from Ohm No. Keep each transformer under 100%, in either direction.</li>
-    <li><b>Firm capacity</b> is what's left if one more transformer trips. After a loss the others can run at up to 120% for 30 minutes, or 120–150% for 3 minutes. Above that they trip.</li>
+    <li><b>Firm capacity</b> is what's left if one more transformer trips. After a loss the others can run at up to 120% for 30 minutes, or 120–150% for ${SHORT_MIN} minutes. Above that they trip.</li>
     <li><b>Everything is run from the diagram.</b> Select equipment to operate it. In the generation days, ▲ ▼ beside a generator turn it up or down now, and armed flexibility switches in by itself on overload.</li>
     <li><b>Neighbours:</b> Hartwell and Marsh Lane have ties to <b>Ampy Place</b>, which shares our grid supply: close the new route, then open the old one within ${PAR_MAX} minutes. Ohm No and Joule Street have ties to <b>Watts This</b>, on a different grid supply: open the old route first, then close the new one. Get the order wrong and protection trips.</li>
-    <li><b>Interconnectors</b> link neighbouring substations so one can feed another. Feeders, ties and interconnectors all have ratings, and neighbours have limited spare capacity. Anything over its limit for 3 minutes trips.</li>
+    <li><b>Interconnectors</b> link neighbouring substations so one can feed another. Feeders, ties and interconnectors all have ratings, and neighbours have limited spare capacity. Anything over its limit for ${OV_MIN} minutes trips, and an alarm sounds at 80% so you have warning.</li>
     <li>Planned work and faulted equipment must be finished before you close it again. Repaired transformers and feeders stay out until you close their breakers. Each operation takes one minute.</li>
     <li>Customers off supply cost points every minute. If every substation is off supply at once, Blackout Canyon is lost and the shift ends.</li>
   </ul>
@@ -1576,10 +1643,10 @@ function startSheet(){
     <button type="button" class="mode" data-mode="daily" aria-pressed="${mode==='daily'}"><b>Today's challenge · ${esc(fmtDate(date))}</b><span>Same weather and fault times for everyone today.</span></button>
     <button type="button" class="mode" data-mode="free" aria-pressed="${mode==='free'}"><b>Free play</b><span>Random faults every game. Good for practice.</span></button></div>
   <h3>Choose a day</h3><div class="scns">${sc}</div>
-  <div class="go"><div class="opts"><label class="chk"><input type="checkbox" id="ovPause" ${autoPause?'checked':''}> Pause when a fault happens</label><label class="chk"><input type="checkbox" id="ovTips" ${tipsOn?'checked':''}> Show tips</label></div>
-  <span style="display:flex;gap:8px;flex-wrap:wrap"><button id="sheetBoardBtn" type="button" class="btn">Scoreboard</button><button id="startBtn" type="button" class="btn primary big">Start shift at 05:00</button></span></div>
+  <div class="go"><div class="opts"><label class="chk"><input type="checkbox" id="ovPause" ${autoPause?'checked':''}> Pause on faults and overloads</label><label class="chk"><input type="checkbox" id="ovTips" ${tipsOn?'checked':''}> Show tips</label></div>
+  <span style="display:flex;gap:8px;flex-wrap:wrap"><button id="sheetBoardBtn" type="button" class="btn">Scoreboard</button><button id="startBtn" type="button" class="btn primary big">Start shift at 08:00</button></span></div>
   <div class="other-game"><p><b>Prefer generation?</b> Try the original game: balance solar, wind, batteries and flexibility to keep the transformers inside their rating.</p><a class="btn" href="https://der-dash.github.io/Network/" target="_top">Play the generation game →</a></div>
-  <p class="fine">Shift runs 05:00–23:00, about 3½ minutes at 1×. MW and MVA are treated as equal. No faults in the first 20 minutes, so you can set up.</p>`;
+  <p class="fine">Shift runs 08:00–20:00, about 3½ minutes at 1×. Time slows to half speed while anything is overloaded. MW and MVA are treated as equal. No faults in the first 20 minutes, so you can set up.</p>`;
   $('overlay').hidden=false;
 }
 
@@ -1731,6 +1798,7 @@ document.addEventListener('click',e=>{
   const bb=e.target.closest('[data-board]');if(bb){boardDay=bb.dataset.board;document.querySelectorAll('[data-board]').forEach(x=>x.setAttribute('aria-pressed',x===bb));loadBoard();return;}
   const bmo=e.target.closest('[data-bmode]');if(bmo){boardMode=bmo.dataset.bmode;document.querySelectorAll('[data-bmode]').forEach(x=>x.setAttribute('aria-pressed',x===bmo));loadBoard();return;}
   const btn=e.target.closest('button');const id=btn?btn.id:'';
+  if(id==='ackBtn'){ackAll();return;}
   if(id==='cookieYes'){setConsent(true);return;}if(id==='cookieNo'){setConsent(false);return;}if(id==='cookieSettings'){$('cookie').hidden=false;return;}
   if(id==='shareBtn'){shareScore();return;}
   if(id==='submitScore'){submitScore();return;}

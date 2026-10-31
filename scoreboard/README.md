@@ -51,3 +51,9 @@ Scores are now kept on two tabs: **Scores** for the generation game and
 automatically the first time someone submits a control room score. Paste in
 the new `Code.gs`, save, then **Deploy → Manage deployments → Edit (pencil)
 → Version: New version → Deploy**.
+
+## Version 5 (12-hour control room shift)
+
+The control room game now runs 08:00 to 20:00, so the script accepts a
+720-minute full shift for it. Update it the same way: paste, save, then
+**Deploy → Manage deployments → Edit (pencil) → New version → Deploy**.
