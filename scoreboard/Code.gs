@@ -1,5 +1,7 @@
 /**
- * Firm Capacity scoreboard (Shocking Steve Electricity), version 3.
+ * Firm Capacity scoreboard (Shocking Steve Electricity), version 4.
+ * Each game keeps its scores on its own tab: 'Scores' for the generation
+ * game and 'Control room scores' for the control room game.
  * Serves both games: the generation game (game 'fc', the default) and the
  * control room switching game (game 'cr', modes prefixed 'cr-').
  * Google Apps Script web app that stores scores in this spreadsheet.
@@ -13,8 +15,10 @@
  * formula as the game, so the sheet never trusts a score sent by the browser.
  * Rows saved before version 2 have no mode and count as free play.
  */
-const VERSION = 3;
+const VERSION = 4;
 const SHEET_NAME = 'Scores';
+const CR_SHEET_NAME = 'Control room scores';
+const sheetFor_ = game => game === 'cr' ? CR_SHEET_NAME : SHEET_NAME;
 const DAYS = ['may', 'jan', 'storm'];
 const CR_DAYS = ['jan', 'storm', 'grid', 'mesh'];
 const SHIFT_MINUTES = 1080; // 05:00 to 23:00
@@ -33,11 +37,12 @@ function rude_(n) {
   return s.split(/[^a-z]+/).some(t => BAD_TOK.indexOf(t) >= 0);
 }
 
-function sheet_() {
+function sheet_(name) {
+  name = name || SHEET_NAME;
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sh = ss.getSheetByName(SHEET_NAME);
+  let sh = ss.getSheetByName(name);
   if (!sh) {
-    sh = ss.insertSheet(SHEET_NAME);
+    sh = ss.insertSheet(name);
     sh.appendRow(HEADERS);
     sh.setFrozenRows(1);
   }
@@ -53,8 +58,8 @@ function json_(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-function rows_() {
-  const sh = sheet_();
+function rows_(name) {
+  const sh = sheet_(name);
   if (sh.getLastRow() < 2) return [];
   return sh.getRange(2, 1, sh.getLastRow() - 1, HEADERS.length).getValues();
 }
@@ -91,7 +96,10 @@ function doGet(e) {
   const p = (e && e.parameter) || {};
   const day = String(p.day || 'may');
   const mode = String(p.mode || (p.game === 'cr' ? 'cr-free' : 'free'));
-  return json_({ ok: true, version: VERSION, scores: best_(rows_(), day, mode).slice(0, 50) });
+  // Control room rows saved before version 4 live on the main tab; the mode
+  // filter in best_ keeps each game's scores apart.
+  const rows = p.game === 'cr' ? rows_(CR_SHEET_NAME).concat(rows_(SHEET_NAME)) : rows_(SHEET_NAME);
+  return json_({ ok: true, version: VERSION, scores: best_(rows, day, mode).slice(0, 50) });
 }
 
 function doPost(e) {
@@ -126,10 +134,10 @@ function doPost(e) {
     if (!valid) return json_({ ok: false, error: 'Invalid score' });
 
     const score = Math.max(0, survived * 10 + (complete ? 5000 : 0) - risk * 20 - Math.round(spend / 10) - ens - incidents * 500);
-    sheet_().appendRow([new Date(), name, day, score, complete ? 'complete' : 'lost',
+    sheet_(sheetFor_(game)).appendRow([new Date(), name, day, score, complete ? 'complete' : 'lost',
       survived, spend, faults, risk, grade, mode, game === 'cr' ? ens : '', game === 'cr' ? incidents : '']);
 
-    const board = best_(rows_(), day, mode);
+    const board = best_(game === 'cr' ? rows_(CR_SHEET_NAME).concat(rows_(SHEET_NAME)) : rows_(SHEET_NAME), day, mode);
     const others = board.filter(x => x.name.toLowerCase() !== name.toLowerCase());
     const rank = others.filter(x => x.score > score).length + 1;
     return json_({ ok: true, version: VERSION, name: name, score: score, rank: rank, total: others.length + 1 });

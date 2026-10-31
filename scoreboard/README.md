@@ -43,3 +43,11 @@ Update it the same way: paste the new `Code.gs` into Apps Script, save, then
 **Deploy → Manage deployments → Edit (pencil) → Version: New version →
 Deploy**. Until then, the control room game shows its scoreboard as "coming
 soon" and players can still carry on after a shift.
+
+## Version 4 (a tab for each game)
+
+Scores are now kept on two tabs: **Scores** for the generation game and
+**Control room scores** for the control room game. The new tab is created
+automatically the first time someone submits a control room score. Paste in
+the new `Code.gs`, save, then **Deploy → Manage deployments → Edit (pencil)
+→ Version: New version → Deploy**.

@@ -463,6 +463,9 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
 .cookie .row{display:flex;gap:8px}
 .foot{max-width:1280px;margin:0 auto;padding-block:0 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 16px}
 .linkish{background:none;border:0;padding:0;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit}
+a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.other-game{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0 0;padding:12px 14px;border-radius:6px;border:1px dashed var(--accent);background:var(--sunk)}
+.other-game p{margin:0;flex:1 1 240px;font-size:14px}
 /* ---------- v3: diagram-driven control room ---------- */
 .desk{grid-template-columns:minmax(0,2.1fr) minmax(0,1fr);grid-template-areas:"mimic insp" "mimic sec" "ahead log";align-items:start}
 .p-insp{grid-area:insp}
@@ -558,6 +561,9 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
 .scns{grid-template-columns:repeat(auto-fit,minmax(165px,1fr))}
 .fd-v.warn{fill:var(--warn)}.fd-v.alarm{fill:var(--alarm);font-weight:700}
 .fd-t.warn{fill:var(--warn)}
+a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.other-game{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0 0;padding:12px 14px;border-radius:6px;border:1px dashed var(--accent);background:var(--sunk)}
+.other-game p{margin:0;flex:1 1 240px;font-size:14px}
 </style>
 </head>
 <body>
@@ -579,6 +585,7 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
       <label class="chk"><input type="checkbox" id="autoPause" checked> Pause on faults</label>
       <button id="muteBtn" class="btn icon-btn" type="button" aria-label="Sound on" aria-pressed="true"></button>
       <button id="boardBtn" class="btn" type="button">Scoreboard</button>
+      <a class="btn" href="https://der-dash.github.io/Network/" target="_top">Generation game →</a>
       <button id="newBtn" class="btn" type="button">New shift</button>
     </div>
     <div class="kpis">
@@ -652,7 +659,7 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
     <ul id="log" class="log"></ul>
   </section>
 </main>
-<footer class="foot"><span>Shocking Steve Electricity, Blackout Canyon and every site in this game are made up.</span><a id="otherGame" href="../" hidden>Play the generation game</a><button type="button" class="linkish" id="cookieSettings" hidden>Cookie settings</button></footer>
+<footer class="foot"><span>Shocking Steve Electricity, Blackout Canyon and every site in this game are made up.</span><a id="otherGame" href="https://der-dash.github.io/Network/" target="_top">Play the generation game</a><button type="button" class="linkish" id="cookieSettings" hidden>Cookie settings</button></footer>
 
 <nav class="dock" aria-label="Game controls"><b id="dClock">05:00</b><span id="dPill" class="pill ok">N-1 secure</span><button id="dCtl" type="button" class="btn icon-btn" aria-label="Open the control panel"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button><button id="dSpeed" type="button" class="btn" aria-label="Change speed">1×</button><button id="dPlay" type="button" class="btn primary">Start</button></nav>
 
@@ -794,7 +801,7 @@ function loadGA(){if(!GA||window.__gaLoaded)return;window.__gaLoaded=true;window
   window.gtag('js',new Date());window.gtag('config',GA);const sc=document.createElement('script');sc.async=true;sc.src='https://www.googletagmanager.com/gtag/js?id='+GA;document.head.appendChild(sc);}
 function consent(){try{return localStorage.getItem('fc-consent');}catch(e){return null;}}
 function track(name,params){try{if(GA&&consent()==='yes'&&typeof window.gtag==='function')window.gtag('event',name,{game:'control_room',...params});}catch(e){}}
-function initConsent(){if(!GA)return;$('cookieSettings').hidden=false;$('otherGame').hidden=false;const c=consent();if(c==='yes')loadGA();else if(c!=='no')$('cookie').hidden=false;}
+function initConsent(){if(!GA)return;$('cookieSettings').hidden=false;const c=consent();if(c==='yes')loadGA();else if(c!=='no')$('cookie').hidden=false;}
 function setConsent(yes){try{localStorage.setItem('fc-consent',yes?'yes':'no');}catch(e){}$('cookie').hidden=true;if(yes)loadGA();else{window['ga-disable-'+GA]=true;
   document.cookie.split(';').map(c=>c.split('=')[0].trim()).filter(n=>/^_ga/.test(n)).forEach(n=>{document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.'+location.hostname;});}}
 const MQ=matchMedia('(max-width: 700px)');let PHONE=MQ.matches;
@@ -1571,6 +1578,7 @@ function startSheet(){
   <h3>Choose a day</h3><div class="scns">${sc}</div>
   <div class="go"><div class="opts"><label class="chk"><input type="checkbox" id="ovPause" ${autoPause?'checked':''}> Pause when a fault happens</label><label class="chk"><input type="checkbox" id="ovTips" ${tipsOn?'checked':''}> Show tips</label></div>
   <span style="display:flex;gap:8px;flex-wrap:wrap"><button id="sheetBoardBtn" type="button" class="btn">Scoreboard</button><button id="startBtn" type="button" class="btn primary big">Start shift at 05:00</button></span></div>
+  <div class="other-game"><p><b>Prefer generation?</b> Try the original game: balance solar, wind, batteries and flexibility to keep the transformers inside their rating.</p><a class="btn" href="https://der-dash.github.io/Network/" target="_top">Play the generation game →</a></div>
   <p class="fine">Shift runs 05:00–23:00, about 3½ minutes at 1×. MW and MVA are treated as equal. No faults in the first 20 minutes, so you can set up.</p>`;
   $('overlay').hidden=false;
 }

@@ -463,6 +463,9 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
 .cookie .row{display:flex;gap:8px}
 .foot{max-width:1280px;margin:0 auto;padding-block:0 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 16px}
 .linkish{background:none;border:0;padding:0;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit}
+a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.other-game{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0 0;padding:12px 14px;border-radius:6px;border:1px dashed var(--accent);background:var(--sunk)}
+.other-game p{margin:0;flex:1 1 240px;font-size:14px}
 </style>
 </head>
 <body>
@@ -484,6 +487,7 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
       <label class="chk"><input type="checkbox" id="autoPause" checked> Pause on faults</label>
       <button id="muteBtn" class="btn icon-btn" type="button" aria-label="Sound on" aria-pressed="true"></button>
       <button id="boardBtn" class="btn" type="button">Scoreboard</button>
+      <a class="btn" href="https://der-dash.github.io/Network/control-room/" target="_top">Control room game →</a>
       <button id="newBtn" class="btn" type="button">New shift</button>
     </div>
     <div class="kpis">
@@ -574,7 +578,7 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
     </div>
   </section>
 </main>
-<footer class="foot"><span>Shocking Steve Electricity, Blackout Canyon and every site in this game are made up.</span><a id="otherGame" href="control-room/" hidden>Try the control room switching game</a><button type="button" class="linkish" id="cookieSettings" hidden>Cookie settings</button></footer>
+<footer class="foot"><span>Shocking Steve Electricity, Blackout Canyon and every site in this game are made up.</span><a id="otherGame" href="https://der-dash.github.io/Network/control-room/" target="_top">Try the control room switching game</a><button type="button" class="linkish" id="cookieSettings" hidden>Cookie settings</button></footer>
 
 <nav class="dock" aria-label="Game controls"><b id="dClock">05:00</b><span id="dPill" class="pill ok">N-1 secure</span><button id="dMute" type="button" class="btn icon-btn" aria-label="Sound on"></button><button id="dSpeed" type="button" class="btn" aria-label="Change speed">1×</button><button id="dPlay" type="button" class="btn primary">Start</button></nav>
 
@@ -702,7 +706,7 @@ const GA=window.FC_GA||null;
 function loadGA(){if(!GA||window.__gaLoaded)return;window.__gaLoaded=true;window['ga-disable-'+GA]=false;window.dataLayer=window.dataLayer||[];window.gtag=function(){window.dataLayer.push(arguments);};
   window.gtag('js',new Date());window.gtag('config',GA);const s=document.createElement('script');s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id='+GA;document.head.appendChild(s);}
 function track(name,params){try{if(GA&&ls('fc-consent')==='yes'&&typeof window.gtag==='function')window.gtag('event',name,params);}catch(e){}}
-function initConsent(){if(!GA)return;$('cookieSettings').hidden=false;$('otherGame').hidden=false;const c=ls('fc-consent');if(c==='yes')loadGA();else if(c!=='no')$('cookie').hidden=false;}
+function initConsent(){if(!GA)return;$('cookieSettings').hidden=false;const c=ls('fc-consent');if(c==='yes')loadGA();else if(c!=='no')$('cookie').hidden=false;}
 function setConsent(yes){ls('fc-consent',yes?'yes':'no');$('cookie').hidden=true;if(yes)loadGA();else{window['ga-disable-'+GA]=true;
   document.cookie.split(';').map(c=>c.split('=')[0].trim()).filter(n=>/^_ga/.test(n)).forEach(n=>{document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.'+location.hostname;});}}
 
@@ -1187,6 +1191,7 @@ function startSheet(){
   <h3>Choose a day</h3><div class="scns">${sc}</div>
   <div class="go"><div class="opts"><label class="chk"><input type="checkbox" id="ovPause" ${autoPause?'checked':''}> Pause when a fault happens</label><label class="chk"><input type="checkbox" id="ovTips" ${tipsOn?'checked':''}> Show tips</label></div>
   <span style="display:flex;gap:8px;flex-wrap:wrap"><button id="sheetBoardBtn" type="button" class="btn">Scoreboard</button><button id="startBtn" type="button" class="btn primary big">Start shift at 05:00</button></span></div>
+  <div class="other-game"><p><b>Prefer switching?</b> Try the control room game: run five substations from the network diagram, with no generation to lean on.</p><a class="btn" href="https://der-dash.github.io/Network/control-room/" target="_top">Play the control room game →</a></div>
   <p class="fine">Shift runs 05:00–23:00, about 3½ minutes at 1×. MW and MVA are treated as equal. Forecasts show planned outages and weather warnings, but never the faults themselves. No faults in the first 20 minutes, so you can set up.</p>`;
   $('overlay').hidden=false;
 }
