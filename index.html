@@ -1191,7 +1191,7 @@ function startSheet(){
     <button type="button" class="mode" data-mode="free" aria-pressed="${mode==='free'}"><b>Free play</b><span>Random faults every game. Good for practice.</span></button></div>
   <h3>Choose a day</h3><div class="scns">${sc}</div>
   <div class="go"><div class="opts"><label class="chk"><input type="checkbox" id="ovPause" ${autoPause?'checked':''}> Pause when a fault happens</label><label class="chk"><input type="checkbox" id="ovTips" ${tipsOn?'checked':''}> Show tips</label></div>
-  <span style="display:flex;gap:8px;flex-wrap:wrap"><button id="sheetBoardBtn" type="button" class="btn">Scoreboard</button><button id="startBtn" type="button" class="btn primary big">Start shift at 05:00</button></span></div>
+  <span style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" data-feedback>Feedback</button><button id="sheetBoardBtn" type="button" class="btn">Scoreboard</button><button id="startBtn" type="button" class="btn primary big">Start shift at 05:00</button></span></div>
   <div class="other-game"><p><b>Prefer switching?</b> Try the control room game: run five substations from the network diagram, with no generation to lean on.</p><a class="btn" href="https://der-dash.github.io/Network/control-room/" target="_top">Play the control room game →</a></div>
   <p class="fine">Shift runs 05:00–23:00, about 3½ minutes at 1×. MW and MVA are treated as equal. Forecasts show planned outages and weather warnings, but never the faults themselves. No faults in the first 20 minutes, so you can set up.</p>`;
   $('overlay').hidden=false;
@@ -1263,7 +1263,8 @@ function showEnd(){
   const lk=S.unlocked?'':' disabled';
   const btns=`<div class="go"><button type="button" class="btn" id="againBtn"${lk}>Choose another day</button><span style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" id="sheetBoardBtn"${lk}>Scoreboard</button><button type="button" class="btn primary big" id="replayBtn"${lk}>${L?'Try again':'Replay '+S.sc.title}</button></span></div>
   <p class="lock-note" id="lockNote" ${S.unlocked?'hidden':''}>Enter your name and submit your score to carry on.</p>
-  <p class="fine">${S.mode==='daily'?"Today's challenge keeps the same faults if you try again. Free play changes them every game.":'Fault times change each time you play.'}</p>`;
+  <p class="fine">${S.mode==='daily'?"Today's challenge keeps the same faults if you try again. Free play changes them every game.":'Fault times change each time you play.'}</p>
+  <p class="fine">Spotted a bug or got an idea? <button type="button" class="linkish" data-feedback>Send feedback</button></p>`;
   const last=L&&L.last?` When the last transformers tripped, ${Math.round(L.last.flow)} MW was flowing through ${L.last.cap} MW of transformer rating.`:'';
   const head=L?`<h2>Blackout Canyon lost at ${fmtT(L.m)}</h2>
     <div class="grade"><span class="lt alarm">✕</span><p style="margin:0;max-width:52ch">After ${esc(L.why)}, no transformers were left in service and every customer on Blackout Canyon lost supply.${esc(last)}</p></div>

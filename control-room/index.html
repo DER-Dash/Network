@@ -1806,7 +1806,7 @@ function startSheet(){
     <button type="button" class="mode" data-mode="free" aria-pressed="${mode==='free'}"><b>Free play</b><span>Random faults every game. Good for practice.</span></button></div>
   <h3>Choose a day</h3><div class="scns">${sc}</div>
   <div class="go"><div class="opts"><label class="chk"><input type="checkbox" id="ovPause" ${autoPause?'checked':''}> Pause on faults and overloads</label><label class="chk"><input type="checkbox" id="ovTips" ${tipsOn?'checked':''}> Show tips</label></div>
-  <span style="display:flex;gap:8px;flex-wrap:wrap"><button id="sheetBoardBtn" type="button" class="btn">Scoreboard</button><button id="startBtn" type="button" class="btn primary big">Start shift at 08:00</button></span></div>
+  <span style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" data-feedback>Feedback</button><button id="sheetBoardBtn" type="button" class="btn">Scoreboard</button><button id="startBtn" type="button" class="btn primary big">Start shift at 08:00</button></span></div>
   <div class="other-game"><p><b>Prefer generation?</b> Try the original game: balance solar, wind, batteries and flexibility to keep the transformers inside their rating.</p><a class="btn" href="https://der-dash.github.io/Network/" target="_top">Play the generation game →</a></div>
   <p class="fine">Shift runs 08:00–20:00, about 3½ minutes at 1×. Time slows to half speed while anything is overloaded. MW and MVA are treated as equal. No faults in the first 20 minutes, so you can set up.</p>`;
   $('overlay').hidden=false;
@@ -1880,7 +1880,8 @@ function showEnd(){
   const lk=S.unlocked?'':' disabled';
   const btns=`<div class="go"><button type="button" class="btn" id="againBtn"${lk}>Choose another day</button><span style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" id="sheetBoardBtn"${lk}>Scoreboard</button><button type="button" class="btn primary big" id="replayBtn"${lk}>${L?'Try again':'Replay '+esc(S.sc.title)}</button></span></div>
   <p class="lock-note" id="lockNote" ${S.unlocked?'hidden':''}>Enter your name and submit your score to carry on.</p>
-  <p class="fine">${S.mode==='daily'?"Today's challenge keeps the same faults if you try again.":'Free play changes the faults every game.'}</p>`;
+  <p class="fine">${S.mode==='daily'?"Today's challenge keeps the same faults if you try again.":'Free play changes the faults every game.'}</p>
+  <p class="fine">Spotted a bug or got an idea? <button type="button" class="linkish" data-feedback>Send feedback</button></p>`;
   const head=L?`<h2>Blackout Canyon lost at ${fmtT(L.m)}</h2>
     <div class="grade"><span class="lt alarm">✕</span><p style="margin:0;max-width:52ch">After ${esc(L.why)}, all ${PIDS.length===5?'five':'four'} substations were off supply at once.</p></div>
     <p style="margin:0 0 14px">You held on for ${Math.floor((L.m-START)/60)} h ${(L.m-START)%60} min. Keep Blackout Canyon inside firm capacity, and use the ties and interconnectors to keep substations on when things trip.</p>`
