@@ -872,7 +872,7 @@ const CUST_TOTAL=60000,SHORT_INT=3,CREW_ON=GAME==='cr',MANUAL=['tie','it','nop']
 const EMERG=1.2,EMERG_MIN=30,SHORT=1.5,SHORT_MIN=5,PAR_MAX=30,OV_MIN=10,INCIDENT_PTS=500,AL_ON=.8,AL_OFF=.75;
 const RATE={1:CFG.rate,2:CFG.rate*2,4:CFG.rate*4};
 const isManual=k=>CREW_ON&&MANUAL.includes(k.split(':')[0]);
-const CAREER=GAME==='cr'?['grid','storm','jan','heat','gsp','mesh']:['may','storm','jan'];
+const CAREER=GAME==='cr'?['grid','storm','heat','jan','gsp','mesh']:['may','storm','jan'];
 const RANKS=GAME==='cr'?[[0,'Trainee control engineer'],[3,'Assistant control engineer'],[6,'Control engineer'],[10,'Senior control engineer'],[14,'Control room manager'],[18,'Head of network operations']]
   :[[0,'Trainee flexibility analyst'],[2,'Flexibility analyst'],[4,'Flexibility engineer'],[6,'Senior flexibility engineer'],[9,'DSO manager']];
 const ACH=[
@@ -930,7 +930,7 @@ const SCENARIOS={
     causes:['Wind-borne debris on the overhead line','Tree contact on the overhead line','Conductor clash in high wind','Lightning strike on the overhead line'],
     build(r){const a=540+Math.round(r()*120),b=900+Math.round(r()*90),s=1005+Math.round(r()*90);
       return{events:[],cutout:{start:s,end:s+75},risk:[{start:a,end:a+180,mult:3,label:'Severe gale'},{start:b,end:b+180,mult:3,label:'Severe gale'}]};}},
-  grid:{color:'var(--mv)',diff:2,title:'Switching shift',when:'Tuesday 8 December',focus:'Switching only',soc0:0,nbShape:'demand',noGen:true,
+  grid:{color:'var(--mv)',diff:1,title:'Switching shift',when:'Tuesday 8 December',focus:'Switching only',soc0:0,nbShape:'demand',noGen:true,
     blurb:'No generation and no flexibility, just switching. T3 is out for maintenance in the afternoon and the evening peak pushes past firm capacity. Move load between substations and onto the neighbours.',
     demand:[[0,88],[4,78],[6,84],[7.5,114],[9,124],[11,118],[13,116],[15,122],[16.5,144],[17.5,160],[18.5,156],[20,140],[21.5,120],[23,100],[24,92]],
     solar:{peak:0,start:7.8,end:16.2,cloud:0},wind:{mean:0,var:0},faults:2.5,nb:{kn:{base:72,dip:26},fm:{base:70,dip:24}},
