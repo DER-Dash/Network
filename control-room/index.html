@@ -602,6 +602,20 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .arw.hid{visibility:hidden}
 .bs-t{font:700 10px var(--f-display);letter-spacing:.08em;fill:var(--muted)}
 @media (prefers-reduced-motion:reduce){.arw{transition:none}}
+
+/* Tap-to-operate pop-up */
+.mscroll{position:relative}
+.qp{position:absolute;z-index:6;width:236px;max-width:calc(100% - 8px);background:var(--panel);color:var(--ink);border:2px solid var(--accent);border-radius:8px;box-shadow:0 10px 28px rgba(0,0,0,.3);padding:8px 10px 10px;font-size:13px}
+.qp[hidden]{display:none}
+.qp-h{display:flex;align-items:center;gap:6px}
+.qp-h b{flex:1;min-width:0;font:600 14px/1.25 var(--f-body)}
+.qp-x{border:0;background:none;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;padding:0 4px;min-width:32px;min-height:32px}
+.qp-s{margin:2px 0 8px;color:var(--muted);font-size:12.5px;line-height:1.35}
+.qp-st{font-weight:700;color:var(--ink)}
+.qp-s.alarm{color:var(--alarm)}.qp-s.warn{color:var(--warn)}.qp-s.ok{color:var(--ok)}
+.qp-row{display:flex;gap:6px}
+.qp .op-btn{min-width:0;flex:1;min-height:42px;font-size:15px}
+.qp-row #qpMore{flex:none;min-height:42px}
 </style>
 </head>
 <body>
@@ -646,7 +660,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
       <div class="legend"><span><i style="border-color:var(--hv)"></i>132 kV</span><span><i style="border-color:var(--mv)"></i>33 kV</span><span><i style="border-color:var(--c-kn)"></i>To Ampy Place</span><span><i style="border-color:var(--c-fm)"></i>To Watts This</span><span><i style="border-color:var(--mv);border-top-style:dashed"></i>Interconnector</span><span>■ closed · □ open</span><span>Select anything to control it</span></div>
       <button class="zoom-btn" type="button" id="zoomBtn" aria-pressed="true">Fit</button>
     </div>
-    <div class="mscroll" id="mscroll"><svg id="mimic" class="mimic-svg" viewBox="0 0 1200 610" role="img" aria-label="Network diagram of Blackout Canyon, its four substations and two neighbouring networks"></svg></div>
+    <div class="mscroll" id="mscroll"><div id="qp" class="qp" role="dialog" aria-label="Switch control" hidden></div><svg id="mimic" class="mimic-svg" viewBox="0 0 1200 610" role="img" aria-label="Network diagram of Blackout Canyon, its four substations and two neighbouring networks"></svg></div>
   </section>
 
   <section class="panel p-insp" id="pInsp" aria-label="Control panel">
@@ -828,7 +842,7 @@ const SPK_ON='<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d=
 const SPK_OFF='<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
 const capOf=s=>s.id==='solar'?Math.max(5,Math.ceil(S.sc.solar.peak/5)*5):s.cap;
 const NOGEN=()=>!!S.sc.noGen;
-const devName=k=>{const[t,i]=k.split(':');return t==='bs'?(i==='12'?'T1–T2 bus section breaker':'T2–T3 bus section breaker'):t==='tx'?`T${+i+1}`:t==='bc'?`${PR[i].name} breaker`:t==='tie'?`${PR[i].name} – ${NBS[PR[i].nb].name} tie`:`${PR[ITS[i].a].name} – ${PR[ITS[i].b].name} interconnector`;};
+const devName=k=>{const[t,i]=k.split(':');return t==='bs'?(i==='12'?'T1–T2 bus section breaker':'T2–T3 bus section breaker'):t==='tx'?`T${+i+1}`:t==='bc'?`${PR[i].name} breaker`:t==='in'?`${PR[i].name} incomer`:t==='tie'?`${PR[i].name} – ${NBS[PR[i].nb].name} tie`:`${PR[ITS[i].a].name} – ${PR[ITS[i].b].name} interconnector`;};
 
 const SITE_URL='https://der-dash.github.io/Network/control-room/';
 const SCORE_URL='https://script.google.com/macros/s/AKfycbx_0hkrfzn5_ApQWr3UwqT-p7SuOf8ubJHBLxNGGQECIbDEJzfIRNRsWquE--FUOhmMNg/exec';
@@ -891,7 +905,7 @@ function islands(extra){const par={B1:'B1',B2:'B2',B3:'B3'},f=n=>par[n]===n?n:(p
   const L={};['B1','B2','B3'].forEach(sc=>{const r=f(sc);(L[r]=L[r]||{id:'I'+r.slice(1),secs:[],txs:[]}).secs.push(sc);SECS[sc].tx.forEach(i=>{if(!S.tx[i].out)L[r].txs.push(i);});});
   const list=Object.values(L),of={},byId={};list.forEach(I=>{I.alive=I.txs.length>0;byId[I.id]=I;I.secs.forEach(sc=>of[sc]=I.id);});return{of,list,byId};}
 function edgesNow(extra){const IS=islands(extra),E=[];
-  PIDS.forEach(p=>{const f=S.fd[p];if(PR[p].fd){const I=IS.byId[IS.of[FSEC[p]]];if(I.alive&&((f.brk&&!f.fault)||extra==='bc:'+p))E.push({id:'bc:'+p,a:I.id,b:p,x:1,r:PR[p].fr});}
+  PIDS.forEach(p=>{const f=S.fd[p];if(PR[p].fd){const I=IS.byId[IS.of[FSEC[p]]];const xb=extra==='bc:'+p,xi=extra==='in:'+p;if(I.alive&&(f.brk||xb)&&(f.inc||xi)&&(!f.fault||((xb||xi)&&f.fault.ready)))E.push({id:'bc:'+p,a:I.id,b:p,x:1,r:PR[p].fr});}
     if(PR[p].nb&&(S.tie[p].closed||extra==='tie:'+p))E.push({id:'tie:'+p,a:p,b:PR[p].nb,x:1.5,r:PR[p].tie});});
   ITIDS.forEach(k=>{const it=S.it[k];if((it.closed&&!it.fault)||extra==='it:'+k)E.push({id:'it:'+k,a:ITS[k].a,b:ITS[k].b,x:1.2,r:ITS[k].r});});
   E.IS=IS;return E;}
@@ -933,7 +947,7 @@ function newGame(key){
     events:b.events.map(e=>({...e,fired:false,noticed:false})),cutout:b.cutout?{...b.cutout,fired:false,done:false}:null,
     risk:b.risk,sched,N,rng2:rngFrom(seed^0x5bd1e995),
     tx:[0,1,2].map(()=>({temp:60,out:null,em:0,sh:0,L:0,flow:0})),
-    share,fd:Object.fromEntries(PIDS.map(p=>[p,{brk:!!PR[p].fd,fault:null}])),
+    share,fd:Object.fromEntries(PIDS.map(p=>[p,{brk:!!PR[p].fd,inc:!!PR[p].fd,fault:null}])),
     tie:Object.fromEntries(PIDS.map(p=>[p,{closed:false}])),
     it:Object.fromEntries(ITIDS.map(k=>[k,{closed:!!ITS[k].nc,fault:null}])),
     ov:{},edL:{},flows:{},alarms:{},bs:{'12':{closed:true},'23':{closed:true}},bsf:{'12':0,'23':0},isl:{},islands:[],inj:{kn:0,fm:0},parMin:0,
@@ -949,7 +963,7 @@ function newGame(key){
   S.silent=false;S.alarms={};S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.peakL=0;S.ens=0;S.log=[];S.full=[];S.marks=[];S.chain=[];queued=[];
   logE(START,`Shift starts. ${sc.when}: ${sc.blurb}`,'info');
   if(daily)logE(START,`Today's challenge (${fmtDate(date)}): everyone gets the same weather and fault times.`,'info');
-  S.events.filter(e=>e.planned).forEach(e=>logE(START,e.fd?`Notice: ${PR[e.fd].name} feeder planned outage ${fmtT(e.start)}–${fmtT(e.end)}. Field staff will open its breaker at Blackout Canyon at ${fmtT(e.start)}, so move ${PR[e.fd].name} and anything fed through it beforehand.`:`Notice: T${e.tx+1} planned outage ${fmtT(e.start)}–${fmtT(e.end)}. Field staff will switch it out; you restore it afterwards.`,'warn'));
+  S.events.filter(e=>e.planned).forEach(e=>logE(START,e.fd?`Notice: ${PR[e.fd].name} feeder planned outage ${fmtT(e.start)}–${fmtT(e.end)}. Field staff will open both ends of it at ${fmtT(e.start)}, so move ${PR[e.fd].name} and anything fed through it beforehand.`:`Notice: T${e.tx+1} planned outage ${fmtT(e.start)}–${fmtT(e.end)}. Field staff will switch it out; you restore it afterwards.`,'warn'));
   S.risk.forEach(w=>logE(START,`Weather warning: ${w.label.toLowerCase()} ${fmtT(w.start)}–${fmtT(w.end)}. Faults are ${w.mult}× more likely.`,'warn'));
   $('scnLabel').innerHTML=esc(sc.title+' · Blackout Canyon 33 kV')+(daily?` <span class="mode-tag">Daily ${esc(fmtDate(date))}</span>`:'');
   $('dayLabel').textContent=sc.when;
@@ -981,9 +995,10 @@ function logE(m,text,lvl){S.log.unshift({m,text,lvl});if(S.log.length>60)S.log.p
 function mark(m,type,label){if(!S.silent)S.marks.push({m,type,label});}
 function queueAlert(text,lvl,pause){if(!S.silent)queued.push({text,lvl,pause,m:S.t});}
 function incident(m,msg,el){S.incidents++;S.chain.push('a switching incident');mark(m,'incident','Incident');logE(m,'Switching incident: '+msg,'alarm');queueAlert('Switching incident: '+msg,'alarm',true);play('incident');fx(el);}
-function openEdge(id){const[t,k]=id.split(':');if(t==='bs')S.bs[k].closed=false;else if(t==='bc')S.fd[k].brk=false;else if(t==='tie')S.tie[k].closed=false;else if(t==='it')S.it[k].closed=false;}
-const isClosed=id=>{const[t,k]=id.split(':');return t==='bs'?S.bs[k].closed:t==='bc'?S.fd[k].brk:t==='tie'?S.tie[k].closed:S.it[k].closed;};
-const elOf=id=>{const[t,k]=id.split(':');return t==='bs'?'bsg_'+k:t==='bc'?'fdg_'+k:t==='tie'?'tieg_'+k:'itg_'+k;};
+function openEdge(id){const[t,k]=id.split(':');if(t==='bs')S.bs[k].closed=false;else if(t==='bc')S.fd[k].brk=false;else if(t==='in')S.fd[k].inc=false;else if(t==='tie')S.tie[k].closed=false;else if(t==='it')S.it[k].closed=false;}
+const isClosed=id=>{const[t,k]=id.split(':');return t==='bs'?S.bs[k].closed:t==='bc'?S.fd[k].brk:t==='in'?S.fd[k].inc:t==='tie'?S.tie[k].closed:S.it[k].closed;};
+const fdOn=p=>{const f=S.fd[p];return !!PR[p].fd&&f.brk&&f.inc&&!f.fault;};
+const elOf=id=>{const[t,k]=id.split(':');return t==='bs'?'bsg_'+k:t==='bc'||t==='in'?'fdg_'+k:t==='tie'?'tieg_'+k:'itg_'+k;};
 
 /* ---------- Simulation step (one game minute) ---------- */
 function step(){
@@ -992,11 +1007,11 @@ function step(){
     const msg=t.out.kind==='planned'?`T${i+1} maintenance is finished. Close the T${i+1} breaker to put it back in service.`:t.out.kind==='trip'?`T${i+1} has been inspected after its trip. Close the T${i+1} breaker to put it back in service.`:`T${i+1} has been repaired. Close the T${i+1} breaker to put it back in service.`;
     logE(m,msg,'ok');queueAlert(msg,'ok',false);play('ok');}});
   ITIDS.forEach(k=>{const f=S.it[k];if(f.fault&&!f.fault.ready&&m>=f.fault.until){f.fault.ready=true;const msg=`The ${devName('it:'+k)} has been repaired. It can be closed again.`;logE(m,msg,'ok');queueAlert(msg,'ok',false);play('ok');}});
-  PIDS.forEach(p=>{const f=S.fd[p];if(f.fault&&!f.fault.ready&&m>=f.fault.until){f.fault.ready=true;const msg=f.fault.planned?`${PR[p].name} feeder maintenance is finished. Its breaker at Blackout Canyon can be closed again.`:`The ${PR[p].name} feeder has been repaired. Its breaker at Blackout Canyon can be closed again.`;logE(m,msg,'ok');queueAlert(msg,'ok',false);play('ok');}});
+  PIDS.forEach(p=>{const f=S.fd[p];if(f.fault&&!f.fault.ready&&m>=f.fault.until){f.fault.ready=true;const msg=f.fault.planned?`${PR[p].name} feeder maintenance is finished. Close its breaker at Blackout Canyon and its incomer at ${PR[p].name} to put it back.`:`The ${PR[p].name} feeder has been repaired. Close its breaker at Blackout Canyon and its incomer at ${PR[p].name} to put it back.`;logE(m,msg,'ok');queueAlert(msg,'ok',false);play('ok');}});
   for(const e of S.events){
     if(!e.noticed&&m>=e.start-60&&m<e.start){e.noticed=true;logE(m,`${e.fd?PR[e.fd].name+' feeder':'T'+(e.tx+1)} planned outage starts in an hour, at ${fmtT(e.start)}.`,'warn');}
-    if(!e.fired&&m>=e.start&&e.fd){e.fired=true;const f=S.fd[e.fd],was=f.brk;f.brk=false;f.fault={until:e.end,ready:false,label:'Planned maintenance',planned:true};mark(m,'planned',PR[e.fd].name+' feeder out');
-      const s=`Field staff have opened the ${PR[e.fd].name} breaker for planned work on the feeder until ${fmtT(e.end)}.`;logE(m,s,'warn');queueAlert(s,'warn',!!was);play('warn');}
+    if(!e.fired&&m>=e.start&&e.fd){e.fired=true;const f=S.fd[e.fd],was=f.brk&&f.inc;f.brk=false;f.inc=false;f.fault={until:Math.max(e.end,f.fault&&!f.fault.ready?f.fault.until:0),ready:false,label:'Planned maintenance',planned:true};mark(m,'planned',PR[e.fd].name+' feeder out');
+      const s=`Field staff have opened both ends of the ${PR[e.fd].name} feeder (the breaker at Blackout Canyon and the incomer at ${PR[e.fd].name}) for planned work on the feeder until ${fmtT(e.end)}.`;logE(m,s,'warn');queueAlert(s,'warn',!!was);play('warn');}
     if(!e.fired&&m>=e.start){e.fired=true;const t=S.tx[e.tx];
       if(!t.out){t.out={kind:'planned',until:e.end,ready:false,label:e.cause};mark(m,'planned',`T${e.tx+1} out`);const s=`Field staff have switched out T${e.tx+1} for planned maintenance until ${fmtT(e.end)}.`;logE(m,s,'warn');queueAlert(s,'warn',false);play('warn');}}
   }
@@ -1008,8 +1023,8 @@ function step(){
       const s=`Fault on the ${devName('it:'+id)}: ${f.cause.toLowerCase()}. ${was?'It tripped. ':''}Repair expected by ${fmtT(m+f.dur)}.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);play('fault');fx('itg_'+id);}
     else{const p=id,fd=S.fd[p];if(fd.fault)continue;
       fd.fault={until:m+f.dur,ready:false,label:f.cause};S.faults++;S.chain.push(`a fault on the ${PR[p].name} feeder`);mark(m,'fault',`${PR[p].name} feeder fault`);
-      const was=fd.brk;fd.brk=false;
-      const s=`Fault on the ${PR[p].name} 33 kV feeder: ${f.cause.toLowerCase()}. ${was?'Its breaker at Blackout Canyon tripped. ':''}Repair expected by ${fmtT(m+f.dur)}.`+(was?` Restore ${PR[p].name} through ${PR[p].nb?'the '+NBS[PR[p].nb].name+' tie or ':''}an interconnector.`:'');
+      const was=fd.brk&&fd.inc;fd.brk=false;fd.inc=false;
+      const s=`Fault on the ${PR[p].name} 33 kV feeder: ${f.cause.toLowerCase()}. ${was?`Its breaker at Blackout Canyon and the incomer at ${PR[p].name} both tripped. `:''}Repair expected by ${fmtT(m+f.dur)}.`+(was?` Restore ${PR[p].name} through ${PR[p].nb?'the '+NBS[PR[p].nb].name+' tie or ':''}an interconnector.`:'');
       logE(m,s,'alarm');queueAlert(s,'alarm',true);play('fault');fx('fdg_'+p);}}
   if(S.cutout&&!S.cutout.fired&&m>=S.cutout.start){S.cutout.fired=true;mark(m,'fail','Wind stop');const s=`Spinney Windy Things shut down on high wind speed. Restart expected around ${fmtT(S.cutout.end)}.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);play('warn');}
   if(S.cutout&&S.cutout.fired&&!S.cutout.done&&m>=S.cutout.end){S.cutout.done=true;logE(m,'Spinney Windy Things restarting.','ok');}
@@ -1025,7 +1040,7 @@ function step(){
   if(parG.length){S.parMin++;if(S.parMin>PAR_MAX&&!S.silent){parG.forEach(g=>PIDS.filter(p=>g.nodes.includes(p)&&PR[p].nb==='kn'&&S.tie[p].closed).forEach(p=>S.tie[p].closed=false));S.parMin=0;
     incident(m,`Blackout Canyon was paralleled with Ampy Place for more than ${PAR_MAX} minutes, so the Ampy Place tie protection tripped. Open one side within ${PAR_MAX} minutes of closing the other.`,'pMimic');}}else S.parMin=0;
   const pre=solve(Object.fromEntries(PIDS.map(p=>[p,0]))),sup=pre.sup,wB={};S.isl=pre.isl;
-  PIDS.forEach(p=>{wB[p]=sup[p]==='par'?(PR[p].fd&&S.fd[p].brk&&!S.fd[p].fault?1:.5):wBC(sup[p]);
+  PIDS.forEach(p=>{wB[p]=sup[p]==='par'?(fdOn(p)?1:.5):wBC(sup[p]);
     if(!S.silent){const was=S.sup[p];
       if(was!=='off'&&sup[p]==='off'){logE(m,`${PR[p].name} is off supply.`,'alarm');mark(m,'off',PR[p].name+' off');}
       if(was==='off'&&sup[p]!=='off'){logE(m,`${PR[p].name} customers back on supply${sup[p]==='kn'||sup[p]==='fm'?' from '+NBS[sup[p]].name:''}.`,'ok');play('ok');}}});
@@ -1135,6 +1150,7 @@ function ackAll(){Object.values(S.alarms).forEach(a=>a.ack=true);lastAl='';rende
 function opLabel(k,act){const[type,id]=k.split(':');
   if(type==='tx')return `${act==='close'?'Close':'Open'} T${+id+1} breaker`;
   if(type==='bc')return `${act==='close'?'Close':'Open'} ${PR[id].name} breaker at Blackout Canyon`;
+  if(type==='in')return `${act==='close'?'Close':'Open'} ${PR[id].name} incomer`;
   if(type==='bs')return `${act==='close'?'Close':'Open'} the ${devName(k)}`;
   if(type==='tie')return `${act==='close'?'Close':'Open'} ${NBS[PR[id].nb].name} tie to ${PR[id].name}`;
   return `${act==='close'?'Close':'Open'} ${PR[ITS[id].a].name} – ${PR[ITS[id].b].name} interconnector`;}
@@ -1152,23 +1168,23 @@ function doOp(op,m){const[type,id]=op.k.split(':');play('op');
   const k=op.k,nm=devName(k);
   if(op.act==='open'){if(!isClosed(k))return;openEdge(k);mark(m,'xfer',nm+' opened');logE(m,`${ucfirst(nm)} opened.`,'info');return;}
   if(isClosed(k))return;
-  if(type==='bc'){const f=S.fd[id];if(f.fault&&!f.fault.ready){f.fault.until+=30;incident(m,f.fault.planned?`The ${PR[id].name} breaker was closed while field staff were still working on the feeder. It tripped straight away, and the work now takes 30 minutes longer.`:`The ${PR[id].name} breaker was closed onto the faulted feeder. It tripped straight away, and the repair now takes 30 minutes longer.`,'fdg_'+id);return;}}
+  if(type==='bc'||type==='in'){const f=S.fd[id];if(f.fault&&!f.fault.ready){f.fault.until+=30;incident(m,f.fault.planned?`The ${nm} was closed while field staff were still working on the feeder. It tripped straight away, and the work now takes 30 minutes longer.`:`The ${nm} was closed onto the faulted feeder. It tripped straight away, and the repair now takes 30 minutes longer.`,'fdg_'+id);return;}}
   if(type==='it'){const f=S.it[id];if(f.fault&&!f.fault.ready){f.fault.until+=30;incident(m,`The ${devName(k)} was closed onto its fault. It tripped straight away, and the repair now takes 30 minutes longer.`,'itg_'+id);return;}}
   const before=groupsOf(edgesNow()),after=groupsOf(edgesNow(k));
-  const ends=G=>type==='bc'?[G.IS.of[FSEC[id]],id]:type==='bs'?[G.IS.of[id==='12'?'B1':'B2'],G.IS.of[id==='12'?'B2':'B3']]:type==='tie'?[id,PR[id].nb]:[ITS[id].a,ITS[id].b];
+  const ends=G=>type==='bc'||type==='in'?[G.IS.of[FSEC[id]],id]:type==='bs'?[G.IS.of[id==='12'?'B1':'B2'],G.IS.of[id==='12'?'B2':'B3']]:type==='tie'?[id,PR[id].nb]:[ITS[id].a,ITS[id].b];
   const[ea,eb]=ends(before),ga=before.of(ea),gb=before.of(eb),gj=after.of(ends(after)[0]),kind=kindOf(gj);
   if(kind==='bad'){
     let tripped=[];
-    if(type==='tie'&&PR[id].nb==='fm'){const p=id;if(S.fd[p].brk){S.fd[p].brk=false;tripped.push(`${PR[p].name} breaker`);}
+    if(type==='tie'&&PR[id].nb==='fm'){const p=id;if(S.fd[p].inc){S.fd[p].inc=false;tripped.push(`${PR[p].name} incomer`);}
       ITIDS.filter(k2=>(ITS[k2].a===p||ITS[k2].b===p)&&S.it[k2].closed).forEach(k2=>{S.it[k2].closed=false;tripped.push(devName('it:'+k2));});}
     else{const g=ga.src.includes('fm')?ga:gb;PIDS.filter(p=>g.nodes.includes(p)&&PR[p].nb==='fm'&&S.tie[p].closed).forEach(p=>{S.tie[p].closed=false;tripped.push(`${NBS.fm.name} tie to ${PR[p].name}`);});}
-    if(type==='bc')S.fd[id].fault=S.fd[id].fault&&S.fd[id].fault.ready?null:S.fd[id].fault;
+    if(type==='bc'||type==='in')S.fd[id].fault=S.fd[id].fault&&S.fd[id].fault.ready?null:S.fd[id].fault;
     incident(m,`Out-of-phase close: closing the ${nm} tried to parallel Watts This with ${gj.src.filter(s=>s!=='fm').map(s=>isBC(s)?'Blackout Canyon':NBS[s].name).filter((v,i,a)=>a.indexOf(v)===i).join(' and ')}, which is on a different grid supply. The ${nm} tripped${tripped.length?', and so did the '+tripped.join(', '):''}.`,elOf(k));
     return;}
   if(type==='bs')S.bs[id].closed=true;
-  else if(type==='bc')S.fd[id].brk=true,S.fd[id].fault=S.fd[id].fault&&S.fd[id].fault.ready?null:S.fd[id].fault;
+  else if(type==='bc'||type==='in'){if(type==='bc')S.fd[id].brk=true;else S.fd[id].inc=true;S.fd[id].fault=S.fd[id].fault&&S.fd[id].fault.ready?null:S.fd[id].fault;}
   else if(type==='tie')S.tie[id].closed=true;else{S.it[id].closed=true;if(S.it[id].fault&&S.it[id].fault.ready)S.it[id].fault=null;}
-  S.ov[k]=0;mark(m,'xfer',nm+' closed');
+  S.ov[type==='in'?'bc:'+id:k]=0;mark(m,'xfer',nm+' closed');
   if(kind==='par'&&kindOf(ga)!=='par'&&kindOf(gb)!=='par')logE(m,`${ucfirst(nm)} closed. Blackout Canyon is now paralleled with Ampy Place: open one side within ${PAR_MAX} minutes.`,'warn');
   else{const wasOff=!ga.src.length||!gb.src.length;logE(m,`${ucfirst(nm)} closed.`+(wasOff&&gj.src.length?' Supply restored to the dead side.':''),'ok');}
 }
@@ -1250,14 +1266,16 @@ function buildMimic(){
   PIDS.forEach(p=>{const P=PR[p],x=P.fx,sw=TIESW[p],py=pY(p);
     if(P.fd)s+=`<g id="fdg_${p}"><line id="fdl_${p}" class="cond mv" x1="${x}" y1="${BCY}" x2="${x}" y2="${PY}"/><line id="fdf_${p}" class="flow" x1="${x}" y1="${BCY+34}" x2="${x}" y2="${PY-4}"/>
       <rect id="fbk_${p}" class="brk sw" x="${x-9}" y="${BCY+14}" width="18" height="18"/>
-      <g id="fdb_${p}" hidden><path class="bolt" d="M${x+20} 248 l-8 14 h7 l-5 13 l12 -17 h-7 l6 -10 z"/></g>
+      <rect id="fin_${p}" class="brk sw" x="${x-9}" y="${PY-50}" width="18" height="18"/><text class="bs-t" x="${x-14}" y="${PY-37}" text-anchor="end">IN</text>
+      <g id="fdb_${p}" hidden><path class="bolt" d="M${x+20} 238 l-8 14 h7 l-5 13 l12 -17 h-7 l6 -10 z"/></g>
       <text id="fdt_${p}" class="fd-t" x="${x+14}" y="${BCY+28}"></text>
-      <text id="fdv_${p}" class="fd-v" x="${x+12}" y="292"></text>${arw('fda_'+p,x,272)}
+      <text id="fdv_${p}" class="fd-v" x="${x+12}" y="262"></text>${arw('fda_'+p,x,252)}
       <rect class="hit" data-sel="bc:${p}" x="${x-22}" y="${BCY+6}" width="44" height="38"/></g>`;
-    if(P.fd)SELBOX['bc:'+p]=[x-16,BCY+8,32,32];
+    if(P.fd)SELBOX['bc:'+p]=[x-16,BCY+8,32,32],SELBOX['in:'+p]=[x-16,PY-57,32,32];
     s+=`<rect class="hit" data-sel="prim:${p}" x="${P.x1-4}" y="${py-38}" width="${P.x2-P.x1+8}" height="48"/>
       <line id="pb_${p}" class="bus mv" x1="${P.x1}" y1="${py}" x2="${P.x2}" y2="${py}"/>
       <text class="p-name" x="${P.lx||P.x1}" y="${py-22}">${P.name.toUpperCase()}</text><text id="ps_${p}" class="p-stat" x="${P.lx||P.x1}" y="${py-9}">From BC</text><text id="pn_${p}" class="p-net" x="${P.x2}" y="${py-9}" text-anchor="end"></text>`;
+    if(P.fd)s+=`<rect class="hit" data-sel="in:${p}" x="${x-22}" y="${PY-62}" width="44" height="42"/>`;
     SELBOX['prim:'+p]=[P.x1-6,py-40,P.x2-P.x1+12,52];
     if(P.nb)s+=`<g id="tieg_${p}"><path id="tl_${p}" class="tie-l ${P.nb}" d="${sw.path}"/>
       <rect id="tsw_${p}" class="brk sw open" x="${sw.x-9}" y="${sw.y-9}" width="18" height="18"/>
@@ -1324,14 +1342,15 @@ function renderMimic(){
   });
   ['B1','B2','B3'].forEach(sc=>setAttr($('bus_'+sc),'class','bus mv'+(secAlive(sc)?'':' dead')));
   BSIDS.forEach(k=>{setAttr($('bsb_'+k),'class','brk sw'+(S.bs[k].closed?'':' open')+(opK==='bs:'+k?' operating':''));setArw('bsa_'+k,S.bs[k].closed?S.bsf[k]:0,'h');});
-  PIDS.forEach(p=>{const f=S.fd[p],sup=S.sup[p],fid='bc:'+p,en=PR[p].fd&&f.brk&&!f.fault&&secAlive(FSEC[p]),fl=S.flows[fid]||0;
+  PIDS.forEach(p=>{const f=S.fd[p],sup=S.sup[p],fid='bc:'+p,en=fdOn(p)&&secAlive(FSEC[p]),fl=S.flows[fid]||0;
     if(PR[p].fd){setAttr($('fdl_'+p),'class','cond mv'+(en?'':' dead'));setFlow($('fdf_'+p),en?fl:0);setArw('fda_'+p,en?fl:0,'v');
     setAttr($('fbk_'+p),'class','brk sw'+(f.brk?'':' open')+(f.fault&&!f.fault.ready&&!f.fault.planned?' trip':'')+(opK===fid?' operating':''));
+    setAttr($('fin_'+p),'class','brk sw'+(f.inc?'':' open')+(f.fault&&!f.fault.ready&&!f.fault.planned?' trip':'')+(opK==='in:'+p?' operating':''));
     const fb=$('fdb_'+p);if(f.fault&&!f.fault.ready&&!f.fault.planned)fb.removeAttribute('hidden');else fb.setAttribute('hidden','');
     txt('fdt_'+p,f.fault?(f.fault.ready?(f.fault.planned?'WORK DONE':'REPAIRED'):f.fault.planned?'WORK':'FAULT'):(S.ov[fid]>0?`TRIP IN ${OV_MIN-S.ov[fid]} MIN`:''));setAttr($('fdt_'+p),'class','fd-t'+(f.fault&&(f.fault.ready||f.fault.planned)?f.fault.ready?' ok':' warn':''));
     txt('fdv_'+p,en?`${Math.round(Math.abs(fl))}/${PR[p].fr} MW ${arrow(fl)}`:'');setAttr($('fdv_'+p),'class','fd-v'+((S.edL[fid]||0)>1?' alarm':(S.edL[fid]||0)>.85?' warn':''));}
     setAttr($('pb_'+p),'class','bus mv'+(sup==='off'?' dead':''));
-    const ds=sup==='par'&&!S.tie[p].closed?(PR[p].fd&&S.fd[p].brk?'bc':'kn'):sup;txt('ps_'+p,supLbl(ds));txt('pn_'+p,sup==='off'?'':`net ${Math.round(Math.abs(S.pn[p]))} MW ${S.pn[p]>=0?'▼':'▲'}`);setAttr($('ps_'+p),'class','p-stat'+(ds==='off'?' off':ds==='par'?' par':ds==='kn'||ds==='fm'?' nb '+ds:''));
+    const ds=sup==='par'&&!S.tie[p].closed?(fdOn(p)?'bc':'kn'):sup;txt('ps_'+p,supLbl(ds));txt('pn_'+p,sup==='off'?'':`net ${Math.round(Math.abs(S.pn[p]))} MW ${S.pn[p]>=0?'▼':'▲'}`);setAttr($('ps_'+p),'class','p-stat'+(ds==='off'?' off':ds==='par'?' par':ds==='kn'||ds==='fm'?' nb '+ds:''));
     const tid='tie:'+p,tc=S.tie[p].closed;if(!PR[p].nb)return;
     setAttr($('tl_'+p),'class','tie-l '+PR[p].nb+(tc?' on':''));
     setAttr($('tsw_'+p),'class','brk sw'+(tc?'':' open')+(opK===tid?' operating':''));
@@ -1387,7 +1406,7 @@ function summaryHtml(){
   const outs=[...S.tx.map((t,i)=>t.out?`<li><button type="button" data-sel="tx:${i}" data-k="o-tx${i}"><span class="nm">T${i+1}</span><span class="st${t.out.ready?' warn':' off'}">${t.out.ready?'Ready: close its breaker':esc(t.out.label)+' · '+fmtT(t.out.until)}</span><span class="v"></span></button></li>`:''),
     ...BSIDS.map(k=>S.bs[k].closed?'':`<li><button type="button" data-sel="bs:${k}" data-k="o-bs${k}"><span class="nm">${esc(ucfirst(devName('bs:'+k)))}</span><span class="st warn">Open: busbar running split</span><span class="v"></span></button></li>`),
     ...ITIDS.map(k=>{const f=S.it[k].fault;return f?`<li><button type="button" data-sel="it:${k}" data-k="o-it${k}"><span class="nm">${esc(ucfirst(devName('it:'+k)))}</span><span class="st${f.ready?' warn':' off'}">${f.ready?'Repaired: can close':'Faulted · repair '+fmtT(f.until)}</span><span class="v"></span></button></li>`:'';}),
-    ...PIDS.map(p=>{const f=S.fd[p];return f.fault?`<li><button type="button" data-sel="bc:${p}" data-k="o-fd${p}"><span class="nm">${PR[p].name} feeder</span><span class="st${f.fault.ready?' warn':' off'}">${f.fault.ready?'Repaired: breaker can close':(f.fault.planned?'Planned work · until ':'Faulted · repair ')+fmtT(f.fault.until)}</span><span class="v"></span></button></li>`:'';})].join('');
+    ...PIDS.map(p=>{const f=S.fd[p];if(PR[p].fd&&!f.fault&&!(f.brk&&f.inc))return `<li><button type="button" data-sel="bc:${p}" data-k="o-fd${p}"><span class="nm">${PR[p].name} feeder</span><span class="st warn">${!f.brk&&!f.inc?'Both ends open':!f.brk?'BC breaker open':'Incomer open'}</span><span class="v"></span></button></li>`;return f.fault?`<li><button type="button" data-sel="bc:${p}" data-k="o-fd${p}"><span class="nm">${PR[p].name} feeder</span><span class="st${f.fault.ready?' warn':' off'}">${f.fault.ready?'Ready: close both ends':(f.fault.planned?'Planned work · until ':'Faulted · repair ')+fmtT(f.fault.until)}</span><span class="v"></span></button></li>`:'';})].join('');
   return `<div class="i-h">${ico('sub')}<div><h3>Control desk</h3><div class="kind">Select anything on the diagram to operate it.${NOGEN()?' This shift has no generation or flexibility: manage loading by switching.':' ▲ ▼ beside a generator turn it up or down now.'}</div></div></div>
     ${S.op?`<p class="i-state warn">Operating: ${esc(opLabel(S.op.k,S.op.act))} · ready ${fmtT(S.op.at)}</p>`:''}
     <h4 class="i-sub">Substations · net MW (+ import)</h4><ul class="i-list">${subs}</ul>
@@ -1404,16 +1423,18 @@ function txHtml(i){const t=S.tx[i];let st='',cls='ok';
     <p class="i-state ${cls}">${esc(st)}</p>
     <div class="op-row">${t.out?opBtn('tx:'+i,'close',`Close T${i+1} breaker`):opBtn('tx:'+i,'open',`Open T${i+1} breaker`)}</div>
     <p class="i-note">Emergency rating: up to 120% for ${EMERG_MIN} minutes, 120–150% for ${SHORT_MIN} minutes. Closing equipment before it's ready trips it again.</p>`;}
-function bcHtml(p){const f=S.fd[p],nm=PR[p].name,id='bc:'+p,fl=S.flows[id]||0,I=S.islands.find(J=>J.secs.includes(FSEC[p])),al=!!(I&&I.alive),en=f.brk&&!f.fault&&al;let st,cls;
-  if(f.fault&&!f.fault.ready){st=`Feeder faulted: ${f.fault.label.toLowerCase()}. Repair until ${fmtT(f.fault.until)}.`;cls='alarm';}
-  else if(f.fault){st='Feeder repaired. The breaker can be closed.';cls='warn';}
+function bcHtml(p){const f=S.fd[p],nm=PR[p].name,id='bc:'+p,fl=S.flows[id]||0,I=S.islands.find(J=>J.secs.includes(FSEC[p])),al=!!(I&&I.alive),en=fdOn(p)&&al;let st,cls;
+  if(f.fault&&!f.fault.ready){st=`Feeder ${f.fault.planned?'out for planned work':'faulted: '+f.fault.label.toLowerCase()}. ${f.fault.planned?'Work':'Repair'} until ${fmtT(f.fault.until)}. Keep both ends open until then.`;cls='alarm';}
+  else if(f.fault){st='Feeder ready. Close both ends to put it back.';cls='warn';}
   else if(S.ov[id]>0){st=`Overloaded: trips in ${OV_MIN-S.ov[id]} min.`;cls='alarm';}
-  else{st=f.brk?(al?'Feeder healthy and energised.':'Feeder healthy, but its busbar section is dead.'):'Feeder healthy. Breaker open.';cls=f.brk&&al?'ok':'warn';}
-  return `${back}<div class="i-h">${ico('brk','var(--mv)')}<div><h3>${nm} feeder breaker</h3><div class="kind">33 kV circuit breaker at Blackout Canyon</div></div></div>
-    ${facts([['Breaker',f.brk?'Closed':'Open'],['Feeder',f.fault?(f.fault.ready?'Repaired':'Faulted'):'Healthy'],['Flow',en?`${mw(Math.abs(fl))} ${fl>=0?'to':'from'} ${nm}`:'–'],['Rating',mw(PR[p].fr)]])}
+  else if(f.brk&&f.inc){st=al?'Feeder healthy and energised.':'Feeder healthy, but its busbar section is dead.';cls=al?'ok':'warn';}
+  else{st=`Feeder healthy but out of service: ${!f.brk&&!f.inc?'both ends are':!f.brk?'the Blackout Canyon breaker is':'the '+nm+' incomer is'} open.`;cls='warn';}
+  return `${back}<div class="i-h">${ico('brk','var(--mv)')}<div><h3>${nm} 33 kV feeder</h3><div class="kind">Breaker at Blackout Canyon, incomer at ${nm}</div></div></div>
+    ${facts([['BC breaker',f.brk?'Closed':'Open'],[nm+' incomer',f.inc?'Closed':'Open'],['Feeder',f.fault?(f.fault.ready?'Ready':f.fault.planned?'Planned work':'Faulted'):'Healthy'],['Flow',en?`${mw(Math.abs(fl))} ${fl>=0?'to':'from'} ${nm}`:'–'],['Rating',mw(PR[p].fr)]])}
     <p class="i-state ${cls}">${esc(st)}</p>
-    <div class="op-row">${f.brk?opBtn(id,'open',`Open ${nm} breaker`):opBtn(id,'close',`Close ${nm} breaker`)}</div>
-    <div class="op-row"><button type="button" class="btn" data-sel="tie:${p}" data-k="go-tie">${esc(NBS[PR[p].nb].name)} tie</button><button type="button" class="btn" data-sel="prim:${p}" data-k="go-prim">${esc(nm)} substation</button></div>`;}
+    <div class="op-row">${f.brk?opBtn(id,'open','Open BC breaker'):opBtn(id,'close','Close BC breaker')}${f.inc?opBtn('in:'+p,'open',`Open ${nm} incomer`):opBtn('in:'+p,'close',`Close ${nm} incomer`)}</div>
+    <p class="i-note">The feeder only carries power with both ends closed. With the incomer open, ${nm} can be fed from a tie or interconnector without back-feeding the feeder.</p>
+    <div class="op-row">${PR[p].nb?`<button type="button" class="btn" data-sel="tie:${p}" data-k="go-tie">${esc(NBS[PR[p].nb].name)} tie</button>`:''}<button type="button" class="btn" data-sel="prim:${p}" data-k="go-prim">${esc(nm)} substation</button></div>`;}
 const RULE_KN=`<p class="i-rule kn"><b>Ampy Place is on the same grid supply as Blackout Canyon.</b> You can transfer without an interruption: close the new route first, then open the old one within ${PAR_MAX} minutes.</p>`;
 const RULE_FM=`<p class="i-rule fm"><b>Watts This is on a different grid supply. Never parallel it with Blackout Canyon or Ampy Place.</b> Open the old route first, then close the new one. Customers lose supply for the minutes in between.</p>`;
 function tieHtml(p){const id='tie:'+p,c=S.tie[p].closed,nb=PR[p].nb,nm=PR[p].name,lim=tieLimit(p),ov=S.ov[id]||0,fl=-(S.flows[id]||0);let st,cls='ok';
@@ -1479,9 +1500,38 @@ function assetHtml(id){const a=ASB[id];
     <p class="i-state ${f?'alarm':''}">${esc(st)}</p>
     <p class="i-note">Armed response only helps Blackout Canyon while ${PR[p].name} is fed from it.</p>`;}
 function inspHtml(){const sel=S.sel;if(!sel)return summaryHtml();const[type,id]=sel.split(':');
-  if(type==='tx')return txHtml(+id);if(type==='bc')return bcHtml(id);if(type==='tie')return tieHtml(id);if(type==='it')return itHtml(id);if(type==='bs')return bsHtml(id);if(type==='nb')return nbHtml(id);if(type==='prim')return primHtml(id);if(type==='as'&&ASB[id]&&(!NOGEN()||ASB[id].type==='load'))return assetHtml(id);return summaryHtml();}
+  if(type==='tx')return txHtml(+id);if(type==='bc'||type==='in')return bcHtml(id);if(type==='tie')return tieHtml(id);if(type==='it')return itHtml(id);if(type==='bs')return bsHtml(id);if(type==='nb')return nbHtml(id);if(type==='prim')return primHtml(id);if(type==='as'&&ASB[id]&&(!NOGEN()||ASB[id].type==='load'))return assetHtml(id);return summaryHtml();}
 function renderInsp(){const h=inspHtml();if(h===lastInsp)return;lastInsp=h;const el=$('inspBody'),ae=document.activeElement,k=ae&&el.contains(ae)&&ae.dataset?ae.dataset.k:null;el.innerHTML=h;if(k){const f=el.querySelector(`[data-k="${k}"]`);if(f)f.focus();}}
-function select(k){S.sel=k==='none'?null:k;lastInsp='';if(PHONE){if(S.sel)openSheet();}render(true);}
+const QP_T=['tx','bc','in','tie','it','bs'],isSw=k=>!!k&&QP_T.includes(k.split(':')[0]);
+function select(k,fromDiagram){S.sel=k==='none'?null:k;S.qp=!!fromDiagram&&isSw(S.sel);lastInsp='';
+  if(PHONE){if(S.qp)closeSheet();else if(S.sel)openSheet();}render(true);}
+let lastQP='';
+function qpHtml(k){const[t,id]=k.split(':');let closed,st,cls='';
+  if(t==='tx'){const x=S.tx[+id];closed=!x.out;
+    st=x.out?(x.out.ready?'ready to close':`${x.out.kind==='planned'?'work':x.out.kind==='trip'?'inspection':x.out.kind==='open'?'opened':'repair'}${x.out.kind==='open'?'':' until '+fmtT(x.out.until)}`):`${Math.round(x.L*100)}% loaded`;
+    cls=x.out?(x.out.ready?'warn':'alarm'):x.L>1?'alarm':x.L>AL_ON?'warn':'ok';}
+  else if(t==='bc'||t==='in'){const f=S.fd[id],fl=Math.abs(S.flows['bc:'+id]||0),L=S.edL['bc:'+id]||0;closed=t==='bc'?f.brk:f.inc;
+    st=f.fault?(f.fault.ready?'feeder ready':`${f.fault.planned?'work':'fault'} until ${fmtT(f.fault.until)}`):fdOn(id)&&S.islands.some(J=>J.alive&&J.secs.includes(FSEC[id]))?`${Math.round(fl)}/${PR[id].fr} MW`:`other end ${(t==='bc'?f.inc:f.brk)?'closed':'open'}`;
+    cls=f.fault&&!f.fault.ready?'alarm':f.fault?'warn':L>1?'alarm':L>AL_ON?'warn':'';}
+  else if(t==='tie'){closed=S.tie[id].closed;const fl=Math.abs(S.flows[k]||0),lim=tieLimit(id);
+    st=closed?`${Math.round(fl)}/${lim} MW`+(S.sup[id]==='par'?` · parallel ${PAR_MAX-S.parMin} min left`:''):(PR[id].nb==='fm'?'different grid supply: open the old route first':'same grid supply: can parallel');
+    cls=closed&&S.sup[id]==='par'?'warn':PR[id].nb==='fm'&&!closed?'warn':'';}
+  else if(t==='it'){const it=S.it[id],fl=Math.abs(S.flows[k]||0);closed=it.closed;
+    st=it.fault?(it.fault.ready?'repaired':'fault until '+fmtT(it.fault.until)):closed?`${Math.round(fl)}/${ITS[id].r} MW`:'normally open';cls=it.fault&&!it.fault.ready?'alarm':'';}
+  else{closed=S.bs[id].closed;st=closed?`${Math.round(Math.abs(S.bsf[id]||0))} MW across`:'busbar running split';cls=closed?'':'warn';}
+  const act=closed?'open':'close',title=t==='tx'?`T${+id+1} breaker`:ucfirst(devName(k))+(t==='bc'?' at Blackout Canyon':'');
+  return `<div class="qp-h"><b>${esc(title)}</b><button type="button" class="qp-x" id="qpClose" aria-label="Close this pop-up">×</button></div>
+    <p class="qp-s ${cls}"><span class="qp-st">${closed?'Closed':'Open'}</span> · ${esc(st)}</p>
+    <div class="qp-row">${opBtn(k,act,act==='close'?'Close':'Open')}<button type="button" class="btn" id="qpMore">Details</button></div>`;}
+function renderQP(){const q=$('qp');if(!q)return;const k=S&&!S.ended&&S.qp&&S.sel;
+  if(!k||!isSw(k)||!SELBOX[k]){if(!q.hidden){q.hidden=true;lastQP='';}return;}
+  const h=qpHtml(k);if(h!==lastQP){const ae=document.activeElement,fid=ae&&q.contains(ae)?ae.id:'',fk=ae&&q.contains(ae)&&ae.dataset?ae.dataset.k:'';q.innerHTML=h;lastQP=h;const f=fid?$(fid):fk?[...q.querySelectorAll('[data-k]')].find(x=>x.dataset.k===fk):null;if(f)f.focus();}
+  q.hidden=false;
+  const ms=$('mscroll'),r=$('mimic').getBoundingClientRect(),mr=ms.getBoundingClientRect();if(!r.width)return;const sc=r.width/1200,bx=SELBOX[k],W=q.offsetWidth,H=q.offsetHeight,ox=r.left-mr.left+ms.scrollLeft,oy=r.top-mr.top+ms.scrollTop,cw=r.width,ch=r.height;
+  let l=ox+(bx[0]+bx[2]/2)*sc-W/2,tp=oy+(bx[1]+bx[3])*sc+6;
+  if(tp+H>oy+ch)tp=oy+bx[1]*sc-H-6;
+  l=Math.max(ox+4,Math.min(l,ox+cw-W-4));tp=Math.max(oy+2,tp);
+  q.style.left=Math.round(l)+'px';q.style.top=Math.round(tp)+'px';}
 function openSheet(){$('pInsp').classList.add('open');}
 function closeSheet(){$('pInsp').classList.remove('open');}
 
@@ -1645,7 +1695,7 @@ function render(force){
     if(S.split&&fs)fs+=' · split bus';txt('kFirm',fv);txt('kFirmSub',fs);setAttr($('kFirmBox'),'class','kpi kpi-firm'+(fc==='ok'?'':' '+fc)+(tipActive&&tipActive.el==='kFirmBox'?' hl':''));
     setAttr($('dPill'),'class','pill '+(fc==='ok'?'ok':fc==='warn'?'warn':'alarm'));txt('dPill',dt);}
   txt('kIns',S.insecureMin+' min');$('kIns').classList.toggle('bad',S.insecureMin>0);
-  renderMimic();renderInsp();renderAlarms();renderLog();renderSky();
+  renderMimic();renderInsp();renderQP();renderAlarms();renderLog();renderSky();
   const now=performance.now();if(force||now-lastChart>350){lastChart=now;drawChart();}
   renderSec();
   const pl=S.ended?'Shift over':!S.running?'Start':S.paused?'Resume':'Pause';txt('playBtn',pl);txt('dPlay',pl);txt('dClock',fmtT(S.t));
@@ -1672,10 +1722,11 @@ function startSheet(){
     <li>Blackout Canyon takes power from the Steve Towers 132 kV grid supply point through three 60 MVA transformers, and feeds four substations: <b>Hartwell</b>, <b>Marsh Lane</b>, <b>Ohm No</b> and <b>Joule Street</b>. On the Interconnected shift, <b>Kilowatt Close</b> is fed through Marsh Lane, with a backup route from Ohm No. Keep each transformer under 100%, in either direction.</li>
     <li>The 33 kV busbar has two normally closed <b>bus section breakers</b> (BS), between T1 and T2 and between T2 and T3. Opening one splits the busbar, so each section is supplied only by its own transformers. Arrows on the diagram show which way power is flowing.</li>
     <li><b>Firm capacity</b> is what's left if one more transformer trips. After a loss the others can run at up to 120% for 30 minutes, or 120–150% for ${SHORT_MIN} minutes. Above that they trip.</li>
-    <li><b>Everything is run from the diagram.</b> Select equipment to operate it. In the generation days, ▲ ▼ beside a generator turn it up or down now, and armed flexibility switches in by itself on overload.</li>
+    <li><b>Everything is run from the diagram.</b> Tap a breaker or switch and press Open or Close in the pop-up. Tap anything else for its details. In the generation days, ▲ ▼ beside a generator turn it up or down now, and armed flexibility switches in by itself on overload.</li>
     <li><b>Neighbours:</b> Hartwell and Marsh Lane have ties to <b>Ampy Place</b>, which shares our grid supply: close the new route, then open the old one within ${PAR_MAX} minutes. Ohm No and Joule Street have ties to <b>Watts This</b>, on a different grid supply: open the old route first, then close the new one. Get the order wrong and protection trips.</li>
     <li><b>Interconnectors</b> link neighbouring substations so one can feed another. Feeders, ties and interconnectors all have ratings, and neighbours have limited spare capacity. Anything over its limit for ${OV_MIN} minutes trips, and an alarm sounds at 80% so you have warning.</li>
-    <li>Planned work and faulted equipment must be finished before you close it again. Repaired transformers and feeders stay out until you close their breakers. Each operation takes one minute.</li>
+    <li><b>Feeders have a breaker at each end:</b> one at Blackout Canyon and an incomer at the substation. A feeder fault trips both, and the feeder only carries power again once both are closed.</li>
+    <li>Planned work and faulted equipment must be finished before you close it again. Closing either end of a feeder before then is an incident. Repaired transformers and feeders stay out until you close their breakers. Each operation takes one minute.</li>
     <li>Customers off supply cost points every minute. If every substation is off supply at once, Blackout Canyon is lost and the shift ends.</li>
   </ul>
   <h3>Mode</h3><div class="modes">
@@ -1829,7 +1880,8 @@ document.addEventListener('click',e=>{
   const adj=e.target.closest('[data-adj]');if(adj){nudge(adj.dataset.adj,+adj.dataset.d);return;}
   const op=e.target.closest('[data-op]');if(op){if(op.disabled)return;const[t,i,a]=op.dataset.op.split(':');issueOp(t+':'+i,a);return;}
   const st=e.target.closest('[data-f]');if(st){adjust(st.dataset.f,st.dataset.id,+st.dataset.d);return;}
-  const sl=e.target.closest('[data-sel]');if(sl&&S){select(sl.dataset.sel);return;}
+  const sl=e.target.closest('[data-sel]');if(sl&&S){select(sl.dataset.sel,!!sl.closest('#mimic'));return;}
+  if(S&&S.sel&&e.target.closest&&e.target.closest('#mimic')){select('none');return;}
   const sc=e.target.closest('[data-scn]');if(sc){chosen=sc.dataset.scn;ls('day',chosen);document.querySelectorAll('[data-scn]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.scn===chosen));newGame(chosen);return;}
   const md=e.target.closest('[data-mode]');if(md){mode=md.dataset.mode;ls('mode',mode);document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===mode));newGame(chosen);return;}
   const sp=e.target.closest('[data-speed]');if(sp){speed=+sp.dataset.speed;document.querySelectorAll('[data-speed]').forEach(b=>b.setAttribute('aria-pressed',b===sp));txt('dSpeed',speed+'×');return;}
@@ -1845,6 +1897,8 @@ document.addEventListener('click',e=>{
   if(id==='boardBack'){if(boardFrom==='end'&&S.ended)showEnd();else if(boardFrom==='game'){$('overlay').hidden=true;render(true);}else startSheet();return;}
   if(id==='muteBtn'){setSound(!SND.on);return;}
   if(id==='zoomBtn'){zoomed=!zoomed;applyZoom();return;}
+  if(id==='qpClose'){S.qp=false;S.sel=null;lastInsp='';render(true);return;}
+  if(id==='qpMore'){S.qp=false;lastInsp='';if(PHONE)openSheet();else $('pInsp').scrollIntoView({block:'nearest',behavior:'smooth'});render(true);return;}
   if(id==='inspClose'){S.sel=null;lastInsp='';closeSheet();render(true);return;}
   if(id==='dCtl'){if($('pInsp').classList.contains('open'))closeSheet();else{openSheet();render(true);}return;}
   if(id==='tipOk'){tipOk();return;}
@@ -1866,6 +1920,7 @@ document.addEventListener('keydown',e=>{
   if(g&&g.tagName!=='BUTTON'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();g.dispatchEvent(new MouseEvent('click',{bubbles:true}));return;}
   if(e.code==='Space'&&$('overlay').hidden&&!/INPUT|BUTTON|TEXTAREA/.test(document.activeElement.tagName)){e.preventDefault();$('playBtn').click();}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)humTo(0);});
+addEventListener('resize',()=>{if(S)renderQP();});
 MQ.addEventListener('change',()=>{PHONE=MQ.matches;applyZoom();if(!PHONE)closeSheet();if(S)render(true);});
 
 setSound(SND.on);applyCollapsed();newGame(chosen);startSheet();initConsent();requestAnimationFrame(frame);
