@@ -1,0 +1,18 @@
+{
+  "id": "/Network/control-room/",
+  "name": "Firm Capacity: Control Room",
+  "short_name": "Control Room",
+  "description": "Switch, transfer and restore supply across Blackout Canyon's substations.",
+  "start_url": "/Network/control-room/?source=pwa",
+  "scope": "/Network/control-room/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1f1452",
+  "theme_color": "#2a1a72",
+  "categories": ["games", "education"],
+  "icons": [
+    {"src": "../icons/cr-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "../icons/cr-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "../icons/cr-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

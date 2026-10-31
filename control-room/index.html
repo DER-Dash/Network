@@ -19,6 +19,11 @@
 <meta name="twitter:description" content="Shocking Steve Electricity control-room game: switch, transfer and restore supply across Blackout Canyon's substations through faults, planned work and peak demand.">
 <meta name="twitter:image" content="https://der-dash.github.io/Network/control-room/og-image.png">
 <meta name="theme-color" content="#2a1a72">
+<link rel="manifest" href="/Network/control-room/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/Network/icons/cr-apple-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script>window.FC_GA='G-HXW96SRTWL';</script>
 <title>Firm Capacity Control Room</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -2059,5 +2064,41 @@ txt('clock',fmtT(START));txt('dClock',fmtT(START));
 setSound(SND.on);applyCollapsed();newGame(chosen);startSheet();initConsent();requestAnimationFrame(frame);
 })();
 </script>
+<!-- app install -->
+<style>
+.pwa-btn{display:none}
+.pwa-ok .pwa-btn{display:inline-flex}
+.pwa-tip{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:70;width:min(420px,calc(100vw - 32px));background:var(--panel);color:var(--ink);border:2px solid var(--accent);border-radius:10px;padding:14px 16px;box-shadow:0 14px 40px rgba(0,0,0,.35);font-size:14.5px;line-height:1.45}
+.pwa-tip[hidden]{display:none}
+.pwa-tip b{display:block;margin-bottom:4px;font:700 15px var(--f-body)}
+.pwa-tip .row{display:flex;justify-content:flex-end;margin-top:10px}
+</style>
+<div id="pwaTip" class="pwa-tip" role="dialog" aria-live="polite" hidden><b>Install this game</b><span id="pwaTipTxt"></span><div class="row"><button type="button" class="btn" id="pwaTipOk">OK</button></div></div>
+<script>
+(function(){
+  if(!('serviceWorker' in navigator)||!(/^https:/.test(location.protocol)||location.hostname==='localhost'))return;
+  addEventListener('load',function(){navigator.serviceWorker.register('/Network/sw.js',{scope:'/Network/'}).catch(function(){});});
+  var standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  if(standalone)return;
+  var deferred=null,ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  function addButtons(){
+    var f=document.querySelector('.foot');if(f&&!document.getElementById('pwaFoot')){var b=document.createElement('button');b.type='button';b.className='linkish pwa-btn';b.id='pwaFoot';b.textContent='Install as an app';f.insertBefore(b,f.children[1]||null);}
+    var g=document.querySelector('#overlay .go > span');if(g&&!g.querySelector('.pwa-btn')){var s=document.createElement('button');s.type='button';s.className='btn pwa-btn';s.textContent='Install app';g.insertBefore(s,g.firstChild);}
+  }
+  function enable(){document.documentElement.classList.add('pwa-ok');addButtons();setInterval(addButtons,1000);}
+  addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;enable();});
+  addEventListener('appinstalled',function(){document.documentElement.classList.remove('pwa-ok');});
+  if(ios)enable();
+  document.addEventListener('click',function(e){
+    if(e.target.id==='pwaTipOk'){document.getElementById('pwaTip').hidden=true;return;}
+    var b=e.target.closest&&e.target.closest('.pwa-btn');if(!b)return;e.preventDefault();e.stopPropagation();
+    if(deferred){deferred.prompt();deferred.userChoice.then(function(){deferred=null;});return;}
+    document.getElementById('pwaTipTxt').textContent=ios?'In Safari, tap the Share button, then "Add to Home Screen". The game then opens full screen from its own icon and works offline.':'Open your browser menu and choose "Install app" or "Add to Home screen".';
+    document.getElementById('pwaTip').hidden=false;
+  },true);
+})();
+</script>
+<!-- /app install -->
+
 </body>
 </html>
