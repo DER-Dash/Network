@@ -617,6 +617,12 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .qp .op-btn{min-width:0;flex:1;min-height:42px;font-size:15px}
 .qp-row #qpMore{flex:none;min-height:42px}
 .asym .sym.off{fill:var(--muted);opacity:.45}
+
+/* Wider screens: let the diagram use the space */
+@media (min-width:1300px){
+  .bar-in,.desk,.foot{max-width:min(1800px,calc(100vw - 24px))}
+  .desk{grid-template-columns:minmax(0,2.6fr) minmax(340px,1fr)}
+}
 </style>
 </head>
 <body>
