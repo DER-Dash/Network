@@ -616,6 +616,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .qp-row{display:flex;gap:6px}
 .qp .op-btn{min-width:0;flex:1;min-height:42px;font-size:15px}
 .qp-row #qpMore{flex:none;min-height:42px}
+.asym .sym.off{fill:var(--muted);opacity:.45}
 </style>
 </head>
 <body>
@@ -817,13 +818,17 @@ const ASSETS=[
   {id:'load_hw',type:'load',prim:'hw',x:140,name:'Demand'},
   {id:'batt',type:'batt',prim:'hw',x:215,name:'Battery',col:'var(--c-batt)'},
   {id:'dsr',type:'dsr',prim:'hw',x:285,name:'DSR',col:'var(--c-dsr)'},
-  {id:'load_ml',type:'load',prim:'ml',x:420,name:'Demand'},
+  {id:'load_ml',type:'load',prim:'ml',x:432,name:'Demand'},
   {id:'solar',type:'solar',prim:'ml',x:505,name:'Solar',col:'var(--c-solar)'},
   {id:'load_rv',type:'load',prim:'rv',x:645,name:'Demand'},
   {id:'chp',type:'chp',prim:'rv',x:710,name:'CHP',col:'var(--c-gas)'},
   {id:'wind',type:'wind',prim:'rv',x:775,name:'Wind',col:'var(--c-wind)'},
   {id:'load_js',type:'load',prim:'js',x:935,name:'Demand'},
   {id:'load_kc',type:'load',prim:'kc',x:600,name:'Demand'}];
+const LF={hw:[.4,.35,.25],ml:[.45,.3,.25],rv:[.4,.35,.25],js:[.35,.35,.3],kc:[.5,.3,.2]};
+const LFN={hw:['Town Centre','Kings Hill','Hartwell Park'],ml:['Marsh Road','Station','Mill Lane'],rv:['Ohm Street','Resistor Row','Circuit Park'],js:['High Street','Joule Park','Watt Way'],kc:['Close North','Close South','Ampere Avenue']};
+const LDX=[-22,0,22],lfOn=p=>S.lf[p].reduce((a,on,i)=>a+(on?LF[p][i]:0),0),dem=(c,p)=>c.demand*S.share[p]*lfOn(p);
+const lfP=id=>[id.slice(0,2),+id.slice(2)];
 const ASB=Object.fromEntries(ASSETS.map(a=>[a.id,a]));
 const ICONS={solar:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
   wind:'<path d="M12 11v11M12 11V2.5M12 11l8.2 4.8M12 11l-8.2 4.8M9 22h6"/>',
@@ -842,7 +847,7 @@ const SPK_ON='<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d=
 const SPK_OFF='<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
 const capOf=s=>s.id==='solar'?Math.max(5,Math.ceil(S.sc.solar.peak/5)*5):s.cap;
 const NOGEN=()=>!!S.sc.noGen;
-const devName=k=>{const[t,i]=k.split(':');return t==='bs'?(i==='12'?'T1–T2 bus section breaker':'T2–T3 bus section breaker'):t==='tx'?`T${+i+1}`:t==='bc'?`${PR[i].name} breaker`:t==='in'?`${PR[i].name} incomer`:t==='tie'?`${PR[i].name} – ${NBS[PR[i].nb].name} tie`:`${PR[ITS[i].a].name} – ${PR[ITS[i].b].name} interconnector`;};
+const devName=k=>{const[t,i]=k.split(':');return t==='bs'?(i==='12'?'T1–T2 bus section breaker':'T2–T3 bus section breaker'):t==='tx'?`T${+i+1}`:t==='bc'?`${PR[i].name} breaker`:t==='in'?`${PR[i].name} incomer`:t==='lf'?`${LFN[i.slice(0,2)][+i.slice(2)]} 11 kV feeder`:t==='tie'?`${PR[i].name} – ${NBS[PR[i].nb].name} tie`:`${PR[ITS[i].a].name} – ${PR[ITS[i].b].name} interconnector`;};
 
 const SITE_URL='https://der-dash.github.io/Network/control-room/';
 const SCORE_URL='https://script.google.com/macros/s/AKfycbx_0hkrfzn5_ApQWr3UwqT-p7SuOf8ubJHBLxNGGQECIbDEJzfIRNRsWquE--FUOhmMNg/exec';
@@ -947,7 +952,7 @@ function newGame(key){
     events:b.events.map(e=>({...e,fired:false,noticed:false})),cutout:b.cutout?{...b.cutout,fired:false,done:false}:null,
     risk:b.risk,sched,N,rng2:rngFrom(seed^0x5bd1e995),
     tx:[0,1,2].map(()=>({temp:60,out:null,em:0,sh:0,L:0,flow:0})),
-    share,fd:Object.fromEntries(PIDS.map(p=>[p,{brk:!!PR[p].fd,inc:!!PR[p].fd,fault:null}])),
+    share,lf:Object.fromEntries(Object.keys(LF).map(p=>[p,LF[p].map(()=>true)])),fd:Object.fromEntries(PIDS.map(p=>[p,{brk:!!PR[p].fd,inc:!!PR[p].fd,fault:null}])),
     tie:Object.fromEntries(PIDS.map(p=>[p,{closed:false}])),
     it:Object.fromEntries(ITIDS.map(k=>[k,{closed:!!ITS[k].nc,fault:null}])),
     ov:{},edL:{},flows:{},alarms:{},bs:{'12':{closed:true},'23':{closed:true}},bsf:{'12':0,'23':0},isl:{},islands:[],inj:{kn:0,fm:0},parMin:0,
@@ -979,7 +984,7 @@ function comps(m,fc){
   if(!fc&&S.cutout&&m>=S.cutout.start&&m<S.cutout.end){const k=Math.min(1,(m-S.cutout.start)/4,(S.cutout.end-m)/10);wind*=1-clamp(k,0,1);}
   return{demand,solar,wind};
 }
-function netP(c,p,a){let v=c.demand*S.share[p];
+function netP(c,p,a){let v=dem(c,p);
   if(p==='hw')v+=-a.dsr+a.bchg-a.bdis;
   if(p==='ml')v+=-(c.solar-a.solar);
   if(p==='rv')v+=-(c.wind-a.wind)-a.chp;
@@ -998,7 +1003,7 @@ function incident(m,msg,el){S.incidents++;S.chain.push('a switching incident');m
 function openEdge(id){const[t,k]=id.split(':');if(t==='bs')S.bs[k].closed=false;else if(t==='bc')S.fd[k].brk=false;else if(t==='in')S.fd[k].inc=false;else if(t==='tie')S.tie[k].closed=false;else if(t==='it')S.it[k].closed=false;}
 const isClosed=id=>{const[t,k]=id.split(':');return t==='bs'?S.bs[k].closed:t==='bc'?S.fd[k].brk:t==='in'?S.fd[k].inc:t==='tie'?S.tie[k].closed:S.it[k].closed;};
 const fdOn=p=>{const f=S.fd[p];return !!PR[p].fd&&f.brk&&f.inc&&!f.fault;};
-const elOf=id=>{const[t,k]=id.split(':');return t==='bs'?'bsg_'+k:t==='bc'||t==='in'?'fdg_'+k:t==='tie'?'tieg_'+k:'itg_'+k;};
+const elOf=id=>{const[t,k]=id.split(':');return t==='bs'?'bsg_'+k:t==='bc'||t==='in'?'fdg_'+k:t==='lf'?'lfb_'+k:t==='tie'?'tieg_'+k:'itg_'+k;};
 
 /* ---------- Simulation step (one game minute) ---------- */
 function step(){
@@ -1087,7 +1092,7 @@ function step(){
   Object.keys(S.ov).forEach(k=>{if(!(k in edL))S.ov[k]=0;});S.edL=edL;
   if(!S.silent)updateAlarms(m,sol);
   let allOff=true;
-  PIDS.forEach(p=>{if(sup[p]==='off'){S.ens+=c.demand*S.share[p];if(p==='ml')S.cost.gen+=c.solar*SV.solar.use/60;if(p==='rv')S.cost.gen+=c.wind*SV.wind.use/60;}else allOff=false;});
+  PIDS.forEach(p=>{S.ens+=c.demand*S.share[p]*(1-lfOn(p));if(sup[p]==='off'){S.ens+=dem(c,p);if(p==='ml')S.cost.gen+=c.solar*SV.solar.use/60;if(p==='rv')S.cost.gen+=c.wind*SV.wind.use/60;}else allOff=false;});
   if(allOff&&!S.silent){loseSite(m);return;}
   if(!S.silent&&S.tx.every(t=>!t.out)&&PIDS.every(p=>sup[p]!=='off'))S.chain=[];
   const live=S.tx.filter(t=>!t.out),maxL=live.length?Math.max(...live.map(t=>t.L)):0;S.peakL=Math.max(S.peakL,maxL);
@@ -1151,6 +1156,7 @@ function opLabel(k,act){const[type,id]=k.split(':');
   if(type==='tx')return `${act==='close'?'Close':'Open'} T${+id+1} breaker`;
   if(type==='bc')return `${act==='close'?'Close':'Open'} ${PR[id].name} breaker at Blackout Canyon`;
   if(type==='in')return `${act==='close'?'Close':'Open'} ${PR[id].name} incomer`;
+  if(type==='lf')return `${act==='close'?'Close':'Open'} the ${devName(k)} at ${PR[id.slice(0,2)].name}`;
   if(type==='bs')return `${act==='close'?'Close':'Open'} the ${devName(k)}`;
   if(type==='tie')return `${act==='close'?'Close':'Open'} ${NBS[PR[id].nb].name} tie to ${PR[id].name}`;
   return `${act==='close'?'Close':'Open'} ${PR[ITS[id].a].name} – ${PR[ITS[id].b].name} interconnector`;}
@@ -1166,6 +1172,8 @@ function doOp(op,m){const[type,id]=op.k.split(':');play('op');
     else{if(t.out)return;t.out={kind:'open',until:m,ready:true,label:'Switched out by control'};mark(m,'xfer',`T${i+1} opened`);logE(m,`T${i+1} breaker opened. T${i+1} is switched out.`,'warn');}
     return;}
   const k=op.k,nm=devName(k);
+  if(type==='lf'){const[p,i]=lfP(id),v=S.lf[p][i];if((op.act==='close')===v)return;S.lf[p][i]=op.act==='close';const mwv=Math.round(S.c.demand*S.share[p]*LF[p][i]);
+    mark(m,'xfer',nm+(v?' opened':' closed'));logE(m,v?`${ucfirst(nm)} at ${PR[p].name} opened: about ${mwv} MW of customers are off supply.`:`${ucfirst(nm)} at ${PR[p].name} closed: about ${mwv} MW of customers are back on.`,v?'warn':'ok');return;}
   if(op.act==='open'){if(!isClosed(k))return;openEdge(k);mark(m,'xfer',nm+' opened');logE(m,`${ucfirst(nm)} opened.`,'info');return;}
   if(isClosed(k))return;
   if(type==='bc'||type==='in'){const f=S.fd[id];if(f.fault&&!f.fault.ready){f.fault.until+=30;incident(m,f.fault.planned?`The ${nm} was closed while field staff were still working on the feeder. It tripped straight away, and the work now takes 30 minutes longer.`:`The ${nm} was closed onto the faulted feeder. It tripped straight away, and the repair now takes 30 minutes longer.`,'fdg_'+id);return;}}
@@ -1295,18 +1303,22 @@ function buildMimic(){
       <rect class="hit" data-sel="it:${k}" x="${t.x-22}" y="${PY-22}" width="44" height="54"/></g>`;
     SELBOX['it:'+k]=[t.x-17,PY-17,34,34];});
   ASSETS.filter(a=>PIDS.includes(a.prim)&&(!ng||a.type==='load')).forEach(a=>{const x=a.x,y=pY(a.prim)+48,ay=pY(a.prim);let sym='';const col=a.col||'var(--muted)';
-    if(a.type==='load')sym=`<path class="sym" d="M${x-11} ${y} L${x+11} ${y} L${x} ${y+20} Z"/>`;
+    if(a.type==='load'){const p=a.prim,by=ay+16;
+      sym=LDX.map((dx,i)=>`<line id="lfl_${p}${i}" class="cond mv" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${y+4}"/><rect id="lfb_${p}${i}" class="brk sw" x="${x+dx-6}" y="${by+8}" width="12" height="12"/><path id="lft_${p}${i}" class="sym" d="M${x+dx-7} ${y+4} L${x+dx+7} ${y+4} L${x+dx} ${y+17} Z"/>`).join('');
+      s+=`<line id="alb_load_${p}" class="cond mv" x1="${x-24}" y1="${by}" x2="${x+24}" y2="${by}" style="stroke-width:3"/>`;}
     if(a.type==='dsr')sym=`<path class="sym-o" d="M${x-11} ${y} L${x+11} ${y} L${x} ${y+20} Z"/>`;
     if(a.type==='solar')sym=`<rect class="sym-o" x="${x-15}" y="${y}" width="30" height="24"/><path class="sym-l" d="M${x-15} ${y+24} L${x+15} ${y}"/><path class="sym-l" d="M${x+3} ${y+18} h8 M${x+3} ${y+21} h8"/>`;
     if(a.type==='wind')sym=`<circle class="sym-o" cx="${x}" cy="${y+14}" r="14"/><g id="blades" class="blades"><path class="sym-l" d="M${x} ${y+14} V${y+4} M${x} ${y+14} L${x+8.7} ${y+19} M${x} ${y+14} L${x-8.7} ${y+19}"/></g>`;
     if(a.type==='batt')sym=`<path class="sym-l" d="M${x-15} ${y} h30 M${x-8} ${y+6} h16 M${x-15} ${y+12} h30 M${x-8} ${y+18} h16" style="stroke-width:2.5"/>`;
     if(a.type==='chp')sym=`<circle class="sym-o" cx="${x}" cy="${y+14}" r="14"/><text x="${x}" y="${y+19}" text-anchor="middle" style="font:700 13px var(--f-display)">G~</text>`;
-    s+=`<line id="al_${a.id}" class="cond mv" x1="${x}" y1="${ay}" x2="${x}" y2="${y}"/><line id="afl_${a.id}" class="flow" x1="${x}" y1="${ay+4}" x2="${x}" y2="${y}"/>
+    s+=a.type==='load'?`<line id="al_${a.id}" class="cond mv" x1="${x}" y1="${ay}" x2="${x}" y2="${ay+16}"/>`:`<line id="al_${a.id}" class="cond mv" x1="${x}" y1="${ay}" x2="${x}" y2="${y}"/><line id="afl_${a.id}" class="flow" x1="${x}" y1="${ay+4}" x2="${x}" y2="${y}"/>`;
+    s+=`
       <g class="asym" style="--sc:${a.type==='load'?'var(--ink)':col}">${sym}</g>
       <text class="a-name" x="${x}" y="${y+46}" text-anchor="middle" style="fill:${a.type==='load'?'var(--muted)':col}">${a.name}</text>
       <text id="av_${a.id}" class="a-val" x="${x}" y="${y+62}" text-anchor="middle">0 MW</text>
       <text id="as_${a.id}" class="a-sub" x="${x}" y="${y+77}" text-anchor="middle"></text>
-      <rect class="hit" data-sel="as:${a.id}" x="${x-30}" y="${y-8}" width="${a.type==='load'?60:48}" height="92"/>`;
+      <rect class="hit" data-sel="as:${a.id}" x="${x-30}" y="${a.type==='load'?y+24:y-8}" width="${a.type==='load'?60:48}" height="${a.type==='load'?60:92}"/>`;
+    if(a.type==='load')LDX.forEach((dx,i)=>{s+=`<rect class="hit" data-sel="lf:${a.prim}${i}" x="${x+dx-11}" y="${ay+18}" width="22" height="${y-ay+4}"/>`;SELBOX['lf:'+a.prim+i]=[x+dx-10,ay+20,20,20];});
     if(a.type!=='load')s+=adjBtn(a.id,x+19,y-4,1)+adjBtn(a.id,x+19,y+18,-1);
     SELBOX['as:'+a.id]=[x-32,y-10,a.type==='load'?64:76,96];});
   s+=`<rect id="selbox" class="selbox" x="0" y="0" width="0" height="0" rx="6" visibility="hidden"/>`;
@@ -1361,7 +1373,9 @@ function renderMimic(){
     txt('itt_'+k,ft?(ft.ready?'REPAIRED':'FAULT'):edgeTxt(id,c,ITS[k].r));setAttr($('itt_'+k),'class',ft&&!ft.ready?'tie-t alarm':edgeCls(id,c));});
   txt('nbs_kn',`Spare ${Math.round(S.spare.kn)} MW`);txt('nbs_fm',`Spare ${Math.round(S.spare.fm)} MW`);
   const c=S.c,a=S.act,on=p=>S.sup[p]!=='off';
-  PIDS.forEach(p=>{const d=c.demand*S.share[p]-(p==='hw'?a.dsr:0);txt('av_load_'+p,on(p)?mw(d):'Off supply');setFlow($('afl_load_'+p),on(p)?d:0);setAttr($('al_load_'+p),'class','cond mv'+(on(p)?'':' dead'));});
+  PIDS.forEach(p=>{const d=dem(c,p)-(p==='hw'?a.dsr:0),n=S.lf[p].filter(Boolean).length;txt('av_load_'+p,on(p)?mw(d):'Off supply');txt('as_load_'+p,n<3?`${3-n} feeder${n===2?'':'s'} off`:'');setAttr($('as_load_'+p),'class','a-sub'+(n<3?'':' muted'));
+    setAttr($('al_load_'+p),'class','cond mv'+(on(p)?'':' dead'));setAttr($('alb_load_'+p),'class','cond mv'+(on(p)?'':' dead'));
+    S.lf[p].forEach((v,i)=>{const k='lf:'+p+i,live=v&&on(p);setAttr($('lfb_'+p+i),'class','brk sw'+(v?'':' open')+(opK===k?' operating':''));setAttr($('lfl_'+p+i),'class','cond mv'+(live?'':' dead'));setAttr($('lft_'+p+i),'class','sym'+(live?'':' off'));});});
   if(!NOGEN()){
     const cut=!!(S.cutout&&S.cutout.fired&&!S.cutout.done);
     const gen=(id,raw,p)=>{const out=on(p)?raw-a[id]:0;txt('av_'+id,on(p)?mw(out):'Off');setFlow($('afl_'+id),-out);setAttr($('al_'+id),'class','cond mv'+(on(p)?'':' dead'));
@@ -1404,6 +1418,7 @@ function summaryHtml(){
   const gens=NOGEN()?'':ids.map(id=>{const st=svcSetting(id),f=id==='batt'?S.fail.bdis>S.t||S.fail.bchg>S.t:S.fail[id]>S.t;
     return `<li><button type="button" data-sel="as:${id}" data-k="g-${id}"><span class="nm">${esc(id==='batt'?'Kings Hill Battery':SV[id].name)}</span><span class="st${f?' off':''}">${f?'Not responding':esc(st.st)}</span><span class="v">${st.v}</span></button></li>`;}).join('');
   const outs=[...S.tx.map((t,i)=>t.out?`<li><button type="button" data-sel="tx:${i}" data-k="o-tx${i}"><span class="nm">T${i+1}</span><span class="st${t.out.ready?' warn':' off'}">${t.out.ready?'Ready: close its breaker':esc(t.out.label)+' · '+fmtT(t.out.until)}</span><span class="v"></span></button></li>`:''),
+    ...PIDS.flatMap(p=>S.lf[p].map((v,i)=>v?'':`<li><button type="button" data-sel="lf:${p}${i}" data-k="o-lf${p}${i}"><span class="nm">${esc(LFN[p][i])} (${PR[p].name})</span><span class="st off">11 kV feeder open · customers off</span><span class="v"></span></button></li>`)),
     ...BSIDS.map(k=>S.bs[k].closed?'':`<li><button type="button" data-sel="bs:${k}" data-k="o-bs${k}"><span class="nm">${esc(ucfirst(devName('bs:'+k)))}</span><span class="st warn">Open: busbar running split</span><span class="v"></span></button></li>`),
     ...ITIDS.map(k=>{const f=S.it[k].fault;return f?`<li><button type="button" data-sel="it:${k}" data-k="o-it${k}"><span class="nm">${esc(ucfirst(devName('it:'+k)))}</span><span class="st${f.ready?' warn':' off'}">${f.ready?'Repaired: can close':'Faulted · repair '+fmtT(f.until)}</span><span class="v"></span></button></li>`:'';}),
     ...PIDS.map(p=>{const f=S.fd[p];if(PR[p].fd&&!f.fault&&!(f.brk&&f.inc))return `<li><button type="button" data-sel="bc:${p}" data-k="o-fd${p}"><span class="nm">${PR[p].name} feeder</span><span class="st warn">${!f.brk&&!f.inc?'Both ends open':!f.brk?'BC breaker open':'Incomer open'}</span><span class="v"></span></button></li>`;return f.fault?`<li><button type="button" data-sel="bc:${p}" data-k="o-fd${p}"><span class="nm">${PR[p].name} feeder</span><span class="st${f.fault.ready?' warn':' off'}">${f.fault.ready?'Ready: close both ends':(f.fault.planned?'Planned work · until ':'Faulted · repair ')+fmtT(f.fault.until)}</span><span class="v"></span></button></li>`:'';})].join('');
@@ -1473,11 +1488,14 @@ function primHtml(p){const P=PR[p],c=S.c,on=S.sup[p]!=='off';
   const assets=ASSETS.filter(a=>a.prim===p&&a.type!=='load'&&!NOGEN());
   const its=ITIDS.filter(k=>ITS[k].a===p||ITS[k].b===p);
   return `${back}<div class="i-h">${ico('sub','var(--mv)')}<div><h3>${P.name} substation</h3><div class="kind">33/11 kV · ${Math.round(S.share[p]*100)}% of the area's demand</div></div></div>
-    ${facts([['Supply',esc(supTxt(p))],['Net',`${mw(Math.abs(S.pn[p]))} ${S.pn[p]>=0?'import':'export'}`],['Demand',on?mw(c.demand*S.share[p]):'Off supply'],P.fd?['Feeder rating',mw(P.fr)]:['Normally fed','Through Marsh Lane']])}
+    ${facts([['Supply',esc(supTxt(p))],['Net',`${mw(Math.abs(S.pn[p]))} ${S.pn[p]>=0?'import':'export'}`],['Demand',on?mw(dem(c,p)):'Off supply'],P.fd?['Feeder rating',mw(P.fr)]:['Normally fed','Through Marsh Lane']])}
     <div class="op-row">${P.fd?`<button type="button" class="btn" data-sel="bc:${p}" data-k="go-bc">Feeder breaker</button>`:''}${P.nb?`<button type="button" class="btn" data-sel="tie:${p}" data-k="go-tie">${esc(NBS[P.nb].name)} tie</button>`:''}${its.map(k=>`<button type="button" class="btn" data-sel="it:${k}" data-k="go-${k}">${esc(PR[ITS[k].a===p?ITS[k].b:ITS[k].a].name)} interconnector</button>`).join('')}${assets.map(a=>`<button type="button" class="btn" data-sel="as:${a.id}" data-k="go-${a.id}">${esc(a.name)}</button>`).join('')}</div>`;}
 function assetHtml(id){const a=ASB[id];
   if(a.type==='load'){const p=a.prim;return `${back}<div class="i-h">${ico('load','var(--muted)')}<div><h3>${PR[p].name} demand</h3><div class="kind">Homes and businesses</div></div></div>
-    ${facts([['Demand now',S.sup[p]==='off'?'Off supply':mw(S.c.demand*S.share[p])],['Supply',esc(supTxt(p))]])}<p class="i-note">Every minute customers are off supply costs 1 point per MW.</p>`;}
+    ${facts([['Demand now',S.sup[p]==='off'?'Off supply':mw(dem(S.c,p))],['Supply',esc(supTxt(p))]])}
+    <h4 class="i-sub">11 kV feeders</h4><ul class="i-list">${S.lf[p].map((v,i)=>`<li><button type="button" data-sel="lf:${p}${i}" data-k="lf-${p}${i}"><span class="nm">${esc(LFN[p][i])}</span><span class="st${v?'':' warn'}">${v?'Closed':'Open · customers off'}</span><span class="v">${mw(S.c.demand*S.share[p]*LF[p][i])}</span></button></li>`).join('')}</ul>
+    <div class="op-row">${S.lf[p].map((v,i)=>opBtn('lf:'+p+i,v?'open':'close',`${v?'Open':'Close'} ${LFN[p][i]}`)).join('')}</div>
+    <p class="i-note">Opening an 11 kV feeder takes its customers off supply to cut the load on the network. Every minute customers are off supply costs 1 point per MW, so use it as a last resort and close it again as soon as you can.</p>`;}
   const p=a.prim,off=S.sup[p]==='off';
   if(id==='batt'){const b=S.act.bdis-S.act.bchg,f=S.fail.bdis>S.t||S.fail.bchg>S.t;
     return `${back}<div class="i-h">${ico('batt','var(--c-batt)')}<div><h3>Kings Hill Battery</h3><div class="kind">30 MW / 60 MWh battery at Hartwell</div></div></div>
@@ -1500,9 +1518,9 @@ function assetHtml(id){const a=ASB[id];
     <p class="i-state ${f?'alarm':''}">${esc(st)}</p>
     <p class="i-note">Armed response only helps Blackout Canyon while ${PR[p].name} is fed from it.</p>`;}
 function inspHtml(){const sel=S.sel;if(!sel)return summaryHtml();const[type,id]=sel.split(':');
-  if(type==='tx')return txHtml(+id);if(type==='bc'||type==='in')return bcHtml(id);if(type==='tie')return tieHtml(id);if(type==='it')return itHtml(id);if(type==='bs')return bsHtml(id);if(type==='nb')return nbHtml(id);if(type==='prim')return primHtml(id);if(type==='as'&&ASB[id]&&(!NOGEN()||ASB[id].type==='load'))return assetHtml(id);return summaryHtml();}
+  if(type==='tx')return txHtml(+id);if(type==='bc'||type==='in')return bcHtml(id);if(type==='lf')return assetHtml('load_'+id.slice(0,2));if(type==='tie')return tieHtml(id);if(type==='it')return itHtml(id);if(type==='bs')return bsHtml(id);if(type==='nb')return nbHtml(id);if(type==='prim')return primHtml(id);if(type==='as'&&ASB[id]&&(!NOGEN()||ASB[id].type==='load'))return assetHtml(id);return summaryHtml();}
 function renderInsp(){const h=inspHtml();if(h===lastInsp)return;lastInsp=h;const el=$('inspBody'),ae=document.activeElement,k=ae&&el.contains(ae)&&ae.dataset?ae.dataset.k:null;el.innerHTML=h;if(k){const f=el.querySelector(`[data-k="${k}"]`);if(f)f.focus();}}
-const QP_T=['tx','bc','in','tie','it','bs'],isSw=k=>!!k&&QP_T.includes(k.split(':')[0]);
+const QP_T=['tx','bc','in','tie','it','bs','lf'],isSw=k=>!!k&&QP_T.includes(k.split(':')[0]);
 function select(k,fromDiagram){S.sel=k==='none'?null:k;S.qp=!!fromDiagram&&isSw(S.sel);lastInsp='';
   if(PHONE){if(S.qp)closeSheet();else if(S.sel)openSheet();}render(true);}
 let lastQP='';
@@ -1518,8 +1536,10 @@ function qpHtml(k){const[t,id]=k.split(':');let closed,st,cls='';
     cls=closed&&S.sup[id]==='par'?'warn':PR[id].nb==='fm'&&!closed?'warn':'';}
   else if(t==='it'){const it=S.it[id],fl=Math.abs(S.flows[k]||0);closed=it.closed;
     st=it.fault?(it.fault.ready?'repaired':'fault until '+fmtT(it.fault.until)):closed?`${Math.round(fl)}/${ITS[id].r} MW`:'normally open';cls=it.fault&&!it.fault.ready?'alarm':'';}
+  else if(t==='lf'){const[p,i]=lfP(id),mwv=S.c?Math.round(S.c.demand*S.share[p]*LF[p][i]):0;closed=S.lf[p][i];
+    st=!closed?`${mwv} MW of customers off`:S.sup[p]==='off'?'substation off supply':`${mwv} MW of demand`;cls=closed?'':'warn';}
   else{closed=S.bs[id].closed;st=closed?`${Math.round(Math.abs(S.bsf[id]||0))} MW across`:'busbar running split';cls=closed?'':'warn';}
-  const act=closed?'open':'close',title=t==='tx'?`T${+id+1} breaker`:ucfirst(devName(k))+(t==='bc'?' at Blackout Canyon':'');
+  const act=closed?'open':'close',title=t==='tx'?`T${+id+1} breaker`:ucfirst(devName(k))+(t==='bc'?' at Blackout Canyon':t==='lf'?' · '+PR[id.slice(0,2)].name:'');
   return `<div class="qp-h"><b>${esc(title)}</b><button type="button" class="qp-x" id="qpClose" aria-label="Close this pop-up">×</button></div>
     <p class="qp-s ${cls}"><span class="qp-st">${closed?'Closed':'Open'}</span> · ${esc(st)}</p>
     <div class="qp-row">${opBtn(k,act,act==='close'?'Close':'Open')}<button type="button" class="btn" id="qpMore">Details</button></div>`;}
@@ -1725,6 +1745,7 @@ function startSheet(){
     <li><b>Everything is run from the diagram.</b> Tap a breaker or switch and press Open or Close in the pop-up. Tap anything else for its details. In the generation days, ▲ ▼ beside a generator turn it up or down now, and armed flexibility switches in by itself on overload.</li>
     <li><b>Neighbours:</b> Hartwell and Marsh Lane have ties to <b>Ampy Place</b>, which shares our grid supply: close the new route, then open the old one within ${PAR_MAX} minutes. Ohm No and Joule Street have ties to <b>Watts This</b>, on a different grid supply: open the old route first, then close the new one. Get the order wrong and protection trips.</li>
     <li><b>Interconnectors</b> link neighbouring substations so one can feed another. Feeders, ties and interconnectors all have ratings, and neighbours have limited spare capacity. Anything over its limit for ${OV_MIN} minutes trips, and an alarm sounds at 80% so you have warning.</li>
+    <li><b>Demand feeders:</b> each substation supplies three 11 kV feeders, each with its own breaker. Opening one sheds that part of the demand, which can save an overload, but its customers count as off supply until you close it again.</li>
     <li><b>Feeders have a breaker at each end:</b> one at Blackout Canyon and an incomer at the substation. A feeder fault trips both, and the feeder only carries power again once both are closed.</li>
     <li>Planned work and faulted equipment must be finished before you close it again. Closing either end of a feeder before then is an incident. Repaired transformers and feeders stay out until you close their breakers. Each operation takes one minute.</li>
     <li>Customers off supply cost points every minute. If every substation is off supply at once, Blackout Canyon is lost and the shift ends.</li>
@@ -1878,7 +1899,7 @@ function applyZoom(){const z=PHONE&&zoomed;$('mimic').classList.toggle('zoom',z)
 function begin(){$('overlay').hidden=true;S.running=true;S.paused=false;acc=0;audio();track('shift_start',{scenario:S.key,mode:S.mode});render(true);}
 document.addEventListener('click',e=>{
   const adj=e.target.closest('[data-adj]');if(adj){nudge(adj.dataset.adj,+adj.dataset.d);return;}
-  const op=e.target.closest('[data-op]');if(op){if(op.disabled)return;const[t,i,a]=op.dataset.op.split(':');issueOp(t+':'+i,a);return;}
+  const op=e.target.closest('[data-op]');if(op){if(op.disabled)return;const[t,i,a]=op.dataset.op.split(':');if(op.closest('#qp')&&S){S.qp=false;}issueOp(t+':'+i,a);return;}
   const st=e.target.closest('[data-f]');if(st){adjust(st.dataset.f,st.dataset.id,+st.dataset.d);return;}
   const sl=e.target.closest('[data-sel]');if(sl&&S){select(sl.dataset.sel,!!sl.closest('#mimic'));return;}
   if(S&&S.sel&&e.target.closest&&e.target.closest('#mimic')){select('none');return;}
