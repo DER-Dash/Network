@@ -623,6 +623,8 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
   .bar-in,.desk,.foot{max-width:min(1800px,calc(100vw - 24px))}
   .desk{grid-template-columns:minmax(0,2.6fr) minmax(340px,1fr)}
 }
+
+.nb-s.warn{fill:var(--warn)}.nb-s.alarm{fill:var(--alarm)}
 </style>
 </head>
 <body>
@@ -1300,7 +1302,7 @@ function guidance(){
   const off=PIDS.filter(p=>S.sup[p]==='off');
   if(off.length){const p=off[0];return `${PR[p].name} is off supply. Restore it through ${PR[p].fd?'its Blackout Canyon breaker, ':''}${PR[p].nb?'the '+NBS[PR[p].nb].name+' tie or ':''}an interconnector, if that route is healthy.`;}
   const over=Object.keys(S.edL).filter(k=>S.edL[k]>1);
-  if(over.length){const k=over[0];return `The ${devName(k)} is overloaded and trips in ${OV_MIN-(S.ov[k]||0)} min. ${GAME==='fc'?'Change the generation or flexibility on it.':'Move some load off it.'}`;}
+  if(over.length){const k=over[0];if(k.startsWith('tie:')){const nb=PR[k.slice(4)].nb,u=Math.abs(S.inj[nb]||0),sp=S.spare[nb],fl=Math.abs(S.flows[k]||0);if(u>sp&&fl<=PR[k.slice(4)].tie)return `${NBS[nb].name} is supplying ${Math.round(u)} MW but only has ${Math.round(sp)} MW spare, so its ties trip in ${OV_MIN-(S.ov[k]||0)} min. Move a substation back onto Blackout Canyon or onto another route.`;}return `The ${devName(k)} is overloaded and trips in ${OV_MIN-(S.ov[k]||0)} min. ${GAME==='fc'?'Change the generation or flexibility on it.':'Move some load off it.'}`;}
   const wi=worstIsl();if(!wi)return 'Blackout Canyon has no transformers in service. Only substations fed from a neighbour have supply.';
   const pct=Math.round(wi.L*100),dirCut=wi.inj>0?'Cut import':'Cut export',need=Math.ceil(Math.abs(wi.inj)-wi.k*R),t=S.tx[wi.txs[0]];
   const autoTot=SERVICES.reduce((a,s)=>a+S.autoP[s.id],0),how=NOGEN()?'Move a substation onto a neighbour':GAME==='fc'?'using generation and flexibility':'or move a substation onto a neighbour';
@@ -1463,7 +1465,7 @@ function renderMimic(){
   ITIDS.forEach(k=>{const id='it:'+k,c=S.it[k].closed,ft=S.it[k].fault;setArw('ita_'+k,c&&!ft?(S.flows[id]||0):0,ITS[k].v?'v':'h');
     setAttr($('itl_'+k),'class','tie-l it'+(c?' on':''));setAttr($('itsw_'+k),'class','brk sw'+(c?'':' open')+(opK===id?' operating':''));
     txt('itt_'+k,ft?(ft.ready?'REPAIRED':'FAULT'):edgeTxt(id,c,ITS[k].r));setAttr($('itt_'+k),'class',ft&&!ft.ready?'tie-t alarm':edgeCls(id,c));});
-  txt('nbs_kn',`Spare ${Math.round(S.spare.kn)} MW`);txt('nbs_fm',`Spare ${Math.round(S.spare.fm)} MW`);
+  ['kn','fm'].forEach(nb=>{const sp=Math.max(0,S.spare[nb]),u=Math.abs(S.inj[nb]||0),L=u/Math.max(1,sp);txt('nbs_'+nb,u>=.5?`Using ${Math.round(u)} of ${Math.round(sp)} MW`:`Spare ${Math.round(sp)} MW`);setAttr($('nbs_'+nb),'class','nb-s'+(u<.5?'':L>1?' alarm':L>=AL_ON?' warn':''));});
   const c=S.c,a=S.act,on=p=>S.sup[p]!=='off';
   PIDS.forEach(p=>{const d=dem(c,p)-(p==='hw'?a.dsr:0),n=S.lf[p].filter(Boolean).length;txt('av_load_'+p,on(p)?mw(d):'Off supply');txt('as_load_'+p,n<3?`${3-n} feeder${n===2?'':'s'} off`:'');setAttr($('as_load_'+p),'class','a-sub'+(n<3?'':' muted'));
     setAttr($('al_load_'+p),'class','cond mv'+(on(p)?'':' dead'));setAttr($('alb_load_'+p),'class','cond mv'+(on(p)?'':' dead'));
@@ -1550,7 +1552,7 @@ function tieHtml(p){const id='tie:'+p,c=S.tie[p].closed,nb=PR[p].nb,nm=PR[p].nam
   else if(S.sup[p]==='par'){st=`Paralleled: open one route within ${PAR_MAX-S.parMin} min.`;cls='warn';}
   else st=`Closed.`;
   return `${back}<div class="i-h">${ico('tie','var(--c-'+nb+')')}<div><h3>${nm} – ${NBS[nb].name} tie</h3><div class="kind">33 kV normally open point</div></div></div>
-    ${facts([['Switch',c?'Closed':'Open'],['Flow',c?`${mw(Math.abs(fl))} ${fl>=0?'into '+nm:'into '+NBS[nb].name}`:'–'],['Tie rating',mw(PR[p].tie)],[NBS[nb].name+' spare',mw(S.spare[nb])]])}
+    ${facts([['Switch',c?'Closed':'Open'],['Flow',c?`${mw(Math.abs(fl))} ${fl>=0?'into '+nm:'into '+NBS[nb].name}`:'–'],['Tie rating',mw(PR[p].tie)],[NBS[nb].name+' spare',`${mw(Math.abs(S.inj[nb]||0))} used of ${mw(S.spare[nb])}`]])}
     <p class="i-state ${cls}">${esc(st)}</p>
     <div class="op-row">${c?opBtn(id,'open',`Open ${NBS[nb].name} tie`):opBtn(id,'close',`Close ${NBS[nb].name} tie`)}</div>
     ${nb==='kn'?RULE_KN:RULE_FM}
