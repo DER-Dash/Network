@@ -591,7 +591,7 @@ const R=60, START=300, END=1380, TAU=45, TRIP_T=140, SOC_MAX=60;
 const EMERG=1.2, EMERG_MIN=30, SHORT=1.5, SHORT_MIN=3, SWITCH_MIN=8, XFER_COST=150;
 const RATE={1:5,2:10,4:20};
 const SITE_URL='https://der-dash.github.io/Network/';
-const SCORE_URL='https://script.google.com/macros/s/AKfycbygDJlPQGiNoSfhk3vidNbnbKxzUNRwI5utAZEJPLsJxlWxQqWIKhh258mlJsn2c2qQdw/exec';
+const SCORE_URL='https://script.google.com/macros/s/AKfycbx_0hkrfzn5_ApQWr3UwqT-p7SuOf8ubJHBLxNGGQECIbDEJzfIRNRsWquE--FUOhmMNg/exec';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const fmtT=m=>{m=Math.round(m);m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');};
 const gbp=x=>'£'+Math.round(x).toLocaleString('en-GB');
