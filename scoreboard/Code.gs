@@ -1,5 +1,9 @@
 /**
- * Firm Capacity scoreboard (Shocking Steve Electricity), version 5.
+ * Firm Capacity scoreboard and feedback (Shocking Steve Electricity), version 6.
+ * Version 6 adds player feedback: POST {type:'feedback', game, message, name,
+ * contact, context} is saved on a 'Feedback' tab and emailed to the account
+ * that owns this script. Run sendTestFeedbackEmail once from the editor to
+ * give the script permission to send email.
  * The control room game runs a 12-hour shift (08:00 to 20:00).
  * Each game keeps its scores on its own tab: 'Scores' for the generation
  * game and 'Control room scores' for the control room game.
@@ -16,7 +20,9 @@
  * formula as the game, so the sheet never trusts a score sent by the browser.
  * Rows saved before version 2 have no mode and count as free play.
  */
-const VERSION = 5;
+const VERSION = 6;
+const FEEDBACK_SHEET_NAME = 'Feedback';
+const FEEDBACK_HEADERS = ['Received', 'Game', 'Name', 'Reply to', 'Feedback', 'Context'];
 const SHEET_NAME = 'Scores';
 const CR_SHEET_NAME = 'Control room scores';
 const sheetFor_ = game => game === 'cr' ? CR_SHEET_NAME : SHEET_NAME;
@@ -104,11 +110,50 @@ function doGet(e) {
   return json_({ ok: true, version: VERSION, scores: best_(rows, day, mode).slice(0, 50) });
 }
 
+function feedbackTo_() {
+  return Session.getEffectiveUser().getEmail();
+}
+
+function clean_(v, max) {
+  return String(v || '').replace(/[\u0000-\u0008\u000b-\u001f]/g, '').trim().slice(0, max);
+}
+
+function feedback_(d) {
+  if (d.hp) return json_({ ok: true }); // hidden field filled in: a bot
+  const message = clean_(d.message, 2000);
+  if (message.length < 3) return json_({ ok: false, error: 'empty' });
+  // At most 20 feedback messages in any 10 minutes, to protect the email quota.
+  const cache = CacheService.getScriptCache();
+  const count = Number(cache.get('fbCount') || 0);
+  if (count >= 20) return json_({ ok: false, error: 'busy' });
+  cache.put('fbCount', String(count + 1), 600);
+  const game = d.game === 'cr' ? 'Control room game' : 'Generation game';
+  const name = clean_(d.name, 60), contact = clean_(d.contact, 100), context = clean_(d.context, 300);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(FEEDBACK_SHEET_NAME);
+  if (!sh) { sh = ss.insertSheet(FEEDBACK_SHEET_NAME); sh.appendRow(FEEDBACK_HEADERS); sh.setFrozenRows(1); sh.getRange(1, 1, 1, FEEDBACK_HEADERS.length).setFontWeight('bold'); }
+  // A leading apostrophe stops text starting with = being run as a formula.
+  const safe = v => /^[=+\-@]/.test(v) ? "'" + v : v;
+  sh.appendRow([new Date(), game, safe(name), safe(contact), safe(message), safe(context)]);
+  const body = message + '\n\n---\nGame: ' + game + '\nFrom: ' + (name || 'not given') +
+    '\nReply to: ' + (contact || 'not given') + '\nContext: ' + (context || '-') + '\nSheet: ' + ss.getUrl();
+  const opts = { name: 'Firm Capacity feedback' };
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact)) opts.replyTo = contact;
+  MailApp.sendEmail(feedbackTo_(), 'Firm Capacity feedback: ' + game + (name ? ' from ' + name : ''), body, opts);
+  return json_({ ok: true, version: VERSION });
+}
+
+/** Run this once from the Apps Script editor to allow email and check it arrives. */
+function sendTestFeedbackEmail() {
+  MailApp.sendEmail(feedbackTo_(), 'Firm Capacity feedback: test', 'Feedback emails from the games will arrive like this.');
+}
+
 function doPost(e) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     const d = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    if (d.type === 'feedback') return feedback_(d);
     // Letters, numbers, spaces and a little punctuation only. This also stops
     // names starting with "=" being treated as spreadsheet formulas.
     const name = String(d.name || '').replace(/[^\p{L}\p{N} '_.-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 20);

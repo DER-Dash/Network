@@ -639,6 +639,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
       <button id="muteBtn" class="btn icon-btn" type="button" aria-label="Sound on" aria-pressed="true"></button>
       <button id="boardBtn" class="btn" type="button">Scoreboard</button>
       <a class="btn" href="https://der-dash.github.io/Network/" target="_top">Generation game →</a>
+      <button class="btn" type="button" data-feedback>Feedback</button>
       <button id="newBtn" class="btn" type="button">New shift</button>
     </div>
     <div class="kpis">
@@ -717,7 +718,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
     <ul id="log" class="log"></ul>
   </section>
 </main>
-<footer class="foot"><span>Shocking Steve Electricity, Blackout Canyon and every site in this game are made up.</span><a id="otherGame" href="https://der-dash.github.io/Network/" target="_top">Play the generation game</a><button type="button" class="linkish" id="cookieSettings" hidden>Cookie settings</button></footer>
+<footer class="foot"><span>Shocking Steve Electricity, Blackout Canyon and every site in this game are made up.</span><button type="button" class="linkish" data-feedback>Send feedback</button><a id="otherGame" href="https://der-dash.github.io/Network/" target="_top">Play the generation game</a><button type="button" class="linkish" id="cookieSettings" hidden>Cookie settings</button></footer>
 
 <nav class="dock" aria-label="Game controls"><b id="dClock">08:00</b><span id="dPill" class="pill ok">N-1 secure</span><span id="dAl" class="al-count"></span><button id="dCtl" type="button" class="btn icon-btn" aria-label="Open the control panel"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button><button id="dSpeed" type="button" class="btn" aria-label="Change speed">1×</button><button id="dPlay" type="button" class="btn primary">Start</button></nav>
 
@@ -726,6 +727,56 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 <div id="cookie" class="cookie" role="dialog" aria-label="Cookies" hidden><p>Can we use Google Analytics cookies to count how many people play and how games go? Nothing is used for advertising.</p><div class="row"><button type="button" class="btn" id="cookieNo">No thanks</button><button type="button" class="btn primary" id="cookieYes">Accept</button></div></div>
 
 <div id="overlay" class="overlay"><div class="sheet" id="sheet"></div></div>
+<!-- feedback -->
+<style>
+.fb-wrap{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:16px;background:rgba(10,8,30,.55)}
+.fb-wrap[hidden]{display:none}
+.fb{width:min(460px,100%);max-height:calc(100vh - 32px);overflow:auto;background:var(--panel);color:var(--ink);border:2px solid var(--accent);border-radius:10px;padding:16px 18px;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+.fb h2{margin:0 0 4px;font:700 18px var(--f-display);letter-spacing:.06em;text-transform:uppercase}
+.fb p{margin:0 0 12px;font-size:14px;color:var(--muted)}
+.fb label{display:block;font:600 12px var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px}
+.fb textarea,.fb input{width:100%;box-sizing:border-box;font:15px var(--f-body);color:var(--ink);background:var(--sunk);border:1px solid var(--rule);border-radius:6px;padding:8px 10px}
+.fb textarea{min-height:120px;resize:vertical}
+.fb .fb-row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.fb .fb-msg{min-height:1.2em;margin:10px 0 0;font-size:14px}
+.fb .fb-msg.ok{color:var(--ok)}.fb .fb-msg.err{color:var(--alarm)}
+.fb .fb-hp{position:absolute;left:-9999px}
+</style>
+<div id="fbWrap" class="fb-wrap" hidden><div class="fb" role="dialog" aria-modal="true" aria-labelledby="fbTitle">
+  <h2 id="fbTitle">Send feedback</h2>
+  <p>Ideas, bugs or anything that felt wrong. It goes straight to the game's maker.</p>
+  <label for="fbText">Your feedback</label><textarea id="fbText" maxlength="2000" placeholder="What would make the game better?"></textarea>
+  <label for="fbName">Your name (optional)</label><input id="fbName" maxlength="60" autocomplete="name">
+  <label for="fbContact">Email, if you'd like a reply (optional)</label><input id="fbContact" type="email" maxlength="100" autocomplete="email">
+  <input id="fbHp" class="fb-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+  <p id="fbMsg" class="fb-msg" aria-live="polite"></p>
+  <div class="fb-row"><button type="button" class="btn" id="fbCancel">Close</button><button type="button" class="btn primary" id="fbSend">Send feedback</button></div>
+</div></div>
+<script>
+(function(){
+  var URL_='https://script.google.com/macros/s/AKfycbx_0hkrfzn5_ApQWr3UwqT-p7SuOf8ubJHBLxNGGQECIbDEJzfIRNRsWquE--FUOhmMNg/exec';
+  var GAME='cr';
+  var $=function(i){return document.getElementById(i);},last=null,busy=false;
+  function msg(t,c){var m=$('fbMsg');m.textContent=t;m.className='fb-msg '+(c||'');}
+  function open(){last=document.activeElement;document.dispatchEvent(new Event('fc:pause'));$('fbWrap').hidden=false;msg('');$('fbSend').disabled=false;$('fbText').focus();}
+  function close(){$('fbWrap').hidden=true;if(last&&last.focus)last.focus();}
+  async function send(){if(busy)return;var t=$('fbText').value.trim();
+    if(t.length<3){msg('Please write a little feedback first.','err');return;}
+    busy=true;$('fbSend').disabled=true;msg('Sending…');
+    var clock=$('clock'),scn=$('scnLabel');
+    try{var r=await fetch(URL_,{method:'POST',body:JSON.stringify({type:'feedback',game:GAME,message:t,name:$('fbName').value.trim(),contact:$('fbContact').value.trim(),hp:$('fbHp').value,
+        context:[scn?scn.textContent:'',clock?'game time '+clock.textContent:'',innerWidth+'×'+innerHeight].filter(Boolean).join(' · ')})});
+      var j=await r.json();
+      if(j.ok){msg('Thanks, your feedback has been sent.','ok');$('fbText').value='';setTimeout(close,1600);}
+      else{msg(j.error==='busy'?'Lots of feedback right now. Please try again in a minute.':"Sorry, feedback can't be sent just yet.",'err');$('fbSend').disabled=false;}
+    }catch(e){msg("Sorry, that didn't send. Check your connection and try again.",'err');$('fbSend').disabled=false;}
+    busy=false;}
+  document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-feedback]');if(b){e.preventDefault();open();return;}
+    if(e.target.id==='fbCancel'||e.target===$('fbWrap'))close();else if(e.target.id==='fbSend')send();},true);
+  document.addEventListener('keydown',function(e){if($('fbWrap').hidden)return;e.stopPropagation();if(e.key==='Escape')close();},true);
+})();
+</script>
+<!-- /feedback -->
 
 <script>
 (function(){
@@ -1777,7 +1828,7 @@ function endShift(){
     else{g='D';gl='warn';gd='You got through it, but customers and the network took a beating.';}
     play('done');
   }
-  S.final={...sc,grade:L?'Lost':g,gl,gd,result:L?'lost':'complete'};S.submitted=null;S.unlocked=false;S.shareMsg='';
+  S.final={...sc,grade:L?'Lost':g,gl,gd,result:L?'lost':'complete'};S.submitted=null;S.unlocked=true;S.shareMsg='';
   const base={scenario:S.key,mode:S.mode,score:sc.total,incidents:S.incidents,minutes_at_risk:S.insecureMin};
   if(L)track('site_lost',{...base,lost_at:fmtT(L.m)});else track('shift_complete',{...base,grade:g});
   showEnd();
@@ -1821,7 +1872,7 @@ function showEnd(){
       <tr><td>Customers off (${nf(S.ens)} MW·min)</td><td>${sg(F.parts.ens)}</td></tr>
       <tr><td>Switching incidents (${S.incidents} × ${INCIDENT_PTS})</td><td>${sg(F.parts.inc)}</td></tr>
       ${NOGEN()?'':`<tr><td>Spend (${gbp(F.spend)} ÷ 10)</td><td>${sg(F.parts.spend)}</td></tr>`}</tbody></table></div>`;
-  const sub=`<div class="submit"><label for="pName">Your name on the scoreboard (required)</label>
+  const sub=`<div class="submit"><label for="pName">Add your score to the scoreboard (optional)</label>
     <div class="sub-row"><input id="pName" maxlength="20" autocomplete="nickname" placeholder="e.g. Sparky Sue" value="${esc(getName())}" ${S.submitted?'disabled':''}>
     <button id="submitScore" type="button" class="btn primary" ${S.submitted?'disabled':''}>${S.submitted?'Submitted':'Submit score'}</button></div>
     <p id="submitMsg" class="fine ${S.submitted?'ok':''}">${S.submitted?`Submitted. You're #${S.submitted.rank} of ${S.submitted.total} on ${esc(S.sc.title)}.`:''}</p></div>
@@ -1940,6 +1991,7 @@ document.addEventListener('keydown',e=>{
   const g=e.target.closest&&e.target.closest('[data-adj],[data-sel]');
   if(g&&g.tagName!=='BUTTON'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();g.dispatchEvent(new MouseEvent('click',{bubbles:true}));return;}
   if(e.code==='Space'&&$('overlay').hidden&&!/INPUT|BUTTON|TEXTAREA/.test(document.activeElement.tagName)){e.preventDefault();$('playBtn').click();}});
+document.addEventListener('fc:pause',()=>{if(S&&S.running&&!S.ended&&!S.paused){S.paused=true;acc=0;render(true);}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)humTo(0);});
 addEventListener('resize',()=>{if(S)renderQP();});
 MQ.addEventListener('change',()=>{PHONE=MQ.matches;applyZoom();if(!PHONE)closeSheet();if(S)render(true);});

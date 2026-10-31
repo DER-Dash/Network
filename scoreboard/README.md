@@ -57,3 +57,18 @@ the new `Code.gs`, save, then **Deploy → Manage deployments → Edit (pencil)
 The control room game now runs 08:00 to 20:00, so the script accepts a
 720-minute full shift for it. Update it the same way: paste, save, then
 **Deploy → Manage deployments → Edit (pencil) → New version → Deploy**.
+
+## Feedback emails (version 6)
+
+Both games have a **Feedback** button. Messages are saved on a **Feedback** tab in the
+scoreboard spreadsheet and emailed to the Google account that owns the script.
+
+To switch it on:
+
+1. Paste the new `Code.gs` into the Apps Script editor and save.
+2. Pick `sendTestFeedbackEmail` in the function list and press **Run**. Allow the
+   permission to send email when asked. A test email should arrive.
+3. **Deploy → Manage deployments → edit (pencil) → Version: New version → Deploy.**
+   Keep the same deployment so the web app URL doesn't change.
+
+At most 20 feedback messages are accepted in any 10 minutes, to protect the daily email quota.
