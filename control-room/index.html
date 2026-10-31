@@ -638,7 +638,7 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
       <label class="chk"><input type="checkbox" id="autoPause" checked> Pause on faults and overloads</label>
       <button id="muteBtn" class="btn icon-btn" type="button" aria-label="Sound on" aria-pressed="true"></button>
       <button id="boardBtn" class="btn" type="button">Scoreboard</button>
-      <a class="btn" href="https://der-dash.github.io/Network/" target="_top">Generation game →</a>
+      <a class="btn" id="hdrOther" href="https://der-dash.github.io/Network/" target="_top">Generation game →</a>
       <button class="btn" type="button" data-feedback>Feedback</button>
       <button id="newBtn" class="btn" type="button">New shift</button>
     </div>
@@ -781,9 +781,19 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 <script>
 (function(){
 const $=id=>document.getElementById(id);
-const R=60,START=480,END=1200,TAU=45,TRIP_T=140,SOC_MAX=60;
+const GAME='cr'; // replaced with 'fc' when the generation game is built
+const CR_URL='https://der-dash.github.io/Network/control-room/',FC_URL='https://der-dash.github.io/Network/';
+const CFG=GAME==='fc'?{start:300,end:1380,rate:5.1,pre:'fcg-',salt:'fcg1',def:'may',tag:'Generation',docTitle:'Firm Capacity',site:FC_URL,
+    band:'Generation · keeping Blackout Canyon inside firm capacity. Mostly.',eyebrow:'Generation · Blackout Canyon 33 kV',h2:'Keep Blackout Canyon inside firm capacity',
+    board:'Generation',share:'Firm Capacity',other:{url:CR_URL,hdr:'Control room game →',foot:'Play the control room game',
+    box:'<b>Prefer switching?</b> Try the control room game: switch, transfer and restore supply across Blackout Canyon\'s substations through faults and planned work.',cta:'Play the control room game →'}}
+  :{start:480,end:1200,rate:3.4,pre:'fc4-',salt:'fc5',def:'mesh',tag:'Control room',docTitle:'Firm Capacity Control Room',site:CR_URL,
+    band:'Control room · keeping Blackout Canyon switched on. Mostly.',eyebrow:'Control room · Blackout Canyon 33 kV',h2:'Run the Blackout Canyon network',
+    board:'Control room',share:'Firm Capacity: Control Room',other:{url:FC_URL,hdr:'Generation game →',foot:'Play the generation game',
+    box:'<b>Prefer generation?</b> Try the generation game: balance solar, wind, batteries and flexibility to keep the transformers inside their rating.',cta:'Play the generation game →'}};
+const R=60,START=CFG.start,END=CFG.end,TAU=45,TRIP_T=140,SOC_MAX=60;
 const EMERG=1.2,EMERG_MIN=30,SHORT=1.5,SHORT_MIN=5,PAR_MAX=30,OV_MIN=10,INCIDENT_PTS=500,AL_ON=.8,AL_OFF=.75;
-const RATE={1:3.4,2:6.8,4:13.6};
+const RATE={1:CFG.rate,2:CFG.rate*2,4:CFG.rate*4};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const fmtT=m=>{m=Math.round(m);m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');};
 const gbp=x=>'£'+Math.round(x).toLocaleString('en-GB');
@@ -791,7 +801,7 @@ const mw=x=>Math.round(x)+' MW';
 const nf=v=>Math.round(v).toLocaleString('en-GB');
 const sgn=v=>(v>0?'+':v<0?'−':'')+Math.abs(Math.round(v));
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
-function ls(k,v){try{if(v===undefined)return localStorage.getItem('fc4-'+k);localStorage.setItem('fc4-'+k,v);}catch(e){return null;}}
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(CFG.pre+k);localStorage.setItem(CFG.pre+k,v);}catch(e){return null;}}
 function rngFrom(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h|0;}
 function makeNoise(rng,step){const n=Math.ceil(1500/step)+3;const p=Array.from({length:n},()=>rng()*2-1);return m=>{const x=Math.max(0,m)/step,i=Math.floor(x),f=x-i,w=(1-Math.cos(Math.PI*f))/2;return p[i]*(1-w)+p[i+1]*w;};}
@@ -833,6 +843,29 @@ const SCENARIOS={
     causes:['Cable joint failure','Insulator flashover','Digger strike on the underground cable','Tree contact on the overhead line'],
     build(r){return{events:[{fd:'ml',start:540,end:720,planned:true,cause:'Planned maintenance'}],cutout:null,risk:[{start:960,end:1140,mult:2,label:'Heavy snow'}]};}}
 };
+
+const SCENARIOS_FC={
+  may:{color:'var(--c-solar)',diff:1,title:'Sunny Sunday',when:'Sunday 17 May',focus:'Reverse power flow',soc0:20,nbShape:'solar',
+    blurb:'Low demand and strong sun push power back up into the grid. T2 is out for maintenance through the middle of the day, and thunderstorms may build in the afternoon.',
+    demand:[[0,50],[4,45],[6,47],[8,58],[10,68],[12,74],[14,73],[16,76],[18,92],[19.5,104],[21,98],[22.5,78],[24,56]],
+    solar:{peak:165,start:5.5,end:20.5,cloud:.07},wind:{mean:32,var:12},faults:1.5,
+    causes:['Lightning strike on the overhead line','Tree contact on the overhead line','Bird strike on the overhead line','Insulator flashover'],
+    build(r){const s=780+Math.round(r()*180);return{events:[{tx:1,start:600,end:900,planned:true,cause:'Planned maintenance'}],cutout:null,
+      risk:[{start:s,end:s+180,mult:4,label:'Thunderstorm risk'}]};}},
+  jan:{color:'var(--c-cold)',diff:3,title:'Cold Thursday',when:'Thursday 14 January',focus:'Peak demand',soc0:45,nbShape:'demand',
+    blurb:'A cold, still evening peak pulls hard on the transformers. T1 is out for maintenance in the morning, when icy lines are most likely to fault. Watch the battery charge.',
+    demand:[[0,80],[4,72],[6,78],[7.5,106],[9,116],[11,112],[13,110],[15,114],[16.5,134],[17.5,150],[18.5,146],[20,130],[21.5,112],[23,94],[24,84]],
+    solar:{peak:35,start:7.8,end:16.2,cloud:.2},wind:{mean:22,var:12},faults:1.5,
+    causes:['Ice build-up on the overhead line','Conductor clash in icy wind','Cable joint failure','Insulator flashover'],
+    build(r){return{events:[{tx:0,start:570,end:750,planned:true,cause:'Planned maintenance'}],cutout:null,risk:[{start:360,end:540,mult:3,label:'Ice and snow'}]};}},
+  storm:{color:'var(--c-storm)',diff:2,title:'Storm day',when:'Monday 2 November',focus:'Faults and swings',soc0:30,nbShape:'demand',
+    blurb:'Two bands of gale-force wind make line faults far more likely, and gusty wind output can shut down without warning. Both directions matter.',
+    demand:[[0,72],[4,64],[6,70],[7.5,98],[9,112],[12,102],[15,106],[16.5,124],[17.5,142],[18.5,140],[20,124],[22,96],[24,74]],
+    solar:{peak:90,start:6.9,end:17.1,cloud:.35},wind:{mean:48,var:14},faults:3,
+    causes:['Wind-borne debris on the overhead line','Tree contact on the overhead line','Conductor clash in high wind','Lightning strike on the overhead line'],
+    build(r){const a=420+Math.round(r()*180),b=900+Math.round(r()*120),s=1005+Math.round(r()*105);
+      return{events:[],cutout:{start:s,end:s+75},risk:[{start:a,end:a+180,mult:3,label:'Severe gale'},{start:b,end:b+180,mult:3,label:'Severe gale'}]};}}};
+if(GAME==='fc'){Object.keys(SCENARIOS).forEach(k=>delete SCENARIOS[k]);Object.assign(SCENARIOS,SCENARIOS_FC);}
 
 /* ---------- Network ---------- */
 const PR={
@@ -893,14 +926,14 @@ const ICONS={solar:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12
   sub:'<path d="M3 8h18M7 8v10M12 8v10M17 8v10"/>',
   nb:'<path d="M3 7h13l-3-3M21 17H8l3 3"/>'};
 const LOGO='<svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="11" fill="var(--zap)"/><path d="M27.5 5 13 26.5h9.5L19 43l16-23h-9.5L30 5z" fill="var(--brand)"/><path d="M8 13l3.5 2.3M6.5 22.5h4M40 35l-3.5-2.3M41.5 25.5h-4" stroke="var(--brand)" stroke-width="2.6" stroke-linecap="round"/></svg>';
-const BAND=`<div class="sheet-brand"><span class="logo">${LOGO}</span><div><p class="co">Shocking Steve Electricity</p><p class="tag">Control room · keeping Blackout Canyon switched on. Mostly.</p></div></div>`;
+const BAND=`<div class="sheet-brand"><span class="logo">${LOGO}</span><div><p class="co">Shocking Steve Electricity</p><p class="tag">${CFG.band}</p></div></div>`;
 const SPK_ON='<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
 const SPK_OFF='<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
 const capOf=s=>s.id==='solar'?Math.max(5,Math.ceil(S.sc.solar.peak/5)*5):s.cap;
 const NOGEN=()=>!!S.sc.noGen;
 const devName=k=>{const[t,i]=k.split(':');return t==='bs'?(i==='12'?'T1–T2 bus section breaker':'T2–T3 bus section breaker'):t==='tx'?`T${+i+1}`:t==='bc'?`${PR[i].name} breaker`:t==='in'?`${PR[i].name} incomer`:t==='lf'?`${LFN[i.slice(0,2)][+i.slice(2)]} 11 kV feeder`:t==='tie'?`${PR[i].name} – ${NBS[PR[i].nb].name} tie`:`${PR[ITS[i].a].name} – ${PR[ITS[i].b].name} interconnector`;};
 
-const SITE_URL='https://der-dash.github.io/Network/control-room/';
+const SITE_URL=CFG.site;
 const SCORE_URL='https://script.google.com/macros/s/AKfycbx_0hkrfzn5_ApQWr3UwqT-p7SuOf8ubJHBLxNGGQECIbDEJzfIRNRsWquE--FUOhmMNg/exec';
 const r13=s=>s.replace(/[a-z]/g,c=>String.fromCharCode((c.charCodeAt(0)-84)%26+97));
 const BAD_SUB=r13('shpx,fuvg,phag,jnax,gjng,obyybpx,onfgneq,ovgpu,avtt,snttbg,ergneq,juber,fyhg,chffl,anmv,uvgyre,zbgures,nffubyr,nefrubyr,qvyqb,wvmm,fcnfgvp,oryyraq,abapr,cnrqb,crqb').split(',');
@@ -920,7 +953,7 @@ function initConsent(){if(!GA)return;$('cookieSettings').hidden=false;const c=co
 function setConsent(yes){try{localStorage.setItem('fc-consent',yes?'yes':'no');}catch(e){}$('cookie').hidden=true;if(yes)loadGA();else{window['ga-disable-'+GA]=true;
   document.cookie.split(';').map(c=>c.split('=')[0].trim()).filter(n=>/^_ga/.test(n)).forEach(n=>{document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.'+location.hostname;});}}
 const MQ=matchMedia('(max-width: 700px)');let PHONE=MQ.matches;
-let S=null,speed=1,autoPause=true,chosen=ls('day')||'mesh',mode=ls('mode')||'daily',acc=0,lastFrame=performance.now(),lastChart=0,logDirty=true,queued=[];
+let S=null,speed=1,autoPause=true,chosen=ls('day')||CFG.def,mode=ls('mode')||'daily',acc=0,lastFrame=performance.now(),lastChart=0,logDirty=true,queued=[];
 if(!SCENARIOS[chosen])chosen='mesh';if(mode!=='daily'&&mode!=='free')mode='daily';
 let tipsOn=ls('tips')!=='off',zoomed=true;
 
@@ -993,7 +1026,7 @@ function genFaults(rng,sc,risk){
 const zeroD=()=>({solar:0,wind:0,bchg:0,bdis:0,chp:0,dsr:0});
 function newGame(key){
   const sc=SCENARIOS[key],date=todayUK(),daily=mode==='daily';
-  const seed=daily?hashStr(date+'|'+key+'|fc5'):((Math.random()*2**31)|0);
+  const seed=daily?hashStr(date+'|'+key+'|'+CFG.salt):((Math.random()*2**31)|0);
   const rng=rngFrom(seed),b=sc.build(rng);
   const N={d:makeNoise(rng,15),c1:makeNoise(rng,25),c2:makeNoise(rng,6),w1:makeNoise(rng,40),w2:makeNoise(rng,5)};
   PIDS=sc.mesh?['hw','ml','rv','js','kc']:['hw','ml','rv','js'];ITIDS=sc.mesh?['hm','mr','rj','mk','rk']:['hm','mr','rj'];
@@ -1787,10 +1820,11 @@ const diffHtml=(d,c)=>`<span class="diff" style="--sc:${c}">${[1,2,3].map(k=>`<s
 function startSheet(){
   const date=todayUK();
   const sc=Object.entries(SCENARIOS).map(([k,v])=>`<button type="button" class="scn" data-scn="${k}" style="--sc:${v.color}" aria-pressed="${k===chosen}"><span class="f">${v.focus}</span><b>${v.title}</b>${diffHtml(v.diff,v.color)}<span class="d">${v.when}</span><p>${v.blurb}</p></button>`).join('');
-  $('sheet').innerHTML=`${BAND}<p class="eyebrow">Control room · Blackout Canyon 33 kV</p>
-  <h2>Run the Blackout Canyon network</h2>
-  <ul class="rules">
-    <li>Blackout Canyon takes power from the Steve Towers 132 kV grid supply point through three 60 MVA transformers, and feeds four substations: <b>Hartwell</b>, <b>Marsh Lane</b>, <b>Ohm No</b> and <b>Joule Street</b>. On the Interconnected shift, <b>Kilowatt Close</b> is fed through Marsh Lane, with a backup route from Ohm No. Keep each transformer under 100%, in either direction.</li>
+  $('sheet').innerHTML=`${BAND}<p class="eyebrow">${CFG.eyebrow}</p>
+  <h2>${CFG.h2}</h2>
+  <ul class="rules">${GAME==='fc'?`
+    <li><b>Generation and flexibility:</b> Marsh Lane has a solar farm, Ohm No has a wind farm and a gas CHP, and Hartwell has the Kings Hill battery and demand response. Strong sun or wind can push power back up through the transformers, and peaks pull hard the other way. Turn things up or down with ▲ ▼, or select one to arm an automatic response that switches in on overload. Spending money costs points, so use only what you need.</li>`:''}
+    <li>Blackout Canyon takes power from the Steve Towers 132 kV grid supply point through three 60 MVA transformers, and feeds four substations: <b>Hartwell</b>, <b>Marsh Lane</b>, <b>Ohm No</b> and <b>Joule Street</b>.${GAME==='cr'?' On the Interconnected shift, <b>Kilowatt Close</b> is fed through Marsh Lane, with a backup route from Ohm No.':''} Keep each transformer under 100%, in either direction.</li>
     <li>The 33 kV busbar has two normally closed <b>bus section breakers</b> (BS), between T1 and T2 and between T2 and T3. Opening one splits the busbar, so each section is supplied only by its own transformers. Arrows on the diagram show which way power is flowing.</li>
     <li><b>Firm capacity</b> is what's left if one more transformer trips. After a loss the others can run at up to 120% for 30 minutes, or 120–150% for ${SHORT_MIN} minutes. Above that they trip.</li>
     <li><b>Everything is run from the diagram.</b> Tap a breaker or switch and press Open or Close in the pop-up. Tap anything else for its details. In the generation days, ▲ ▼ beside a generator turn it up or down now, and armed flexibility switches in by itself on overload.</li>
@@ -1806,9 +1840,9 @@ function startSheet(){
     <button type="button" class="mode" data-mode="free" aria-pressed="${mode==='free'}"><b>Free play</b><span>Random faults every game. Good for practice.</span></button></div>
   <h3>Choose a day</h3><div class="scns">${sc}</div>
   <div class="go"><div class="opts"><label class="chk"><input type="checkbox" id="ovPause" ${autoPause?'checked':''}> Pause on faults and overloads</label><label class="chk"><input type="checkbox" id="ovTips" ${tipsOn?'checked':''}> Show tips</label></div>
-  <span style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" data-feedback>Feedback</button><button id="sheetBoardBtn" type="button" class="btn">Scoreboard</button><button id="startBtn" type="button" class="btn primary big">Start shift at 08:00</button></span></div>
-  <div class="other-game"><p><b>Prefer generation?</b> Try the original game: balance solar, wind, batteries and flexibility to keep the transformers inside their rating.</p><a class="btn" href="https://der-dash.github.io/Network/" target="_top">Play the generation game →</a></div>
-  <p class="fine">Shift runs 08:00–20:00, about 3½ minutes at 1×. Time slows to half speed while anything is overloaded. MW and MVA are treated as equal. No faults in the first 20 minutes, so you can set up.</p>`;
+  <span style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" data-feedback>Feedback</button><button id="sheetBoardBtn" type="button" class="btn">Scoreboard</button><button id="startBtn" type="button" class="btn primary big">Start shift at ${fmtT(START)}</button></span></div>
+  <div class="other-game"><p>${CFG.other.box}</p><a class="btn" href="${CFG.other.url}" target="_top">${CFG.other.cta}</a></div>
+  <p class="fine">Shift runs ${fmtT(START)}–${fmtT(END)}, about 3½ minutes at 1×. Time slows to half speed while anything is overloaded. MW and MVA are treated as equal. No faults in the first 20 minutes, so you can set up.</p>`;
   $('overlay').hidden=false;
 }
 
@@ -1892,26 +1926,26 @@ function showEnd(){
 
 function unlockEnd(){S.unlocked=true;['againBtn','sheetBoardBtn','replayBtn'].forEach(i=>{const b=$(i);if(b)b.disabled=false;});const n=$('lockNote');if(n)n.hidden=true;}
 function setMsg(t,cls){const m=$('submitMsg');if(m){m.textContent=t;m.className='fine '+(cls||'');}}
-const modeKey=(md,date)=>md==='daily'?'cr-daily-'+date:'cr-free';
+const MPRE=GAME==='cr'?'cr-':'',modeKey=(md,date)=>md==='daily'?MPRE+'daily-'+date:MPRE+'free';
 async function submitScore(){
   const inp=$('pName'),btn=$('submitScore');if(!inp||S.submitted)return;
   const nm=inp.value.trim().replace(/\s+/g,' ').slice(0,20);if(!nm){setMsg('Enter a name first.','err');inp.focus();return;}
   if(rude(nm)){setMsg('Please choose a different name.','err');inp.focus();return;}
   saveName(nm);const F=S.final;btn.disabled=true;setMsg('Sending…');
   try{
-    const r=await fetch(SCORE_URL,{method:'POST',body:JSON.stringify({game:'cr',name:nm,day:S.key,mode:modeKey(S.mode,S.date),result:F.result,survived:F.surv,spend:Math.round(F.spend),faults:S.faults,risk:S.insecureMin,ens:Math.round(S.ens),incidents:S.incidents,grade:F.grade})});
+    const r=await fetch(SCORE_URL,{method:'POST',body:JSON.stringify({game:GAME,name:nm,day:S.key,mode:modeKey(S.mode,S.date),result:F.result,survived:F.surv,spend:Math.round(F.spend),faults:S.faults,risk:S.insecureMin,ens:Math.round(S.ens),incidents:S.incidents,grade:F.grade})});
     const j=await r.json();
     if(!j.ok){if(j.error==='name'){btn.disabled=false;setMsg('Please choose a different name.','err');return;}
-      if(!(j.version>=3)){setMsg("The control room scoreboard isn't switched on yet, so this score wasn't saved.",'err');unlockEnd();return;}throw new Error(j.error||'rejected');}
+      if(!(j.version>=(GAME==='cr'?3:1))){setMsg("The scoreboard isn't switched on yet, so this score wasn't saved.",'err');unlockEnd();return;}throw new Error(j.error||'rejected');}
     S.submitted={rank:j.rank,total:j.total};lastSubmit={name:j.name||nm,score:j.score,day:S.key,mode:S.mode};
     track('score_submitted',{scenario:S.key,mode:S.mode,score:j.score});
     inp.disabled=true;btn.textContent='Submitted';setMsg(`Submitted. You're #${j.rank} of ${j.total} on ${S.sc.title}.`,'ok');unlockEnd();
   }catch(e){btn.disabled=false;setMsg("Couldn't reach the scoreboard, so your score wasn't saved. Try again, or carry on without it.",'err');unlockEnd();}
 }
 async function shareScore(){
-  const F=S.final,t=`I scored ${nf(F.total)} on Firm Capacity: Control Room (${S.sc.title}${S.mode==='daily'?", today's challenge":''}) for Shocking Steve Electricity${S.lost?'':' with '+S.incidents+' switching incidents'}. Can you beat it?`;
+  const F=S.final,t=`I scored ${nf(F.total)} on ${CFG.share} (${S.sc.title}${S.mode==='daily'?", today's challenge":''}) for Shocking Steve Electricity${S.lost?'':' with '+S.incidents+' switching incidents'}. Can you beat it?`;
   const msg=v=>{S.shareMsg=v;txt('shareMsg',v);};
-  try{if(navigator.share){await navigator.share({title:'Firm Capacity: Control Room',text:t,url:SITE_URL});msg('Shared.');track('share',{method:'native'});return;}}catch(e){if(e&&e.name==='AbortError')return;}
+  try{if(navigator.share){await navigator.share({title:CFG.share,text:t,url:SITE_URL});msg('Shared.');track('share',{method:'native'});return;}}catch(e){if(e&&e.name==='AbortError')return;}
   try{await navigator.clipboard.writeText(t+' '+SITE_URL);msg('Copied. Paste it into a message or post.');track('share',{method:'copy'});return;}catch(e){}
   const row=$('shareBtn').parentNode;if(!$('shareTxt')){const ta=document.createElement('textarea');ta.id='shareTxt';ta.className='share-txt';ta.rows=3;ta.readOnly=true;ta.value=t+' '+SITE_URL;row.appendChild(ta);}
   $('shareTxt').select();msg('Copy this text to share it.');
@@ -1919,7 +1953,7 @@ async function shareScore(){
 function showBoard(day){
   boardDay=day||boardDay;
   const tabs=Object.entries(SCENARIOS).map(([k,v])=>`<button type="button" data-board="${k}" style="--sc:${v.color}" aria-pressed="${k===boardDay}">${v.title}</button>`).join('');
-  $('sheet').innerHTML=`${BAND}<p class="eyebrow">Scoreboard · Control room</p><h2>Top control engineers</h2>
+  $('sheet').innerHTML=`${BAND}<p class="eyebrow">Scoreboard · ${CFG.board}</p><h2>Top control engineers</h2>
     <div class="board-modes" role="group" aria-label="Mode"><button type="button" data-bmode="daily" aria-pressed="${boardMode==='daily'}">Today's challenge · ${esc(fmtDate(todayUK()))}</button><button type="button" data-bmode="free" aria-pressed="${boardMode==='free'}">Free play</button></div>
     <div class="board-tabs" role="group" aria-label="Day">${tabs}</div>
     <div class="board" id="boardList"></div>
@@ -1931,9 +1965,9 @@ async function loadBoard(){
   const el=$('boardList'),day=boardDay,bm=boardMode;if(!el)return;
   el.innerHTML='<p class="empty">Loading scores…</p>';
   try{
-    const r=await fetch(SCORE_URL+'?game=cr&day='+encodeURIComponent(day)+'&mode='+encodeURIComponent(modeKey(bm,todayUK())));const j=await r.json();
+    const r=await fetch(SCORE_URL+'?game='+GAME+'&day='+encodeURIComponent(day)+'&mode='+encodeURIComponent(modeKey(bm,todayUK())));const j=await r.json();
     if(boardDay!==day||boardMode!==bm||!$('boardList'))return;if(!j.ok)throw new Error('bad');
-    if(!(j.version>=3)){el.innerHTML="<p class=\"empty\">The control room scoreboard is coming soon.</p>";return;}
+    if(!(j.version>=(GAME==='cr'?3:1))){el.innerHTML="<p class=\"empty\">The scoreboard is coming soon.</p>";return;}
     const rows=j.scores;
     if(!rows.length){el.innerHTML=`<p class="empty">No scores for ${bm==='daily'?"today's challenge":'this day'} yet. Be the first.</p>`;return;}
     el.innerHTML=`<table class="board-t"><thead><tr><th>#</th><th>Name</th><th>Score</th><th>Result</th><th>Grade</th></tr></thead><tbody>${
@@ -1997,6 +2031,10 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)humTo(0);})
 addEventListener('resize',()=>{if(S)renderQP();});
 MQ.addEventListener('change',()=>{PHONE=MQ.matches;applyZoom();if(!PHONE)closeSheet();if(S)render(true);});
 
+if(!SCENARIOS[chosen])chosen=CFG.def;
+document.title=CFG.docTitle;document.querySelectorAll('.bar .mode-tag').forEach(e=>e.textContent=CFG.tag);
+{const h=$('hdrOther');if(h){h.href=CFG.other.url;h.textContent=CFG.other.hdr;}const f=$('otherGame');if(f){f.href=CFG.other.url;f.textContent=CFG.other.foot;}}
+txt('clock',fmtT(START));txt('dClock',fmtT(START));
 setSound(SND.on);applyCollapsed();newGame(chosen);startSheet();initConsent();requestAnimationFrame(frame);
 })();
 </script>

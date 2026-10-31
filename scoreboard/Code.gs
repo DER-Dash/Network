@@ -1,5 +1,7 @@
 /**
- * Firm Capacity scoreboard and feedback (Shocking Steve Electricity), version 6.
+ * Firm Capacity scoreboard and feedback (Shocking Steve Electricity), version 7.
+ * Version 7: both games now send customers off (ens) and switching incidents,
+ * and both scores include them.
  * Version 6 adds player feedback: POST {type:'feedback', game, message, name,
  * contact, context} is saved on a 'Feedback' tab and emailed to the account
  * that owns this script. Run sendTestFeedbackEmail once from the editor to
@@ -20,7 +22,7 @@
  * formula as the game, so the sheet never trusts a score sent by the browser.
  * Rows saved before version 2 have no mode and count as free play.
  */
-const VERSION = 6;
+const VERSION = 7;
 const FEEDBACK_SHEET_NAME = 'Feedback';
 const FEEDBACK_HEADERS = ['Received', 'Game', 'Name', 'Reply to', 'Feedback', 'Context'];
 const SHEET_NAME = 'Scores';
@@ -162,8 +164,8 @@ function doPost(e) {
     const day = (game === 'cr' ? CR_DAYS : DAYS).indexOf(d.day) >= 0 ? d.day : null;
     const rawMode = String(d.mode || (game === 'cr' ? 'cr-free' : 'free'));
     const mode = modeOk_(rawMode, game) ? rawMode : null;
-    const ens = game === 'cr' ? Math.round(Number(d.ens)) : 0;
-    const incidents = game === 'cr' ? Math.round(Number(d.incidents)) : 0;
+    const ens = Math.round(Number(d.ens) || 0);
+    const incidents = Math.round(Number(d.incidents) || 0);
     const survived = Math.round(Number(d.survived));
     const spend = Math.round(Number(d.spend));
     const faults = Math.round(Number(d.faults));
@@ -183,7 +185,7 @@ function doPost(e) {
 
     const score = Math.max(0, survived * 10 + (complete ? 5000 : 0) - risk * 20 - Math.round(spend / 10) - ens - incidents * 500);
     sheet_(sheetFor_(game)).appendRow([new Date(), name, day, score, complete ? 'complete' : 'lost',
-      survived, spend, faults, risk, grade, mode, game === 'cr' ? ens : '', game === 'cr' ? incidents : '']);
+      survived, spend, faults, risk, grade, mode, ens, incidents]);
 
     const board = best_(game === 'cr' ? rows_(CR_SHEET_NAME).concat(rows_(SHEET_NAME)) : rows_(SHEET_NAME), day, mode);
     const others = board.filter(x => x.name.toLowerCase() !== name.toLowerCase());
