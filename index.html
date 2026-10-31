@@ -19,7 +19,6 @@
 <meta name="twitter:description" content="Backhouse to the Future Energy control-room game: keep Blackout Canyon's transformers inside firm capacity through faults, storms and swings in generation.">
 <meta name="twitter:image" content="https://der-dash.github.io/Network/og-image.png">
 <meta name="theme-color" content="#2a1a72">
-<link rel="manifest" href="/Network/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/Network/icons/gen-apple-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -2095,10 +2094,13 @@ setSound(SND.on);applyCollapsed();newGame(chosen);startSheet();initConsent();req
   function enable(){document.documentElement.classList.add('pwa-ok');addButtons();setInterval(addButtons,1000);}
   addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;enable();});
   addEventListener('appinstalled',function(){document.documentElement.classList.remove('pwa-ok');});
+  var hasManifest=!!document.querySelector('link[rel=manifest]');
   enable();
+  if(/[?&]install=1/.test(location.search))setTimeout(function(){var b=document.querySelector('.pwa-btn');if(b)b.click();},800);
   document.addEventListener('click',function(e){
     if(e.target.id==='pwaTipOk'){document.getElementById('pwaTip').hidden=true;return;}
     var b=e.target.closest&&e.target.closest('.pwa-btn');if(!b)return;e.preventDefault();e.stopPropagation();
+    if(!hasManifest){location.href='/Network/generation/?install=1';return;}
     if(deferred){deferred.prompt();deferred.userChoice.then(function(){deferred=null;});return;}
     document.getElementById('pwaTipTxt').textContent=ios?'In Safari, tap the Share button, then "Add to Home Screen". The game then opens full screen from its own icon and works offline.':'Tap the ⋮ menu at the top right of Chrome, then "Add to Home screen" (or "Install app"), then "Install". The game then opens full screen from its own icon and works offline.';
     document.getElementById('pwaTip').hidden=false;
