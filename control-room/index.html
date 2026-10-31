@@ -954,7 +954,7 @@ const GA=window.FC_GA||null;
 function loadGA(){if(!GA||window.__gaLoaded)return;window.__gaLoaded=true;window['ga-disable-'+GA]=false;window.dataLayer=window.dataLayer||[];window.gtag=function(){window.dataLayer.push(arguments);};
   window.gtag('js',new Date());window.gtag('config',GA);const sc=document.createElement('script');sc.async=true;sc.src='https://www.googletagmanager.com/gtag/js?id='+GA;document.head.appendChild(sc);}
 function consent(){try{return localStorage.getItem('fc-consent');}catch(e){return null;}}
-function track(name,params){try{if(GA&&consent()==='yes'&&typeof window.gtag==='function')window.gtag('event',name,{game:'control_room',...params});}catch(e){}}
+function track(name,params){try{if(GA&&consent()==='yes'&&typeof window.gtag==='function')window.gtag('event',name,{game:GAME==='fc'?'generation':'control_room',...params});}catch(e){}}
 function initConsent(){if(!GA)return;$('cookieSettings').hidden=false;const c=consent();if(c==='yes')loadGA();else if(c!=='no')$('cookie').hidden=false;}
 function setConsent(yes){try{localStorage.setItem('fc-consent',yes?'yes':'no');}catch(e){}$('cookie').hidden=true;if(yes)loadGA();else{window['ga-disable-'+GA]=true;
   document.cookie.split(';').map(c=>c.split('=')[0].trim()).filter(n=>/^_ga/.test(n)).forEach(n=>{document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.'+location.hostname;});}}
