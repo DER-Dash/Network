@@ -731,6 +731,26 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 @media (max-width:700px){.coach{max-height:38vh;padding:10px 12px 12px}.coach h3{font-size:16px}.coach p{font-size:13.5px;margin-bottom:6px}}
 
 .coach .btn.on{border-color:var(--zap);color:var(--zap)}
+
+/* Display mode (large screen): whole diagram on the left, explanation to the right */
+html.kiosk,html.kiosk body{height:100%;overflow:hidden}
+html.kiosk .bar .controls,html.kiosk .banner,html.kiosk .foot,html.kiosk .dock,html.kiosk .tip,html.kiosk .cookie,
+html.kiosk .col-r,html.kiosk #pAhead,html.kiosk #pLog,html.kiosk .zoom-btn,html.kiosk #qpMore,html.kiosk .qp-x,html.kiosk .qp [data-crew]{display:none!important}
+html.kiosk .bar-in{max-width:none;padding-block:8px}
+html.kiosk .desk{position:fixed;left:0;right:calc(min(30vw,560px) + 16px);top:var(--kh,96px);bottom:0;max-width:none;margin:0;padding:16px;display:block}
+html.kiosk .col-l{display:block;height:100%}
+html.kiosk .p-mimic{height:100%;display:flex;flex-direction:column;box-sizing:border-box;margin:0}
+html.kiosk .p-mimic .ph{flex:none}
+html.kiosk .mscroll{flex:1;min-height:0;max-height:none;overflow:hidden}
+html.kiosk .mimic-svg,html.kiosk .mimic-svg.zoom{width:100%;height:100%;max-width:none}
+html.kiosk .coach{position:fixed;top:calc(var(--kh,96px) + 16px);right:16px;bottom:16px;left:auto;width:min(30vw,560px);max-height:none;box-sizing:border-box;display:flex;flex-direction:column;padding:clamp(18px,2vw,32px);overflow:auto}
+html.kiosk .coach-n{font-size:clamp(13px,1vw,18px)}
+html.kiosk .coach h3{font-size:clamp(24px,2.2vw,44px);margin:10px 0 14px;line-height:1.1}
+html.kiosk .coach p{font-size:clamp(17px,1.35vw,26px);line-height:1.45;margin-bottom:14px}
+html.kiosk .coach .coach-st{font-size:clamp(16px,1.2vw,24px)}
+html.kiosk .coach-row{margin-top:auto}
+html.kiosk .coach .btn{font-size:clamp(14px,1vw,18px)}
+html.kiosk .qp{width:270px;font-size:14px}
 </style>
 </head>
 <body>
@@ -1873,7 +1893,7 @@ function renderQP(){const q=$('qp');if(!q)return;const k=S&&!S.ended&&S.qp&&S.se
   if(!k||!isSw(k)||!SELBOX[k]){if(!q.hidden){q.hidden=true;lastQP='';}return;}
   const h=qpHtml(k);if(h!==lastQP){const ae=document.activeElement,fid=ae&&q.contains(ae)?ae.id:'',fk=ae&&q.contains(ae)&&ae.dataset?ae.dataset.k:'';q.innerHTML=h;lastQP=h;const f=fid?$(fid):fk?[...q.querySelectorAll('[data-k]')].find(x=>x.dataset.k===fk):null;if(f)f.focus();}
   q.hidden=false;
-  const ms=$('mscroll'),r=$('mimic').getBoundingClientRect(),mr=ms.getBoundingClientRect();if(!r.width)return;const sc=r.width/1200,bx=SELBOX[k],W=q.offsetWidth,H=q.offsetHeight,ox=r.left-mr.left+ms.scrollLeft,oy=r.top-mr.top+ms.scrollTop,cw=r.width,ch=r.height;
+  const ms=$('mscroll'),r=$('mimic').getBoundingClientRect(),mr=ms.getBoundingClientRect();if(!r.width)return;const vb=($('mimic').getAttribute('viewBox')||'0 0 1200 610').split(' ').map(Number),sc=Math.min(r.width/vb[2],r.height/vb[3]),padX=(r.width-vb[2]*sc)/2,padY=(r.height-vb[3]*sc)/2,bx=SELBOX[k],W=q.offsetWidth,H=q.offsetHeight,ox=r.left-mr.left+ms.scrollLeft+padX,oy=r.top-mr.top+ms.scrollTop+padY,cw=vb[2]*sc,ch=vb[3]*sc;
   let l=ox+(bx[0]+bx[2]/2)*sc-W/2,tp=oy+(bx[1]+bx[3])*sc+6;
   if(tp+H>oy+ch)tp=oy+bx[1]*sc-H-6;
   l=Math.max(ox+4,Math.min(l,ox+cw-W-4));tp=Math.max(oy+2,tp);
@@ -2085,10 +2105,14 @@ const TUT=[
   {t:'next',x:null,h:'Tutorial complete',b:'You\'ve restored a faulted feeder, done break-before-make and make-before-break transfers, sent crews to manual switches and moved a feeder onto Volt Face. That\'s the control room. Ready for your first shift?'}];
 const readMs=st=>Math.max(4500,(typeof st.b==='function'?st.b():st.b).length*55);
 let tutRepeat=ls('tutRepeat')==='on',wakeLock=null;
+function kioskLayout(on){const h=document.documentElement;h.classList.toggle('kiosk',!!on);
+  if(on){const b=document.querySelector('header.bar');h.style.setProperty('--kh',(b?b.getBoundingClientRect().height:90)+'px');hideBanner();}else h.style.removeProperty('--kh');
+  if(S)render(true);}
+addEventListener('resize',()=>{if(document.documentElement.classList.contains('kiosk'))kioskLayout(true);});
 async function keepAwake(on){try{if(on&&'wakeLock' in navigator&&!wakeLock){wakeLock=await navigator.wakeLock.request('screen');wakeLock.addEventListener('release',()=>{wakeLock=null;});}else if(!on&&wakeLock){await wakeLock.release();wakeLock=null;}}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S&&S.tut&&S.tut.kiosk)keepAwake(true);});
 function tutStart(auto,kiosk){speed=1;document.querySelectorAll('[data-speed]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.speed==='1'));txt('dSpeed','1×');
-  const m0=mode;mode='free';newGame('tut');mode=m0;S.tut={i:-1,auto:!!auto||!!kiosk,kiosk:!!kiosk,shown:0,acted:false,doneAt:0};if(kiosk){tutRepeat=true;keepAwake(true);const ck=$('cookie');if(ck)ck.hidden=true;}hideTip();begin();tutGo(0);track('tutorial_start',{auto:!!auto,kiosk:!!kiosk});}
+  const m0=mode;mode='free';newGame('tut');mode=m0;S.tut={i:-1,auto:!!auto||!!kiosk,kiosk:!!kiosk,shown:0,acted:false,doneAt:0};kioskLayout(!!kiosk);if(kiosk){tutRepeat=true;keepAwake(true);const ck=$('cookie');if(ck)ck.hidden=true;}hideTip();begin();tutGo(0);track('tutorial_start',{auto:!!auto,kiosk:!!kiosk});}
 function tutGo(i){const T=S.tut;if(!T)return;T.i=i;const st=TUT[i];if(!st){tutDone();return;}
   if(st.enter)st.enter();T.shown=performance.now();T.acted=false;T.doneAt=0;
   S.paused=st.t==='next';acc=0;S.sel=null;S.qp=false;lastInsp='';if(PHONE)closeSheet();
@@ -2133,8 +2157,8 @@ function tutClick(a){
   if(a==='next'&&S.tut){tutGo(S.tut.i+1);return;}
   if(a==='show'&&S.tut){tutAct();return;}
   if(a==='mode'&&S.tut){S.tut.auto=!S.tut.auto;S.tut.shown=performance.now();S.tut.acted=false;renderCoach(true);return;}
-  if(a==='exit'||a==='menu'){keepAwake(false);S.tut=null;renderCoach(true);S.running=false;S.paused=true;newGame(chosen);startSheet();return;}
-  if(a==='career'){S.tut=null;renderCoach(true);mode='career';ls('mode',mode);const c=career();chosen=CAREER.find(k=>unlockedK(c,k)&&!(c.stars[k]>=1))||CAREER[0];ls('day',chosen);newGame(chosen);startSheet();return;}}
+  if(a==='exit'||a==='menu'){keepAwake(false);kioskLayout(false);S.tut=null;renderCoach(true);S.running=false;S.paused=true;newGame(chosen);startSheet();return;}
+  if(a==='career'){kioskLayout(false);S.tut=null;renderCoach(true);mode='career';ls('mode',mode);const c=career();chosen=CAREER.find(k=>unlockedK(c,k)&&!(c.stars[k]>=1))||CAREER[0];ls('day',chosen);newGame(chosen);startSheet();return;}}
 
 /* ---------- Start sheet ---------- */
 const BOLT='M7 0 0 8h4l-2 6 7-9H5l2-5z';
