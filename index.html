@@ -1005,9 +1005,6 @@ const SCENARIOS={
     shares:{hw:.24,ml:.17,rv:.20,js:.20,kc:.19},
     causes:['Cable joint failure','Insulator flashover','Digger strike on the underground cable','Tree contact on the overhead line'],
     build(r){return{events:[{fd:'ml',start:540,end:720,planned:true,cause:'Planned maintenance'}],cutout:null,risk:[{start:960,end:1140,mult:2,label:'Heavy snow'}]};}},
-  tut:{hidden:true,color:'var(--zap)',diff:1,title:'Tutorial',when:'Monday 5 October',focus:'Learn the control room',soc0:0,nbShape:'demand',noGen:true,
-    blurb:'A quiet day to learn the controls.',demand:[[0,80],[8,86],[12,88],[18,90],[24,82]],solar:{peak:0,start:7,end:17,cloud:0},wind:{mean:0,var:0},faults:0,
-    causes:['Lightning strike on the overhead line'],build(r){return{events:[],cutout:null,risk:[]};}},
   heat:{color:'var(--c-solar)',diff:2,title:'Heatwave',when:'Thursday 17 July',focus:'Derated network',soc0:0,nbShape:'demand',noGen:true,derate:.85,
     blurb:'Hot ground and air cut every rating by 15%: each transformer is good for 51 MW, and feeders, ties and interconnectors carry less. Air conditioning pushes the peak into the afternoon, when hot cable joints are most likely to fail.',
     demand:[[0,70],[4,62],[6,66],[8,84],[10,100],[12,112],[14,122],[15.5,127],[17,124],[18.5,116],[20,104],[22,88],[24,74]],
@@ -1044,6 +1041,8 @@ const SCENARIOS_FC={
     causes:['Wind-borne debris on the overhead line','Tree contact on the overhead line','Conductor clash in high wind','Lightning strike on the overhead line'],
     build(r){const a=420+Math.round(r()*180),b=900+Math.round(r()*120),s=1005+Math.round(r()*105);
       return{events:[],cutout:{start:s,end:s+75},risk:[{start:a,end:a+180,mult:3,label:'Severe gale'},{start:b,end:b+180,mult:3,label:'Severe gale'}]};}}};
+if(SCENARIOS.jan)SCENARIOS.tut={...SCENARIOS.jan,hidden:true,title:'Tutorial · Cold Thursday',focus:'Learn the control room',faults:0,
+  blurb:'Cold Thursday, 15:30: the evening peak is building. Learn generation, flexibility and switching on the real network.',build(r){return{events:[],cutout:null,risk:[]};}};
 if(GAME==='fc'){Object.keys(SCENARIOS).forEach(k=>delete SCENARIOS[k]);Object.assign(SCENARIOS,SCENARIOS_FC);}
 
 /* ---------- Network ---------- */
@@ -2083,25 +2082,26 @@ function frame(now){
 
 /* ---------- Tutorial (control room) ---------- */
 const TUT=[
-  {t:'next',x:'pMimic',h:'Welcome to the control room',b:'This is Blackout Canyon. Power comes from the Steve Towers grid supply point at the top, through three transformers (T1–T3), onto the 33 kV busbar, and out along feeders to four substations: Hartwell, Marsh Lane, Ohm No and Joule Street.'},
-  {t:'next',x:'kFirmBox',h:'Firm capacity',b:()=>`Each transformer is rated ${R} MW. Firm capacity is what you could still carry if one more transformer tripped: ${2*R} MW with all three in. Blackout Canyon is carrying about ${Math.round(Math.abs(S.net))} MW now, so you're secure.`},
-  {t:'next',x:'depot',h:'Remote and manual switches',b:'Squares are remote-controlled breakers: they operate from here in a minute. Circles are manual switches. A field crew has to walk there from this depot before it can operate one, so it takes longer.'},
-  {t:'next',x:'bc:js',h:'A fault!',enter(){S.sched.push({k:'fd:js',m:S.t,dur:600,cause:'Lightning strike on the overhead line',done:false});for(let i=0;i<2;i++)step();},b:'Lightning has hit the Joule Street 33 kV feeder. Its breaker at Blackout Canyon and its incomer at Joule Street both tripped, so Joule Street is off supply. Its customers are in the dark.'},
-  {t:'act',x:'tie:js',k:'tie:js',a:'close',done:()=>S.tie.js.closed,h:'Restore from Watts This',b:'Tap the Joule Street – Watts This tie (the orange circle on the right) and press Close. Watts This is a neighbouring network. It\'s on a different grid supply, but Joule Street is dead, so closing onto it is safe. A crew will walk there first.'},
-  {t:'next',x:'prim:js',h:'Customers back on',b:()=>`Joule Street is back on, fed from Watts This. It was off for more than 3 minutes, so those customers count as interrupted (CI: ${nf(S.cust.ci)} so far) and every minute added customer minutes lost (CML). Restore inside 3 minutes and it only counts as a short interruption.`},
-  {t:'next',x:'bc:js',h:'Repair finished',enter(){const f=S.fd.js.fault;if(f){f.until=S.t;step();}},b:'Field staff have repaired the feeder. Now put Joule Street back on Blackout Canyon. Watts This is on a different grid supply, so never parallel them: open the tie first, then close the feeder. Customers are off for the minutes in between.'},
-  {t:'act',x:'tie:js',k:'tie:js',a:'open',done:()=>!S.tie.js.closed,h:'Break first',b:'Tap the Watts This tie and press Open. The crew is still standing by there, so this one is quick.'},
-  {t:'act',x:'bc:js',k:'bc:js',a:'close',done:()=>S.fd.js.brk,h:'Close the feeder breaker',b:'Now tap the Joule Street breaker at Blackout Canyon (the square under the busbar) and press Close. It\'s remote-controlled, so it operates in a minute.'},
-  {t:'act',x:'in:js',k:'in:js',a:'close',done:()=>S.fd.js.inc&&S.sup.js==='bc',h:'…and the incomer',b:'The feeder only carries power with both ends closed. Tap the Joule Street incomer (marked IN) and press Close.'},
-  {t:'next',x:'kFirmBox',h:'Planned work',enter(){S.events.push({tx:2,start:S.t+25,end:S.t+400,planned:true,cause:'Planned maintenance',fired:false,noticed:true});logE(S.t,`Notice: T3 planned outage from ${fmtT(S.t+25)}.`,'warn');},
-    b:()=>`T3 comes out for maintenance in 25 minutes. With two transformers left, firm capacity drops to ${R} MW, but you're carrying about ${Math.round(Math.abs(S.net))} MW. Move some load off Blackout Canyon before then.`},
-  {t:'act',x:'tie:hw',k:'tie:hw',a:'close',done:()=>S.tie.hw.closed,h:'Make before break',b:'Ampy Place shares our grid supply, so you can move Hartwell across without an interruption. First make: tap the Hartwell – Ampy Place tie (the green circle on the left) and press Close.'},
+  {t:'next',x:'pMimic',h:'Welcome to the control room',b:'It\'s Cold Thursday, 15:30, and the evening peak is building. This is Blackout Canyon: power comes from the Steve Towers grid supply point at the top, through three transformers (T1–T3), onto the 33 kV busbar, and out to four substations: Hartwell, Marsh Lane, Ohm No and Joule Street.'},
+  {t:'next',x:'kFirmBox',h:'Firm capacity',b:()=>`Each transformer is rated ${R} MW. Firm capacity is what you could still carry if one more transformer tripped: ${2*R} MW with all three in. You're importing about ${Math.round(Math.abs(S.net))} MW now, and the peak at 17:30 will be well over firm capacity.`},
+  {t:'next',x:'as:batt',h:'Generation and flexibility',b:'Each substation has demand, and some have generation or flexibility: the Kings Hill battery and demand response at Hartwell, solar at Marsh Lane, wind and a gas CHP at Ohm No. The ▲ ▼ buttons beside each one turn it up or down now. Every MW you produce locally is a MW Blackout Canyon doesn\'t have to import.'},
+  {t:'act',x:'as:batt',go:()=>nudge('batt',1,true),done:()=>S.manual.bdis>=20,h:'Discharge the battery',b:'Press ▲ beside the Kings Hill Battery four times to discharge 20 MW into Hartwell. Batteries are quick but limited: watch its charge.'},
+  {t:'act',x:'as:chp',go:()=>nudge('chp',1,true),done:()=>S.manual.chp>=15,h:'Run the CHP',b:'Press ▲ beside the Ohm No CHP three times to run 15 MW. Running something now costs 1.5× its normal price, so spend only what you need.'},
+  {t:'act',x:'as:dsr',go:()=>{select('as:dsr');adjust('arm','dsr',5);},done:()=>S.armed.dsr>=10,h:'Arm demand response',b:'Better still, arm flexibility in advance. Select the Hartwell DSR and press + on Armed twice (10 MW). Armed services cost a small fee per hour, and switch in by themselves the moment a transformer overloads.'},
+  {t:'next',x:'depot',h:'Remote and manual switches',b:'Now switching. Squares are remote-controlled breakers: they operate from here in a minute. Circles are manual switches: a field crew has to walk there from this depot first, so they take longer.'},
+  {t:'next',x:'bc:js',h:'A fault!',enter(){S.sched.push({k:'fd:js',m:S.t,dur:900,cause:'Ice build-up on the overhead line',done:false});for(let i=0;i<2;i++)step();},b:'Ice has brought down the Joule Street 33 kV feeder. Its breaker at Blackout Canyon and its incomer at Joule Street both tripped, so Joule Street is off supply.'},
+  {t:'act',x:'tie:js',k:'tie:js',a:'close',done:()=>S.tie.js.closed,h:'Restore from Watts This',b:'Tap the Joule Street – Watts This tie (the orange circle on the right) and press Close. Watts This is on a different grid supply, but Joule Street is dead, so closing onto it is safe. A crew will walk there first.'},
+  {t:'next',x:'prim:js',h:'Customers back on',b:()=>`Joule Street is back, fed from Watts This, and that load is off Blackout Canyon too. It was off for more than 3 minutes, so those customers count as interrupted (CI: ${nf(S.cust.ci)}) and every minute added customer minutes lost (CML). Restore inside 3 minutes and it's only a short interruption.`},
+  {t:'next',x:'tx:1',h:'T2 has tripped!',enter(){const t=S.tx[1];if(!t.out){t.out={kind:'fault',until:S.t+120,ready:false,label:'Cable joint failure'};S.faults++;logE(S.t,'Fault on the T2 circuit: cable joint failure. T2 tripped.','alarm');}for(let i=0;i<2;i++)step();},
+    b:()=>{const L=Math.round(Math.max(...S.tx.filter(t=>!t.out).map(t=>t.L))*100),fc=Math.round(Math.abs(S.net));return L>100?`T2 has tripped on a cable fault. T1 and T3 now carry everything, ${L}% each, so they're on their emergency rating: 30 minutes to get below 100%. Your armed demand response switched in by itself${S.act.dsr>.5?` (${Math.round(S.act.dsr)} MW)`:''}. Take more load off now.`
+      :`T2 has tripped on a cable fault. T1 and T3 now carry everything, but thanks to the battery, the CHP and Joule Street being on Watts This they're only at ${L}%. Had they gone over 100%, your armed demand response would have switched in by itself. Firm capacity is now just ${R} MW against ${fc} MW, and the peak is still climbing, so another trip would hurt. Take load off before it does.`;}},
+  {t:'act',x:'tie:hw',k:'tie:hw',a:'close',done:()=>S.tie.hw.closed,h:'Make before break',b:'Move Hartwell onto Ampy Place. Ampy Place shares our grid supply, so you can do it without an interruption. First make: tap the Hartwell – Ampy Place tie (the green circle on the left) and press Close.'},
   {t:'act',x:'bc:hw',k:'bc:hw',a:'open',done:()=>!S.fd.hw.brk,h:'…then break',b:()=>`Blackout Canyon and Ampy Place are now running in parallel. You have ${PAR_MAX} minutes to open one side. Tap the Hartwell breaker at Blackout Canyon and press Open.`},
   {t:'act',x:'lf:ml1',k:'lf:ml1',a:'open',done:()=>!S.lf.ml[1],h:'Volt Face backfeeds',b:'Volt Face is a neighbouring 11 kV network on a different grid supply. It can pick up some 11 kV feeders. First open the Station 11 kV feeder breaker at Marsh Lane (the middle small square).'},
   {t:'act',x:'nop:ml1',k:'nop:ml1',a:'close',done:()=>S.nop.ml[1],h:'Close the backfeed',b:'Now tap the pink circle under that feeder, its Volt Face backfeed, and press Close. A crew walks there; the Station customers are off until it closes.'},
   {t:'next',x:'pAlarm',h:'Alarms',b:'Anything over 80% of its rating raises an alarm here, with a countdown if it will trip. Press Acknowledge to quieten them.'},
-  {t:'next',x:'pSec',h:'Next-loss check',b:'This tells you whether you\'d survive another transformer trip, and what to do if not. Keep it green and you\'re running a secure network.'},
-  {t:'next',x:null,h:'Tutorial complete',b:'You\'ve restored a faulted feeder, done break-before-make and make-before-break transfers, sent crews to manual switches and moved a feeder onto Volt Face. That\'s the control room. Ready for your first shift?'}];
+  {t:'next',x:'pSec',h:'Next-loss check',b:()=>`This tells you whether you'd survive another transformer trip, and what to do if not. You're carrying about ${Math.round(Math.abs(S.net))} MW on two transformers now. Keep it green and you're running a secure network.`},
+  {t:'next',x:null,h:'Tutorial complete',b:'You\'ve used the battery, CHP and armed demand response, restored a faulted feeder from a neighbour, made a make-before-break transfer after a transformer trip, and moved a feeder onto Volt Face. That\'s the control room. Ready for your first shift?'}];
 const readMs=st=>Math.max(4500,(typeof st.b==='function'?st.b():st.b).length*55);
 let tutRepeat=ls('tutRepeat')==='on',wakeLock=null;
 function kioskLayout(on){const h=document.documentElement;h.classList.toggle('kiosk',!!on);
@@ -2111,20 +2111,24 @@ addEventListener('resize',()=>{if(document.documentElement.classList.contains('k
 async function keepAwake(on){try{if(on&&'wakeLock' in navigator&&!wakeLock){wakeLock=await navigator.wakeLock.request('screen');wakeLock.addEventListener('release',()=>{wakeLock=null;});}else if(!on&&wakeLock){await wakeLock.release();wakeLock=null;}}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S&&S.tut&&S.tut.kiosk)keepAwake(true);});
 function tutStart(auto,kiosk){speed=1;document.querySelectorAll('[data-speed]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.speed==='1'));txt('dSpeed','1×');
-  const m0=mode;mode='free';newGame('tut');mode=m0;S.tut={i:-1,auto:!!auto||!!kiosk,kiosk:!!kiosk,shown:0,acted:false,doneAt:0};kioskLayout(!!kiosk);if(kiosk){tutRepeat=true;keepAwake(true);const ck=$('cookie');if(ck)ck.hidden=true;}hideTip();begin();tutGo(0);track('tutorial_start',{auto:!!auto,kiosk:!!kiosk});}
+  const m0=mode;mode='free';newGame('tut');mode=m0;
+  S.silent=true;while(S.t<930)step();S.silent=false;S.log=[];S.full=[];S.marks=[];S.alarms={};S.cust={ci:0,cml:0,si:0,off:{}};S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.ens=0;S.peakL=0;queued=[];
+  logE(S.t,'Tutorial: Cold Thursday, 15:30. The evening peak is building.','info');S.tut={i:-1,auto:!!auto||!!kiosk,kiosk:!!kiosk,shown:0,acted:false,doneAt:0};kioskLayout(!!kiosk);if(kiosk){tutRepeat=true;keepAwake(true);const ck=$('cookie');if(ck)ck.hidden=true;}hideTip();begin();tutGo(0);track('tutorial_start',{auto:!!auto,kiosk:!!kiosk});}
 function tutGo(i){const T=S.tut;if(!T)return;T.i=i;const st=TUT[i];if(!st){tutDone();return;}
-  if(st.enter)st.enter();T.shown=performance.now();T.acted=false;T.doneAt=0;
+  if(st.enter)st.enter();T.shown=performance.now();T.acted=false;T.doneAt=0;T.pressing=false;
   S.paused=st.t==='next';acc=0;S.sel=null;S.qp=false;lastInsp='';if(PHONE)closeSheet();
   if(st.t==='next'&&i===TUT.length-1)S.paused=true;
   renderCoach(true);render(true);
   if(PHONE){const pm=$('pMimic');if(pm)window.scrollTo({top:pm.getBoundingClientRect().top+window.scrollY-8,behavior:'smooth'});}
   if(st.x&&SELBOX[st.x]&&PHONE){const sc=$('mscroll'),svg=$('mimic'),k=svg.getBoundingClientRect().width/1200,b=SELBOX[st.x];sc.scrollLeft=Math.max(0,(b[0]+b[2]/2)*k-sc.clientWidth/2);}}
 function tutAct(){const st=TUT[S.tut.i];if(!st||st.t!=='act'||st.done())return;S.tut.acted=true;
+  if(st.go){S.tut.pressing=true;return;}
   if(isManual(st.k)?!crewFor(st.k):!S.op){select(st.k,true);setTimeout(()=>{if(!S||!S.tut)return;issueOp(st.k,st.a);S.qp=false;render(true);},900);}}
 function tutTick(now){const T=S&&S.tut;if(!T||S.ended)return;const st=TUT[T.i];if(!st)return;
+  if(st.t==='act'&&st.go&&T.pressing&&!st.done()&&now-(T.lastGo||0)>650){T.lastGo=now;st.go();}
   if(st.t==='act'){if(st.done()){if(!T.doneAt){T.doneAt=now;play('ok');}else if(now-T.doneAt>900)tutGo(T.i+1);}
     else if(T.auto&&!T.acted&&now-T.shown>2600)tutAct();
-    else if(T.acted&&!S.op&&!crewFor(st.k)&&now-T.shown>4000&&!st.done())T.acted=false;}
+    else if(T.acted&&!st.go&&!S.op&&!crewFor(st.k)&&now-T.shown>4000&&!st.done())T.acted=false;}
   else if(T.auto&&T.i<TUT.length-1&&now-T.shown>readMs(st))tutGo(T.i+1);
   else if(T.auto&&T.i===TUT.length-1&&tutRepeat&&now-T.shown>Math.max(9000,readMs(st))){tutStart(true,T.kiosk);return;}
   renderCoach(false);}
@@ -2145,7 +2149,7 @@ function renderCoach(force){const el=$('coach');if(!el)return;const T=S&&S.tut;
   else{setAttr(r,'visibility','hidden');const e=st.x&&$(st.x);if(e)e.classList.add('coach-hl');}}
 function tutDone(){if(!S)return;S.tut=null;S.ended=true;S.running=false;S.paused=true;renderCoach(true);track('tutorial_done',{});
   $('sheet').innerHTML=`${BAND}<p class="eyebrow">Tutorial</p><h2>You're ready for the control room</h2>
-    <ul class="rules"><li>Remote breakers (squares) operate in a minute; manual switches (circles) need a field crew.</li><li>Different grid supply (Watts This, Volt Face): open the old route first, then close the new one.</li><li>Same grid supply (Ampy Place): close the new route, then open the old one within ${PAR_MAX} minutes.</li><li>Restore customers inside 3 minutes and it only counts as a short interruption.</li><li>Keep the next-loss check green before things go wrong.</li></ul>
+    <ul class="rules"><li>▲ ▼ turn generation and flexibility up or down now; arming it makes it switch in by itself when a transformer overloads.</li><li>Remote breakers (squares) operate in a minute; manual switches (circles) need a field crew.</li><li>Different grid supply (Watts This, Volt Face): open the old route first, then close the new one.</li><li>Same grid supply (Ampy Place): close the new route, then open the old one within ${PAR_MAX} minutes.</li><li>Restore customers inside 3 minutes and it only counts as a short interruption.</li><li>Keep the next-loss check green before things go wrong.</li></ul>
     <div class="go"><button type="button" class="btn" data-tut="again">Replay the demo</button><span style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" data-tut="menu">Start screen</button><button type="button" class="btn primary big" data-tut="career">Start my career</button></span></div>`;
   $('overlay').hidden=false;}
 function tutClick(a){
@@ -2181,7 +2185,7 @@ function startSheet(){
   const sc=keys.map(k=>[k,SCENARIOS[k]]).map(([k,v])=>`<button type="button" class="scn${mode==='career'&&!unlockedK(cc,k)?' locked':''}" data-scn="${k}"${mode==='career'&&!unlockedK(cc,k)?' disabled':''} style="--sc:${v.color}" aria-pressed="${k===chosen}"><span class="f">${mode==='career'?`Shift ${CAREER.indexOf(k)+1} · `:''}${v.focus}</span><b>${v.title}${mode==='career'?` <span class="stars">${unlockedK(cc,k)?starStr(cc.stars[k]||0):'🔒'}</span>`:''}</b>${diffHtml(v.diff,v.color)}<span class="d">${v.when}</span><p>${v.blurb}</p></button>`).join('');
   $('sheet').innerHTML=`${BAND}<p class="eyebrow">${CFG.eyebrow}</p>
   <h2>${CFG.h2}</h2>
-  ${GAME==='cr'?`<div class="tut-cta"><div><b>New to the control room?</b><span>A guided tutorial: watch it run as a demonstration, or do each step yourself with instructions as you go.</span></div><div class="tut-b"><button type="button" class="btn" data-tut="demo">Watch the demo</button><button type="button" class="btn" data-tut="kiosk" title="Runs the demo on its own, over and over, and keeps the screen awake. For a display stand.">Display mode</button><button type="button" class="btn primary" data-tut="play">Play the tutorial</button></div></div>`:''}
+  ${GAME==='cr'?`<div class="tut-cta"><div><b>New to the control room?</b><span>A guided tutorial on Cold Thursday's evening peak, using generation and switching. Watch it run as a demonstration, or do each step yourself with instructions as you go.</span></div><div class="tut-b"><button type="button" class="btn" data-tut="demo">Watch the demo</button><button type="button" class="btn" data-tut="kiosk" title="Runs the demo on its own, over and over, and keeps the screen awake. For a display stand.">Display mode</button><button type="button" class="btn primary" data-tut="play">Play the tutorial</button></div></div>`:''}
   <ul class="rules">${GAME==='fc'?FC_RULES:`
     <li>Blackout Canyon takes power from the Steve Towers 132 kV grid supply point through three 60 MVA transformers, and feeds four substations: <b>Hartwell</b>, <b>Marsh Lane</b>, <b>Ohm No</b> and <b>Joule Street</b>.${GAME==='cr'?' On the Interconnected shift, <b>Kilowatt Close</b> is fed through Marsh Lane, with a backup route from Ohm No.':''} Keep each transformer under 100%, in either direction.</li>
     <li>The 33 kV busbar has two normally closed <b>bus section breakers</b> (BS), between T1 and T2 and between T2 and T3. Opening one splits the busbar, so each section is supplied only by its own transformers. Arrows on the diagram show which way power is flowing.</li>
