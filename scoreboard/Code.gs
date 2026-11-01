@@ -1,5 +1,5 @@
 /**
- * Firm Capacity scoreboard and feedback (Backhouse to the Future Energy), version 7.
+ * Firm Capacity scoreboard and feedback (Watts Up), version 7.
  * Version 8: accepts the Heatwave ('heat') and Grid emergency ('gsp') control room shifts.
  * Version 7: both games now send customers off (ens) and switching incidents,
  * and both scores include them.
