@@ -828,6 +828,11 @@ html.kiosk .qp{width:270px;font-size:14px}
 @keyframes haWalk{0%{transform:translate(14px,196px)}55%{transform:translate(14px,196px)}85%{transform:translate(240px,196px)}100%{transform:translate(240px,196px);opacity:0}}
 @keyframes haSpin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion: reduce){.ha-flow,.ha-f .ha-flow,.ha-f .ha-l,.ha-f .ha-w1,.ha-f .ha-w2,.ha-bolt,.ha-crew,.ha-bob,.ha-blades{animation:none}.ha-crew{transform:translate(120px,196px)}}
+.cta-sec{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.btn.sec-go{flex:1 1 210px;display:inline-flex;flex-direction:column;align-items:flex-start;text-align:left;line-height:1.15;min-height:50px;padding-inline:18px;font-size:15.5px;border-width:2px;border-color:var(--accent);color:var(--accent);background:var(--panel)}
+.sec-go small{font:600 11px var(--f-display);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.btn.sec-go:hover{background:var(--sunk)}
+@media (max-width:520px){.cta-sec .sec-go{flex:1 1 100%}}
 </style>
 </head>
 <body>
@@ -2475,11 +2480,12 @@ function mainAction(){const cr=GAME==='cr';
   if(!played()){const e=easiestK();
     return `<div class="cta-main">${cr?`<button type="button" class="btn primary big hero-go" data-tut="play"><small>New here? Start with</small>Play the tutorial</button><button type="button" class="btn big hero-go" data-tut="demo"><small>Or sit back and</small>Watch the demo</button>`
       :`<button type="button" class="btn primary big hero-go" data-go="first"><small>New here? Start with the easiest day</small>Play ${esc(SCENARIOS[e].title)}</button>`}</div>
-    <p class="cta-alt">Played before? <button type="button" class="linkish" data-go="skip">Choose your own shift</button>${cr?` · <button type="button" class="linkish" data-tut="kiosk" title="Runs the demo on its own, over and over, and keeps the screen awake. For a display stand.">Display mode</button>`:''}</p>`;}
+    <div class="cta-sec"><button type="button" class="btn sec-go" data-go="skip"><small>Played before?</small>Choose your own shift ↓</button>${cr?`<button type="button" class="btn sec-go" data-tut="kiosk" title="Runs the demo on its own, over and over, and keeps the screen awake. For a display stand."><small>For a stand or screen</small>Display mode</button>`:''}</div>`;}
   const c=career(),nk=careerNext(),done=CAREER.filter(k=>SCENARIOS[k]).every(k=>c.stars[k]>=1),dk=dailyK();
   return `<div class="cta-main"><button type="button" class="btn primary big hero-go" data-go="career"><small>${done?'Career complete · play again':starsOf(c)?'Continue your career':'Start your career'}</small>Shift ${CAREER.indexOf(nk)+1}: ${esc(SCENARIOS[nk].title)}</button>
     <button type="button" class="btn big hero-go" data-go="daily"><small>Today's challenge · ${esc(fmtDate(todayUK()))}</small>${esc(SCENARIOS[dk].title)}</button></div>
-    <p class="cta-alt"><button type="button" class="linkish" data-go="skip">Choose your own shift</button>${cr?` · Refresher: <button type="button" class="linkish" data-tut="play">tutorial</button> · <button type="button" class="linkish" data-tut="demo">demo</button> · <button type="button" class="linkish" data-tut="kiosk" title="Runs the demo on its own, over and over, and keeps the screen awake. For a display stand.">display mode</button>`:''}</p>`;}
+    <div class="cta-sec"><button type="button" class="btn sec-go" data-go="skip"><small>Something else?</small>Choose your own shift ↓</button>${cr?`<button type="button" class="btn sec-go" data-tut="kiosk" title="Runs the demo on its own, over and over, and keeps the screen awake. For a display stand."><small>For a stand or screen</small>Display mode</button>`:''}</div>
+    ${cr?`<p class="cta-alt">Refresher: <button type="button" class="linkish" data-tut="play">tutorial</button> · <button type="button" class="linkish" data-tut="demo">demo</button></p>`:''}`;}
 function heroGo(g){
   if(g==='skip'){const t=$('pick');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});return;}
   if(g==='career'){mode='career';chosen=careerNext();}else if(g==='daily'){mode='daily';chosen=dailyK();}else if(g==='first'){mode='free';chosen=easiestK();}else return;
