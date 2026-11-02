@@ -1,0 +1,9 @@
+{
+  "name": "firm-capacity-tests",
+  "private": true,
+  "description": "Headless checks for the Firm Capacity games. Run python3 src/build.py first.",
+  "scripts": {
+    "test": "node feeders.test.js && node crews-career.test.js && node links.test.js && node tutorial.test.js"
+  },
+  "dependencies": { "jsdom": "^24.0.0" }
+}
