@@ -1,5 +1,6 @@
 /**
  * Firm Capacity scoreboard and feedback (Watts Up), version 7.
+ * Version 9: accepts the Snow day ('snow') control room shift.
  * Version 8: accepts the Heatwave ('heat') and Grid emergency ('gsp') control room shifts.
  * Version 7: both games now send customers off (ens) and switching incidents,
  * and both scores include them.
@@ -23,14 +24,14 @@
  * formula as the game, so the sheet never trusts a score sent by the browser.
  * Rows saved before version 2 have no mode and count as free play.
  */
-const VERSION = 8;
+const VERSION = 9;
 const FEEDBACK_SHEET_NAME = 'Feedback';
 const FEEDBACK_HEADERS = ['Received', 'Game', 'Name', 'Reply to', 'Feedback', 'Context'];
 const SHEET_NAME = 'Scores';
 const CR_SHEET_NAME = 'Control room scores';
 const sheetFor_ = game => game === 'cr' ? CR_SHEET_NAME : SHEET_NAME;
 const DAYS = ['may', 'jan', 'storm'];
-const CR_DAYS = ['jan', 'storm', 'grid', 'mesh', 'heat', 'gsp'];
+const CR_DAYS = ['jan', 'storm', 'grid', 'mesh', 'heat', 'gsp', 'snow'];
 const SHIFT_MINUTES = 1080; // generation game: 05:00 to 23:00
 const CR_SHIFT_MINUTES = 720; // control room game: 08:00 to 20:00
 const HEADERS = ['Submitted', 'Name', 'Day', 'Score', 'Result', 'Minutes on supply',
