@@ -15,7 +15,13 @@ const CFG=GAME==='fc'?{start:300,end:1380,rate:5.1,pre:'fcg-',salt:'fcg1',def:'m
     board:'Control room',share:'Firm Capacity: Control Room',other:{url:FC_URL,hdr:'Generation game →',foot:'Play the generation game',
     box:'<b>Prefer generation?</b> Try the generation game: balance solar, wind, batteries and flexibility to keep the transformers inside their rating.',cta:'Play the generation game →'}};
 let R=60,START=CFG.start,END=CFG.end;const TAU=45,TRIP_T=140,SOC_MAX=60;
-const CUST_TOTAL=60000,SHORT_INT=3,CREW_ON=GAME==='cr',MANUAL=['tie','it','nop','lk'],CREW_SPEED=70,CREW_OP=2,DEPOT={x:1150,y:62};
+const CUST_TOTAL=60000,SHORT_INT=3,CREW_ON=GAME==='cr',MANUAL=['tie','it','nop','lk','mid','mg'],CREW_SPEED=70,CREW_OP=2,DEPOT={x:1150,y:62};
+// 11 kV fault finding, auto-reclose and mobile generators (control room only)
+const LV_ON=GAME==='cr',SECF=[.5,.5],PATROL=60,TRIAL_PTS=50,MG_N=2,MG_CAP=8,MG_CONN=45;
+const LF_OH={hw:[0,1,1],ml:[0,1,1],rv:[0,1,1],js:[0,1,1],kc:[0,0,1]};// 1 = overhead line (auto-reclose), 0 = underground cable
+const OH_CAUSES=['Tree branch blown onto the line','Lightning strike','Conductor clash in the wind','Bird contact on the line','Broken insulator'];
+const CABLE_CAUSES=['Cable joint failure','Third-party dig-in','Cable insulation failure'];
+const SECN=['first half (breaker to mid-point switch)','second half (beyond the mid-point switch)'];
 const EMERG=1.2,EMERG_MIN=30,SHORT=1.5,SHORT_MIN=5,PAR_MAX=30,OV_MIN=10,INCIDENT_PTS=500,AL_ON=.8,AL_OFF=.75;
 const RATE={1:CFG.rate,2:CFG.rate*2,4:CFG.rate*4};
 const isManual=k=>CREW_ON&&MANUAL.includes(k.split(':')[0]);
@@ -195,13 +201,23 @@ const LDX=[-22,0,22],lfOn=p=>S.lf[p].reduce((a,on,i)=>a+(on?LF[p][i]:0),0);
 function linkOf(p,i){for(const k of LKIDS){const L=LINKS[k];if(L.a[0]===p&&L.a[1]===i)return{k,q:L.b[0],j:L.b[1]};if(L.b[0]===p&&L.b[1]===i)return{k,q:L.a[0],j:L.a[1]};}return null;}
 const subOn=(p,sup)=>{const v=(sup||S.supNow||S.sup||{})[p];return !!v&&v!=='off';};
 // where an 11 kV feeder gets its supply: its own substation, Volt Face, the substation at the other end of an 11 kV link, or nowhere
-function feedOf(p,i,sup){if(!S.lf[p])return null;
-  if(S.lf[p][i])return subOn(p,sup)?p:null;
-  if(VF_ON&&VFI.includes(i)&&S.nop[p][i])return'vf';
-  const l=linkOf(p,i);if(l&&S.lk[l.k]&&S.lf[l.q]&&S.lf[l.q][l.j]&&subOn(l.q,sup))return l.q;return null;}
-function dem(c,p){let f=0;PIDS.forEach(q=>LF[q].forEach((v,i)=>{if(feedOf(q,i)===p)f+=S.share[q]*v;}));return c.demand*f;}
+// Each 11 kV feeder has two halves split by a mid-point switch: half 0 is next to the substation breaker,
+// half 1 is the far end, where the Volt Face backfeed, the 11 kV link and a mobile generator connect.
+const midOn=(p,i)=>!S.mid||!S.mid[p]||S.mid[p][i]!==false;
+const mgAt=k=>(S.mgu||[]).find(u=>u.site===k);
+const mgOn=(p,i)=>{const u=mgAt(p+i);return !!(u&&u.conn);};
+function farSrc(p,i,sup){if(VF_ON&&VFI.includes(i)&&S.nop[p][i])return'vf';
+  const l=linkOf(p,i);if(l&&S.lk[l.k]&&S.lf[l.q]&&S.lf[l.q][l.j]&&midOn(l.q,l.j)&&subOn(l.q,sup))return l.q;
+  if(mgOn(p,i))return'mg';return null;}
+function secFeed(p,i,s,sup){if(!S.lf[p])return null;const mid=midOn(p,i);
+  if(S.lf[p][i]){const n=subOn(p,sup)?p:null;return s===0||mid?n:farSrc(p,i,sup);}
+  return s===1||mid?farSrc(p,i,sup):null;}
+function feedOf(p,i,sup){const a=secFeed(p,i,0,sup);return a!==null?a:secFeed(p,i,1,sup);}
+const secOff=(p,i)=>[0,1].filter(s=>secFeed(p,i,s)===null);
+function dem(c,p){let f=0;PIDS.forEach(q=>LF[q].forEach((v,i)=>SECF.forEach((h,s)=>{if(secFeed(q,i,s)===p)f+=S.share[q]*v*h;})));return c.demand*f;}
 const lfP=id=>[id.slice(0,2),+id.slice(2)];
-const vfFrac=p=>VFI.reduce((a,i)=>a+(feedOf(p,i)==='vf'?LF[p][i]:0),0),lfMW=(p,i)=>S.c?S.c.demand*S.share[p]*LF[p][i]:0;
+const srcMW=(p,i,src)=>SECF.reduce((a,h,s)=>a+(secFeed(p,i,s)===src?h:0),0)*lfMW(p,i);
+const vfFrac=p=>VFI.reduce((a,i)=>a+SECF.reduce((b,h,s)=>b+(secFeed(p,i,s)==='vf'?LF[p][i]*h:0),0),0),lfMW=(p,i)=>S.c?S.c.demand*S.share[p]*LF[p][i]:0;
 const ASB=Object.fromEntries(ASSETS.map(a=>[a.id,a]));
 const ICONS={solar:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
   wind:'<path d="M12 11v11M12 11V2.5M12 11l8.2 4.8M12 11l-8.2 4.8M9 22h6"/>',
@@ -220,7 +236,7 @@ const SPK_ON='<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d=
 const SPK_OFF='<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
 const capOf=s=>s.id==='solar'?Math.max(5,Math.ceil(S.sc.solar.peak/5)*5):s.cap;
 const NOGEN=()=>!!S.sc.noGen;
-const devName=k=>{const[t,i]=k.split(':');return t==='bs'?(i==='12'?'T1–T2 bus section breaker':'T2–T3 bus section breaker'):t==='tx'?`T${+i+1}`:t==='bc'?`${PR[i].name} breaker`:t==='in'?`${PR[i].name} incomer`:t==='lf'?`${LFN[i.slice(0,2)][+i.slice(2)]} 11 kV feeder`:t==='nop'?`${LFN[i.slice(0,2)][+i.slice(2)]} backfeed from Volt Face`:t==='lk'?`${PR[LINKS[i].a[0]].name} – ${PR[LINKS[i].b[0]].name} 11 kV link`:t==='tie'?`${PR[i].name} – ${NBS[PR[i].nb].name} tie`:`${PR[ITS[i].a].name} – ${PR[ITS[i].b].name} interconnector`;};
+const devName=k=>{const[t,i]=k.split(':');return t==='bs'?(i==='12'?'T1–T2 bus section breaker':'T2–T3 bus section breaker'):t==='tx'?`T${+i+1}`:t==='bc'?`${PR[i].name} breaker`:t==='in'?`${PR[i].name} incomer`:t==='lf'?`${LFN[i.slice(0,2)][+i.slice(2)]} 11 kV feeder`:t==='nop'?`${LFN[i.slice(0,2)][+i.slice(2)]} backfeed from Volt Face`:t==='mid'?`${LFN[i.slice(0,2)][+i.slice(2)]} mid-point switch`:t==='mg'?`mobile generator at ${LFN[i.slice(0,2)][+i.slice(2)]}`:t==='lk'?`${PR[LINKS[i].a[0]].name} – ${PR[LINKS[i].b[0]].name} 11 kV link`:t==='tie'?`${PR[i].name} – ${NBS[PR[i].nb].name} tie`:`${PR[ITS[i].a].name} – ${PR[ITS[i].b].name} interconnector`;};
 
 const SITE_URL=CFG.site;
 const SCORE_URL='https://script.google.com/macros/s/AKfycbx_0hkrfzn5_ApQWr3UwqT-p7SuOf8ubJHBLxNGGQECIbDEJzfIRNRsWquE--FUOhmMNg/exec';
@@ -265,7 +281,8 @@ const sfx={
   op(){clunk(.25);},
   lost(){clunk();tone(320,1.4,.15,'sawtooth',.07,50);},
   done(){[523,659,784,1047].forEach((f,i)=>tone(f,.3,i*.13,'triangle',.11));},
-  click(){tone(1400,.04,0,'square',.025);}
+  click(){tone(1400,.04,0,'square',.025);},
+  ar(){clunk();tone(520,.08,.35,'triangle',.05);}
 };
 function play(k){if(S&&S.silent)return;try{sfx[k]&&sfx[k]();}catch(e){}}
 function humTo(level){const a=SND.ctx;if(!a)return;try{
@@ -310,7 +327,7 @@ function edgesNow(extra){const IS=islands(extra),E=[];
   PIDS.forEach(p=>{const f=S.fd[p];if(PR[p].fd){const I=IS.byId[IS.of[FSEC[p]]];const xb=extra==='bc:'+p,xi=extra==='in:'+p;if(I.alive&&(f.brk||xb)&&(f.inc||xi)&&(!f.fault||((xb||xi)&&f.fault.ready)))E.push({id:'bc:'+p,a:I.id,b:p,x:1,r:PR[p].fr});}
     if(PR[p].nb&&(S.tie[p].closed||extra==='tie:'+p))E.push({id:'tie:'+p,a:p,b:PR[p].nb,x:1.5,r:PR[p].tie});});
   ITIDS.forEach(k=>{const it=S.it[k];if((it.closed&&!it.fault)||extra==='it:'+k)E.push({id:'it:'+k,a:ITS[k].a,b:ITS[k].b,x:1.2,r:ITS[k].r});});
-  LKIDS.forEach(k=>{const L=LINKS[k],fa=S.lf[L.a[0]][L.a[1]]||extra==='lf:'+L.a[0]+L.a[1],fb=S.lf[L.b[0]][L.b[1]]||extra==='lf:'+L.b[0]+L.b[1];if((S.lk[k]||extra==='lk:'+k)&&fa&&fb)E.push({id:'lk:'+k,a:L.a[0],b:L.b[0],x:6,r:L.r});});
+  LKIDS.forEach(k=>{const L=LINKS[k],fa=S.lf[L.a[0]][L.a[1]]||extra==='lf:'+L.a[0]+L.a[1],fb=S.lf[L.b[0]][L.b[1]]||extra==='lf:'+L.b[0]+L.b[1];const ma=midOn(L.a[0],L.a[1])||extra==='mid:'+L.a[0]+L.a[1],mb=midOn(L.b[0],L.b[1])||extra==='mid:'+L.b[0]+L.b[1];if((S.lk[k]||extra==='lk:'+k)&&fa&&fb&&ma&&mb)E.push({id:'lk:'+k,a:L.a[0],b:L.b[0],x:6,r:L.r});});
   E.IS=IS;return E;}
 function groupsOf(E){const IS=E.IS,nodes=[...IS.list.map(i=>i.id),'kn','fm',...PIDS],par={};nodes.forEach(n=>par[n]=n);const f=n=>par[n]===n?n:(par[n]=f(par[n]));
   E.forEach(e=>{par[f(e.a)]=f(e.b);});const G={};nodes.forEach(n=>{const r=f(n);(G[r]=G[r]||{nodes:[],src:[]}).nodes.push(n);});
@@ -337,6 +354,18 @@ function genFaults(rng,sc,risk){
   comps.forEach(k=>{for(let m=START+20;m<END;m++){if(rng()<base*mult(m)){const dur=Math.round(90+rng()*150);out.push({k,m,dur,cause:pick(rng,sc.causes||FAULTS),done:false});m+=dur;}}});
   return out.sort((a,b)=>a.m-b.m);
 }
+// 11 kV faults (overhead ones may be transient and auto-reclose) and transient 33 kV trips. A separate
+// random stream keeps the existing fault times unchanged, and the daily challenge is still the same for everyone.
+function genLvFaults(seed,sc,risk){if(!LV_ON||!sc.faults)return[];
+  const rng=rngFrom(seed^0x2c1b3c6d),mult=m=>{let k=1;risk.forEach(w=>{if(m>=w.start&&m<w.end)k=Math.max(k,w.mult);});return k;};
+  let integ=0;for(let m=START+20;m<END;m++)integ+=mult(m);
+  const comps=[];PIDS.forEach(p=>LF[p].forEach((v,i)=>comps.push({k:'lv:'+p+i,w:LF_OH[p][i]?3:1,oh:!!LF_OH[p][i]})));
+  PIDS.filter(p=>PR[p].fd).forEach(p=>comps.push({k:'ar:'+p,w:2,oh:true}));
+  const W=comps.reduce((a,c)=>a+c.w,0),tot=sc.faults*2.2,out=[];
+  comps.forEach(c=>{for(let m=START+20;m<END;m++){if(rng()<tot*c.w/W*mult(m)/integ){
+    if(c.k.startsWith('ar:'))out.push({k:c.k,m,dur:0,cause:pick(rng,OH_CAUSES),done:false});
+    else{const tr=c.oh&&rng()<.6,dur=Math.round(50+rng()*100);out.push({k:c.k,m,dur,sec:rng()<.5?0:1,tr,cause:pick(rng,c.oh?OH_CAUSES:CABLE_CAUSES),done:false});if(!tr)m+=dur+PATROL;}}}});
+  return out;}
 const spanOf=k=>{const v=SCENARIOS[k]||{};return{start:v.start!=null?v.start:CFG.start,end:v.end!=null?v.end:CFG.end};};
 const runText=()=>{const r=Math.round((END-START)/CFG.rate/60*2)/2;return `Shift runs ${fmtT(START)}–${END>=1440?'24:00':fmtT(END)}, about ${Math.floor(r)}${r%1?'½':''} minutes at 1×.`;};
 const zeroD=()=>({solar:0,wind:0,bchg:0,bdis:0,chp:0,dsr:0});
@@ -350,12 +379,14 @@ function newGame(key){
   const share=sc.shares||{hw:.30,ml:.20,rv:.25,js:.25};
   {const D=sc.derate||1;R=Math.round(60*D);Object.values(PR).forEach(P=>{if(P.fr0==null){P.fr0=P.fr;P.tie0=P.tie;}if(P.fr0!=null)P.fr=Math.round(P.fr0*D);if(P.tie0!=null)P.tie=Math.round(P.tie0*D);});
    Object.values(ITS).forEach(t=>{if(t.r0==null)t.r0=t.r;t.r=Math.round(t.r0*D);});}
-  const sched=genFaults(rng,sc,b.risk),dv=sc.demand.map(x=>x[1]);
+  const sched=genFaults(rng,sc,b.risk).concat(genLvFaults(seed,sc,b.risk)).sort((a,b)=>a.m-b.m),dv=sc.demand.map(x=>x[1]);
   S={key,sc,mode,date,seed,t:START-60,dmin:Math.min(...dv),dmax:Math.max(...dv),
     events:b.events.map(e=>({...e,fired:false,noticed:false})),cutout:b.cutout?{...b.cutout,fired:false,done:false}:null,
     risk:b.risk,sched,N,rng2:rngFrom(seed^0x5bd1e995),
     tx:[0,1,2].map(()=>({temp:60,out:null,em:0,sh:0,L:0,flow:0})),
-    share,lf:Object.fromEntries(Object.keys(LF).map(p=>[p,LF[p].map(()=>true)])),nop:Object.fromEntries(Object.keys(LF).map(p=>[p,LF[p].map(()=>false)])),lk:{hm:false,mr:false,rj:false},vfLoad:0,fd:Object.fromEntries(PIDS.map(p=>[p,{brk:!!PR[p].fd,inc:!!PR[p].fd,fault:null}])),
+    share,lf:Object.fromEntries(Object.keys(LF).map(p=>[p,LF[p].map(()=>true)])),nop:Object.fromEntries(Object.keys(LF).map(p=>[p,LF[p].map(()=>false)])),lk:{hm:false,mr:false,rj:false},
+    mid:Object.fromEntries(Object.keys(LF).map(p=>[p,LF[p].map(()=>true)])),lff:Object.fromEntries(Object.keys(LF).map(p=>[p,LF[p].map(()=>null)])),
+    mgu:LV_ON?Array.from({length:MG_N},(_,j)=>({n:j+1,site:null,conn:false,pend:false})):[],trial:0,recloses:0,vfLoad:0,fd:Object.fromEntries(PIDS.map(p=>[p,{brk:!!PR[p].fd,inc:!!PR[p].fd,fault:null}])),
     tie:Object.fromEntries(PIDS.map(p=>[p,{closed:false}])),
     it:Object.fromEntries(ITIDS.map(k=>[k,{closed:!!ITS[k].nc,fault:null}])),
     ov:{},edL:{},flows:{},alarms:{},bs:{'12':{closed:true},'23':{closed:true}},bsf:{'12':0,'23':0},isl:{},islands:[],inj:{kn:0,fm:0},parMin:0,
@@ -368,7 +399,7 @@ function newGame(key){
   const c0=comps(S.t,false),L0=Math.abs(PIDS.reduce((a,p)=>a+netP(c0,p,zeroD()),0))/3/R;S.tx.forEach(t=>t.temp=20+100*L0*L0);
   buildMimic();
   for(let i=0;i<60;i++)step();
-  S.silent=false;S.alarms={};S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.peakL=0;S.ens=0;S.cust={ci:0,cml:0,si:0,off:{}};S.crewJobs=0;S.parOk=0;S.vfPeak=0;S.gspOver=0;S.gspTrips=0;S.log=[];S.full=[];S.marks=[];S.chain=[];queued=[];
+  S.silent=false;S.alarms={};S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.peakL=0;S.ens=0;S.cust={ci:0,cml:0,si:0,off:{}};S.crewJobs=0;S.trial=0;S.recloses=0;S.parOk=0;S.vfPeak=0;S.gspOver=0;S.gspTrips=0;S.log=[];S.full=[];S.marks=[];S.chain=[];queued=[];
   logE(START,`Shift starts. ${sc.when}: ${sc.blurb}`,'info');
   if(daily)logE(START,`Today's challenge (${fmtDate(date)}): everyone gets the same weather and fault times.`,'info');
   S.events.filter(e=>e.planned).forEach(e=>logE(START,e.fd?`Notice: ${PR[e.fd].name} feeder planned outage ${fmtT(e.start)}–${fmtT(e.end)}. Field staff will open both ends of it at ${fmtT(e.start)}, so move ${PR[e.fd].name} and anything fed through it beforehand.`:`Notice: T${e.tx+1} planned outage ${fmtT(e.start)}–${fmtT(e.end)}. Field staff will switch it out; you restore it afterwards.`,'warn'));
@@ -406,7 +437,43 @@ function incident(m,msg,el){S.incidents++;S.chain.push('a switching incident');m
 function openEdge(id){const[t,k]=id.split(':');if(t==='bs')S.bs[k].closed=false;else if(t==='bc')S.fd[k].brk=false;else if(t==='in')S.fd[k].inc=false;else if(t==='tie')S.tie[k].closed=false;else if(t==='it')S.it[k].closed=false;else if(t==='lk')S.lk[k]=false;}
 const isClosed=id=>{const[t,k]=id.split(':');return t==='bs'?S.bs[k].closed:t==='bc'?S.fd[k].brk:t==='in'?S.fd[k].inc:t==='tie'?S.tie[k].closed:t==='lk'?!!S.lk[k]:S.it[k].closed;};
 const fdOn=p=>{const f=S.fd[p];return !!PR[p].fd&&f.brk&&f.inc&&!f.fault;};
-const elOf=id=>{const[t,k]=id.split(':');return t==='bs'?'bsg_'+k:t==='bc'||t==='in'?'fdg_'+k:t==='lf'?'lfb_'+k:t==='nop'?'nopb_'+k:t==='lk'?'lkg_'+k:t==='tie'?'tieg_'+k:'itg_'+k;};
+/* ---------- 11 kV faults: fault finding, auto-reclose, mobile generators ---------- */
+const lfName=(p,i)=>`${LFN[p][i]} 11 kV feeder`;
+const custOf=(p,i,s)=>Math.round(CUST_TOTAL*S.share[p]*LF[p][i]*SECF[s]);
+// the device that puts supply onto half s of feeder p,i
+function srcDev(p,i,s){const src=secFeed(p,i,s);if(src===null)return null;
+  if(src===p&&S.lf[p][i])return 'lf:'+p+i;if(src==='vf')return 'nop:'+p+i;if(src==='mg')return 'mg:'+p+i;
+  const l=linkOf(p,i);return l?'lk:'+l.k:null;}
+function tripDev(k){const[t,id]=k.split(':');
+  if(t==='lf'){const[p,i]=lfP(id);S.lf[p][i]=false;}else if(t==='nop'){const[p,i]=lfP(id);S.nop[p][i]=false;}
+  else if(t==='lk')S.lk[id]=false;else if(t==='mg'){const u=mgAt(id);if(u)u.conn=false;}}
+function farOpts(p,i){const o=[];if(VF_ON&&VFI.includes(i))o.push('the Volt Face backfeed');if(linkOf(p,i))o.push('the 11 kV link');o.push('a mobile generator');return o.join(', ').replace(/, ([^,]*)$/,' or $1');}
+function locate(m,p,i,sec,how){const f=S.lff[p][i];if(!f||f.found)return;f.found=true;f.sec=sec;f.until=m+f.dur;mark(m,'xfer','Fault found');
+  const nxt=sec===1?(S.lf[p][i]?`The first half is back on. Keep the mid-point switch open until the repair is done.`:`Keep the mid-point switch open and close the breaker at ${PR[p].name} to restore the first half.`):`Keep the mid-point switch open. The second half can be restored from the far end with ${farOpts(p,i)}.`;
+  const s=`${how} The fault on the ${lfName(p,i)} at ${PR[p].name} is in the ${SECN[sec]}. Repair expected by ${fmtT(f.until)}. ${nxt}`;
+  logE(m,s,'ok');queueAlert(s,'ok',false);play('ok');}
+// Protection: a half with an unrepaired fault cannot stay energised. Trips whatever is feeding it, and uses
+// what held and what tripped to locate the fault.
+function checkLv(m,opK){if(!LV_ON||!S.lff)return;
+  PIDS.forEach(p=>LF[p].forEach((v,i)=>{const f=S.lff[p][i];if(!f)return;
+    for(let g=0;g<3;g++){const d=srcDev(p,i,f.sec);if(!d)break;const live=[0,1].filter(s=>srcDev(p,i,s)===d);tripDev(d);
+      if(opK){S.trial++;mark(m,'trip','Closed onto fault');const s=`The ${devName(d)} tripped straight away: it was closed onto the fault on the ${lfName(p,i)} at ${PR[p].name}.`;logE(m,s,'alarm');queueAlert(s,'alarm',false);play('fault');fx(elOf(d));}
+      else if(f.start!==m){const s=`The ${devName(d)} tripped: supply came back onto the faulted ${lfName(p,i)} at ${PR[p].name}.`;logE(m,s,'alarm');queueAlert(s,'alarm',false);play('trip');}
+      if(live.length===1)locate(m,p,i,live[0],'Protection operated on that half only.');}
+    if(!f.found&&!midOn(p,i)){const lv=[0,1].filter(s=>secFeed(p,i,s)!==null);if(lv.length===1)locate(m,p,i,1-lv[0],`The ${lv[0]?'second':'first'} half is holding on load.`);}}));}
+function stepLv(m){if(!LV_ON)return;
+  PIDS.forEach(p=>LF[p].forEach((v,i)=>{const f=S.lff[p][i];if(!f)return;
+    if(!f.found&&m>=f.start+PATROL)locate(m,p,i,f.sec,'Line patrol has found the fault.');
+    else if(f.found&&m>=f.until){S.lff[p][i]=null;const off=secOff(p,i).length;const s=`The ${lfName(p,i)} at ${PR[p].name} has been repaired.`+(off?` Close ${!S.lf[p][i]?'its breaker':''}${!S.lf[p][i]&&!midOn(p,i)?' and ':''}${!midOn(p,i)?'its mid-point switch':''}${S.lf[p][i]&&midOn(p,i)?'whatever fed it':''} to restore everyone.`:'');logE(m,s,'ok');queueAlert(s,'ok',false);play('ok');}}));
+  // mobile generators: trip on overload
+  (S.mgu||[]).forEach(u=>{if(!u.conn)return;const[p,i]=lfP(u.site),ld=srcMW(p,i,'mg');
+    if(ld>MG_CAP+.05){u.conn=false;S.trips++;mark(m,'trip','Generator trip');const s=`The mobile generator at ${LFN[p][i]} (${PR[p].name}) tripped on overload: it was asked for ${ld.toFixed(1)} MW and is rated ${MG_CAP} MW. Open the mid-point switch so it only carries the second half, then reconnect it.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);play('trip');fx('mgg_'+u.site);}});}
+// an operation that makes two different supplies meet on one 11 kV feeder through the mid-point switch or a generator
+function lvConflict(p,i){const near=S.lf[p][i]&&subOn(p),far=farSrc(p,i),g=mgOn(p,i),vf=VF_ON&&VFI.includes(i)&&S.nop[p][i],l=linkOf(p,i),lk=l&&S.lk[l.k]&&S.lf[l.q][l.j]&&midOn(l.q,l.j)&&subOn(l.q);
+  if(g&&(vf||lk||(near&&midOn(p,i))))return 'gen';
+  if(near&&far&&midOn(p,i)){if(far==='vf')return 'vf';if(far!=='mg'&&grpOf(S.sup[p])!==grpOf(S.sup[far]))return 'grid';}
+  return null;}
+const elOf=id=>{const[t,k]=id.split(':');return t==='bs'?'bsg_'+k:t==='bc'||t==='in'?'fdg_'+k:t==='lf'?'lfb_'+k:t==='nop'?'nopb_'+k:t==='mid'?'midb_'+k:t==='mg'?'mgg_'+k:t==='lk'?'lkg_'+k:t==='tie'?'tieg_'+k:'itg_'+k;};
 
 /* ---------- Simulation step (one game minute) ---------- */
 function step(){
@@ -430,6 +497,16 @@ function step(){
       const s=`Fault on the T${i+1} circuit: ${f.cause.toLowerCase()}. T${i+1} tripped. Repair expected by ${fmtT(m+f.dur)}.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);play('fault');fx('cct'+i);}
     else if(type==='ic'){const it=S.it[id];if(it.fault)continue;it.fault={until:m+f.dur,ready:false,label:f.cause};const was=it.closed;it.closed=false;S.faults++;S.chain.push(`a fault on the ${devName('it:'+id)}`);mark(m,'fault',devName('it:'+id)+' fault');
       const s=`Fault on the ${devName('it:'+id)}: ${f.cause.toLowerCase()}. ${was?'It tripped. ':''}Repair expected by ${fmtT(m+f.dur)}.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);play('fault');fx('itg_'+id);}
+    else if(type==='lv'){const[p,i]=lfP(id);if(!PIDS.includes(p)||S.lff[p][i])continue;const devs=[0,1].map(s=>srcDev(p,i,s)),dv=devs[f.sec];if(!dv)continue;
+      const nm=lfName(p,i),fedN=[0,1].filter(s=>devs[s]===dv).reduce((a,s)=>a+custOf(p,i,s),0);
+      if(f.tr){S.cust.si+=fedN;S.recloses++;mark(m,'ar','Auto-reclose');logE(m,`${ucfirst(nm)} at ${PR[p].name} tripped and auto-reclosed: a transient fault (${f.cause.toLowerCase()}) cleared itself. ${nf(fedN)} customers had a short interruption.`,'info');play('ar');continue;}
+      S.lff[p][i]={sec:f.sec,dur:f.dur,found:false,until:null,start:m,label:f.cause,oh:!!LF_OH[p][i]};S.faults++;S.chain.push(`a fault on the ${nm}`);mark(m,'fault',LFN[p][i]+' fault');
+      checkLv(m,null);const f2=S.lff[p][i];
+      const how=LF_OH[p][i]&&dv.startsWith('lf:')?`The breaker at ${PR[p].name} tripped, auto-reclosed onto a permanent fault and locked out.`:`The ${devName(dv)} tripped${LF_OH[p][i]?' and locked out':' (underground cable, so no auto-reclose)'}.`;
+      const s=`Fault on the ${nm} at ${PR[p].name}: ${f.cause.toLowerCase()}. ${how} ${nf(fedN)} customers are off.`+(f2.found?` It's in the ${SECN[f2.sec]}, repair expected by ${fmtT(f2.until)}.`:` The fault could be in either half. Send a crew to open the mid-point switch, then trial-close the breaker to find it. Line patrol will find it by ${fmtT(m+PATROL)} otherwise.`);
+      logE(m,s,'alarm');queueAlert(s,'alarm',true);play('fault');fx(elOf(dv));}
+    else if(type==='ar'){const p=id;if(!PIDS.includes(p)||!fdOn(p)||Math.abs(S.flows['bc:'+p]||0)<.5)continue;let n=0;PIDS.forEach(q=>LF[q].forEach((v,i)=>[0,1].forEach(s=>{if(secFeed(q,i,s)===p)n+=custOf(q,i,s);})));
+      S.cust.si+=n;S.recloses++;mark(m,'ar','Auto-reclose');logE(m,`${PR[p].name} 33 kV feeder tripped and auto-reclosed: a transient fault (${f.cause.toLowerCase()}) cleared itself. ${nf(n)} customers had a short interruption.`,'info');play('ar');fx('fdg_'+p);}
     else{const p=id,fd=S.fd[p];if(fd.fault)continue;
       fd.fault={until:m+f.dur,ready:false,label:f.cause};S.faults++;S.chain.push(`a fault on the ${PR[p].name} feeder`);mark(m,'fault',`${PR[p].name} feeder fault`);
       const was=fd.brk&&fd.inc;fd.brk=false;fd.inc=false;
@@ -439,6 +516,7 @@ function step(){
   if(S.cutout&&S.cutout.fired&&!S.cutout.done&&m>=S.cutout.end){S.cutout.done=true;logE(m,'Spinney Windy Things restarting.','ok');}
   if(S.op&&m>=S.op.at){const op=S.op;S.op=null;doOp(op,m);}
   if(!S.silent)stepCrews(m);
+  if(!S.silent){stepLv(m);checkLv(m,null);}
 
   const c=comps(m,false),n=S.tx.filter(t=>!t.out).length;
   // Protection on topology: out-of-phase and long parallels
@@ -489,8 +567,8 @@ function step(){
     const s=`Overload trip: ${names} (${tripped[0].why}). The flow moves onto what is left. Inspection takes 90 minutes.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);play('trip');tripped.forEach(x=>fx('cct'+x.i));}
   // circuit ratings
   S.spare={kn:spareOf('kn',m),fm:spareOf('fm',m),vf:VF_ON?spareOf('vf',m):0};
-  S.lkLoad={};LKIDS.forEach(k=>{const L=LINKS[k];let f=0;if(S.lk[k]){if(feedOf(L.a[0],L.a[1])===L.b[0])f=lfMW(L.a[0],L.a[1]);else if(feedOf(L.b[0],L.b[1])===L.a[0])f=lfMW(L.b[0],L.b[1]);}S.lkLoad[k]=f;
-    const id='lk:'+k,Lr=f/L.r;if(!(S.lf[L.a[0]][L.a[1]]&&S.lf[L.b[0]][L.b[1]])){S.ov[id+'x']=Lr>1.0001?(S.ov[id+'x']||0)+1:0;
+  S.lkLoad={};LKIDS.forEach(k=>{const L=LINKS[k];let f=0;if(S.lk[k])f=srcMW(L.a[0],L.a[1],L.b[0])+srcMW(L.b[0],L.b[1],L.a[0]);S.lkLoad[k]=f;
+    const id='lk:'+k,Lr=f/L.r;if(!(S.lf[L.a[0]][L.a[1]]&&S.lf[L.b[0]][L.b[1]]&&midOn(L.a[0],L.a[1])&&midOn(L.b[0],L.b[1]))){S.ov[id+'x']=Lr>1.0001?(S.ov[id+'x']||0)+1:0;
       if(S.ov[id+'x']>=OV_MIN&&!S.silent){S.ov[id+'x']=0;S.lk[k]=false;S.trips++;S.chain.push(`the ${devName(id)} tripping`);mark(m,'trip',devName(id)+' trip');const s3=`Overload trip: the ${devName(id)} opened because it carried over its ${L.r} MW rating.`;logE(m,s3,'alarm');queueAlert(s3,'alarm',true);play('trip');fx('lkg_'+k);}}});
   S.vfLoad=VF_ON?PIDS.reduce((a,p)=>a+c.demand*S.share[p]*vfFrac(p),0):0;
   {const L=S.vfLoad/Math.max(1,S.spare.vf);S.ov.vf=VF_ON&&L>1.0001?(S.ov.vf||0)+1:0;
@@ -514,9 +592,9 @@ function step(){
         else S.gspOver=0;}
       if(m===G.end){logE(m,'National Grid has lifted the Steve Towers limit. Normal running can resume.','ok');queueAlert('National Grid has lifted the Steve Towers limit.','ok',false);play('ok');}}}
   let allOff=true;
-  {const C=S.cust;PIDS.forEach(p=>LF[p].forEach((f,i)=>{const k=p+i,fed=feedOf(p,i,sup)!==null,n=Math.round(CUST_TOTAL*S.share[p]*f);
+  {const C=S.cust;PIDS.forEach(p=>LF[p].forEach((f,i)=>SECF.forEach((h,sx)=>{const k=p+i+'s'+sx,fed=secFeed(p,i,sx,sup)!==null,n=Math.round(CUST_TOTAL*S.share[p]*f*h);
     if(!fed){const o=C.off[k]=(C.off[k]||0)+1;if(o===SHORT_INT){C.ci+=n;C.cml+=SHORT_INT*n;}else if(o>SHORT_INT)C.cml+=n;}
-    else if(C.off[k]){if(C.off[k]<SHORT_INT)C.si+=n;C.off[k]=0;}}));
+    else if(C.off[k]){if(C.off[k]<SHORT_INT)C.si+=n;C.off[k]=0;}})));
    S.ens=C.ci/100+C.cml/500+C.si/500;S.vfPeak=Math.max(S.vfPeak,S.vfLoad||0);}
   PIDS.forEach(p=>{if(sup[p]==='off'){if(p==='ml')S.cost.gen+=c.solar*SV.solar.use/60;if(p==='rv')S.cost.gen+=c.wind*SV.wind.use/60;}else allOff=false;});
   if(allOff&&!S.silent){loseSite(m);return;}
@@ -590,6 +668,8 @@ function opLabel(k,act){const[type,id]=k.split(':');
   if(type==='bs')return `${act==='close'?'Close':'Open'} the ${devName(k)}`;
   if(type==='tie')return `${act==='close'?'Close':'Open'} ${NBS[PR[id].nb].name} tie to ${PR[id].name}`;
   if(type==='lk')return `${act==='close'?'Close':'Open'} the ${devName(k)}`;
+  if(type==='mid')return `${act==='close'?'Close':'Open'} the ${devName(k)}`;
+  if(type==='mg')return act==='close'?`Connect a mobile generator to ${LFN[id.slice(0,2)][+id.slice(2)]}`:`Disconnect the ${devName(k)}`;
   return `${act==='close'?'Close':'Open'} ${PR[ITS[id].a].name} – ${PR[ITS[id].b].name} interconnector`;}
 const crewAt=k=>S.crews.find(c=>c.at===k&&!c.to);
 const crewFor=k=>S.crews.find(c=>c.job&&c.job.k===k);
@@ -598,13 +678,16 @@ function crewPos(c,tNow){if(!c.to)return{x:c.x,y:c.y};const f=clamp((tNow-c.dep)
   return d<=Math.abs(dx)?{x:c.from.x+Math.sign(dx)*d,y:c.from.y}:{x:c.to.x,y:c.from.y+Math.sign(dy)*(d-Math.abs(dx))};}
 function dispatch(k,act){if(!S||S.ended||!CREW_ON)return;
   if(crewFor(k)){showBanner({m:S.t,text:`Crew ${crewFor(k).n} is already on its way to the ${devName(k)}.`,lvl:'warn'});return;}
+  let mgu=null,opT=CREW_OP;if(k.startsWith('mg:')&&act==='close'){const id=k.slice(3);if(mgOn(...lfP(id)))return;
+    if(!mgAt(id)){mgu=S.mgu.find(x=>!x.site)||S.mgu.find(x=>!x.conn&&!x.pend);if(!mgu){showBanner({m:S.t,text:`Both mobile generators are connected elsewhere. Disconnect one before sending it here.`,lvl:'warn'},'Mobile generators restore a dead section of feeder, up to '+MG_CAP+' MW each.');return;}opT=MG_CONN;}}
   let c=crewAt(k)&&!crewAt(k).job?crewAt(k):null;const tgt=devXY(k);
   if(!c){const idle=S.crews.filter(x=>!x.job);if(!idle.length){showBanner({m:S.t,text:'All three field crews are busy. Wait for one to finish its job.',lvl:'warn'},'Crews walk to manual switches, which takes time. Send one ahead to stand by where you will need it.');return;}
     c=idle.sort((a,b)=>{const pa=crewPos(a,S.t),pb=crewPos(b,S.t);return(Math.abs(pa.x-tgt.x)+Math.abs(pa.y-tgt.y))-(Math.abs(pb.x-tgt.x)+Math.abs(pb.y-tgt.y));})[0];}
   const p=crewPos(c,S.t),dist=Math.abs(p.x-tgt.x)+Math.abs(p.y-tgt.y),travel=c.at===k?0:Math.max(2,Math.round(dist/CREW_SPEED));
   if(travel){c.from={x:p.x,y:p.y};c.to=tgt;c.dep=S.t;c.arr=S.t+travel;c.at=null;}
-  c.job={k,act,at:S.t+travel+(act?CREW_OP:0),arr:S.t+travel};
-  logE(S.t,act?`Crew ${c.n} sent to ${opLabel(k,act).toLowerCase()}. Arrives ${fmtT(S.t+travel)}, done by ${fmtT(c.job.at)}.`:`Crew ${c.n} sent to stand by at the ${devName(k)}. Arrives ${fmtT(S.t+travel)}.`,'info');
+  c.job={k,act,at:S.t+travel+(act?opT:0),arr:S.t+travel};
+  if(mgu){if(mgu.site&&mgu.site!==k.slice(3))logE(S.t,`Mobile generator ${mgu.n} is being moved from ${LFN[mgu.site.slice(0,2)][+mgu.site.slice(2)]}.`,'info');mgu.site=k.slice(3);mgu.conn=false;mgu.pend=true;}
+  logE(S.t,act?`Crew ${c.n} sent to ${opLabel(k,act).toLowerCase()}${opT===MG_CONN?' (towing and connecting a generator takes '+MG_CONN+' min)':''}. Arrives ${fmtT(S.t+travel)}, done by ${fmtT(c.job.at)}.`:`Crew ${c.n} sent to stand by at the ${devName(k)}. Arrives ${fmtT(S.t+travel)}.`,'info');
   play('click');lastInsp='';render(true);}
 function stepCrews(m){if(!CREW_ON)return;S.crews.forEach(c=>{
   if(c.to&&m>=c.arr){c.x=c.to.x;c.y=c.to.y;c.to=null;c.at=c.job?c.job.k:c.at;}
@@ -613,7 +696,10 @@ function issueOp(k,act){if(!S||S.ended||GAME==='fc')return;
   if(isManual(k)){dispatch(k,act);return;}
   if(S.op){showBanner({m:S.t,text:`Wait for the current operation (${opLabel(S.op.k,S.op.act).toLowerCase()}) to finish.`,lvl:'warn'},'Each operation takes one minute.');return;}
   S.op={k,act,at:S.t+1};logE(S.t,`Operating: ${opLabel(k,act).toLowerCase()}.`,'info');play('click');lastInsp='';render(true);}
-function doOp(op,m){const[type,id]=op.k.split(':');play('op');
+function doOp(op,m){doOp0(op,m);if(LV_ON&&op.act==='close'){genCheck(m,op.k);checkLv(m,op.k);}}
+function genCheck(m,k){(S.mgu||[]).forEach(u=>{if(!u.conn)return;const[p,i]=lfP(u.site);if(lvConflict(p,i)!=='gen')return;u.conn=false;
+  incident(m,`Closing the ${devName(k)} put another supply onto the mobile generator at ${LFN[p][i]} without synchronising, so the generator tripped. Disconnect a generator before closing anything else onto its section.`,'mgg_'+u.site);});}
+function doOp0(op,m){const[type,id]=op.k.split(':');play('op');
   if(type==='tx'){const i=+id,t=S.tx[i];
     if(op.act==='close'){if(!t.out)return;
       if(!t.out.ready){t.out.until+=30;incident(m,`T${i+1} was closed before ${t.out.kind==='planned'?'its maintenance was finished':t.out.kind==='trip'?'its inspection was finished':'it was repaired'}. Protection tripped it straight away, and it now takes 30 minutes longer to come back.`,'cct'+i);return;}
@@ -622,14 +708,26 @@ function doOp(op,m){const[type,id]=op.k.split(':');play('op');
     else{if(t.out)return;t.out={kind:'open',until:m,ready:true,label:'Switched out by control'};mark(m,'xfer',`T${i+1} opened`);logE(m,`T${i+1} breaker opened. T${i+1} is switched out.`,'warn');}
     return;}
   const k=op.k,nm=devName(k);
+  if(type==='mid'){const[p,i]=lfP(id),v=midOn(p,i),fn=LFN[p][i];if((op.act==='close')===v)return;
+    if(op.act==='open'){const b=secOff(p,i).length;S.mid[p][i]=false;const lost=secOff(p,i).length>b;mark(m,'xfer',nm+' opened');
+      logE(m,`${ucfirst(nm)} opened: ${fn} is split into two halves.`+(lost?` About ${Math.round(lfMW(p,i)*SECF[1])} MW of customers beyond it are off supply.`:''),lost?'warn':'ok');return;}
+    S.mid[p][i]=true;const cf=lvConflict(p,i);
+    if(cf==='vf'||cf==='grid'){S.mid[p][i]=false;tripDev(cf==='vf'?'nop:'+id:'lk:'+linkOf(p,i).k);incident(m,`Closing the ${nm} paralleled ${PR[p].name} with ${cf==='vf'?'Volt Face':'a substation'} on a different grid supply, so protection tripped the ${cf==='vf'?'backfeed':'11 kV link'}. Open one end of ${fn} first.`,'midb_'+id);return;}
+    mark(m,'xfer',nm+' closed');logE(m,`${ucfirst(nm)} closed: ${fn} is one feeder again.`,'ok');return;}
+  if(type==='mg'){const[p,i]=lfP(id),u=mgAt(id),fn=LFN[p][i];if(!u)return;
+    if(op.act==='open'){u.pend=false;if(!u.conn)return;u.conn=false;mark(m,'xfer','Generator off');logE(m,`The ${nm} was disconnected. It stays parked there until you send it somewhere else.`,'info');return;}
+    u.pend=false;if(u.conn)return;
+    if(secFeed(p,i,1)!==null){const s=`The crew could not connect the ${nm}: the far end of ${fn} is still live. Make that half dead first (open the mid-point switch or the backfeed), then connect it.`;logE(m,s,'warn');queueAlert(s,'warn',false);return;}
+    u.conn=true;const ld=srcMW(p,i,'mg');mark(m,'xfer','Generator on');
+    logE(m,`Mobile generator ${u.n} connected at the far end of ${fn}: supplying about ${Math.round(ld)} MW (rated ${MG_CAP} MW).${ld>MG_CAP?' That is over its rating, so it will trip. Open the mid-point switch first.':''}`,ld>MG_CAP?'warn':'ok');return;}
   if(type==='nop'){const[p,i]=lfP(id),v=S.nop[p][i];if((op.act==='close')===v)return;const mwv=Math.round(lfMW(p,i)),fn=LFN[p][i];
-    if(op.act==='close'&&S.lf[p][i]){incident(m,`The ${nm} was closed while the ${fn} feeder breaker at ${PR[p].name} was still closed. That paralleled Blackout Canyon with Volt Face, which is on a different grid supply, so the backfeed tripped straight away. Open the feeder breaker first.`,'nopb_'+id);return;}
+    if(op.act==='close'&&S.lf[p][i]&&midOn(p,i)){incident(m,`The ${nm} was closed while the ${fn} feeder breaker at ${PR[p].name} was still closed. That paralleled Blackout Canyon with Volt Face, which is on a different grid supply, so the backfeed tripped straight away. Open the feeder breaker first.`,'nopb_'+id);return;}
     S.nop[p][i]=op.act==='close';mark(m,'xfer',nm+(v?' opened':' closed'));
     logE(m,v?(S.lf[p][i]?`${ucfirst(nm)} opened.`:`${ucfirst(nm)} opened: about ${mwv} MW of ${fn} customers are off supply.`):`${ucfirst(nm)} closed: ${fn} (about ${mwv} MW) is now fed from Volt Face.`,v&&!S.lf[p][i]?'warn':'ok');return;}
   if(type==='lf'&&op.act==='close'){const[p,i]=lfP(id),l=linkOf(p,i);
-    if(l&&S.lk[l.k]&&S.lf[l.q][l.j]&&subOn(l.q)&&subOn(p)&&grpOf(S.sup[p])!==grpOf(S.sup[l.q])){incident(m,`The ${nm} breaker at ${PR[p].name} was closed while it was linked at 11 kV to ${PR[l.q].name}, which is on a different grid supply. That paralleled two grid supplies, so the breaker tripped straight away. Open the 11 kV link first.`,'lfb_'+id);return;}
-    if(l&&S.lk[l.k]&&S.lf[l.q][l.j]&&subOn(l.q)&&subOn(p))logE(m,`${ucfirst(nm)} closed with the ${devName('lk:'+l.k)} closed: ${PR[p].name} and ${PR[l.q].name} are now paralleled at 11 kV. Open one side to finish the transfer.`,'warn');}
-  if(type==='lf'&&op.act==='close'){const[p,i]=lfP(id);if(S.nop[p][i]){incident(m,`The ${nm} breaker at ${PR[p].name} was closed while ${LFN[p][i]} was still fed from Volt Face. That paralleled two different grid supplies, so the breaker tripped straight away. Open the Volt Face backfeed first.`,'lfb_'+id);return;}}
+    if(l&&S.lk[l.k]&&S.lf[l.q][l.j]&&midOn(p,i)&&midOn(l.q,l.j)&&subOn(l.q)&&subOn(p)&&grpOf(S.sup[p])!==grpOf(S.sup[l.q])){incident(m,`The ${nm} breaker at ${PR[p].name} was closed while it was linked at 11 kV to ${PR[l.q].name}, which is on a different grid supply. That paralleled two grid supplies, so the breaker tripped straight away. Open the 11 kV link first.`,'lfb_'+id);return;}
+    if(l&&S.lk[l.k]&&S.lf[l.q][l.j]&&midOn(p,i)&&midOn(l.q,l.j)&&subOn(l.q)&&subOn(p))logE(m,`${ucfirst(nm)} closed with the ${devName('lk:'+l.k)} closed: ${PR[p].name} and ${PR[l.q].name} are now paralleled at 11 kV. Open one side to finish the transfer.`,'warn');}
+  if(type==='lf'&&op.act==='close'){const[p,i]=lfP(id);if(S.nop[p][i]&&midOn(p,i)){incident(m,`The ${nm} breaker at ${PR[p].name} was closed while ${LFN[p][i]} was still fed from Volt Face. That paralleled two different grid supplies, so the breaker tripped straight away. Open the Volt Face backfeed first.`,'lfb_'+id);return;}}
   if(type==='lf'){const[p,i]=lfP(id),v=S.lf[p][i];if((op.act==='close')===v)return;S.lf[p][i]=op.act==='close';const mwv=Math.round(S.c.demand*S.share[p]*LF[p][i]);
     mark(m,'xfer',nm+(v?' opened':' closed'));logE(m,v?`${ucfirst(nm)} at ${PR[p].name} opened: about ${mwv} MW of customers are off supply.`:`${ucfirst(nm)} at ${PR[p].name} closed: about ${mwv} MW of customers are back on.`,v?'warn':'ok');return;}
   if(op.act==='open'){if(!isClosed(k))return;openEdge(k);mark(m,'xfer',nm+' opened');logE(m,`${ucfirst(nm)} opened.`,'info');return;}
@@ -763,7 +861,9 @@ function buildMimic(){
     SELBOX['it:'+k]=[t.x-17,PY-17,34,34];});
   ASSETS.filter(a=>PIDS.includes(a.prim)&&(!ng||a.type==='load')).forEach(a=>{const x=a.x,y=pY(a.prim)+48,ay=pY(a.prim);let sym='';const col=a.col||'var(--muted)';
     if(a.type==='load'){const p=a.prim,by=ay+16;
-      sym=LDX.map((dx,i)=>`<line id="lfl_${p}${i}" class="cond mv" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${y+4}"/><rect id="lfb_${p}${i}" class="brk sw" x="${x+dx-6}" y="${by+8}" width="12" height="12"/><path id="lft_${p}${i}" class="sym" d="M${x+dx-7} ${y+4} L${x+dx+7} ${y+4} L${x+dx} ${y+17} Z"/>`).join('');
+      sym=LDX.map((dx,i)=>LV_ON?`<line id="lfl_${p}${i}" class="cond mv" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${ay+38}"/><line id="lfm_${p}${i}" class="cond mv" x1="${x+dx}" y1="${ay+44}" x2="${x+dx}" y2="${y+4}"/><rect id="lfb_${p}${i}" class="brk sw" x="${x+dx-6}" y="${by+6}" width="12" height="12"/><rect id="midb_${p}${i}" class="brk sw man mid" x="${x+dx-4}" y="${ay+37}" width="8" height="8" rx="4"/><path id="lft_${p}${i}" class="sym" d="M${x+dx-7} ${y+4} L${x+dx+7} ${y+4} L${x+dx} ${y+17} Z"/>`
+        :`<line id="lfl_${p}${i}" class="cond mv" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${y+4}"/><rect id="lfb_${p}${i}" class="brk sw" x="${x+dx-6}" y="${by+8}" width="12" height="12"/><path id="lft_${p}${i}" class="sym" d="M${x+dx-7} ${y+4} L${x+dx+7} ${y+4} L${x+dx} ${y+17} Z"/>`).join('');
+      if(LV_ON)LDX.forEach((dx,i)=>{const fx=x+dx;sym+=`<g id="mgg_${p}${i}" class="mg" hidden><path class="mg-l" d="M${fx} ${VF_ON&&VFI.includes(i)?y+40:y+17} V${y+39.5}"/><circle cx="${fx}" cy="${y+45}" r="5.5"/><text x="${fx}" y="${y+48}" text-anchor="middle">G</text></g>`;SELBOX['mg:'+p+i]=[fx-8,y+37,16,16];});
       s+=`<line id="alb_load_${p}" class="cond mv" x1="${x-24}" y1="${by}" x2="${x+24}" y2="${by}" style="stroke-width:3"/>`;
       if(VF_ON)VFI.forEach(i=>{const fx=x+LDX[i];sym+=`<path id="nopl_${p}${i}" class="vf-l" d="M${fx} ${y+17} V${y+24} M${fx} ${y+34} V${y+40}"/><rect id="nopb_${p}${i}" class="brk sw nop open" x="${fx-5}" y="${y+24}" width="10" height="10" rx="5"/>`;});}
     if(a.type==='dsr')sym=`<path class="sym-o" d="M${x-11} ${y} L${x+11} ${y} L${x} ${y+20} Z"/>`;
@@ -774,11 +874,11 @@ function buildMimic(){
     s+=a.type==='load'?`<line id="al_${a.id}" class="cond mv" x1="${x}" y1="${ay}" x2="${x}" y2="${ay+16}"/>`:`<line id="al_${a.id}" class="cond mv" x1="${x}" y1="${ay}" x2="${x}" y2="${y}"/><line id="afl_${a.id}" class="flow" x1="${x}" y1="${ay+4}" x2="${x}" y2="${y}"/>`;
     s+=`
       <g class="asym" style="--sc:${a.type==='load'?'var(--ink)':col}">${sym}</g>
-      <text class="a-name" x="${x}" y="${y+46+(a.type==='load'&&VF_ON?10:0)}" text-anchor="middle" style="fill:${a.type==='load'?'var(--muted)':col}">${a.name}</text>
-      <text id="av_${a.id}" class="a-val" x="${x}" y="${y+62+(a.type==='load'&&VF_ON?10:0)}" text-anchor="middle">0 MW</text>
-      <text id="as_${a.id}" class="a-sub" x="${x}" y="${y+77+(a.type==='load'&&VF_ON?10:0)}" text-anchor="middle"></text>
+      <text class="a-name" x="${x}" y="${y+46+(a.type==='load'&&VF_ON?10:0)+(a.type==='load'&&LV_ON?6:0)}" text-anchor="middle" style="fill:${a.type==='load'?'var(--muted)':col}">${a.name}</text>
+      <text id="av_${a.id}" class="a-val" x="${x}" y="${y+62+(a.type==='load'&&VF_ON?10:0)+(a.type==='load'&&LV_ON?6:0)}" text-anchor="middle">0 MW</text>
+      <text id="as_${a.id}" class="a-sub" x="${x}" y="${y+77+(a.type==='load'&&VF_ON?10:0)+(a.type==='load'&&LV_ON?6:0)}" text-anchor="middle"></text>
       <rect class="hit" data-sel="as:${a.id}" x="${x-30}" y="${a.type==='load'?y+24:y-8}" width="${a.type==='load'?60:48}" height="${a.type==='load'?60:92}"/>`;
-    if(a.type==='load')LDX.forEach((dx,i)=>{s+=`<rect class="hit" data-sel="lf:${a.prim}${i}" x="${x+dx-11}" y="${ay+18}" width="22" height="${y-ay+4}"/>`;SELBOX['lf:'+a.prim+i]=[x+dx-10,ay+20,20,20];
+    if(a.type==='load')LDX.forEach((dx,i)=>{s+=LV_ON?`<rect class="hit" data-sel="lf:${a.prim}${i}" x="${x+dx-11}" y="${ay+18}" width="22" height="18"/><rect class="hit" data-sel="mid:${a.prim}${i}" x="${x+dx-11}" y="${ay+36}" width="22" height="16"/><rect class="hit" data-sel="lf:${a.prim}${i}" x="${x+dx-11}" y="${ay+52}" width="22" height="14"/>`:`<rect class="hit" data-sel="lf:${a.prim}${i}" x="${x+dx-11}" y="${ay+18}" width="22" height="${y-ay+4}"/>`;SELBOX['lf:'+a.prim+i]=[x+dx-10,ay+20,20,20];if(LV_ON){SELBOX['mid:'+a.prim+i]=[x+dx-8,ay+33,16,16];s+=`<rect id="mgh_${a.prim}${i}" class="hit" data-sel="mg:${a.prim}${i}" x="${x+dx-10}" y="${y+37}" width="20" height="17" hidden/>`;}
       if(VF_ON&&VFI.includes(i)){s+=`<rect class="hit" data-sel="nop:${a.prim}${i}" x="${x+dx-11}" y="${y+19}" width="22" height="22"/>`;SELBOX['nop:'+a.prim+i]=[x+dx-9,y+20,18,18];}});
     if(a.type!=='load')s+=adjBtn(a.id,x+19,y-4,1)+adjBtn(a.id,x+19,y+18,-1);
     SELBOX['as:'+a.id]=[x-32,y-10,a.type==='load'?64:76,96];});
@@ -851,8 +951,13 @@ function renderMimic(){
   const c=S.c,a=S.act,on=p=>S.sup[p]!=='off';
   PIDS.forEach(p=>{const d=dem(c,p)-(p==='hw'?a.dsr:0),n=S.lf[p].filter((v,i)=>feedOf(p,i)!==null).length,nv=S.lf[p].filter((v,i)=>feedOf(p,i)==='vf').length,nl=S.lf[p].filter((v,i)=>{const f=feedOf(p,i);return f&&f!==p&&f!=='vf';}).length;txt('av_load_'+p,on(p)?mw(d):'Off supply');txt('as_load_'+p,(n<3?`${3-n} feeder${n===2?'':'s'} off`:'')+(nv?`${n<3?' · ':''}${nv} on Volt Face`:'')+(nl?`${n<3||nv?' · ':''}${nl} linked`:''));setAttr($('as_load_'+p),'class','a-sub'+(n<3?'':' muted'));
     setAttr($('al_load_'+p),'class','cond mv'+(on(p)?'':' dead'));setAttr($('alb_load_'+p),'class','cond mv'+(on(p)?'':' dead'));
-    S.lf[p].forEach((v,i)=>{const k='lf:'+p+i,live=v&&on(p),vfd=!v&&S.nop[p][i];setAttr($('lfb_'+p+i),'class','brk sw'+(v?'':' open')+(opK===k?' operating':''));setAttr($('lfl_'+p+i),'class','cond mv'+(live?'':' dead'));setAttr($('lft_'+p+i),'class','sym'+(live?'':vfd?' vf':' off'));
-      {const fo=feedOf(p,i);if(fo&&fo!==p&&fo!=='vf')setAttr($('lft_'+p+i),'class','sym lk');}
+    S.lf[p].forEach((v,i)=>{const k='lf:'+p+i,F=S.lff&&S.lff[p][i],f0=secFeed(p,i,0),f1=secFeed(p,i,1),fl=sx=>F?(!F.found?' unk':F.sec===sx?' flt':''):'';
+      setAttr($('lfb_'+p+i),'class','brk sw'+(v?'':' open')+(F&&!F.found&&!v?' trip':'')+(opK===k?' operating':''));
+      if(LV_ON){setAttr($('lfl_'+p+i),'class','cond mv'+(f0!==null?'':' dead')+fl(0));setAttr($('lfm_'+p+i),'class','cond mv'+(f1!==null?'':' dead')+fl(1));
+        const mk='mid:'+p+i;setAttr($('midb_'+p+i),'class','brk sw man mid'+(midOn(p,i)?'':' open')+(crewFor(mk)?' operating':''));
+        const u=mgAt(p+i),g=$('mgg_'+p+i);const gh=$('mgh_'+p+i);if(gh){if(u)gh.removeAttribute('hidden');else gh.setAttribute('hidden','');}if(g){if(u)g.removeAttribute('hidden');else g.setAttribute('hidden','');setAttr(g,'class','mg'+(u&&u.conn?' on':'')+(crewFor('mg:'+p+i)?' operating':''));}}
+      else setAttr($('lfl_'+p+i),'class','cond mv'+(f0!==null?'':' dead'));
+      setAttr($('lft_'+p+i),'class','sym'+(f1===null?(S.nop[p][i]?' vf':' off'):f1==='vf'?' vf':f1==='mg'?' mg':f1!==p?' lk':'')+(F&&(!F.found||F.sec===1)?' flt':''));
       if(VF_ON&&VFI.includes(i)){const nk='nop:'+p+i,nc=S.nop[p][i];setAttr($('nopb_'+p+i),'class','brk sw nop'+(nc?'':' open')+(opK===nk?' operating':''));setAttr($('nopl_'+p+i),'class','vf-l'+(nc?' on':''));}});});
   LKIDS.forEach(k=>{const id='lk:'+k,c2=!!S.lk[k],f=(S.lkLoad||{})[k]||0,par=(S.flows||{})[id];setAttr($('lksw_'+k),'class','brk sw man'+(c2?'':' open')+(opK===id||crewFor(id)?' operating':''));setAttr($('lkl_'+k),'class','lk-l'+(c2?' on':''));
     txt('lkt_'+k,!c2?`open · ${LINKS[k].r} MW`:par!=null?`parallel ${Math.round(Math.abs(par))}/${LINKS[k].r} MW`:f>.5?`${Math.round(f)}/${LINKS[k].r} MW`:'closed · no load');setAttr($('lkt_'+k),'class','tie-t'+(f>LINKS[k].r?' alarm':f>LINKS[k].r*AL_ON?' warn':''));});
@@ -904,7 +1009,8 @@ function summaryHtml(){
   const gens=NOGEN()?'':ids.map(id=>{const st=svcSetting(id),f=id==='batt'?S.fail.bdis>S.t||S.fail.bchg>S.t:S.fail[id]>S.t;
     return `<li><button type="button" data-sel="as:${id}" data-k="g-${id}"><span class="nm">${esc(id==='batt'?'Kings Hill Battery':SV[id].name)}</span><span class="st${f?' off':''}">${f?'Not responding':esc(st.st)}</span><span class="v">${st.v}</span></button></li>`;}).join('');
   const outs=[...S.tx.map((t,i)=>t.out?`<li><button type="button" data-sel="tx:${i}" data-k="o-tx${i}"><span class="nm">T${i+1}</span><span class="st${t.out.ready?' warn':' off'}">${t.out.ready?'Ready: close its breaker':esc(t.out.label)+' · '+fmtT(t.out.until)}</span><span class="v"></span></button></li>`:''),
-    ...PIDS.flatMap(p=>S.lf[p].map((v,i)=>v?'':S.nop[p][i]?`<li><button type="button" data-sel="nop:${p}${i}" data-k="o-vf${p}${i}"><span class="nm">${esc(LFN[p][i])} (${PR[p].name})</span><span class="st">On Volt Face backfeed</span><span class="v">${mw(lfMW(p,i))}</span></button></li>`:`<li><button type="button" data-sel="lf:${p}${i}" data-k="o-lf${p}${i}"><span class="nm">${esc(LFN[p][i])} (${PR[p].name})</span><span class="st off">11 kV feeder open · customers off</span><span class="v"></span></button></li>`)),
+    ...PIDS.flatMap(p=>S.lf[p].map((v,i)=>lvFaultTxt(p,i)?`<li><button type="button" data-sel="lf:${p}${i}" data-k="o-lv${p}${i}"><span class="nm">${esc(LFN[p][i])} (${PR[p].name})</span><span class="st off">${esc(ucfirst(lvFaultTxt(p,i)))}</span><span class="v">${mw(lfMW(p,i)*SECF.reduce((a,h,sx)=>a+(secFeed(p,i,sx)===null?h:0),0))}</span></button></li>`:v?'':S.nop[p][i]?`<li><button type="button" data-sel="nop:${p}${i}" data-k="o-vf${p}${i}"><span class="nm">${esc(LFN[p][i])} (${PR[p].name})</span><span class="st">On Volt Face backfeed</span><span class="v">${mw(lfMW(p,i))}</span></button></li>`:`<li><button type="button" data-sel="lf:${p}${i}" data-k="o-lf${p}${i}"><span class="nm">${esc(LFN[p][i])} (${PR[p].name})</span><span class="st off">11 kV feeder open · customers off</span><span class="v"></span></button></li>`)),
+    ...(S.mgu||[]).filter(u=>u.site).map(u=>`<li><button type="button" data-sel="mg:${u.site}" data-k="o-mg${u.n}"><span class="nm">Mobile generator ${u.n}</span><span class="st${u.conn?'':' warn'}">${u.conn?`On ${esc(LFN[u.site.slice(0,2)][+u.site.slice(2)])} · ${srcMW(...lfP(u.site),'mg').toFixed(1)}/${MG_CAP} MW`:u.pend?'Being towed and connected':'Parked, disconnected'}</span><span class="v"></span></button></li>`),
     ...BSIDS.map(k=>S.bs[k].closed?'':`<li><button type="button" data-sel="bs:${k}" data-k="o-bs${k}"><span class="nm">${esc(ucfirst(devName('bs:'+k)))}</span><span class="st warn">Open: busbar running split</span><span class="v"></span></button></li>`),
     ...ITIDS.map(k=>{const f=S.it[k].fault;return f?`<li><button type="button" data-sel="it:${k}" data-k="o-it${k}"><span class="nm">${esc(ucfirst(devName('it:'+k)))}</span><span class="st${f.ready?' warn':' off'}">${f.ready?'Repaired: can close':'Faulted · repair '+fmtT(f.until)}</span><span class="v"></span></button></li>`:'';}),
     ...PIDS.map(p=>{const f=S.fd[p];if(PR[p].fd&&!f.fault&&!(f.brk&&f.inc))return `<li><button type="button" data-sel="bc:${p}" data-k="o-fd${p}"><span class="nm">${PR[p].name} feeder</span><span class="st warn">${!f.brk&&!f.inc?'Both ends open':!f.brk?'BC breaker open':'Incomer open'}</span><span class="v"></span></button></li>`;return f.fault?`<li><button type="button" data-sel="bc:${p}" data-k="o-fd${p}"><span class="nm">${PR[p].name} feeder</span><span class="st${f.fault.ready?' warn':' off'}">${f.fault.ready?'Ready: close both ends':(f.fault.planned?'Planned work · until ':'Faulted · repair ')+fmtT(f.fault.until)}</span><span class="v"></span></button></li>`:'';})].join('');
@@ -991,9 +1097,12 @@ function primHtml(p){const P=PR[p],c=S.c,on=S.sup[p]!=='off';
 function assetHtml(id){const a=ASB[id];
   if(a.type==='load'){const p=a.prim;return `${back}<div class="i-h">${ico('load','var(--muted)')}<div><h3>${PR[p].name} demand</h3><div class="kind">Homes and businesses</div></div></div>
     ${facts([['Demand now',S.sup[p]==='off'?'Off supply':mw(dem(S.c,p))],['Supply',esc(supTxt(p))]])}
-    <h4 class="i-sub">11 kV feeders</h4><ul class="i-list">${S.lf[p].map((v,i)=>`<li><button type="button" data-sel="lf:${p}${i}" data-k="lf-${p}${i}"><span class="nm">${esc(LFN[p][i])}</span><span class="st${v||S.nop[p][i]?'':' warn'}">${v?'From '+esc(PR[p].name):S.nop[p][i]?'From Volt Face':'Open · customers off'}</span><span class="v">${mw(S.c.demand*S.share[p]*LF[p][i])}</span></button></li>`).join('')}</ul>
+    <h4 class="i-sub">11 kV feeders</h4><ul class="i-list">${S.lf[p].map((v,i)=>`<li><button type="button" data-sel="lf:${p}${i}" data-k="lf-${p}${i}"><span class="nm">${esc(LFN[p][i])}</span><span class="st${lvFaultTxt(p,i)?' off':v||S.nop[p][i]?'':' warn'}">${lvFaultTxt(p,i)?esc(ucfirst(lvFaultTxt(p,i))):(v?'From '+esc(PR[p].name):S.nop[p][i]?'From Volt Face':'Open · customers off')+(LV_ON&&!midOn(p,i)?' · split':'')+(LV_ON&&mgOn(p,i)?' · generator':'')}</span><span class="v">${mw(S.c.demand*S.share[p]*LF[p][i])}</span></button></li>`).join('')}</ul>
     <div class="op-row">${S.lf[p].map((v,i)=>opBtn('lf:'+p+i,v?'open':'close',`${v?'Open':'Close'} ${LFN[p][i]}`)).join('')}</div>
     ${VF_ON?`<div class="op-row">${VFI.map(i=>opBtn('nop:'+p+i,S.nop[p][i]?'open':'close',`${S.nop[p][i]?'Open':'Close'} ${LFN[p][i]} backfeed`)).join('')}</div><p class="i-note">Backfeeds move a feeder onto Volt Face, a neighbouring 11 kV network on a different grid supply. Open the feeder breaker first, then close the backfeed.</p>`:''}
+    ${LV_ON?`<h4 class="i-sub">Mid-point switches</h4><div class="op-row">${S.lf[p].map((v,i)=>opBtn('mid:'+p+i,midOn(p,i)?'open':'close',`${midOn(p,i)?'Open':'Close'} ${LFN[p][i]} mid-point`)).join('')}</div>
+    <h4 class="i-sub">Mobile generators · ${S.mgu.filter(u=>!u.conn&&!u.pend).length} of ${MG_N} free · ${MG_CAP} MW each</h4><div class="op-row">${S.lf[p].map((v,i)=>{const u=mgAt(p+i);return u&&(u.conn||u.pend)?opBtn('mg:'+p+i,'open',`Disconnect generator at ${LFN[p][i]}`):opBtn('mg:'+p+i,'close',`${u?'Reconnect':'Send'} generator to ${LFN[p][i]}`);}).join('')}</div>
+    <p class="i-note">Fault finding: when a feeder locks out you don't know which half is faulted. Open its mid-point switch (manual, so a crew goes), then trial-close the breaker. If it holds, the fault is in the second half; if it trips, it's in the first. Repairs start once the fault is found. A mobile generator connects at the far end of a feeder after ${MG_CONN} minutes and carries up to ${MG_CAP} MW, so it can usually supply one dead half.</p>`:''}
     <p class="i-note">Opening an 11 kV feeder takes its customers off supply to cut the load on the network. Every minute customers are off supply costs 1 point per MW, so use it as a last resort and close it again as soon as you can.</p>`;}
   const p=a.prim,off=S.sup[p]==='off';
   if(id==='batt'){const b=S.act.bdis-S.act.bchg,f=S.fail.bdis>S.t||S.fail.bchg>S.t;
@@ -1017,11 +1126,13 @@ function assetHtml(id){const a=ASB[id];
     <p class="i-state ${f?'alarm':''}">${esc(st)}</p>
     <p class="i-note">Armed response only helps Blackout Canyon while ${PR[p].name} is fed from it.</p>`;}
 function inspHtml(){const sel=S.sel;if(!sel)return summaryHtml();const[type,id]=sel.split(':');
-  if(type==='tx')return txHtml(+id);if(type==='bc'||type==='in')return bcHtml(id);if(type==='lf'||type==='nop')return assetHtml('load_'+id.slice(0,2));if(type==='lk')return lkHtml(id);if(type==='nb'&&id==='vf')return vfHtml();if(type==='tie')return tieHtml(id);if(type==='it')return itHtml(id);if(type==='bs')return bsHtml(id);if(type==='nb')return nbHtml(id);if(type==='prim')return primHtml(id);if(type==='as'&&ASB[id]&&(!NOGEN()||ASB[id].type==='load'))return assetHtml(id);return summaryHtml();}
+  if(type==='tx')return txHtml(+id);if(type==='bc'||type==='in')return bcHtml(id);if(type==='lf'||type==='nop'||type==='mid'||type==='mg')return assetHtml('load_'+id.slice(0,2));if(type==='lk')return lkHtml(id);if(type==='nb'&&id==='vf')return vfHtml();if(type==='tie')return tieHtml(id);if(type==='it')return itHtml(id);if(type==='bs')return bsHtml(id);if(type==='nb')return nbHtml(id);if(type==='prim')return primHtml(id);if(type==='as'&&ASB[id]&&(!NOGEN()||ASB[id].type==='load'))return assetHtml(id);return summaryHtml();}
 function renderInsp(){const h=inspHtml();if(h===lastInsp)return;lastInsp=h;const el=$('inspBody'),ae=document.activeElement,k=ae&&el.contains(ae)&&ae.dataset?ae.dataset.k:null;el.innerHTML=h;if(k){const f=el.querySelector(`[data-k="${k}"]`);if(f)f.focus();}}
-const QP_T=GAME==='fc'?[]:['tx','bc','in','tie','it','bs','lf','nop','lk'],isSw=k=>!!k&&QP_T.includes(k.split(':')[0]);
+const QP_T=GAME==='fc'?[]:['tx','bc','in','tie','it','bs','lf','nop','lk','mid','mg'],isSw=k=>!!k&&QP_T.includes(k.split(':')[0]);
 function select(k,fromDiagram){S.sel=k==='none'?null:k;S.qp=!!fromDiagram&&isSw(S.sel);lastInsp='';
   if(PHONE){if(S.qp)closeSheet();else if(S.sel)openSheet();}render(true);}
+function lvFaultTxt(p,i){const F=S.lff&&S.lff[p]&&S.lff[p][i];if(!F)return '';
+  return F.found?`fault in the ${F.sec?'second':'first'} half · repair ${fmtT(F.until)}`:`faulted · location unknown (patrol ${fmtT(F.start+PATROL)})`;}
 let lastQP='';
 function qpHtml(k){const[t,id]=k.split(':');let closed,st,cls='';
   if(t==='tx'){const x=S.tx[+id];closed=!x.out;
@@ -1042,12 +1153,17 @@ function qpHtml(k){const[t,id]=k.split(':');let closed,st,cls='';
     st=closed?`feeding ${mwv} MW · Volt Face ${Math.round(S.vfLoad)}/${Math.round(S.spare.vf)} MW`:S.lf[p][i]?'feeder breaker closed: open it first':`${mwv} MW off · Volt Face spare ${Math.round(Math.max(0,S.spare.vf-S.vfLoad))} MW`;
     cls=!closed&&S.lf[p][i]?'warn':S.vfLoad>S.spare.vf?'alarm':'';}
   else if(t==='lf'){const[p,i]=lfP(id),mwv=S.c?Math.round(S.c.demand*S.share[p]*LF[p][i]):0;closed=S.lf[p][i];
-    st=!closed&&S.nop[p][i]?`fed from Volt Face (${mwv} MW)`:!closed?`${mwv} MW of customers off`:S.sup[p]==='off'?'substation off supply':`${mwv} MW of demand`;cls=closed?'':'warn';}
+    st=!closed&&S.nop[p][i]?`fed from Volt Face (${mwv} MW)`:!closed?`${mwv} MW of customers off`:S.sup[p]==='off'?'substation off supply':`${mwv} MW of demand`;cls=closed?'':'warn';
+    const F=lvFaultTxt(p,i);if(F){st=F+' · '+st;cls='alarm';}}
+  else if(t==='mid'){const[p,i]=lfP(id);closed=midOn(p,i);const F=lvFaultTxt(p,i);
+    st=F||`splits ${LFN[p][i]} in two · ${Math.round(lfMW(p,i)*SECF[1])} MW beyond it`;cls=F?'alarm':closed?'':'warn';}
+  else if(t==='mg'){const[p,i]=lfP(id),u=mgAt(id);closed=!!(u&&u.conn);const ld=srcMW(p,i,'mg');
+    st=closed?`supplying ${ld.toFixed(1)}/${MG_CAP} MW`:u&&u.pend?'on its way':'parked here, disconnected';cls=closed&&ld>MG_CAP*AL_ON?'warn':'';}
   else{closed=S.bs[id].closed;st=closed?`${Math.round(Math.abs(S.bsf[id]||0))} MW across`:'busbar running split';cls=closed?'':'warn';}
-  const act=closed?'open':'close',title=t==='tx'?`T${+id+1} breaker`:ucfirst(devName(k))+(t==='bc'?' at Blackout Canyon':t==='lf'||t==='nop'?' · '+PR[id.slice(0,2)].name:'');
+  const act=closed?'open':'close',title=t==='tx'?`T${+id+1} breaker`:ucfirst(devName(k))+(t==='bc'?' at Blackout Canyon':t==='lf'||t==='nop'||t==='mid'?' · '+PR[id.slice(0,2)].name:'');
   return `<div class="qp-h"><b>${esc(title)}</b><button type="button" class="qp-x" id="qpClose" aria-label="Close this pop-up">×</button></div>
     <p class="qp-s ${cls}"><span class="qp-st">${closed?'Closed':'Open'}</span> · ${esc(st)}</p>${isManual(k)?qpCrew(k):''}
-    <div class="qp-row">${opBtn(k,act,act==='close'?'Close':'Open')}${isManual(k)&&!crewAt(k)&&!crewFor(k)?`<button type="button" class="btn" data-crew="${k}">Send crew</button>`:''}<button type="button" class="btn" id="qpMore">Details</button></div>`;}
+    <div class="qp-row">${opBtn(k,act,act==='close'?'Close':'Open')}${isManual(k)&&!crewAt(k)&&!crewFor(k)?`<button type="button" class="btn" data-crew="${k}">Send crew</button>`:''}${LV_ON&&(t==='lf'||t==='mid')&&S.lff[id.slice(0,2)][+id.slice(2)]&&!mgAt(id)?opBtn('mg:'+id,'close','Generator'):''}<button type="button" class="btn" id="qpMore">Details</button></div>`;}
 function qpCrew(k){const j=crewFor(k),h=crewAt(k);return `<p class="qp-crew">${j?`Crew ${j.n} ${j.to?'walking there, arrives '+fmtT(j.arr):'on site'}${j.job.act?', will '+j.job.act+' it by '+fmtT(j.job.at):''}.`:h?`Crew ${h.n} is standing by here: operating takes ${CREW_OP} min.`:'Manual switch: a field crew has to walk here first.'}</p>`;}
 function renderQP(){const q=$('qp');if(!q)return;const k=S&&!S.ended&&S.qp&&S.sel;
   if(!k||!isSw(k)||!SELBOX[k]){if(!q.hidden){q.hidden=true;lastQP='';}return;}
@@ -1360,6 +1476,9 @@ function startSheet(){
     <li><b>11 kV links</b> (Snow day and Storm endurance) join an 11 kV feeder at one substation to a feeder at the next. Open a feeder breaker and close its link to move that feeder onto the neighbouring substation. With both on the same grid supply you can close the link first for a transfer with no interruption. Each link is rated 15 MW.</li>
     <li><b>Volt Face</b> is a neighbouring 11 kV network on a different grid supply. The second and third 11 kV feeders at each substation have a backfeed from it (the small switch under the feeder). Open the feeder breaker first, then close the backfeed, and those customers move onto Volt Face, which takes the load off Blackout Canyon. Volt Face has limited spare capacity too.</li>
     <li><b>Demand feeders:</b> each substation supplies three 11 kV feeders, each with its own breaker. Opening one sheds that part of the demand, which can save an overload, but its customers count as off supply until you close it again.</li>
+    <li><b>Auto-reclose:</b> most faults on overhead lines are transient. The breaker trips, recloses a few seconds later and stays in, so customers only get a short interruption. A permanent fault makes it lock out. Underground cables (the first feeder at each substation) don't auto-reclose.</li>
+    <li><b>Fault finding:</b> when an 11 kV feeder locks out you don't know which half the fault is in. Each feeder has a manual mid-point switch (the small circle halfway down). Open it, then trial-close the feeder breaker: if it holds, the fault is in the far half and the near half is back on; if it trips, the fault is in the near half. Each close onto a fault costs ${TRIAL_PTS} points. Repairs only start once the fault is found, and line patrol finds it after ${PATROL} minutes if you don't.</li>
+    <li><b>Mobile generators:</b> ${MG_N} trailer generators of ${MG_CAP} MW each. A crew tows one to the far end of a feeder and connects it in ${MG_CONN} minutes, so it can supply a dead half that has no backfeed. It trips if it's overloaded or if another supply is closed onto it.</li>
     <li><b>Feeders have a breaker at each end:</b> one at Blackout Canyon and an incomer at the substation. A feeder fault trips both, and the feeder only carries power again once both are closed.</li>
     <li>Planned work and faulted equipment must be finished before you close it again. Closing either end of a feeder before then is an incident. Repaired transformers and feeders stay out until you close their breakers. Each operation takes one minute.</li>
     <li>Customers off supply cost points every minute. If every substation is off supply at once, Blackout Canyon is lost and the shift ends.</li>
@@ -1380,7 +1499,7 @@ function startSheet(){
 /* ---------- End of shift ---------- */
 function computeScore(){
   const spend=spendOf(S.cost),L=S.lost,surv=(L?L.m:END)-START;
-  const parts={surv:surv*10,bonus:L?0:5000,risk:-S.insecureMin*20,spend:-Math.round(spend/10),ens:-Math.round(S.ens),inc:-S.incidents*INCIDENT_PTS};
+  const parts={surv:surv*10,bonus:L?0:5000,risk:-S.insecureMin*20,spend:-Math.round(spend/10),ens:-Math.round(S.ens),inc:-S.incidents*INCIDENT_PTS,trial:-(S.trial||0)*TRIAL_PTS};
   return{total:Math.max(0,Object.values(parts).reduce((a,b)=>a+b,0)),parts,surv,spend};
 }
 function endShift(){
@@ -1445,6 +1564,7 @@ function showEnd(){
       <tr><td>Minutes at risk (${S.insecureMin} × 20)</td><td>${sg(F.parts.risk)}</td></tr>
       <tr><td>Customer interruptions: ${nf(S.cust.ci)} CI, ${nf(S.cust.cml)} CML, ${nf(S.cust.si)} short (under 3 min)</td><td>${sg(F.parts.ens)}</td></tr>
       <tr><td>Switching incidents (${S.incidents} × ${INCIDENT_PTS})</td><td>${sg(F.parts.inc)}</td></tr>
+      ${LV_ON?`<tr><td>Closed onto a fault (${S.trial||0} × ${TRIAL_PTS})</td><td>${sg(F.parts.trial)}</td></tr>`:''}
       ${NOGEN()?'':`<tr><td>Spend (${gbp(F.spend)} ÷ 10)</td><td>${sg(F.parts.spend)}</td></tr>`}</tbody></table></div>`;
   const sub=`<div class="submit"><label for="pName">Add your score to the scoreboard (optional)</label>
     <div class="sub-row"><input id="pName" maxlength="20" autocomplete="nickname" placeholder="e.g. Sparky Sue" value="${esc(getName())}" ${S.submitted?'disabled':''}>

@@ -289,3 +289,16 @@ html.kiosk .qp{width:270px;font-size:14px}
 #musicBtn svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 #musicBtn:not(.on){opacity:.6}
 #musicBtn.on{border-color:var(--zap);color:var(--zap)}
+/* 11 kV fault finding, auto-reclose and mobile generators */
+.brk.mid{stroke:var(--ink);stroke-width:1.5}
+.cond.mv.unk{stroke:var(--warn);stroke-dasharray:3 2}
+.cond.mv.flt{stroke:var(--alarm);stroke-dasharray:4 2}
+.asym .sym.mg{fill:var(--c-gas)}
+.asym .sym.flt{fill:var(--alarm);opacity:1}
+.mg-l{stroke:var(--c-gas);stroke-width:2;stroke-dasharray:3 3;fill:none}
+.mg.on .mg-l{stroke-dasharray:none}
+.mg circle{fill:var(--panel);stroke:var(--c-gas);stroke-width:2}
+.mg.on circle{fill:var(--c-gas)}
+.asym .mg text{font:700 8px var(--f-mono);fill:var(--c-gas)}
+.asym .mg.on text{fill:#fff}
+.mg.operating circle{stroke-dasharray:3 2}
