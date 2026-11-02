@@ -1456,14 +1456,51 @@ function careerBox(){const c=career(),n=starsOf(c),nr=nextRank(n),got=ACH.filter
     <div><span class="k">Achievements</span><b>${got.length} of ${ACH.length}</b></div></div>
     <div class="ach">${ACH.map(a=>`<span class="badge${c.ach[a.id]?' got':''}" title="${esc(a.d)}">${c.ach[a.id]?'🏅':'○'} ${esc(a.name)}</span>`).join('')}</div>
     <p class="fine">Finish a shift to unlock the next one. Grade A earns 3 stars, B 2, C or D 1. Career shifts use random faults and count on the free-play scoreboard.</p></div>`;}
+// Start screen: hero with an animated mini-diagram, three "how it works" cards and one clear main action
+const HOW=GAME==='cr'?[['tx','var(--hv)','Keep transformers under firm capacity','If one more transformer trips, the others still have to carry the load.'],
+    ['tie','var(--c-wind)','Switch load between substations','Ties, interconnectors and backfeeds move demand to where there is room.'],
+    ['load','var(--ok)','Restore customers fast','Find faults, send crews and get people back on inside 3 minutes if you can.']]
+  :[['tx','var(--hv)','Keep transformers under firm capacity','If one more transformer trips, the others still have to carry the flow.'],
+    ['wind','var(--c-wind)','Turn generation up or down','Strong sun and wind push power back up; evening peaks pull the other way.'],
+    ['batt','var(--c-batt)','Arm flexibility before the fault','Book the battery, CHP and demand response to switch in by themselves.']];
+const played=()=>ls('played')==='1'||starsOf(career())>0;
+const easiestK=()=>Object.keys(SCENARIOS).filter(k=>!SCENARIOS[k].hidden).sort((a,b)=>SCENARIOS[a].diff-SCENARIOS[b].diff)[0];
+const careerNext=()=>{const c=career(),ks=CAREER.filter(k=>SCENARIOS[k]);return ks.find(k=>unlockedK(c,k)&&!(c.stars[k]>=1))||ks[ks.length-1];};
+const dailyK=()=>SCENARIOS[chosen]&&!SCENARIOS[chosen].hidden?chosen:CFG.def;
+function heroArt(){const cr=GAME==='cr',X=[80,160,240],F=[60,125,195,260];
+  return `<svg class="hero-art" viewBox="0 0 320 210" role="img" aria-label="Animated network: power flowing through three transformers, then a fault trips one circuit${cr?' and a field crew walks out':' while the wind farm turns'}">
+  <text class="ha-t" x="40" y="12">132 kV</text><path class="ha-gsp" d="M40 18 H280"/>
+  ${X.map((x,i)=>`<g class="ha-cct${i===2?' ha-f':''}"><path class="ha-l" d="M${x} 18 V39 M${x} 74 V110"/><path class="ha-flow" d="M${x} 18 V39 M${x} 74 V110"/><circle class="ha-w1" cx="${x}" cy="50" r="11"/><circle class="ha-w2" cx="${x}" cy="63" r="11"/><text class="ha-t" x="${x+15}" y="48">T${i+1}</text></g>`).join('')}
+  <path class="ha-bolt" d="M262 82 l-9 13 h6 l-3 10 l10 -14 h-6 z"/>
+  <path class="ha-bus" d="M30 110 H290"/><text class="ha-t" x="30" y="104">33 kV</text>
+  ${F.map(x=>`<path class="ha-fd" d="M${x} 110 V146"/><path class="ha-flow" d="M${x} 110 V146"/><path class="ha-sub" d="M${x-16} 146 H${x+16}"/>${[-9,0,9].map(d=>`<path class="ha-ld" d="M${x+d-4} 152 h8 l-4 7 z"/>`).join('')}`).join('')}
+  ${cr?`<g class="ha-crew"><g class="ha-bob"><circle cx="0" cy="-15" r="3.6"/><path d="M0 -11 V-3 M0 -9 l-5 4 M0 -9 l5 4 M0 -3 l-4 7 M0 -3 l4 7"/></g></g><path class="ha-path" d="M14 196 H306"/>`
+    :`<g class="ha-wt" transform="translate(296 168)"><path class="ha-tower" d="M0 0 V34"/><g class="ha-blades"><path d="M0 0 V-14 M0 0 L12 7 M0 0 L-12 7"/></g></g><g class="ha-sun" transform="translate(24 176)"><circle r="7"/><path d="M0 -12v3M0 9v3M-12 0h3M9 0h3M-8.5 -8.5l2 2M6.5 6.5l2 2M-8.5 8.5l2 -2M6.5 -6.5l2 -2"/></g>`}
+</svg>`;}
+function mainAction(){const cr=GAME==='cr';
+  if(!played()){const e=easiestK();
+    return `<div class="cta-main">${cr?`<button type="button" class="btn primary big hero-go" data-tut="play"><small>New here? Start with</small>Play the tutorial</button><button type="button" class="btn big hero-go" data-tut="demo"><small>Or sit back and</small>Watch the demo</button>`
+      :`<button type="button" class="btn primary big hero-go" data-go="first"><small>New here? Start with the easiest day</small>Play ${esc(SCENARIOS[e].title)}</button>`}</div>
+    <p class="cta-alt">Played before? <button type="button" class="linkish" data-go="skip">Choose your own shift</button>${cr?` · <button type="button" class="linkish" data-tut="kiosk" title="Runs the demo on its own, over and over, and keeps the screen awake. For a display stand.">Display mode</button>`:''}</p>`;}
+  const c=career(),nk=careerNext(),done=CAREER.filter(k=>SCENARIOS[k]).every(k=>c.stars[k]>=1),dk=dailyK();
+  return `<div class="cta-main"><button type="button" class="btn primary big hero-go" data-go="career"><small>${done?'Career complete · play again':starsOf(c)?'Continue your career':'Start your career'}</small>Shift ${CAREER.indexOf(nk)+1}: ${esc(SCENARIOS[nk].title)}</button>
+    <button type="button" class="btn big hero-go" data-go="daily"><small>Today's challenge · ${esc(fmtDate(todayUK()))}</small>${esc(SCENARIOS[dk].title)}</button></div>
+    <p class="cta-alt"><button type="button" class="linkish" data-go="skip">Choose your own shift</button>${cr?` · Refresher: <button type="button" class="linkish" data-tut="play">tutorial</button> · <button type="button" class="linkish" data-tut="demo">demo</button> · <button type="button" class="linkish" data-tut="kiosk" title="Runs the demo on its own, over and over, and keeps the screen awake. For a display stand.">display mode</button>`:''}</p>`;}
+function heroGo(g){
+  if(g==='skip'){const t=$('pick');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});return;}
+  if(g==='career'){mode='career';chosen=careerNext();}else if(g==='daily'){mode='daily';chosen=dailyK();}else if(g==='first'){mode='free';chosen=easiestK();}else return;
+  ls('mode',mode);ls('day',chosen);newGame(chosen);$('startBtn').click();}
 function startSheet(){
   const date=todayUK();
   const cc=career(),keys=mode==='career'?CAREER.filter(k=>SCENARIOS[k]):Object.keys(SCENARIOS).filter(k=>!SCENARIOS[k].hidden);
   if(mode==='career'&&!unlockedK(cc,chosen)){chosen=CAREER.find(k=>unlockedK(cc,k)&&!(cc.stars[k]>=1))||CAREER[0];}
   const sc=keys.map(k=>[k,SCENARIOS[k]]).map(([k,v])=>`<button type="button" class="scn${mode==='career'&&!unlockedK(cc,k)?' locked':''}" data-scn="${k}"${mode==='career'&&!unlockedK(cc,k)?' disabled':''} style="--sc:${v.color}" aria-pressed="${k===chosen}"><span class="f">${mode==='career'?`Shift ${CAREER.indexOf(k)+1} · `:''}${v.focus}</span><b>${v.title}${mode==='career'?` <span class="stars">${unlockedK(cc,k)?starStr(cc.stars[k]||0):'🔒'}</span>`:''}</b>${diffHtml(v.diff,v.color)}<span class="d">${v.when}</span><p>${v.blurb}</p></button>`).join('');
-  $('sheet').innerHTML=`${BAND}<p class="eyebrow">${CFG.eyebrow}</p>
-  <h2>${CFG.h2}</h2>
-  ${GAME==='cr'?`<div class="tut-cta"><div><b>New to the control room?</b><span>A guided tutorial on Cold Thursday's evening peak, using generation and switching. Watch it run as a demonstration, or do each step yourself with instructions as you go.</span></div><div class="tut-b"><button type="button" class="btn" data-tut="demo">Watch the demo</button><button type="button" class="btn" data-tut="kiosk" title="Runs the demo on its own, over and over, and keeps the screen awake. For a display stand.">Display mode</button><button type="button" class="btn primary" data-tut="play">Play the tutorial</button></div></div>`:''}
+  $('sheet').innerHTML=`${BAND}<div class="hero"><div class="hero-t">
+    <h2 class="hero-h">Firm Capacity<span>${GAME==='cr'?'Control room':'Generation'}</span></h2>
+    <p class="pitch">${GAME==='cr'?"You're on shift in the control room. Keep the lights on.":"You're the DSO on shift. Keep Blackout Canyon inside firm capacity."}</p>
+    ${mainAction()}</div>${heroArt()}</div>
+  <div class="how">${HOW.map(([ic,c,t,d])=>`<div class="how-c">${ico(ic,c)}<div><b>${t}</b><span class="t">${d}</span></div></div>`).join('')}</div>
+  <details class="rules-d"><summary>How to play: the full rules</summary>
   <ul class="rules">${GAME==='fc'?FC_RULES:`
     <li>Blackout Canyon takes power from the Steve Towers 132 kV grid supply point through three 60 MVA transformers, and feeds four substations: <b>Hartwell</b>, <b>Marsh Lane</b>, <b>Ohm No</b> and <b>Joule Street</b>.${GAME==='cr'?' On the Interconnected shift, <b>Kilowatt Close</b> is fed through Marsh Lane, with a backup route from Ohm No.':''} Keep each transformer under 100%, in either direction.</li>
     <li>The 33 kV busbar has two normally closed <b>bus section breakers</b> (BS), between T1 and T2 and between T2 and T3. Opening one splits the busbar, so each section is supplied only by its own transformers. Arrows on the diagram show which way power is flowing.</li>
@@ -1482,7 +1519,8 @@ function startSheet(){
     <li><b>Feeders have a breaker at each end:</b> one at Blackout Canyon and an incomer at the substation. A feeder fault trips both, and the feeder only carries power again once both are closed.</li>
     <li>Planned work and faulted equipment must be finished before you close it again. Closing either end of a feeder before then is an incident. Repaired transformers and feeders stay out until you close their breakers. Each operation takes one minute.</li>
     <li>Customers off supply cost points every minute. If every substation is off supply at once, Blackout Canyon is lost and the shift ends.</li>
-  `}</ul>
+  `}</ul></details>
+  <div class="pick" id="pick"><p class="pick-h">Or choose your own shift</p>
   <h3>Mode</h3><div class="modes">
     <button type="button" class="mode" data-mode="daily" aria-pressed="${mode==='daily'}"><b>Today's challenge · ${esc(fmtDate(date))}</b><span>Same weather and fault times for everyone today.</span></button>
     <button type="button" class="mode" data-mode="free" aria-pressed="${mode==='free'}"><b>Free play</b><span>Random faults every game. Good for practice.</span></button>
@@ -1492,7 +1530,7 @@ function startSheet(){
   <div class="go"><div class="opts"><label class="chk"><input type="checkbox" id="ovPause" ${autoPause?'checked':''}> Pause on faults and overloads</label><label class="chk"><input type="checkbox" id="ovTips" ${tipsOn?'checked':''}> Show tips</label></div>
   <span style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" data-feedback>Feedback</button><button id="sheetBoardBtn" type="button" class="btn">Scoreboard</button><button id="startBtn" type="button" class="btn primary big">Start shift at ${fmtT(START)}</button></span></div>
   <div class="other-game"><p>${CFG.other.box}</p><a class="btn" href="${CFG.other.url}" target="_top">${CFG.other.cta}</a></div>
-  <p class="fine"><span id="runTxt">${runText()}</span> Time slows to half speed while anything is overloaded. MW and MVA are treated as equal. No faults in the first 20 minutes, so you can set up.</p>`;
+  <p class="fine"><span id="runTxt">${runText()}</span> Time slows to half speed while anything is overloaded. MW and MVA are treated as equal. No faults in the first 20 minutes, so you can set up.</p></div>`;
   $('overlay').hidden=false;
 }
 
@@ -1650,14 +1688,15 @@ function applyZoom(){const z=PHONE&&zoomed;$('mimic').classList.toggle('zoom',z)
   if(z){const sc=$('mscroll');sc.scrollLeft=Math.max(0,(sc.scrollWidth-sc.clientWidth)*.3);}}
 
 /* ---------- Events ---------- */
-function begin(){$('overlay').hidden=true;S.running=true;S.paused=false;acc=0;audio();if(MUS.on&&!MUS.timer)setMusic(true);track('shift_start',{scenario:S.key,mode:S.mode});render(true);}
+function begin(){ls('played','1');$('overlay').hidden=true;S.running=true;S.paused=false;acc=0;audio();if(MUS.on&&!MUS.timer)setMusic(true);track('shift_start',{scenario:S.key,mode:S.mode});render(true);}
 document.addEventListener('click',e=>{
   const adj=e.target.closest('[data-adj]');if(adj){nudge(adj.dataset.adj,+adj.dataset.d);return;}
   const op=e.target.closest('[data-op]');if(op){if(op.disabled)return;const[t,i,a]=op.dataset.op.split(':');if(op.closest('#qp')&&S){S.qp=false;}issueOp(t+':'+i,a);return;}
   const st=e.target.closest('[data-f]');if(st){adjust(st.dataset.f,st.dataset.id,+st.dataset.d);return;}
   const sl=e.target.closest('[data-sel]');if(sl&&S){select(sl.dataset.sel,!!sl.closest('#mimic'));return;}
   if(S&&S.sel&&e.target.closest&&e.target.closest('#mimic')){select('none');return;}
-  const tu=e.target.closest('[data-tut]');if(tu){tutClick(tu.dataset.tut);return;}
+  const hg=e.target.closest('[data-go]');if(hg){heroGo(hg.dataset.go);return;}
+  const tu=e.target.closest('[data-tut]');if(tu){if(tu.dataset.tut==='play')ls('played','1');tutClick(tu.dataset.tut);return;}
   const cw=e.target.closest('[data-crew]');if(cw&&S){if(cw.closest('#qp'))S.qp=false;dispatch(cw.dataset.crew,null);return;}
   const nx=e.target.closest('[data-next]');if(nx){chosen=nx.dataset.next;ls('day',chosen);newGame(chosen);begin();return;}
   const sc=e.target.closest('[data-scn]');if(sc){if(sc.disabled)return;chosen=sc.dataset.scn;ls('day',chosen);document.querySelectorAll('[data-scn]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.scn===chosen));newGame(chosen);txt('startBtn','Start shift at '+fmtT(START));txt('runTxt',runText());return;}
