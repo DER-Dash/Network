@@ -14,12 +14,12 @@ const CFG=GAME==='fc'?{start:300,end:1380,rate:5.1,pre:'fcg-',salt:'fcg1',def:'m
     band:'Control room · keeping Blackout Canyon switched on. Mostly.',eyebrow:'Control room · Blackout Canyon 33 kV',h2:'Run the Blackout Canyon network',
     board:'Control room',share:'Firm Capacity: Control Room',other:{url:FC_URL,hdr:'Generation game →',foot:'Play the generation game',
     box:'<b>Prefer generation?</b> Try the generation game: balance solar, wind, batteries and flexibility to keep the transformers inside their rating.',cta:'Play the generation game →'}};
-let R=60;const START=CFG.start,END=CFG.end,TAU=45,TRIP_T=140,SOC_MAX=60;
+let R=60,START=CFG.start,END=CFG.end;const TAU=45,TRIP_T=140,SOC_MAX=60;
 const CUST_TOTAL=60000,SHORT_INT=3,CREW_ON=GAME==='cr',MANUAL=['tie','it','nop','lk'],CREW_SPEED=70,CREW_OP=2,DEPOT={x:1150,y:62};
 const EMERG=1.2,EMERG_MIN=30,SHORT=1.5,SHORT_MIN=5,PAR_MAX=30,OV_MIN=10,INCIDENT_PTS=500,AL_ON=.8,AL_OFF=.75;
 const RATE={1:CFG.rate,2:CFG.rate*2,4:CFG.rate*4};
 const isManual=k=>CREW_ON&&MANUAL.includes(k.split(':')[0]);
-const CAREER=GAME==='cr'?['grid','storm','heat','jan','snow','gsp','mesh']:['may','storm','jan'];
+const CAREER=GAME==='cr'?['grid','storm','heat','jan','snow','gsp','mesh','endure']:['may','storm','jan'];
 const RANKS=GAME==='cr'?[[0,'Trainee control engineer'],[3,'Assistant control engineer'],[6,'Control engineer'],[10,'Senior control engineer'],[14,'Control room manager'],[18,'Head of network operations']]
   :[[0,'Trainee flexibility analyst'],[2,'Flexibility analyst'],[4,'Flexibility engineer'],[6,'Senior flexibility engineer'],[9,'DSO manager']];
 const ACH=[
@@ -32,6 +32,7 @@ const ACH=[
   {id:'crews',name:'Crew boss',d:'Complete 8 crew jobs in one shift.',cr:1},
   {id:'vf',name:'Volt Face value',d:'Have 20 MW on Volt Face backfeeds at once.',cr:1},
   {id:'heat',name:'Keep your cool',d:'Grade A or B on the Heatwave.',cr:1},
+  {id:'endure',name:'Weathered it',d:'Grade A or B on Storm endurance.',cr:1},
   {id:'gsp',name:'Grid guardian',d:'Finish the Grid emergency without National Grid disconnecting a transformer.',cr:1},
   {id:'cheap',name:'Bargain hunter',d:'Finish a generation shift spending under £2,000.',fc:1},
   {id:'textbook',name:'Textbook',d:'Grade A on every career shift.'}].filter(a=>GAME==='cr'?!a.fc:!a.cr);
@@ -77,6 +78,13 @@ const SCENARIOS={
     causes:['Wind-borne debris on the overhead line','Tree contact on the overhead line','Conductor clash in high wind','Lightning strike on the overhead line'],
     build(r){const a=540+Math.round(r()*120),b=900+Math.round(r()*90),s=1005+Math.round(r()*90);
       return{events:[],cutout:{start:s,end:s+75},risk:[{start:a,end:a+180,mult:3,label:'Severe gale'},{start:b,end:b+180,mult:3,label:'Severe gale'}]};}},
+  endure:{color:'var(--c-storm)',diff:3,title:'Storm endurance',when:'Tuesday 3 November',focus:'18-hour storm shift',start:360,end:1440,soc0:30,nbShape:'demand',links:true,
+    blurb:'The storm stalls over Blackout Canyon and you have the whole of it: 06:00 to midnight. Three bands of severe gale, strong wind in between, the wind farm cutting out and no planned work to hide behind. The 11 kV links and Volt Face are there when the ties run out. Pace yourself.',
+    demand:[[0,74],[4,66],[6,72],[7.5,100],[9,114],[12,104],[15,108],[16.5,128],[17.5,146],[18.5,144],[20,128],[22,100],[24,78]],
+    solar:{peak:60,start:7,end:16.6,cloud:.45},wind:{mean:50,var:14},faults:7,
+    causes:['Wind-borne debris on the overhead line','Tree contact on the overhead line','Conductor clash in high wind','Lightning strike on the overhead line','Fallen tree on the overhead line'],
+    build(r){const a=420+Math.round(r()*60),b=780+Math.round(r()*90),c=1140+Math.round(r()*60),s=900+Math.round(r()*120);
+      return{events:[],cutout:{start:s,end:s+90},risk:[{start:360,end:1440,mult:1.5,label:'Strong wind'},{start:a,end:a+180,mult:3,label:'Severe gale'},{start:b,end:b+180,mult:3,label:'Severe gale'},{start:c,end:c+180,mult:3,label:'Severe gale'}]};}},
   grid:{color:'var(--mv)',diff:1,title:'Switching shift',when:'Tuesday 8 December',focus:'Switching only',soc0:0,nbShape:'demand',noGen:true,
     blurb:'No generation and no flexibility, just switching. T3 is out for maintenance in the afternoon and the evening peak pushes past firm capacity. Move load between substations and onto the neighbours.',
     demand:[[0,88],[4,78],[6,84],[7.5,114],[9,124],[11,118],[13,116],[15,122],[16.5,144],[17.5,160],[18.5,156],[20,140],[21.5,120],[23,100],[24,92]],
@@ -329,9 +337,12 @@ function genFaults(rng,sc,risk){
   comps.forEach(k=>{for(let m=START+20;m<END;m++){if(rng()<base*mult(m)){const dur=Math.round(90+rng()*150);out.push({k,m,dur,cause:pick(rng,sc.causes||FAULTS),done:false});m+=dur;}}});
   return out.sort((a,b)=>a.m-b.m);
 }
+const spanOf=k=>{const v=SCENARIOS[k]||{};return{start:v.start!=null?v.start:CFG.start,end:v.end!=null?v.end:CFG.end};};
+const runText=()=>{const r=Math.round((END-START)/CFG.rate/60*2)/2;return `Shift runs ${fmtT(START)}–${END>=1440?'24:00':fmtT(END)}, about ${Math.floor(r)}${r%1?'½':''} minutes at 1×.`;};
 const zeroD=()=>({solar:0,wind:0,bchg:0,bdis:0,chp:0,dsr:0});
 function newGame(key){
   const sc=SCENARIOS[key],date=todayUK(),daily=mode==='daily';
+  ({start:START,end:END}=spanOf(key));
   const seed=daily?hashStr(date+'|'+key+'|'+CFG.salt):((Math.random()*2**31)|0);
   const rng=rngFrom(seed),b=sc.build(rng);
   const N={d:makeNoise(rng,15),c1:makeNoise(rng,25),c2:makeNoise(rng,6),w1:makeNoise(rng,40),w2:makeNoise(rng,5)};
@@ -1346,7 +1357,7 @@ function startSheet(){
     <li><b>Interconnectors</b> link neighbouring substations so one can feed another. Feeders, ties and interconnectors all have ratings, and neighbours have limited spare capacity. Anything over its limit for ${OV_MIN} minutes trips, and an alarm sounds at 80% so you have warning.</li>
     <li><b>Field crews:</b> breakers at substations are remote-controlled and operate in a minute. Ties, interconnectors and Volt Face backfeeds (drawn as circles ○) are manual: one of three field crews has to walk there from the depot first. Send a crew ahead to stand by where you'll need it.</li>
     <li><b>The 3-minute rule:</b> customers count as interrupted (CI) only if they're off for 3 minutes or more, and every minute after that adds customer minutes lost (CML). Restore within 3 minutes and it's only a short interruption.</li>
-    <li><b>11 kV links</b> (Snow day) join an 11 kV feeder at one substation to a feeder at the next. Open a feeder breaker and close its link to move that feeder onto the neighbouring substation. With both on the same grid supply you can close the link first for a transfer with no interruption. Each link is rated 15 MW.</li>
+    <li><b>11 kV links</b> (Snow day and Storm endurance) join an 11 kV feeder at one substation to a feeder at the next. Open a feeder breaker and close its link to move that feeder onto the neighbouring substation. With both on the same grid supply you can close the link first for a transfer with no interruption. Each link is rated 15 MW.</li>
     <li><b>Volt Face</b> is a neighbouring 11 kV network on a different grid supply. The second and third 11 kV feeders at each substation have a backfeed from it (the small switch under the feeder). Open the feeder breaker first, then close the backfeed, and those customers move onto Volt Face, which takes the load off Blackout Canyon. Volt Face has limited spare capacity too.</li>
     <li><b>Demand feeders:</b> each substation supplies three 11 kV feeders, each with its own breaker. Opening one sheds that part of the demand, which can save an overload, but its customers count as off supply until you close it again.</li>
     <li><b>Feeders have a breaker at each end:</b> one at Blackout Canyon and an incomer at the substation. A feeder fault trips both, and the feeder only carries power again once both are closed.</li>
@@ -1362,7 +1373,7 @@ function startSheet(){
   <div class="go"><div class="opts"><label class="chk"><input type="checkbox" id="ovPause" ${autoPause?'checked':''}> Pause on faults and overloads</label><label class="chk"><input type="checkbox" id="ovTips" ${tipsOn?'checked':''}> Show tips</label></div>
   <span style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" data-feedback>Feedback</button><button id="sheetBoardBtn" type="button" class="btn">Scoreboard</button><button id="startBtn" type="button" class="btn primary big">Start shift at ${fmtT(START)}</button></span></div>
   <div class="other-game"><p>${CFG.other.box}</p><a class="btn" href="${CFG.other.url}" target="_top">${CFG.other.cta}</a></div>
-  <p class="fine">Shift runs ${fmtT(START)}–${fmtT(END)}, about 3½ minutes at 1×. Time slows to half speed while anything is overloaded. MW and MVA are treated as equal. No faults in the first 20 minutes, so you can set up.</p>`;
+  <p class="fine"><span id="runTxt">${runText()}</span> Time slows to half speed while anything is overloaded. MW and MVA are treated as equal. No faults in the first 20 minutes, so you can set up.</p>`;
   $('overlay').hidden=false;
 }
 
@@ -1376,10 +1387,10 @@ function endShift(){
   if(S.tut){tutDone();return;}
   S.ended=true;S.running=false;S.paused=true;hideBanner();hideTip();humTo(0);closeSheet();S.sel=null;lastInsp='';
   const L=S.lost,sc=computeScore();let g='✕',gl='alarm',gd='';
-  if(!L){
+  if(!L){const k=(END-START)/720;
     if(S.insecureMin===0&&S.overloadMin===0&&S.incidents===0&&S.ens<100){g='A';gl='ok';gd='Secure all shift, no incidents and almost no customers off. Textbook control.';}
-    else if(S.insecureMin<=20&&S.incidents<=1&&S.ens<1500){g='B';gl='ok';gd='A solid shift with only brief exposure.';}
-    else if(S.insecureMin<=90&&S.incidents<=2){g='C';gl='warn';gd='Blackout Canyon stayed on, but there were costly moments.';}
+    else if(S.insecureMin<=20*k&&S.incidents<=Math.round(k)&&S.ens<1500*k){g='B';gl='ok';gd='A solid shift with only brief exposure.';}
+    else if(S.insecureMin<=90*k&&S.incidents<=Math.round(2*k)){g='C';gl='warn';gd='Blackout Canyon stayed on, but there were costly moments.';}
     else{g='D';gl='warn';gd='You got through it, but customers and the network took a beating.';}
     play('done');
   }
@@ -1387,7 +1398,7 @@ function endShift(){
   {const c=career(),before=starsOf(c),done=!L,st=L?0:{A:3,B:2,C:1,D:1}[g]||0,newA=[];const prevUnl=CAREER.filter(k=>unlockedK(c,k));
    const award=(id,ok)=>{if(ok&&!c.ach[id]&&ACH.some(a=>a.id===id)){c.ach[id]=1;newA.push(ACH.find(a=>a.id===id));}};
    award('first',done);award('clean',done&&S.incidents===0);award('solid',done&&S.insecureMin===0);award('quick',done&&S.cust.ci===0&&S.cust.si>0);award('nobody',done&&S.cust.ci===0&&S.cust.si===0);
-   award('mbb',S.parOk>0);award('crews',S.crewJobs>=8);award('vf',S.vfPeak>=20);award('heat',done&&S.key==='heat'&&(g==='A'||g==='B'));award('gsp',done&&S.key==='gsp'&&S.gspTrips===0);award('cheap',done&&GAME==='fc'&&sc.spend<2000);
+   award('mbb',S.parOk>0);award('crews',S.crewJobs>=8);award('vf',S.vfPeak>=20);award('heat',done&&S.key==='heat'&&(g==='A'||g==='B'));award('gsp',done&&S.key==='gsp'&&S.gspTrips===0);award('endure',done&&S.key==='endure'&&(g==='A'||g==='B'));award('cheap',done&&GAME==='fc'&&sc.spend<2000);
    let up=false;if(S.mode==='career'&&st>(c.stars[S.key]||0)){c.stars[S.key]=st;up=true;}
    award('textbook',CAREER.every(k=>(c.stars[k]||0)>=3));saveCareer(c);
    const after=starsOf(c),newUnl=CAREER.filter(k=>unlockedK(c,k)&&!prevUnl.includes(k));
@@ -1508,7 +1519,7 @@ async function loadBoard(){
     const rows=j.scores;
     if(!rows.length){el.innerHTML=`<p class="empty">No scores for ${bm==='daily'?"today's challenge":'this day'} yet. Be the first.</p>`;return;}
     el.innerHTML=`<table class="board-t"><thead><tr><th>#</th><th>Name</th><th>Score</th><th>Result</th><th>Grade</th></tr></thead><tbody>${
-      rows.slice(0,20).map((x,i)=>`<tr class="${i<3?'top':''}${lastSubmit&&lastSubmit.day===day&&lastSubmit.mode===bm&&x.name===lastSubmit.name?' me':''}"><td>${i+1}</td><td class="nm">${esc(x.name)}</td><td>${Number(x.score).toLocaleString('en-GB')}</td><td>${x.result==='complete'?'Full shift':'Lost at '+fmtT(START+Number(x.survived))}</td><td>${esc(x.grade)}</td></tr>`).join('')}</tbody></table>`;
+      rows.slice(0,20).map((x,i)=>`<tr class="${i<3?'top':''}${lastSubmit&&lastSubmit.day===day&&lastSubmit.mode===bm&&x.name===lastSubmit.name?' me':''}"><td>${i+1}</td><td class="nm">${esc(x.name)}</td><td>${Number(x.score).toLocaleString('en-GB')}</td><td>${x.result==='complete'?'Full shift':'Lost at '+fmtT(spanOf(day).start+Number(x.survived))}</td><td>${esc(x.grade)}</td></tr>`).join('')}</tbody></table>`;
   }catch(e){if($('boardList'))el.innerHTML="<p class=\"empty\">Couldn't load the scoreboard. Check your connection and try again.</p>";}
 }
 
@@ -1529,7 +1540,7 @@ document.addEventListener('click',e=>{
   const tu=e.target.closest('[data-tut]');if(tu){tutClick(tu.dataset.tut);return;}
   const cw=e.target.closest('[data-crew]');if(cw&&S){if(cw.closest('#qp'))S.qp=false;dispatch(cw.dataset.crew,null);return;}
   const nx=e.target.closest('[data-next]');if(nx){chosen=nx.dataset.next;ls('day',chosen);newGame(chosen);begin();return;}
-  const sc=e.target.closest('[data-scn]');if(sc){if(sc.disabled)return;chosen=sc.dataset.scn;ls('day',chosen);document.querySelectorAll('[data-scn]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.scn===chosen));newGame(chosen);return;}
+  const sc=e.target.closest('[data-scn]');if(sc){if(sc.disabled)return;chosen=sc.dataset.scn;ls('day',chosen);document.querySelectorAll('[data-scn]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.scn===chosen));newGame(chosen);txt('startBtn','Start shift at '+fmtT(START));txt('runTxt',runText());return;}
   const md=e.target.closest('[data-mode]');if(md){mode=md.dataset.mode;ls('mode',mode);const sy=$('sheet').scrollTop;if(mode==='career'&&!unlockedK(career(),chosen))chosen=CAREER[0];newGame(chosen);startSheet();$('sheet').scrollTop=sy;return;}
   const sp=e.target.closest('[data-speed]');if(sp){speed=+sp.dataset.speed;document.querySelectorAll('[data-speed]').forEach(b=>b.setAttribute('aria-pressed',b===sp));txt('dSpeed',speed+'×');return;}
   const tg=e.target.closest('[data-tog]');if(tg){const id=tg.dataset.tog;collapsed[id]=!collapsed[id];ls('col',JSON.stringify(collapsed));applyCollapsed();return;}
