@@ -156,7 +156,7 @@ const PR={
   ml:{id:'ml',name:'Marsh Lane',share:.20,nb:'kn',tie:40,fr:170,x1:370,x2:560,fx:465},
   rv:{id:'rv',name:'Ohm No',share:.25,nb:'fm',tie:40,fr:80,x1:610,x2:830,fx:715},
   js:{id:'js',name:'Joule Street',share:.25,nb:'fm',tie:45,fr:70,x1:880,x2:1060,fx:970}};
-PR.kc={id:'kc',name:'Kilowatt Close',share:.19,nb:null,fd:false,x1:500,x2:760,fx:600,y:500,lx:540};
+PR.kc={id:'kc',name:'Kilowatt Close',share:.19,nb:null,fd:false,x1:500,x2:760,fx:600,y:GAME==='cr'?530:500,lx:540};
 ['hw','ml','rv','js'].forEach(p=>PR[p].fd=true);
 let PIDS=['hw','ml','rv','js'];
 const NBS={kn:{id:'kn',name:'Ampy Place',same:true,base:65,dip:25},fm:{id:'fm',name:'Watts This',same:false,base:60,dip:22},vf:{id:'vf',name:'Volt Face',same:false,base:52,dip:14}};
@@ -164,7 +164,7 @@ let VFI=[1,2];const VF_ON=GAME==='cr';
 const LINKS={hm:{a:['hw',2],b:['ml',0],r:15},mr:{a:['ml',2],b:['rv',0],r:15},rj:{a:['rv',2],b:['js',0],r:15}};let LKIDS=[];
 const grpOf=s=>!s||s==='off'?null:s==='fm'?'wt':'st';
 const ITS={hm:{id:'hm',a:'hw',b:'ml',x:345,r:30},mr:{id:'mr',a:'ml',b:'rv',x:585,r:30},rj:{id:'rj',a:'rv',b:'js',x:855,r:30}};
-ITS.mk={id:'mk',a:'ml',b:'kc',x:520,sy:420,r:40,v:true,nc:true,left:true};ITS.rk={id:'rk',a:'rv',b:'kc',x:690,sy:420,r:40,v:true};
+ITS.mk={id:'mk',a:'ml',b:'kc',x:520,sy:GAME==='cr'?470:420,r:40,v:true,nc:true,left:true};ITS.rk={id:'rk',a:'rv',b:'kc',x:690,sy:GAME==='cr'?470:420,r:40,v:true};
 let ITIDS=['hm','mr','rj'];
 const pY=p=>PR[p].y||PY;
 const TIESW={hw:{x:75,y:330,path:'M110 330 H40',lx:48,ly:354,anc:'start'},
@@ -197,7 +197,7 @@ const ASSETS=[
   {id:'load_kc',type:'load',prim:'kc',x:600,name:'Demand'}];
 const LF={hw:[.4,.35,.25],ml:[.45,.3,.25],rv:[.4,.35,.25],js:[.35,.35,.3],kc:[.5,.3,.2]};
 const LFN={hw:['Town Centre','Kings Hill','Hartwell Park'],ml:['Marsh Road','Station','Mill Lane'],rv:['Ohm Street','Resistor Row','Circuit Park'],js:['High Street','Joule Park','Watt Way'],kc:['Close North','Close South','Ampere Avenue']};
-const LDX=[-22,0,22],lfOn=p=>S.lf[p].reduce((a,on,i)=>a+(on?LF[p][i]:0),0);
+const LDX=GAME==='cr'?[-26,0,26]:[-22,0,22],LVD=GAME==='cr'?18:0,lfOn=p=>S.lf[p].reduce((a,on,i)=>a+(on?LF[p][i]:0),0);
 function linkOf(p,i){for(const k of LKIDS){const L=LINKS[k];if(L.a[0]===p&&L.a[1]===i)return{k,q:L.b[0],j:L.b[1]};if(L.b[0]===p&&L.b[1]===i)return{k,q:L.a[0],j:L.a[1]};}return null;}
 const subOn=(p,sup)=>{const v=(sup||S.supNow||S.sup||{})[p];return !!v&&v!=='off';};
 // where an 11 kV feeder gets its supply: its own substation, Volt Face, the substation at the other end of an 11 kV link, or nowhere
@@ -859,12 +859,12 @@ function buildMimic(){
       <text id="itt_${k}" class="tie-t" x="${t.x}" y="${PY+26}" text-anchor="middle">open</text>${arw('ita_'+k,t.x,PY-15)}
       <rect class="hit" data-sel="it:${k}" x="${t.x-22}" y="${PY-22}" width="44" height="54"/></g>`;
     SELBOX['it:'+k]=[t.x-17,PY-17,34,34];});
-  ASSETS.filter(a=>PIDS.includes(a.prim)&&(!ng||a.type==='load')).forEach(a=>{const x=a.x,y=pY(a.prim)+48,ay=pY(a.prim);let sym='';const col=a.col||'var(--muted)';
+  ASSETS.filter(a=>PIDS.includes(a.prim)&&(!ng||a.type==='load')).forEach(a=>{const x=a.x,ay=pY(a.prim),y=ay+48+(a.type==='load'?LVD:0);let sym='';const col=a.col||'var(--muted)';
     if(a.type==='load'){const p=a.prim,by=ay+16;
-      sym=LDX.map((dx,i)=>LV_ON?`<line id="lfl_${p}${i}" class="cond mv" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${ay+38}"/><line id="lfm_${p}${i}" class="cond mv" x1="${x+dx}" y1="${ay+44}" x2="${x+dx}" y2="${y+4}"/><rect id="lfb_${p}${i}" class="brk sw" x="${x+dx-6}" y="${by+6}" width="12" height="12"/><rect id="midb_${p}${i}" class="brk sw man mid" x="${x+dx-4}" y="${ay+37}" width="8" height="8" rx="4"/><path id="lft_${p}${i}" class="sym" d="M${x+dx-7} ${y+4} L${x+dx+7} ${y+4} L${x+dx} ${y+17} Z"/>`
+      sym=LDX.map((dx,i)=>LV_ON?`<line id="lfl_${p}${i}" class="cond mv" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${ay+44}"/><line id="lfm_${p}${i}" class="cond mv" x1="${x+dx}" y1="${ay+56}" x2="${x+dx}" y2="${y+4}"/><rect id="lfb_${p}${i}" class="brk sw" x="${x+dx-6}" y="${by+6}" width="12" height="12"/><rect id="midb_${p}${i}" class="brk sw man mid" x="${x+dx-6}" y="${ay+44}" width="12" height="12" rx="6"/><path id="lft_${p}${i}" class="sym" d="M${x+dx-7} ${y+4} L${x+dx+7} ${y+4} L${x+dx} ${y+17} Z"/>`
         :`<line id="lfl_${p}${i}" class="cond mv" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${y+4}"/><rect id="lfb_${p}${i}" class="brk sw" x="${x+dx-6}" y="${by+8}" width="12" height="12"/><path id="lft_${p}${i}" class="sym" d="M${x+dx-7} ${y+4} L${x+dx+7} ${y+4} L${x+dx} ${y+17} Z"/>`).join('');
-      if(LV_ON)LDX.forEach((dx,i)=>{const fx=x+dx;sym+=`<g id="mgg_${p}${i}" class="mg" hidden><path class="mg-l" d="M${fx} ${VF_ON&&VFI.includes(i)?y+40:y+17} V${y+39.5}"/><circle cx="${fx}" cy="${y+45}" r="5.5"/><text x="${fx}" y="${y+48}" text-anchor="middle">G</text></g>`;SELBOX['mg:'+p+i]=[fx-8,y+37,16,16];});
-      s+=`<line id="alb_load_${p}" class="cond mv" x1="${x-24}" y1="${by}" x2="${x+24}" y2="${by}" style="stroke-width:3"/>`;
+      if(LV_ON)LDX.forEach((dx,i)=>{const fx=x+dx;sym+=`<g id="mgg_${p}${i}" class="mg" hidden><path class="mg-l" d="M${fx} ${VF_ON&&VFI.includes(i)?y+40:y+17} V${y+45.5}"/><circle cx="${fx}" cy="${y+52}" r="6.5"/><text x="${fx}" y="${y+55}" text-anchor="middle">G</text></g>`;SELBOX['mg:'+p+i]=[fx-9,y+43,18,18];});
+      s+=`<line id="alb_load_${p}" class="cond mv" x1="${x+LDX[0]-2}" y1="${by}" x2="${x+LDX[2]+2}" y2="${by}" style="stroke-width:3"/>`;
       if(VF_ON)VFI.forEach(i=>{const fx=x+LDX[i];sym+=`<path id="nopl_${p}${i}" class="vf-l" d="M${fx} ${y+17} V${y+24} M${fx} ${y+34} V${y+40}"/><rect id="nopb_${p}${i}" class="brk sw nop open" x="${fx-5}" y="${y+24}" width="10" height="10" rx="5"/>`;});}
     if(a.type==='dsr')sym=`<path class="sym-o" d="M${x-11} ${y} L${x+11} ${y} L${x} ${y+20} Z"/>`;
     if(a.type==='solar')sym=`<rect class="sym-o" x="${x-15}" y="${y}" width="30" height="24"/><path class="sym-l" d="M${x-15} ${y+24} L${x+15} ${y}"/><path class="sym-l" d="M${x+3} ${y+18} h8 M${x+3} ${y+21} h8"/>`;
@@ -874,16 +874,16 @@ function buildMimic(){
     s+=a.type==='load'?`<line id="al_${a.id}" class="cond mv" x1="${x}" y1="${ay}" x2="${x}" y2="${ay+16}"/>`:`<line id="al_${a.id}" class="cond mv" x1="${x}" y1="${ay}" x2="${x}" y2="${y}"/><line id="afl_${a.id}" class="flow" x1="${x}" y1="${ay+4}" x2="${x}" y2="${y}"/>`;
     s+=`
       <g class="asym" style="--sc:${a.type==='load'?'var(--ink)':col}">${sym}</g>
-      <text class="a-name" x="${x}" y="${y+46+(a.type==='load'&&VF_ON?10:0)+(a.type==='load'&&LV_ON?6:0)}" text-anchor="middle" style="fill:${a.type==='load'?'var(--muted)':col}">${a.name}</text>
-      <text id="av_${a.id}" class="a-val" x="${x}" y="${y+62+(a.type==='load'&&VF_ON?10:0)+(a.type==='load'&&LV_ON?6:0)}" text-anchor="middle">0 MW</text>
-      <text id="as_${a.id}" class="a-sub" x="${x}" y="${y+77+(a.type==='load'&&VF_ON?10:0)+(a.type==='load'&&LV_ON?6:0)}" text-anchor="middle"></text>
+      <text class="a-name" x="${x}" y="${y+46+(a.type==='load'&&VF_ON?10:0)+(a.type==='load'&&LV_ON?14:0)}" text-anchor="middle" style="fill:${a.type==='load'?'var(--muted)':col}">${a.name}</text>
+      <text id="av_${a.id}" class="a-val" x="${x}" y="${y+62+(a.type==='load'&&VF_ON?10:0)+(a.type==='load'&&LV_ON?14:0)}" text-anchor="middle">0 MW</text>
+      <text id="as_${a.id}" class="a-sub" x="${x}" y="${y+77+(a.type==='load'&&VF_ON?10:0)+(a.type==='load'&&LV_ON?14:0)}" text-anchor="middle"></text>
       <rect class="hit" data-sel="as:${a.id}" x="${x-30}" y="${a.type==='load'?y+24:y-8}" width="${a.type==='load'?60:48}" height="${a.type==='load'?60:92}"/>`;
-    if(a.type==='load')LDX.forEach((dx,i)=>{s+=LV_ON?`<rect class="hit" data-sel="lf:${a.prim}${i}" x="${x+dx-11}" y="${ay+18}" width="22" height="18"/><rect class="hit" data-sel="mid:${a.prim}${i}" x="${x+dx-11}" y="${ay+36}" width="22" height="16"/><rect class="hit" data-sel="lf:${a.prim}${i}" x="${x+dx-11}" y="${ay+52}" width="22" height="14"/>`:`<rect class="hit" data-sel="lf:${a.prim}${i}" x="${x+dx-11}" y="${ay+18}" width="22" height="${y-ay+4}"/>`;SELBOX['lf:'+a.prim+i]=[x+dx-10,ay+20,20,20];if(LV_ON){SELBOX['mid:'+a.prim+i]=[x+dx-8,ay+33,16,16];s+=`<rect id="mgh_${a.prim}${i}" class="hit" data-sel="mg:${a.prim}${i}" x="${x+dx-10}" y="${y+37}" width="20" height="17" hidden/>`;}
-      if(VF_ON&&VFI.includes(i)){s+=`<rect class="hit" data-sel="nop:${a.prim}${i}" x="${x+dx-11}" y="${y+19}" width="22" height="22"/>`;SELBOX['nop:'+a.prim+i]=[x+dx-9,y+20,18,18];}});
+    if(a.type==='load')LDX.forEach((dx,i)=>{s+=LV_ON?`<rect class="hit" data-sel="lf:${a.prim}${i}" x="${x+dx-12}" y="${ay+16}" width="24" height="24"/><rect class="hit" data-sel="mid:${a.prim}${i}" x="${x+dx-12}" y="${ay+40}" width="24" height="22"/><rect class="hit" data-sel="lf:${a.prim}${i}" x="${x+dx-12}" y="${ay+62}" width="24" height="${y+20-ay-62}"/>`:`<rect class="hit" data-sel="lf:${a.prim}${i}" x="${x+dx-11}" y="${ay+18}" width="22" height="${y-ay+4}"/>`;SELBOX['lf:'+a.prim+i]=[x+dx-10,ay+20,20,20];if(LV_ON){SELBOX['mid:'+a.prim+i]=[x+dx-8,ay+42,16,16];s+=`<rect id="mgh_${a.prim}${i}" class="hit" data-sel="mg:${a.prim}${i}" x="${x+dx-12}" y="${y+42}" width="24" height="21" hidden/>`;}
+      if(VF_ON&&VFI.includes(i)){s+=LV_ON?`<rect class="hit" data-sel="nop:${a.prim}${i}" x="${x+dx-12}" y="${y+20}" width="24" height="22"/>`:`<rect class="hit" data-sel="nop:${a.prim}${i}" x="${x+dx-11}" y="${y+19}" width="22" height="22"/>`;SELBOX['nop:'+a.prim+i]=[x+dx-9,y+20,18,18];}});
     if(a.type!=='load')s+=adjBtn(a.id,x+19,y-4,1)+adjBtn(a.id,x+19,y+18,-1);
     SELBOX['as:'+a.id]=[x-32,y-10,a.type==='load'?64:76,96];});
   LKIDS.forEach(k=>{const L=LINKS[k],A=ASSETS.find(a=>a.id==='load_'+L.a[0]),B=ASSETS.find(a=>a.id==='load_'+L.b[0]);if(!A||!B)return;
-    const y=pY(L.a[0])+48,xa=A.x+LDX[L.a[1]],xb=B.x+LDX[L.b[1]],oa=xa+(L.a[1]===2?22:-22),ob=xb+(L.b[1]===0?-22:22),yl=y+100,mx=(oa+ob)/2;
+    const y=pY(L.a[0])+48+LVD,xa=A.x+LDX[L.a[1]],xb=B.x+LDX[L.b[1]],oa=xa+(L.a[1]===2?22:-22),ob=xb+(L.b[1]===0?-22:22),yl=y+100,mx=(oa+ob)/2;
     s+=`<g id="lkg_${k}"><path id="lkl_${k}" class="lk-l" d="M${xa} ${y+17} V${y+22} H${oa} V${yl} H${ob} V${y+22} H${xb} V${y+17}"/>
       <rect id="lksw_${k}" class="brk sw open man" x="${mx-8}" y="${yl-8}" width="16" height="16" rx="8"/><text id="lkt_${k}" class="tie-t" x="${mx}" y="${yl+20}" text-anchor="middle">open</text>
       <rect class="hit" data-sel="lk:${k}" x="${mx-24}" y="${yl-20}" width="48" height="46"/></g>`;SELBOX['lk:'+k]=[mx-15,yl-15,30,30];});
@@ -898,7 +898,7 @@ function buildMimic(){
   s+=`<rect id="selbox" class="selbox" x="0" y="0" width="0" height="0" rx="6" visibility="hidden"/>`;
   if(GAME==='fc')s=s.replace(/<rect class="hit" data-sel="(?:bc|in|tie|it|bs|lf|nop|lk|nb):[^"]*"[^>]*\/>/g,'');
   {const lg=$('lgLK');if(lg)lg.hidden=!LKIDS.length;}
-  const el=$('mimic');el.setAttribute('viewBox',PIDS.includes('kc')?'0 0 1200 640':'0 0 1200 610');el.innerHTML=s;
+  const el=$('mimic');el.setAttribute('viewBox',PIDS.includes('kc')?(LVD?'0 0 1200 706':'0 0 1200 640'):'0 0 1200 610');el.innerHTML=s;
 }
 function txt(id,v){const e=$(id);if(e&&e.textContent!==v)e.textContent=v;}
 function setAttr(e,k,v){if(e&&e.getAttribute(k)!==v)e.setAttribute(k,v);}
