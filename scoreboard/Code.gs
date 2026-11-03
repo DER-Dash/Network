@@ -1,5 +1,6 @@
 /**
  * Firm Capacity scoreboard and feedback (Watts Up), version 7.
+ * Version 11: accepts the Quiet shift ('quiet') control room shift.
  * Version 10: accepts the Storm endurance ('endure') control room shift, which runs
  * 18 hours (06:00 to 24:00).
  * Version 9: accepts the Snow day ('snow') control room shift.
@@ -33,7 +34,7 @@ const SHEET_NAME = 'Scores';
 const CR_SHEET_NAME = 'Control room scores';
 const sheetFor_ = game => game === 'cr' ? CR_SHEET_NAME : SHEET_NAME;
 const DAYS = ['may', 'jan', 'storm'];
-const CR_DAYS = ['jan', 'storm', 'grid', 'mesh', 'heat', 'gsp', 'snow', 'endure'];
+const CR_DAYS = ['quiet', 'jan', 'storm', 'grid', 'mesh', 'heat', 'gsp', 'snow', 'endure'];
 const SHIFT_MINUTES = 1080; // generation game: 05:00 to 23:00
 const CR_SHIFT_MINUTES = 720; // control room game: 08:00 to 20:00
 const CR_SHIFT_BY_DAY = { endure: 1080 }; // control room shifts of a different length

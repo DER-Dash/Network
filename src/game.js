@@ -24,8 +24,10 @@ const CABLE_CAUSES=['Cable joint failure','Third-party dig-in','Cable insulation
 const SECN=['first half (breaker to mid-point switch)','second half (beyond the mid-point switch)'];
 const EMERG=1.2,EMERG_MIN=30,SHORT=1.5,SHORT_MIN=5,PAR_MAX=30,OV_MIN=10,INCIDENT_PTS=500,AL_ON=.8,AL_OFF=.75;
 const RATE={1:CFG.rate,2:CFG.rate*2,4:CFG.rate*4};
-const isManual=k=>CREW_ON&&MANUAL.includes(k.split(':')[0]);
-const CAREER=GAME==='cr'?['grid','storm','heat','jan','snow','gsp','mesh','endure']:['may','storm','jan'];
+const noCrews=()=>!!(S&&S.sc&&S.sc.remote);// remote-only shifts have no field crews, but their mid-point switches are remotely controlled
+const isManual=k=>{const t=k.split(':')[0];return CREW_ON&&MANUAL.includes(t)&&!(t==='mid'&&noCrews());};
+const REMOTE_MSG='There are no field crews on this shift: only remotely operated breakers can be switched.';
+const CAREER=GAME==='cr'?['quiet','grid','storm','heat','jan','snow','gsp','mesh','endure']:['may','storm','jan'];
 const RANKS=GAME==='cr'?[[0,'Trainee control engineer'],[3,'Assistant control engineer'],[6,'Control engineer'],[10,'Senior control engineer'],[14,'Control room manager'],[18,'Head of network operations']]
   :[[0,'Trainee flexibility analyst'],[2,'Flexibility analyst'],[4,'Flexibility engineer'],[6,'Senior flexibility engineer'],[9,'DSO manager']];
 const ACH=[
@@ -47,7 +49,7 @@ function saveCareer(c){ls('career',JSON.stringify(c));}
 const starsOf=c=>CAREER.reduce((a,k)=>a+(c.stars[k]||0),0);
 const rankOf=n=>{let r=RANKS[0][1];RANKS.forEach(([t,nm])=>{if(n>=t)r=nm;});return r;};
 const nextRank=n=>RANKS.find(([t])=>t>n);
-const unlockedK=(c,k)=>{const i=CAREER.indexOf(k);return i<=0||(c.stars[CAREER[i-1]]||0)>=1;};
+const unlockedK=(c,k)=>{const i=CAREER.indexOf(k);return i<=0||CAREER.slice(i-1).some(j=>(c.stars[j]||0)>=1);};
 const starStr=n=>'★'.repeat(n)+'☆'.repeat(3-n);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const fmtT=m=>{m=Math.round(m);m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');};
@@ -71,12 +73,18 @@ function gauss(A,b){const n=b.length,M=A.map((r,i)=>[...r,b[i]]);
 const FAULTS=['Lightning strike on the overhead line','Tree contact on the overhead line','Bird strike on the overhead line','Insulator flashover','Cable joint failure'];
 
 const SCENARIOS={
-  jan:{color:'var(--c-cold)',diff:3,title:'Cold Thursday',when:'Thursday 14 January',focus:'Peak demand',soc0:45,nbShape:'demand',
-    blurb:'A cold, still evening peak pulls hard on the transformers and the neighbouring networks. T1 is out for maintenance in the morning, when icy lines are most likely to fault.',
-    demand:[[0,80],[4,72],[6,78],[7.5,106],[9,116],[11,112],[13,110],[15,114],[16.5,134],[17.5,150],[18.5,146],[20,130],[21.5,112],[23,94],[24,84]],
-    solar:{peak:35,start:7.8,end:16.2,cloud:.2},wind:{mean:22,var:12},faults:2,
-    causes:['Ice build-up on the overhead line','Conductor clash in icy wind','Cable joint failure','Insulator flashover'],
-    build(r){return{events:[{tx:0,start:570,end:750,planned:true,cause:'Planned maintenance'}],cutout:null,risk:[{start:480,end:600,mult:3,label:'Ice and snow'}]};}},
+  quiet:{color:'var(--ok)',diff:1,title:'Quiet shift',when:'Wednesday 14 October',focus:'Remote switching only',soc0:0,nbShape:'demand',noGen:true,remote:true,easy:true,faults:2,
+    blurb:'A mild autumn day and a gentle start. No generation, no field crews and no planned work: every switch you need is remotely controlled. When an 11 kV feeder trips, the fault is found straight away in the far half. Open the mid-point switch, close the breaker to restore the near half, then close the mid-point switch once the quick repair is done.',
+    demand:[[0,62],[4,56],[6,60],[7.5,80],[9,88],[11,84],[13,82],[15,86],[16.5,98],[17.5,106],[18.5,104],[20,94],[21.5,82],[23,70],[24,64]],
+    solar:{peak:0,start:7.2,end:17.8,cloud:0},wind:{mean:0,var:0},
+    causes:['Cable joint failure','Insulator flashover','Bird strike on the overhead line','Tree contact on the overhead line'],
+    build(r){return{events:[],cutout:null,risk:[]};}},
+  grid:{color:'var(--mv)',diff:1,title:'Switching shift',when:'Tuesday 8 December',focus:'Switching only',soc0:0,nbShape:'demand',noGen:true,
+    blurb:'No generation and no flexibility, just switching. T3 is out for maintenance in the afternoon and the evening peak pushes past firm capacity. Move load between substations and onto the neighbours.',
+    demand:[[0,88],[4,78],[6,84],[7.5,114],[9,124],[11,118],[13,116],[15,122],[16.5,144],[17.5,160],[18.5,156],[20,140],[21.5,120],[23,100],[24,92]],
+    solar:{peak:0,start:7.8,end:16.2,cloud:0},wind:{mean:0,var:0},faults:2.5,nb:{kn:{base:72,dip:26},fm:{base:70,dip:24}},
+    causes:['Cable joint failure','Insulator flashover','Tree contact on the overhead line','Digger strike on the underground cable'],
+    build(r){return{events:[{tx:2,start:780,end:900,planned:true,cause:'Planned maintenance'}],cutout:null,risk:[{start:1020,end:1190,mult:2,label:'Freezing fog'}]};}},
   storm:{color:'var(--c-storm)',diff:2,title:'Storm day',when:'Monday 2 November',focus:'Faults and switching',soc0:30,nbShape:'demand',
     blurb:'Two bands of gale-force wind bring faults on transformers and feeders, and gusty wind output can shut down without warning. Expect to switch.',
     demand:[[0,72],[4,64],[6,70],[7.5,98],[9,112],[12,102],[15,106],[16.5,124],[17.5,142],[18.5,140],[20,124],[22,96],[24,74]],
@@ -84,19 +92,31 @@ const SCENARIOS={
     causes:['Wind-borne debris on the overhead line','Tree contact on the overhead line','Conductor clash in high wind','Lightning strike on the overhead line'],
     build(r){const a=540+Math.round(r()*120),b=900+Math.round(r()*90),s=1005+Math.round(r()*90);
       return{events:[],cutout:{start:s,end:s+75},risk:[{start:a,end:a+180,mult:3,label:'Severe gale'},{start:b,end:b+180,mult:3,label:'Severe gale'}]};}},
-  endure:{color:'var(--c-storm)',diff:3,title:'Storm endurance',when:'Tuesday 3 November',focus:'18-hour storm shift',start:360,end:1440,soc0:30,nbShape:'demand',links:true,
-    blurb:'The storm stalls over Blackout Canyon and you have the whole of it: 06:00 to midnight. Three bands of severe gale, strong wind in between, the wind farm cutting out and no planned work to hide behind. The 11 kV links and Volt Face are there when the ties run out. Pace yourself.',
-    demand:[[0,74],[4,66],[6,72],[7.5,100],[9,114],[12,104],[15,108],[16.5,128],[17.5,146],[18.5,144],[20,128],[22,100],[24,78]],
-    solar:{peak:60,start:7,end:16.6,cloud:.45},wind:{mean:50,var:14},faults:7,
-    causes:['Wind-borne debris on the overhead line','Tree contact on the overhead line','Conductor clash in high wind','Lightning strike on the overhead line','Fallen tree on the overhead line'],
-    build(r){const a=420+Math.round(r()*60),b=780+Math.round(r()*90),c=1140+Math.round(r()*60),s=900+Math.round(r()*120);
-      return{events:[],cutout:{start:s,end:s+90},risk:[{start:360,end:1440,mult:1.5,label:'Strong wind'},{start:a,end:a+180,mult:3,label:'Severe gale'},{start:b,end:b+180,mult:3,label:'Severe gale'},{start:c,end:c+180,mult:3,label:'Severe gale'}]};}},
-  grid:{color:'var(--mv)',diff:1,title:'Switching shift',when:'Tuesday 8 December',focus:'Switching only',soc0:0,nbShape:'demand',noGen:true,
-    blurb:'No generation and no flexibility, just switching. T3 is out for maintenance in the afternoon and the evening peak pushes past firm capacity. Move load between substations and onto the neighbours.',
-    demand:[[0,88],[4,78],[6,84],[7.5,114],[9,124],[11,118],[13,116],[15,122],[16.5,144],[17.5,160],[18.5,156],[20,140],[21.5,120],[23,100],[24,92]],
-    solar:{peak:0,start:7.8,end:16.2,cloud:0},wind:{mean:0,var:0},faults:2.5,nb:{kn:{base:72,dip:26},fm:{base:70,dip:24}},
-    causes:['Cable joint failure','Insulator flashover','Tree contact on the overhead line','Digger strike on the underground cable'],
-    build(r){return{events:[{tx:2,start:780,end:900,planned:true,cause:'Planned maintenance'}],cutout:null,risk:[{start:1020,end:1190,mult:2,label:'Freezing fog'}]};}},
+  heat:{color:'var(--c-solar)',diff:2,title:'Heatwave',when:'Thursday 17 July',focus:'Derated network',soc0:0,nbShape:'demand',noGen:true,derate:.85,
+    blurb:'Hot ground and air cut every rating by 15%: each transformer is good for 51 MW, and feeders, ties and interconnectors carry less. Air conditioning pushes the peak into the afternoon, when hot cable joints are most likely to fail.',
+    demand:[[0,70],[4,62],[6,66],[8,84],[10,100],[12,112],[14,122],[15.5,127],[17,124],[18.5,116],[20,104],[22,88],[24,74]],
+    solar:{peak:0,start:5,end:21,cloud:0},wind:{mean:0,var:0},faults:2.5,nb:{kn:{base:60,dip:22},fm:{base:56,dip:20}},
+    causes:['Cable joint failure in hot ground','Overheated cable termination','Insulator flashover','Digger strike on the underground cable'],
+    build(r){return{events:[],cutout:null,risk:[{start:720,end:1020,mult:2.5,label:'Extreme heat'}]};}},
+  jan:{color:'var(--c-cold)',diff:3,title:'Cold Thursday',when:'Thursday 14 January',focus:'Peak demand',soc0:45,nbShape:'demand',
+    blurb:'A cold, still evening peak pulls hard on the transformers and the neighbouring networks. T1 is out for maintenance in the morning, when icy lines are most likely to fault.',
+    demand:[[0,80],[4,72],[6,78],[7.5,106],[9,116],[11,112],[13,110],[15,114],[16.5,134],[17.5,150],[18.5,146],[20,130],[21.5,112],[23,94],[24,84]],
+    solar:{peak:35,start:7.8,end:16.2,cloud:.2},wind:{mean:22,var:12},faults:2,
+    causes:['Ice build-up on the overhead line','Conductor clash in icy wind','Cable joint failure','Insulator flashover'],
+    build(r){return{events:[{tx:0,start:570,end:750,planned:true,cause:'Planned maintenance'}],cutout:null,risk:[{start:480,end:600,mult:3,label:'Ice and snow'}]};}},
+  snow:{color:'var(--c-cold)',diff:3,title:'Snow day',when:'Friday 4 December',focus:'Generation, switching and 11 kV links',soc0:40,nbShape:'demand',links:true,vfi:[1],
+    blurb:'Heavy snow and the biggest peak of the winter. The Ohm No feeder is out for planned work over lunch. New 11 kV links join neighbouring substations: open a feeder breaker and close its link to move that feeder next door. Use them with generation, the battery and Volt Face to ride the evening peak.',
+    demand:[[0,90],[4,80],[6,86],[7.5,116],[9,128],[11,122],[13,120],[15,126],[16.5,148],[17.5,164],[18.5,160],[20,144],[21.5,124],[23,104],[24,94]],
+    solar:{peak:25,start:8,end:15.8,cloud:.3},wind:{mean:30,var:14},faults:2.5,
+    causes:['Snow loading on the overhead line','Conductor clash in heavy snow','Cable joint failure','Snow-laden branch on the overhead line'],
+    build(r){return{events:[{fd:'rv',start:600,end:840,planned:true,cause:'Planned maintenance'}],cutout:null,risk:[{start:900,end:1140,mult:3,label:'Heavy snow'}]};}},
+  gsp:{color:'var(--alarm)',diff:3,title:'Grid emergency',when:'Wednesday 13 January',focus:'Cut demand at the GSP',soc0:0,nbShape:'demand',noGen:true,
+    gsp:{warn:900,start:930,deadline:955,end:1110,limit:100},
+    blurb:'At 15:30 Steve Towers loses a supergrid transformer. National Grid will instruct you to hold Blackout Canyon and Ampy Place to 100 MW at the grid supply point until 18:30. Ampy Place is on the same grid supply, so moving load there does not help.',
+    demand:[[0,84],[4,74],[6,80],[7.5,110],[9,120],[11,114],[13,112],[15,118],[16.5,140],[17.5,154],[18.5,150],[20,134],[21.5,116],[23,96],[24,88]],
+    solar:{peak:0,start:7.8,end:16.2,cloud:0},wind:{mean:0,var:0},faults:1.5,nb:{kn:{base:70,dip:24},fm:{base:72,dip:22}},
+    causes:['Cable joint failure','Insulator flashover','Conductor clash in icy wind','Digger strike on the underground cable'],
+    build(r){return{events:[],cutout:null,risk:[{start:1080,end:1200,mult:2,label:'Freezing fog'}]};}},
   mesh:{color:'var(--c-kn)',diff:3,title:'Interconnected',when:'Friday 22 January',focus:'Switching · 5 substations',soc0:0,nbShape:'demand',noGen:true,mesh:true,
     blurb:'Kilowatt Close joins the network, normally fed through Marsh Lane, with a backup route from Ohm No. The Marsh Lane feeder is out for planned work all morning, and the evening peak is the biggest yet. No generation, just switching.',
     demand:[[0,92],[4,82],[6,88],[7.5,120],[9,132],[11,126],[13,122],[15,128],[16.5,152],[17.5,174],[18.5,170],[20,152],[21.5,128],[23,106],[24,96]],
@@ -104,25 +124,13 @@ const SCENARIOS={
     shares:{hw:.24,ml:.17,rv:.20,js:.20,kc:.19},
     causes:['Cable joint failure','Insulator flashover','Digger strike on the underground cable','Tree contact on the overhead line'],
     build(r){return{events:[{fd:'ml',start:540,end:720,planned:true,cause:'Planned maintenance'}],cutout:null,risk:[{start:960,end:1140,mult:2,label:'Heavy snow'}]};}},
-  snow:{color:'var(--c-cold)',diff:3,title:'Snow day',when:'Friday 4 December',focus:'Generation, switching and 11 kV links',soc0:40,nbShape:'demand',links:true,vfi:[1],
-    blurb:'Heavy snow and the biggest peak of the winter. The Ohm No feeder is out for planned work over lunch. New 11 kV links join neighbouring substations: open a feeder breaker and close its link to move that feeder next door. Use them with generation, the battery and Volt Face to ride the evening peak.',
-    demand:[[0,90],[4,80],[6,86],[7.5,116],[9,128],[11,122],[13,120],[15,126],[16.5,148],[17.5,164],[18.5,160],[20,144],[21.5,124],[23,104],[24,94]],
-    solar:{peak:25,start:8,end:15.8,cloud:.3},wind:{mean:30,var:14},faults:2.5,
-    causes:['Snow loading on the overhead line','Conductor clash in heavy snow','Cable joint failure','Snow-laden branch on the overhead line'],
-    build(r){return{events:[{fd:'rv',start:600,end:840,planned:true,cause:'Planned maintenance'}],cutout:null,risk:[{start:900,end:1140,mult:3,label:'Heavy snow'}]};}},
-  heat:{color:'var(--c-solar)',diff:2,title:'Heatwave',when:'Thursday 17 July',focus:'Derated network',soc0:0,nbShape:'demand',noGen:true,derate:.85,
-    blurb:'Hot ground and air cut every rating by 15%: each transformer is good for 51 MW, and feeders, ties and interconnectors carry less. Air conditioning pushes the peak into the afternoon, when hot cable joints are most likely to fail.',
-    demand:[[0,70],[4,62],[6,66],[8,84],[10,100],[12,112],[14,122],[15.5,127],[17,124],[18.5,116],[20,104],[22,88],[24,74]],
-    solar:{peak:0,start:5,end:21,cloud:0},wind:{mean:0,var:0},faults:2.5,nb:{kn:{base:60,dip:22},fm:{base:56,dip:20}},
-    causes:['Cable joint failure in hot ground','Overheated cable termination','Insulator flashover','Digger strike on the underground cable'],
-    build(r){return{events:[],cutout:null,risk:[{start:720,end:1020,mult:2.5,label:'Extreme heat'}]};}},
-  gsp:{color:'var(--alarm)',diff:3,title:'Grid emergency',when:'Wednesday 13 January',focus:'Cut demand at the GSP',soc0:0,nbShape:'demand',noGen:true,
-    gsp:{warn:900,start:930,deadline:955,end:1110,limit:100},
-    blurb:'At 15:30 Steve Towers loses a supergrid transformer. National Grid will instruct you to hold Blackout Canyon and Ampy Place to 100 MW at the grid supply point until 18:30. Ampy Place is on the same grid supply, so moving load there does not help.',
-    demand:[[0,84],[4,74],[6,80],[7.5,110],[9,120],[11,114],[13,112],[15,118],[16.5,140],[17.5,154],[18.5,150],[20,134],[21.5,116],[23,96],[24,88]],
-    solar:{peak:0,start:7.8,end:16.2,cloud:0},wind:{mean:0,var:0},faults:1.5,nb:{kn:{base:70,dip:24},fm:{base:72,dip:22}},
-    causes:['Cable joint failure','Insulator flashover','Conductor clash in icy wind','Digger strike on the underground cable'],
-    build(r){return{events:[],cutout:null,risk:[{start:1080,end:1200,mult:2,label:'Freezing fog'}]};}}
+  endure:{color:'var(--c-storm)',diff:3,title:'Storm endurance',when:'Tuesday 3 November',focus:'18-hour storm shift',start:360,end:1440,soc0:30,nbShape:'demand',links:true,
+    blurb:'The storm stalls over Blackout Canyon and you have the whole of it: 06:00 to midnight. Three bands of severe gale, strong wind in between, the wind farm cutting out and no planned work to hide behind. The 11 kV links and Volt Face are there when the ties run out. Pace yourself.',
+    demand:[[0,74],[4,66],[6,72],[7.5,100],[9,114],[12,104],[15,108],[16.5,128],[17.5,146],[18.5,144],[20,128],[22,100],[24,78]],
+    solar:{peak:60,start:7,end:16.6,cloud:.45},wind:{mean:50,var:14},faults:7,
+    causes:['Wind-borne debris on the overhead line','Tree contact on the overhead line','Conductor clash in high wind','Lightning strike on the overhead line','Fallen tree on the overhead line'],
+    build(r){const a=420+Math.round(r()*60),b=780+Math.round(r()*90),c=1140+Math.round(r()*60),s=900+Math.round(r()*120);
+      return{events:[],cutout:{start:s,end:s+90},risk:[{start:360,end:1440,mult:1.5,label:'Strong wind'},{start:a,end:a+180,mult:3,label:'Severe gale'},{start:b,end:b+180,mult:3,label:'Severe gale'},{start:c,end:c+180,mult:3,label:'Severe gale'}]};}}
 };
 
 const SCENARIOS_FC={
@@ -133,19 +141,19 @@ const SCENARIOS_FC={
     causes:['Lightning strike on the overhead line','Tree contact on the overhead line','Bird strike on the overhead line','Insulator flashover'],
     build(r){const s=780+Math.round(r()*180);return{events:[{tx:1,start:600,end:900,planned:true,cause:'Planned maintenance'}],cutout:null,
       risk:[{start:s,end:s+180,mult:4,label:'Thunderstorm risk'}]};}},
-  jan:{color:'var(--c-cold)',diff:3,title:'Cold Thursday',when:'Thursday 14 January',focus:'Peak demand',soc0:45,nbShape:'demand',
-    blurb:'A cold, still evening peak pulls hard on the transformers. T1 is out for maintenance in the morning, when icy lines are most likely to fault. Watch the battery charge.',
-    demand:[[0,80],[4,72],[6,78],[7.5,106],[9,116],[11,112],[13,110],[15,114],[16.5,134],[17.5,150],[18.5,146],[20,130],[21.5,112],[23,94],[24,84]],
-    solar:{peak:35,start:7.8,end:16.2,cloud:.2},wind:{mean:22,var:12},faults:1.5,
-    causes:['Ice build-up on the overhead line','Conductor clash in icy wind','Cable joint failure','Insulator flashover'],
-    build(r){return{events:[{tx:0,start:570,end:750,planned:true,cause:'Planned maintenance'}],cutout:null,risk:[{start:360,end:540,mult:3,label:'Ice and snow'}]};}},
   storm:{color:'var(--c-storm)',diff:2,title:'Storm day',when:'Monday 2 November',focus:'Faults and swings',soc0:30,nbShape:'demand',
     blurb:'Two bands of gale-force wind make line faults far more likely, and gusty wind output can shut down without warning. Both directions matter.',
     demand:[[0,72],[4,64],[6,70],[7.5,98],[9,112],[12,102],[15,106],[16.5,124],[17.5,142],[18.5,140],[20,124],[22,96],[24,74]],
     solar:{peak:90,start:6.9,end:17.1,cloud:.35},wind:{mean:48,var:14},faults:3,
     causes:['Wind-borne debris on the overhead line','Tree contact on the overhead line','Conductor clash in high wind','Lightning strike on the overhead line'],
     build(r){const a=420+Math.round(r()*180),b=900+Math.round(r()*120),s=1005+Math.round(r()*105);
-      return{events:[],cutout:{start:s,end:s+75},risk:[{start:a,end:a+180,mult:3,label:'Severe gale'},{start:b,end:b+180,mult:3,label:'Severe gale'}]};}}};
+      return{events:[],cutout:{start:s,end:s+75},risk:[{start:a,end:a+180,mult:3,label:'Severe gale'},{start:b,end:b+180,mult:3,label:'Severe gale'}]};}},
+  jan:{color:'var(--c-cold)',diff:3,title:'Cold Thursday',when:'Thursday 14 January',focus:'Peak demand',soc0:45,nbShape:'demand',
+    blurb:'A cold, still evening peak pulls hard on the transformers. T1 is out for maintenance in the morning, when icy lines are most likely to fault. Watch the battery charge.',
+    demand:[[0,80],[4,72],[6,78],[7.5,106],[9,116],[11,112],[13,110],[15,114],[16.5,134],[17.5,150],[18.5,146],[20,130],[21.5,112],[23,94],[24,84]],
+    solar:{peak:35,start:7.8,end:16.2,cloud:.2},wind:{mean:22,var:12},faults:1.5,
+    causes:['Ice build-up on the overhead line','Conductor clash in icy wind','Cable joint failure','Insulator flashover'],
+    build(r){return{events:[{tx:0,start:570,end:750,planned:true,cause:'Planned maintenance'}],cutout:null,risk:[{start:360,end:540,mult:3,label:'Ice and snow'}]};}}};
 if(SCENARIOS.jan)SCENARIOS.tut={...SCENARIOS.jan,hidden:true,title:'Tutorial · Cold Thursday',focus:'Learn the control room',faults:0,
   blurb:'Cold Thursday, 15:30: the evening peak is building. Learn generation, flexibility and switching on the real network.',build(r){return{events:[],cutout:null,risk:[]};}};
 if(GAME==='fc'){Object.keys(SCENARIOS).forEach(k=>delete SCENARIOS[k]);Object.assign(SCENARIOS,SCENARIOS_FC);}
@@ -350,7 +358,7 @@ const wBC=k=>k==='bc'?1:k==='par'?.5:0;
 function genFaults(rng,sc,risk){
   const mult=m=>{let k=1;risk.forEach(w=>{if(m>=w.start&&m<w.end)k=Math.max(k,w.mult);});return k;};
   let integ=0;for(let m=START+20;m<END;m++)integ+=mult(m);
-  const comps=GAME==='fc'?['tx:0','tx:1','tx:2']:['tx:0','tx:1','tx:2',...PIDS.filter(p=>PR[p].fd).map(p=>'fd:'+p),...ITIDS.filter(k=>ITS[k].nc).map(k=>'ic:'+k)],base=sc.faults/(comps.length*integ),out=[];
+  const comps=sc.easy?[]:GAME==='fc'?['tx:0','tx:1','tx:2']:['tx:0','tx:1','tx:2',...PIDS.filter(p=>PR[p].fd).map(p=>'fd:'+p),...ITIDS.filter(k=>ITS[k].nc).map(k=>'ic:'+k)],base=sc.faults/(comps.length*integ),out=[];
   comps.forEach(k=>{for(let m=START+20;m<END;m++){if(rng()<base*mult(m)){const dur=Math.round(90+rng()*150);out.push({k,m,dur,cause:pick(rng,sc.causes||FAULTS),done:false});m+=dur;}}});
   return out.sort((a,b)=>a.m-b.m);
 }
@@ -364,7 +372,7 @@ function genLvFaults(seed,sc,risk){if(!LV_ON||!sc.faults)return[];
   const W=comps.reduce((a,c)=>a+c.w,0),tot=sc.faults*2.2,out=[];
   comps.forEach(c=>{for(let m=START+20;m<END;m++){if(rng()<tot*c.w/W*mult(m)/integ){
     if(c.k.startsWith('ar:'))out.push({k:c.k,m,dur:0,cause:pick(rng,OH_CAUSES),done:false});
-    else{const tr=c.oh&&rng()<.6,dur=Math.round(50+rng()*100);out.push({k:c.k,m,dur,sec:rng()<.5?0:1,tr,cause:pick(rng,c.oh?OH_CAUSES:CABLE_CAUSES),done:false});if(!tr)m+=dur+PATROL;}}}});
+    else{const tr=c.oh&&rng()<.6,dur=Math.round(sc.easy?20+rng()*25:50+rng()*100);out.push({k:c.k,m,dur,sec:rng()<.5&&!sc.easy?0:1,tr,cause:pick(rng,c.oh?OH_CAUSES:CABLE_CAUSES),done:false});if(!tr)m+=dur+PATROL;}}}});
   return out;}
 const spanOf=k=>{const v=SCENARIOS[k]||{};return{start:v.start!=null?v.start:CFG.start,end:v.end!=null?v.end:CFG.end};};
 const runText=()=>{const r=Math.round((END-START)/CFG.rate/60*2)/2;return `Shift runs ${fmtT(START)}–${END>=1440?'24:00':fmtT(END)}, about ${Math.floor(r)}${r%1?'½':''} minutes at 1×.`;};
@@ -399,7 +407,7 @@ function newGame(key){
   const c0=comps(S.t,false),L0=Math.abs(PIDS.reduce((a,p)=>a+netP(c0,p,zeroD()),0))/3/R;S.tx.forEach(t=>t.temp=20+100*L0*L0);
   buildMimic();
   for(let i=0;i<60;i++)step();
-  S.silent=false;S.alarms={};S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.peakL=0;S.ens=0;S.cust={ci:0,cml:0,si:0,off:{}};S.crewJobs=0;S.trial=0;S.recloses=0;S.parOk=0;S.vfPeak=0;S.gspOver=0;S.gspTrips=0;S.log=[];S.full=[];S.marks=[];S.chain=[];queued=[];
+  S.silent=false;S.alarms={};S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.peakL=0;S.ens=0;S.cust={ci:0,cml:0,si:0,off:{}};S.crewJobs=0;S.trial=0;S.isoMin=0;S.recloses=0;S.parOk=0;S.vfPeak=0;S.gspOver=0;S.gspTrips=0;S.log=[];S.full=[];S.marks=[];S.chain=[];queued=[];
   logE(START,`Shift starts. ${sc.when}: ${sc.blurb}`,'info');
   if(daily)logE(START,`Today's challenge (${fmtDate(date)}): everyone gets the same weather and fault times.`,'info');
   S.events.filter(e=>e.planned).forEach(e=>logE(START,e.fd?`Notice: ${PR[e.fd].name} feeder planned outage ${fmtT(e.start)}–${fmtT(e.end)}. Field staff will open both ends of it at ${fmtT(e.start)}, so move ${PR[e.fd].name} and anything fed through it beforehand.`:`Notice: T${e.tx+1} planned outage ${fmtT(e.start)}–${fmtT(e.end)}. Field staff will switch it out; you restore it afterwards.`,'warn'));
@@ -463,6 +471,7 @@ function checkLv(m,opK){if(!LV_ON||!S.lff)return;
     if(!f.found&&!midOn(p,i)){const lv=[0,1].filter(s=>secFeed(p,i,s)!==null);if(lv.length===1)locate(m,p,i,1-lv[0],`The ${lv[0]?'second':'first'} half is holding on load.`);}}));}
 function stepLv(m){if(!LV_ON)return;
   PIDS.forEach(p=>LF[p].forEach((v,i)=>{const f=S.lff[p][i];if(!f)return;
+    if(S.sc.easy&&f.found&&f.sec===1&&secFeed(p,i,0)===null)S.isoMin++;// easy shifts: minutes the healthy near half is left off
     if(!f.found&&m>=f.start+PATROL)locate(m,p,i,f.sec,'Line patrol has found the fault.');
     else if(f.found&&m>=f.until){S.lff[p][i]=null;const off=secOff(p,i).length;const s=`The ${lfName(p,i)} at ${PR[p].name} has been repaired.`+(off?` Close ${!S.lf[p][i]?'its breaker':''}${!S.lf[p][i]&&!midOn(p,i)?' and ':''}${!midOn(p,i)?'its mid-point switch':''}${S.lf[p][i]&&midOn(p,i)?'whatever fed it':''} to restore everyone.`:'');logE(m,s,'ok');queueAlert(s,'ok',false);play('ok');}}));
   // mobile generators: trip on overload
@@ -500,10 +509,10 @@ function step(){
     else if(type==='lv'){const[p,i]=lfP(id);if(!PIDS.includes(p)||S.lff[p][i])continue;const devs=[0,1].map(s=>srcDev(p,i,s)),dv=devs[f.sec];if(!dv)continue;
       const nm=lfName(p,i),fedN=[0,1].filter(s=>devs[s]===dv).reduce((a,s)=>a+custOf(p,i,s),0);
       if(f.tr){S.cust.si+=fedN;S.recloses++;mark(m,'ar','Auto-reclose');logE(m,`${ucfirst(nm)} at ${PR[p].name} tripped and auto-reclosed: a transient fault (${f.cause.toLowerCase()}) cleared itself. ${nf(fedN)} customers had a short interruption.`,'info');play('ar');continue;}
-      S.lff[p][i]={sec:f.sec,dur:f.dur,found:false,until:null,start:m,label:f.cause,oh:!!LF_OH[p][i]};S.faults++;S.chain.push(`a fault on the ${nm}`);mark(m,'fault',LFN[p][i]+' fault');
+      S.lff[p][i]={sec:f.sec,dur:f.dur,found:!!S.sc.easy,until:S.sc.easy?m+f.dur:null,start:m,label:f.cause,oh:!!LF_OH[p][i]};S.faults++;S.chain.push(`a fault on the ${nm}`);mark(m,'fault',LFN[p][i]+' fault');
       checkLv(m,null);const f2=S.lff[p][i];
       const how=LF_OH[p][i]&&dv.startsWith('lf:')?`The breaker at ${PR[p].name} tripped, auto-reclosed onto a permanent fault and locked out.`:`The ${devName(dv)} tripped${LF_OH[p][i]?' and locked out':' (underground cable, so no auto-reclose)'}.`;
-      const s=`Fault on the ${nm} at ${PR[p].name}: ${f.cause.toLowerCase()}. ${how} ${nf(fedN)} customers are off.`+(f2.found?` It's in the ${SECN[f2.sec]}, repair expected by ${fmtT(f2.until)}.`:` The fault could be in either half. Send a crew to open the mid-point switch, then trial-close the breaker to find it. Line patrol will find it by ${fmtT(m+PATROL)} otherwise.`);
+      const s=`Fault on the ${nm} at ${PR[p].name}: ${f.cause.toLowerCase()}. ${how} ${nf(fedN)} customers are off.`+(f2.found?` It's in the ${SECN[f2.sec]}, repair expected by ${fmtT(f2.until)}.${S.sc.remote?(f2.sec?' Open the mid-point switch and close the breaker to restore the first half. Close the mid-point switch after the repair.':' Close the breaker once it is repaired.'):''}`:` The fault could be in either half. Send a crew to open the mid-point switch, then trial-close the breaker to find it. Line patrol will find it by ${fmtT(m+PATROL)} otherwise.`);
       logE(m,s,'alarm');queueAlert(s,'alarm',true);play('fault');fx(elOf(dv));}
     else if(type==='ar'){const p=id;if(!PIDS.includes(p)||!fdOn(p)||Math.abs(S.flows['bc:'+p]||0)<.5)continue;let n=0;PIDS.forEach(q=>LF[q].forEach((v,i)=>[0,1].forEach(s=>{if(secFeed(q,i,s)===p)n+=custOf(q,i,s);})));
       S.cust.si+=n;S.recloses++;mark(m,'ar','Auto-reclose');logE(m,`${PR[p].name} 33 kV feeder tripped and auto-reclosed: a transient fault (${f.cause.toLowerCase()}) cleared itself. ${nf(n)} customers had a short interruption.`,'info');play('ar');fx('fdg_'+p);}
@@ -677,6 +686,7 @@ function devXY(k){const b=SELBOX[k];return b?{x:b[0]+b[2]/2,y:b[1]+b[3]/2}:{x:DE
 function crewPos(c,tNow){if(!c.to)return{x:c.x,y:c.y};const f=clamp((tNow-c.dep)/Math.max(.01,c.arr-c.dep),0,1),dx=c.to.x-c.from.x,dy=c.to.y-c.from.y,tot=Math.abs(dx)+Math.abs(dy)||1,d=f*tot;
   return d<=Math.abs(dx)?{x:c.from.x+Math.sign(dx)*d,y:c.from.y}:{x:c.to.x,y:c.from.y+Math.sign(dy)*(d-Math.abs(dx))};}
 function dispatch(k,act){if(!S||S.ended||!CREW_ON)return;
+  if(noCrews()){showBanner({m:S.t,text:REMOTE_MSG,lvl:'warn'},'Square symbols are remote breakers: select one and operate it from the control desk.');return;}
   if(crewFor(k)){showBanner({m:S.t,text:`Crew ${crewFor(k).n} is already on its way to the ${devName(k)}.`,lvl:'warn'});return;}
   let mgu=null,opT=CREW_OP;if(k.startsWith('mg:')&&act==='close'){const id=k.slice(3);if(mgOn(...lfP(id)))return;
     if(!mgAt(id)){mgu=S.mgu.find(x=>!x.site)||S.mgu.find(x=>!x.conn&&!x.pend);if(!mgu){showBanner({m:S.t,text:`Both mobile generators are connected elsewhere. Disconnect one before sending it here.`,lvl:'warn'},'Mobile generators restore a dead section of feeder, up to '+MG_CAP+' MW each.');return;}opT=MG_CONN;}}
@@ -861,7 +871,7 @@ function buildMimic(){
     SELBOX['it:'+k]=[t.x-17,PY-17,34,34];});
   ASSETS.filter(a=>PIDS.includes(a.prim)&&(!ng||a.type==='load')).forEach(a=>{const x=a.x,ay=pY(a.prim),y=ay+48+(a.type==='load'?LVD:0);let sym='';const col=a.col||'var(--muted)';
     if(a.type==='load'){const p=a.prim,by=ay+16;
-      sym=LDX.map((dx,i)=>LV_ON?`<line id="lfl_${p}${i}" class="cond mv" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${ay+44}"/><line id="lfm_${p}${i}" class="cond mv" x1="${x+dx}" y1="${ay+56}" x2="${x+dx}" y2="${y+4}"/><rect id="lfb_${p}${i}" class="brk sw" x="${x+dx-6}" y="${by+6}" width="12" height="12"/><rect id="midb_${p}${i}" class="brk sw man mid" x="${x+dx-6}" y="${ay+44}" width="12" height="12" rx="6"/><path id="lft_${p}${i}" class="sym" d="M${x+dx-7} ${y+4} L${x+dx+7} ${y+4} L${x+dx} ${y+17} Z"/>`
+      sym=LDX.map((dx,i)=>LV_ON?`<line id="lfl_${p}${i}" class="cond mv" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${ay+44}"/><line id="lfm_${p}${i}" class="cond mv" x1="${x+dx}" y1="${ay+56}" x2="${x+dx}" y2="${y+4}"/><rect id="lfb_${p}${i}" class="brk sw" x="${x+dx-6}" y="${by+6}" width="12" height="12"/><rect id="midb_${p}${i}" class="brk sw${noCrews()?'':' man'} mid" x="${x+dx-6}" y="${ay+44}" width="12" height="12" rx="${noCrews()?0:6}"/><path id="lft_${p}${i}" class="sym" d="M${x+dx-7} ${y+4} L${x+dx+7} ${y+4} L${x+dx} ${y+17} Z"/>`
         :`<line id="lfl_${p}${i}" class="cond mv" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${y+4}"/><rect id="lfb_${p}${i}" class="brk sw" x="${x+dx-6}" y="${by+8}" width="12" height="12"/><path id="lft_${p}${i}" class="sym" d="M${x+dx-7} ${y+4} L${x+dx+7} ${y+4} L${x+dx} ${y+17} Z"/>`).join('');
       if(LV_ON)LDX.forEach((dx,i)=>{const fx=x+dx;sym+=`<g id="mgg_${p}${i}" class="mg" hidden><path class="mg-l" d="M${fx} ${VF_ON&&VFI.includes(i)?y+40:y+17} V${y+45.5}"/><circle cx="${fx}" cy="${y+52}" r="6.5"/><text x="${fx}" y="${y+55}" text-anchor="middle">G</text></g>`;SELBOX['mg:'+p+i]=[fx-9,y+43,18,18];});
       s+=`<line id="alb_load_${p}" class="cond mv" x1="${x+LDX[0]-2}" y1="${by}" x2="${x+LDX[2]+2}" y2="${by}" style="stroke-width:3"/>`;
@@ -893,7 +903,7 @@ function buildMimic(){
   if(S.sc.gsp)s+=`<text id="gspT" class="gsp-t" x="812" y="44"></text>`;
   if(CREW_ON)SELBOX.depot=[1080,22,114,74];
   s+=`<rect id="coachRing" class="coach-ring" x="0" y="0" width="0" height="0" rx="10" visibility="hidden"/>`;
-  if(CREW_ON){s+=`<g class="depot"><text class="nb-name crew-n" x="1188" y="34" text-anchor="end">CREW DEPOT</text><text class="nb-r" x="1188" y="48" text-anchor="end">3 field crews</text><path class="depot-i" d="M1094 76 l11 -10 l11 10 v11 h-22z"/></g><g id="crews">`+
+  if(CREW_ON){s+=`<g class="depot"><text class="nb-name crew-n" x="1188" y="34" text-anchor="end">CREW DEPOT</text><text class="nb-r" x="1188" y="48" text-anchor="end">${noCrews()?'No crews today':'3 field crews'}</text><path class="depot-i" d="M1094 76 l11 -10 l11 10 v11 h-22z"/></g><g id="crews">`+
     [1,2,3].map(n=>`<g id="crew${n}" class="crew"><g class="crew-b"><circle cx="0" cy="-15" r="3.6"/><path d="M0 -11 V-3 M0 -9 l-5 4 M0 -9 l5 4 M0 -3 l-4 7 M0 -3 l4 7"/></g><text class="crew-t" x="7" y="-12">${n}</text></g>`).join('')+'</g>';}
   s+=`<rect id="selbox" class="selbox" x="0" y="0" width="0" height="0" rx="6" visibility="hidden"/>`;
   if(GAME==='fc')s=s.replace(/<rect class="hit" data-sel="(?:bc|in|tie|it|bs|lf|nop|lk|nb):[^"]*"[^>]*\/>/g,'');
@@ -954,7 +964,7 @@ function renderMimic(){
     S.lf[p].forEach((v,i)=>{const k='lf:'+p+i,F=S.lff&&S.lff[p][i],f0=secFeed(p,i,0),f1=secFeed(p,i,1),fl=sx=>F?(!F.found?' unk':F.sec===sx?' flt':''):'';
       setAttr($('lfb_'+p+i),'class','brk sw'+(v?'':' open')+(F&&!F.found&&!v?' trip':'')+(opK===k?' operating':''));
       if(LV_ON){setAttr($('lfl_'+p+i),'class','cond mv'+(f0!==null?'':' dead')+fl(0));setAttr($('lfm_'+p+i),'class','cond mv'+(f1!==null?'':' dead')+fl(1));
-        const mk='mid:'+p+i;setAttr($('midb_'+p+i),'class','brk sw man mid'+(midOn(p,i)?'':' open')+(crewFor(mk)?' operating':''));
+        const mk='mid:'+p+i;setAttr($('midb_'+p+i),'class','brk sw'+(noCrews()?'':' man')+' mid'+(midOn(p,i)?'':' open')+(crewFor(mk)?' operating':''));
         const u=mgAt(p+i),g=$('mgg_'+p+i);const gh=$('mgh_'+p+i);if(gh){if(u)gh.removeAttribute('hidden');else gh.setAttribute('hidden','');}if(g){if(u)g.removeAttribute('hidden');else g.setAttribute('hidden','');setAttr(g,'class','mg'+(u&&u.conn?' on':'')+(crewFor('mg:'+p+i)?' operating':''));}}
       else setAttr($('lfl_'+p+i),'class','cond mv'+(f0!==null?'':' dead'));
       setAttr($('lft_'+p+i),'class','sym'+(f1===null?(S.nop[p][i]?' vf':' off'):f1==='vf'?' vf':f1==='mg'?' mg':f1!==p?' lk':'')+(F&&(!F.found||F.sec===1)?' flt':''));
@@ -990,6 +1000,7 @@ const ico=(k,c)=>`<span class="ico" style="--tc:${c||'var(--accent)'}"><svg view
 const facts=rows=>`<dl class="facts">${rows.map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`;
 const back=`<div class="i-back"><button type="button" class="linkish" data-sel="none" data-k="back">← All controls</button></div>`;
 function opBtn(k,act,label){if(GAME==='fc')return '';
+  if(isManual(k)&&noCrews())return `<button type="button" class="btn op-btn" data-k="op-${k}" disabled>Manual: no crews today</button>`;
   if(isManual(k)){const j=crewFor(k),here=crewAt(k),dis=S.ended;
     return `<button type="button" class="btn primary op-btn" data-op="${k}:${act}" data-k="op-${k}"${dis||j?' disabled':''}>${j?`Crew ${j.n}: ${j.job.act?'done':'there'} ${fmtT(j.job.at)}`:esc(label)+(here?'':' (send crew)')}</button>`;}const pend=S.op&&S.op.k===k,dis=S.ended||(S.op&&!pend);
   return `<button type="button" class="btn primary op-btn" data-op="${k}:${act}" data-k="op-${k}"${dis||pend?' disabled':''}>${pend?'Operating… ready '+fmtT(S.op.at):esc(label)}</button>`;}
@@ -1163,8 +1174,8 @@ function qpHtml(k){const[t,id]=k.split(':');let closed,st,cls='';
   const act=closed?'open':'close',title=t==='tx'?`T${+id+1} breaker`:ucfirst(devName(k))+(t==='bc'?' at Blackout Canyon':t==='lf'||t==='nop'||t==='mid'?' · '+PR[id.slice(0,2)].name:'');
   return `<div class="qp-h"><b>${esc(title)}</b><button type="button" class="qp-x" id="qpClose" aria-label="Close this pop-up">×</button></div>
     <p class="qp-s ${cls}"><span class="qp-st">${closed?'Closed':'Open'}</span> · ${esc(st)}</p>${isManual(k)?qpCrew(k):''}
-    <div class="qp-row">${opBtn(k,act,act==='close'?'Close':'Open')}${isManual(k)&&!crewAt(k)&&!crewFor(k)?`<button type="button" class="btn" data-crew="${k}">Send crew</button>`:''}${LV_ON&&(t==='lf'||t==='mid')&&S.lff[id.slice(0,2)][+id.slice(2)]&&!mgAt(id)?opBtn('mg:'+id,'close','Generator'):''}<button type="button" class="btn" id="qpMore">Details</button></div>`;}
-function qpCrew(k){const j=crewFor(k),h=crewAt(k);return `<p class="qp-crew">${j?`Crew ${j.n} ${j.to?'walking there, arrives '+fmtT(j.arr):'on site'}${j.job.act?', will '+j.job.act+' it by '+fmtT(j.job.at):''}.`:h?`Crew ${h.n} is standing by here: operating takes ${CREW_OP} min.`:'Manual switch: a field crew has to walk here first.'}</p>`;}
+    <div class="qp-row">${opBtn(k,act,act==='close'?'Close':'Open')}${isManual(k)&&!noCrews()&&!crewAt(k)&&!crewFor(k)?`<button type="button" class="btn" data-crew="${k}">Send crew</button>`:''}${LV_ON&&(t==='lf'||t==='mid')&&S.lff[id.slice(0,2)][+id.slice(2)]&&!mgAt(id)?opBtn('mg:'+id,'close','Generator'):''}<button type="button" class="btn" id="qpMore">Details</button></div>`;}
+function qpCrew(k){const j=crewFor(k),h=crewAt(k);return `<p class="qp-crew">${j?`Crew ${j.n} ${j.to?'walking there, arrives '+fmtT(j.arr):'on site'}${j.job.act?', will '+j.job.act+' it by '+fmtT(j.job.at):''}.`:h?`Crew ${h.n} is standing by here: operating takes ${CREW_OP} min.`:noCrews()?'Manual switch: there are no field crews on this shift.':'Manual switch: a field crew has to walk here first.'}</p>`;}
 function renderQP(){const q=$('qp');if(!q)return;const k=S&&!S.ended&&S.qp&&S.sel;
   if(!k||!isSw(k)||!SELBOX[k]){if(!q.hidden){q.hidden=true;lastQP='';}return;}
   const h=qpHtml(k);if(h!==lastQP){const ae=document.activeElement,fid=ae&&q.contains(ae)?ae.id:'',fk=ae&&q.contains(ae)&&ae.dataset?ae.dataset.k:'';q.innerHTML=h;lastQP=h;const f=fid?$(fid):fk?[...q.querySelectorAll('[data-k]')].find(x=>x.dataset.k===fk):null;if(f)f.focus();}
@@ -1547,7 +1558,8 @@ function endShift(){
   S.ended=true;S.running=false;S.paused=true;hideBanner();hideTip();humTo(0);closeSheet();S.sel=null;lastInsp='';
   const L=S.lost,sc=computeScore();let g='✕',gl='alarm',gd='';
   if(!L){const k=(END-START)/720;
-    if(S.insecureMin===0&&S.overloadMin===0&&S.incidents===0&&S.ens<100){g='A';gl='ok';gd='Secure all shift, no incidents and almost no customers off. Textbook control.';}
+    if(S.sc.easy&&S.insecureMin===0&&S.overloadMin===0&&S.incidents===0&&S.isoMin<=5*S.faults){g='A';gl='ok';gd=S.faults?'Every fault isolated and the healthy half back on within minutes. Textbook control.':'A clean shift with nothing to restore. Textbook control.';}
+    else if(S.insecureMin===0&&S.overloadMin===0&&S.incidents===0&&S.ens<100){g='A';gl='ok';gd='Secure all shift, no incidents and almost no customers off. Textbook control.';}
     else if(S.insecureMin<=20*k&&S.incidents<=Math.round(k)&&S.ens<1500*k){g='B';gl='ok';gd='A solid shift with only brief exposure.';}
     else if(S.insecureMin<=90*k&&S.incidents<=Math.round(2*k)){g='C';gl='warn';gd='Blackout Canyon stayed on, but there were costly moments.';}
     else{g='D';gl='warn';gd='You got through it, but customers and the network took a beating.';}
