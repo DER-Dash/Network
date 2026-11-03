@@ -7,8 +7,10 @@
 /* Layout: control-room desk. Mimic diagram + look-ahead chart on the left, contingency panel + event log on the right, flexibility register across the bottom. */
 :root{
   --bg:#ecebf3; --panel:#fbfaff; --sunk:#f2f0f9; --ink:#1a1730; --muted:#5f5b78; --rule:#d3d0e3;
-  --hv:#8a2f6b; --mv:#1b6a8a; --accent:#4a35c4; --on-accent:#ffffff; --pulse:#ffffff;
-  --brand:#2a1a72; --brand-2:#3a2992; --brand-line:#5141b0; --brand-ink:#ffffff; --brand-muted:#cbc3f3; --zap:#ffc928; --zap-ink:#21154f; --ok-on-brand:#5fe0a0; --alarm-on-brand:#ff9384;
+  --hv:#8a2f6b; --mv:#1b6a8a; --accent:var(--wu-navy); --on-accent:#ffffff; --pulse:#ffffff;
+  /* Watts Up navy: the one colour the header, buttons and accents are built from */
+  --wu-navy:#0B1F3A;
+  --brand:var(--wu-navy); --brand-2:color-mix(in srgb,var(--wu-navy) 82%,#fff); --brand-line:color-mix(in srgb,var(--wu-navy) 65%,#fff); --brand-ink:#ffffff; --brand-muted:color-mix(in srgb,var(--wu-navy) 22%,#fff); --zap:#ffc928; --zap-ink:var(--wu-navy); --ok-on-brand:#5fe0a0; --alarm-on-brand:#ff9384;
   --c-solar:#d48c00; --c-wind:#0f9384; --c-batt:#6f4ce6; --c-gas:#dc5a24; --c-dsr:#c93d78; --c-cold:#2f7fd6; --c-storm:#6a48d6;
   --ok:#2c8a57; --warn:#b5730a; --alarm:#c4352b;
   --ok-bg:#d8ede0; --warn-bg:#f5e6c6; --alarm-bg:#f6d6d1; --scrim:rgba(20,14,48,.6);
@@ -19,8 +21,8 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#100e1d; --panel:#18152b; --sunk:#201c38; --ink:#e8e6f5; --muted:#9a95b8; --rule:#322b55;
-    --hv:#d281b6; --mv:#5db3d6; --accent:#a596ff; --on-accent:#120f22; --pulse:#0c1416;
-    --brand:#1f1452; --brand-2:#2d2072; --brand-line:#45369a;
+    --hv:#d281b6; --mv:#5db3d6; --accent:color-mix(in srgb,var(--wu-navy) 30%,#fff); --on-accent:#120f22; --pulse:#0c1416;
+    --brand:color-mix(in srgb,var(--wu-navy) 80%,#000); --brand-2:var(--wu-navy); --brand-line:color-mix(in srgb,var(--wu-navy) 70%,#fff);
     --c-solar:#ffbf2e; --c-wind:#38c6b4; --c-batt:#a68bff; --c-gas:#ff8a55; --c-dsr:#ff6fa8; --c-cold:#6fb0ff; --c-storm:#a48cff;
     --ok:#52b886; --warn:#e2a840; --alarm:#f0675a;
     --ok-bg:#1d3a2c; --warn-bg:#3d3017; --alarm-bg:#47201c; --scrim:rgba(4,8,9,.7);
@@ -29,8 +31,8 @@
 }
 :root[data-theme="dark"]{
   --bg:#100e1d; --panel:#18152b; --sunk:#201c38; --ink:#e8e6f5; --muted:#9a95b8; --rule:#322b55;
-  --hv:#d281b6; --mv:#5db3d6; --accent:#a596ff; --on-accent:#120f22; --pulse:#0c1416;
-    --brand:#1f1452; --brand-2:#2d2072; --brand-line:#45369a;
+  --hv:#d281b6; --mv:#5db3d6; --accent:color-mix(in srgb,var(--wu-navy) 30%,#fff); --on-accent:#120f22; --pulse:#0c1416;
+    --brand:color-mix(in srgb,var(--wu-navy) 80%,#000); --brand-2:var(--wu-navy); --brand-line:color-mix(in srgb,var(--wu-navy) 70%,#fff);
     --c-solar:#ffbf2e; --c-wind:#38c6b4; --c-batt:#a68bff; --c-gas:#ff8a55; --c-dsr:#ff6fa8; --c-cold:#6fb0ff; --c-storm:#a48cff;
   --ok:#52b886; --warn:#e2a840; --alarm:#f0675a;
   --ok-bg:#1d3a2c; --warn-bg:#3d3017; --alarm-bg:#47201c; --scrim:rgba(4,8,9,.7);

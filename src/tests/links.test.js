@@ -7,7 +7,7 @@ const until=(G,f,max=60)=>{for(let i=0;i<max&&!f();i++)G.run(1);};
  {const {doc,G,S}=await start('snow');S.sched.length=0;S.events.length=0;G.run(5);
   console.log('links drawn',['hm','mr','rj'].map(k=>!!doc.getElementById('lkg_'+k)).join(','),'| VF backfeeds',doc.querySelectorAll('[id^="nopb_"]').length,'| legend',!doc.getElementById('lgLK').hidden);
   const pn0={...S.pn};
-  // break-before-make transfer of Hartwell Park (hw2) onto Marsh Lane via link hm
+  // break-before-make transfer of Hertz House Park (hw2) onto Shocking Place via link hm
   G.op('lf:hw2','open');G.run(2);G.op('lk:hm','close');until(G,()=>S.lk.hm);G.run(2);
   console.log('transfer: hw',r(pn0.hw),'->',r(S.pn.hw),'ml',r(pn0.ml),'->',r(S.pn.ml),'link load',r(S.lkLoad.hm),'text',doc.getElementById('lkt_hm').textContent,'CI',S.cust.ci);
   // close hw2 breaker while linked (same supply) -> parallel allowed, edge in flows

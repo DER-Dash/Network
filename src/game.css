@@ -88,6 +88,11 @@
 .nb-name.kn{fill:var(--c-kn)}.nb-name.fm{fill:var(--c-fm)}
 .p-stat.nb.kn{fill:var(--c-kn)}.p-stat.nb.fm{fill:var(--c-fm)}
 .i-rule.kn{border-left-color:var(--c-kn)}.i-rule.fm{border-left-color:var(--c-fm)}
+/* 33 kV feeders from Blackout Canyon: one colour each, like the neighbour circuits */
+:root{--c-fd-hw:#2563a8;--c-fd-ml:#7b4bc2;--c-fd-rv:#0e7f86;--c-fd-js:#a33f7a}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--c-fd-hw:#6fa8ff;--c-fd-ml:#b493ff;--c-fd-rv:#4fd0c8;--c-fd-js:#f08cc4}}
+:root[data-theme="dark"]{--c-fd-hw:#6fa8ff;--c-fd-ml:#b493ff;--c-fd-rv:#4fd0c8;--c-fd-js:#f08cc4}
+.cond.fd-hw{stroke:var(--c-fd-hw)}.cond.fd-ml{stroke:var(--c-fd-ml)}.cond.fd-rv{stroke:var(--c-fd-rv)}.cond.fd-js{stroke:var(--c-fd-js)}
 
 .tie-l.it{stroke:var(--mv)}
 .scns{grid-template-columns:repeat(auto-fit,minmax(165px,1fr))}
@@ -359,3 +364,8 @@ html.kiosk .qp{width:270px;font-size:14px}
 .sec-go small{font:600 11px var(--f-display);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
 .btn.sec-go:hover{background:var(--sunk)}
 @media (max-width:520px){.cta-sec .sec-go{flex:1 1 100%}}
+/* Phones: keep the Start shift button pinned to the bottom of the screen while the start sheet scrolls */
+@media (max-width:700px){
+  #startBtn{position:fixed;z-index:1;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));box-shadow:0 6px 20px rgba(0,0,0,.35)}
+  .pick{padding-bottom:72px}
+}

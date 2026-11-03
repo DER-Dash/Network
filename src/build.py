@@ -69,7 +69,7 @@ def page(game,s):
 <meta name="twitter:title" content="{m["title"]}">
 <meta name="twitter:description" content="{desc}">
 <meta name="twitter:image" content="{url}og-image.png">
-<meta name="theme-color" content="#2a1a72">
+<meta name="theme-color" content="#0B1F3A">
 <link rel="manifest" href="{m["manifest"]}">
 <link rel="apple-touch-icon" href="{m["apple"]}">
 <meta name="apple-mobile-web-app-capable" content="yes">

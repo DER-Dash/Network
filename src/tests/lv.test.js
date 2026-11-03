@@ -27,10 +27,10 @@ const fault=(S,k,sec,tr,dur)=>S.sched.push({k,m:S.t,dur:dur||80,sec,tr:!!tr,caus
   ok(G.S.mgu.find(u=>u.conn).site==='hw1','generator on Kings Hill');
   // repair, then restore without paralleling the generator
   until(G,S,()=>!S.lff.hw[1],200);ok(!S.lff.hw[1],'fault repaired');
-  G.op('lf:hw1','close');G.run(2);ok(S.lf.hw[1]&&S.cust.off['hw1s0']===0,'first half back from Hartwell');
+  G.op('lf:hw1','close');G.run(2);ok(S.lf.hw[1]&&S.cust.off['hw1s0']===0,'first half back from Hertz House');
   const inc0=S.incidents;G.op('mid:hw1','close');until(G,S,()=>S.mid.hw[1]||S.incidents>inc0);
   ok(S.incidents===inc0+1&&!S.mgu.some(u=>u.conn),'closing the mid-point onto the generator is an incident and trips it');
-  G.run(2);ok(S.cust.off['hw1s1']===0,'whole feeder back on Hartwell');}
+  G.run(2);ok(S.cust.off['hw1s1']===0,'whole feeder back on Hertz House');}
  {const {G,S}=await start('storm');
   // fault in the far half: trial close holds
   fault(S,'lv:ml2',1);G.run(1);G.op('mid:ml2','open');until(G,S,()=>!S.mid.ml[2]);G.op('lf:ml2','close');G.run(2);
