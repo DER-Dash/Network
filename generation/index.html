@@ -1023,9 +1023,8 @@ const CABLE_CAUSES=['Cable joint failure','Third-party dig-in','Cable insulation
 const SECN=['first half (breaker to mid-point switch)','second half (beyond the mid-point switch)'];
 const EMERG=1.2,EMERG_MIN=30,SHORT=1.5,SHORT_MIN=5,PAR_MAX=30,OV_MIN=10,INCIDENT_PTS=500,AL_ON=.8,AL_OFF=.75;
 const RATE={1:CFG.rate,2:CFG.rate*2,4:CFG.rate*4};
-const noCrews=()=>!!(S&&S.sc&&S.sc.remote);// remote-only shifts have no field crews, but their mid-point switches are remotely controlled
-const isManual=k=>{const t=k.split(':')[0];return CREW_ON&&MANUAL.includes(t)&&!(t==='mid'&&noCrews());};
-const REMOTE_MSG='There are no field crews on this shift: only remotely operated breakers can be switched.';
+const ISO_A=25;// easy shifts: minutes per fault that customers can be left off and still get an A
+const isManual=k=>CREW_ON&&MANUAL.includes(k.split(':')[0]);
 const CAREER=GAME==='cr'?['quiet','grid','storm','heat','jan','snow','gsp','mesh','endure']:['may','storm','jan'];
 const RANKS=GAME==='cr'?[[0,'Trainee control engineer'],[3,'Assistant control engineer'],[6,'Control engineer'],[10,'Senior control engineer'],[14,'Control room manager'],[18,'Head of network operations']]
   :[[0,'Trainee flexibility analyst'],[2,'Flexibility analyst'],[4,'Flexibility engineer'],[6,'Senior flexibility engineer'],[9,'DSO manager']];
@@ -1072,8 +1071,8 @@ function gauss(A,b){const n=b.length,M=A.map((r,i)=>[...r,b[i]]);
 const FAULTS=['Lightning strike on the overhead line','Tree contact on the overhead line','Bird strike on the overhead line','Insulator flashover','Cable joint failure'];
 
 const SCENARIOS={
-  quiet:{color:'var(--ok)',diff:1,title:'Quiet shift',when:'Wednesday 14 October',focus:'Remote switching only',soc0:0,nbShape:'demand',noGen:true,remote:true,easy:true,faults:2,
-    blurb:'A mild autumn day and a gentle start. No generation, no field crews and no planned work: every switch you need is remotely controlled. When an 11 kV feeder trips, the fault is found straight away in the far half. Open the mid-point switch, close the breaker to restore the near half, then close the mid-point switch once the quick repair is done.',
+  quiet:{color:'var(--ok)',diff:1,title:'Quiet shift',when:'Wednesday 14 October',focus:'Easy faults · first switching',soc0:0,nbShape:'demand',noGen:true,easy:true,faults:2.5,
+    blurb:'A mild autumn day with no generation and no planned work. Faults are found straight away and repaired quickly, so every one is a simple switching job. If a substation feeder trips, send a crew to close its tie or an interconnector. If an 11 kV feeder trips, the fault is in the far half: open the mid-point switch and close the breaker. Put things back once repairs are done.',
     demand:[[0,62],[4,56],[6,60],[7.5,80],[9,88],[11,84],[13,82],[15,86],[16.5,98],[17.5,106],[18.5,104],[20,94],[21.5,82],[23,70],[24,64]],
     solar:{peak:0,start:7.2,end:17.8,cloud:0},wind:{mean:0,var:0},
     causes:['Cable joint failure','Insulator flashover','Bird strike on the overhead line','Tree contact on the overhead line'],
@@ -1357,8 +1356,8 @@ const wBC=k=>k==='bc'?1:k==='par'?.5:0;
 function genFaults(rng,sc,risk){
   const mult=m=>{let k=1;risk.forEach(w=>{if(m>=w.start&&m<w.end)k=Math.max(k,w.mult);});return k;};
   let integ=0;for(let m=START+20;m<END;m++)integ+=mult(m);
-  const comps=sc.easy?[]:GAME==='fc'?['tx:0','tx:1','tx:2']:['tx:0','tx:1','tx:2',...PIDS.filter(p=>PR[p].fd).map(p=>'fd:'+p),...ITIDS.filter(k=>ITS[k].nc).map(k=>'ic:'+k)],base=sc.faults/(comps.length*integ),out=[];
-  comps.forEach(k=>{for(let m=START+20;m<END;m++){if(rng()<base*mult(m)){const dur=Math.round(90+rng()*150);out.push({k,m,dur,cause:pick(rng,sc.causes||FAULTS),done:false});m+=dur;}}});
+  const comps=sc.easy?PIDS.filter(p=>PR[p].fd).map(p=>'fd:'+p):GAME==='fc'?['tx:0','tx:1','tx:2']:['tx:0','tx:1','tx:2',...PIDS.filter(p=>PR[p].fd).map(p=>'fd:'+p),...ITIDS.filter(k=>ITS[k].nc).map(k=>'ic:'+k)],base=sc.faults/(comps.length*integ),out=[];
+  comps.forEach(k=>{for(let m=START+20;m<END;m++){if(rng()<base*mult(m)){const dur=Math.round(sc.easy?40+rng()*30:90+rng()*150);out.push({k,m,dur,cause:pick(rng,sc.causes||FAULTS),done:false});m+=dur;}}});
   return out.sort((a,b)=>a.m-b.m);
 }
 // 11 kV faults (overhead ones may be transient and auto-reclose) and transient 33 kV trips. A separate
@@ -1371,7 +1370,7 @@ function genLvFaults(seed,sc,risk){if(!LV_ON||!sc.faults)return[];
   const W=comps.reduce((a,c)=>a+c.w,0),tot=sc.faults*2.2,out=[];
   comps.forEach(c=>{for(let m=START+20;m<END;m++){if(rng()<tot*c.w/W*mult(m)/integ){
     if(c.k.startsWith('ar:'))out.push({k:c.k,m,dur:0,cause:pick(rng,OH_CAUSES),done:false});
-    else{const tr=c.oh&&rng()<.6,dur=Math.round(sc.easy?20+rng()*25:50+rng()*100);out.push({k:c.k,m,dur,sec:rng()<.5&&!sc.easy?0:1,tr,cause:pick(rng,c.oh?OH_CAUSES:CABLE_CAUSES),done:false});if(!tr)m+=dur+PATROL;}}}});
+    else{const tr=c.oh&&rng()<.6,dur=Math.round(sc.easy?40+rng()*30:50+rng()*100);out.push({k:c.k,m,dur,sec:rng()<.5&&!sc.easy?0:1,tr,cause:pick(rng,c.oh?OH_CAUSES:CABLE_CAUSES),done:false});if(!tr)m+=dur+PATROL;}}}});
   return out;}
 const spanOf=k=>{const v=SCENARIOS[k]||{};return{start:v.start!=null?v.start:CFG.start,end:v.end!=null?v.end:CFG.end};};
 const runText=()=>{const r=Math.round((END-START)/CFG.rate/60*2)/2;return `Shift runs ${fmtT(START)}–${END>=1440?'24:00':fmtT(END)}, about ${Math.floor(r)}${r%1?'½':''} minutes at 1×.`;};
@@ -1469,6 +1468,7 @@ function checkLv(m,opK){if(!LV_ON||!S.lff)return;
       if(live.length===1)locate(m,p,i,live[0],'Protection operated on that half only.');}
     if(!f.found&&!midOn(p,i)){const lv=[0,1].filter(s=>secFeed(p,i,s)!==null);if(lv.length===1)locate(m,p,i,1-lv[0],`The ${lv[0]?'second':'first'} half is holding on load.`);}}));}
 function stepLv(m){if(!LV_ON)return;
+  if(S.sc.easy)PIDS.forEach(p=>{if(S.fd[p].fault&&S.sup[p]==='off')S.isoMin++;});// easy shifts: a substation left off while its feeder is out
   PIDS.forEach(p=>LF[p].forEach((v,i)=>{const f=S.lff[p][i];if(!f)return;
     if(S.sc.easy&&f.found&&f.sec===1&&secFeed(p,i,0)===null)S.isoMin++;// easy shifts: minutes the healthy near half is left off
     if(!f.found&&m>=f.start+PATROL)locate(m,p,i,f.sec,'Line patrol has found the fault.');
@@ -1511,11 +1511,11 @@ function step(){
       S.lff[p][i]={sec:f.sec,dur:f.dur,found:!!S.sc.easy,until:S.sc.easy?m+f.dur:null,start:m,label:f.cause,oh:!!LF_OH[p][i]};S.faults++;S.chain.push(`a fault on the ${nm}`);mark(m,'fault',LFN[p][i]+' fault');
       checkLv(m,null);const f2=S.lff[p][i];
       const how=LF_OH[p][i]&&dv.startsWith('lf:')?`The breaker at ${PR[p].name} tripped, auto-reclosed onto a permanent fault and locked out.`:`The ${devName(dv)} tripped${LF_OH[p][i]?' and locked out':' (underground cable, so no auto-reclose)'}.`;
-      const s=`Fault on the ${nm} at ${PR[p].name}: ${f.cause.toLowerCase()}. ${how} ${nf(fedN)} customers are off.`+(f2.found?` It's in the ${SECN[f2.sec]}, repair expected by ${fmtT(f2.until)}.${S.sc.remote?(f2.sec?' Open the mid-point switch and close the breaker to restore the first half. Close the mid-point switch after the repair.':' Close the breaker once it is repaired.'):''}`:` The fault could be in either half. Send a crew to open the mid-point switch, then trial-close the breaker to find it. Line patrol will find it by ${fmtT(m+PATROL)} otherwise.`);
+      const s=`Fault on the ${nm} at ${PR[p].name}: ${f.cause.toLowerCase()}. ${how} ${nf(fedN)} customers are off.`+(f2.found?` It's in the ${SECN[f2.sec]}, repair expected by ${fmtT(f2.until)}.${S.sc.easy&&f2.sec?' Send a crew to open the mid-point switch, then close the breaker to restore the first half. Close the mid-point switch after the repair.':''}`:` The fault could be in either half. Send a crew to open the mid-point switch, then trial-close the breaker to find it. Line patrol will find it by ${fmtT(m+PATROL)} otherwise.`);
       logE(m,s,'alarm');queueAlert(s,'alarm',true);play('fault');fx(elOf(dv));}
     else if(type==='ar'){const p=id;if(!PIDS.includes(p)||!fdOn(p)||Math.abs(S.flows['bc:'+p]||0)<.5)continue;let n=0;PIDS.forEach(q=>LF[q].forEach((v,i)=>[0,1].forEach(s=>{if(secFeed(q,i,s)===p)n+=custOf(q,i,s);})));
       S.cust.si+=n;S.recloses++;mark(m,'ar','Auto-reclose');logE(m,`${PR[p].name} 33 kV feeder tripped and auto-reclosed: a transient fault (${f.cause.toLowerCase()}) cleared itself. ${nf(n)} customers had a short interruption.`,'info');play('ar');fx('fdg_'+p);}
-    else{const p=id,fd=S.fd[p];if(fd.fault)continue;
+    else{const p=id,fd=S.fd[p];if(fd.fault||(S.sc.easy&&PIDS.some(q=>S.fd[q].fault&&!S.fd[q].fault.planned)))continue;// easy shifts: one feeder fault at a time
       fd.fault={until:m+f.dur,ready:false,label:f.cause};S.faults++;S.chain.push(`a fault on the ${PR[p].name} feeder`);mark(m,'fault',`${PR[p].name} feeder fault`);
       const was=fd.brk&&fd.inc;fd.brk=false;fd.inc=false;
       const s=`Fault on the ${PR[p].name} 33 kV feeder: ${f.cause.toLowerCase()}. ${was?`Its breaker at Blackout Canyon and the incomer at ${PR[p].name} both tripped. `:''}Repair expected by ${fmtT(m+f.dur)}.`+(was?` Restore ${PR[p].name} through ${PR[p].nb?'the '+NBS[PR[p].nb].name+' tie or ':''}an interconnector.`:'');
@@ -1685,7 +1685,6 @@ function devXY(k){const b=SELBOX[k];return b?{x:b[0]+b[2]/2,y:b[1]+b[3]/2}:{x:DE
 function crewPos(c,tNow){if(!c.to)return{x:c.x,y:c.y};const f=clamp((tNow-c.dep)/Math.max(.01,c.arr-c.dep),0,1),dx=c.to.x-c.from.x,dy=c.to.y-c.from.y,tot=Math.abs(dx)+Math.abs(dy)||1,d=f*tot;
   return d<=Math.abs(dx)?{x:c.from.x+Math.sign(dx)*d,y:c.from.y}:{x:c.to.x,y:c.from.y+Math.sign(dy)*(d-Math.abs(dx))};}
 function dispatch(k,act){if(!S||S.ended||!CREW_ON)return;
-  if(noCrews()){showBanner({m:S.t,text:REMOTE_MSG,lvl:'warn'},'Square symbols are remote breakers: select one and operate it from the control desk.');return;}
   if(crewFor(k)){showBanner({m:S.t,text:`Crew ${crewFor(k).n} is already on its way to the ${devName(k)}.`,lvl:'warn'});return;}
   let mgu=null,opT=CREW_OP;if(k.startsWith('mg:')&&act==='close'){const id=k.slice(3);if(mgOn(...lfP(id)))return;
     if(!mgAt(id)){mgu=S.mgu.find(x=>!x.site)||S.mgu.find(x=>!x.conn&&!x.pend);if(!mgu){showBanner({m:S.t,text:`Both mobile generators are connected elsewhere. Disconnect one before sending it here.`,lvl:'warn'},'Mobile generators restore a dead section of feeder, up to '+MG_CAP+' MW each.');return;}opT=MG_CONN;}}
@@ -1870,7 +1869,7 @@ function buildMimic(){
     SELBOX['it:'+k]=[t.x-17,PY-17,34,34];});
   ASSETS.filter(a=>PIDS.includes(a.prim)&&(!ng||a.type==='load')).forEach(a=>{const x=a.x,ay=pY(a.prim),y=ay+48+(a.type==='load'?LVD:0);let sym='';const col=a.col||'var(--muted)';
     if(a.type==='load'){const p=a.prim,by=ay+16;
-      sym=LDX.map((dx,i)=>LV_ON?`<line id="lfl_${p}${i}" class="cond mv" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${ay+44}"/><line id="lfm_${p}${i}" class="cond mv" x1="${x+dx}" y1="${ay+56}" x2="${x+dx}" y2="${y+4}"/><rect id="lfb_${p}${i}" class="brk sw" x="${x+dx-6}" y="${by+6}" width="12" height="12"/><rect id="midb_${p}${i}" class="brk sw${noCrews()?'':' man'} mid" x="${x+dx-6}" y="${ay+44}" width="12" height="12" rx="${noCrews()?0:6}"/><path id="lft_${p}${i}" class="sym" d="M${x+dx-7} ${y+4} L${x+dx+7} ${y+4} L${x+dx} ${y+17} Z"/>`
+      sym=LDX.map((dx,i)=>LV_ON?`<line id="lfl_${p}${i}" class="cond mv" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${ay+44}"/><line id="lfm_${p}${i}" class="cond mv" x1="${x+dx}" y1="${ay+56}" x2="${x+dx}" y2="${y+4}"/><rect id="lfb_${p}${i}" class="brk sw" x="${x+dx-6}" y="${by+6}" width="12" height="12"/><rect id="midb_${p}${i}" class="brk sw man mid" x="${x+dx-6}" y="${ay+44}" width="12" height="12" rx="6"/><path id="lft_${p}${i}" class="sym" d="M${x+dx-7} ${y+4} L${x+dx+7} ${y+4} L${x+dx} ${y+17} Z"/>`
         :`<line id="lfl_${p}${i}" class="cond mv" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${y+4}"/><rect id="lfb_${p}${i}" class="brk sw" x="${x+dx-6}" y="${by+8}" width="12" height="12"/><path id="lft_${p}${i}" class="sym" d="M${x+dx-7} ${y+4} L${x+dx+7} ${y+4} L${x+dx} ${y+17} Z"/>`).join('');
       if(LV_ON)LDX.forEach((dx,i)=>{const fx=x+dx;sym+=`<g id="mgg_${p}${i}" class="mg" hidden><path class="mg-l" d="M${fx} ${VF_ON&&VFI.includes(i)?y+40:y+17} V${y+45.5}"/><circle cx="${fx}" cy="${y+52}" r="6.5"/><text x="${fx}" y="${y+55}" text-anchor="middle">G</text></g>`;SELBOX['mg:'+p+i]=[fx-9,y+43,18,18];});
       s+=`<line id="alb_load_${p}" class="cond mv" x1="${x+LDX[0]-2}" y1="${by}" x2="${x+LDX[2]+2}" y2="${by}" style="stroke-width:3"/>`;
@@ -1902,7 +1901,7 @@ function buildMimic(){
   if(S.sc.gsp)s+=`<text id="gspT" class="gsp-t" x="812" y="44"></text>`;
   if(CREW_ON)SELBOX.depot=[1080,22,114,74];
   s+=`<rect id="coachRing" class="coach-ring" x="0" y="0" width="0" height="0" rx="10" visibility="hidden"/>`;
-  if(CREW_ON){s+=`<g class="depot"><text class="nb-name crew-n" x="1188" y="34" text-anchor="end">CREW DEPOT</text><text class="nb-r" x="1188" y="48" text-anchor="end">${noCrews()?'No crews today':'3 field crews'}</text><path class="depot-i" d="M1094 76 l11 -10 l11 10 v11 h-22z"/></g><g id="crews">`+
+  if(CREW_ON){s+=`<g class="depot"><text class="nb-name crew-n" x="1188" y="34" text-anchor="end">CREW DEPOT</text><text class="nb-r" x="1188" y="48" text-anchor="end">3 field crews</text><path class="depot-i" d="M1094 76 l11 -10 l11 10 v11 h-22z"/></g><g id="crews">`+
     [1,2,3].map(n=>`<g id="crew${n}" class="crew"><g class="crew-b"><circle cx="0" cy="-15" r="3.6"/><path d="M0 -11 V-3 M0 -9 l-5 4 M0 -9 l5 4 M0 -3 l-4 7 M0 -3 l4 7"/></g><text class="crew-t" x="7" y="-12">${n}</text></g>`).join('')+'</g>';}
   s+=`<rect id="selbox" class="selbox" x="0" y="0" width="0" height="0" rx="6" visibility="hidden"/>`;
   if(GAME==='fc')s=s.replace(/<rect class="hit" data-sel="(?:bc|in|tie|it|bs|lf|nop|lk|nb):[^"]*"[^>]*\/>/g,'');
@@ -1963,7 +1962,7 @@ function renderMimic(){
     S.lf[p].forEach((v,i)=>{const k='lf:'+p+i,F=S.lff&&S.lff[p][i],f0=secFeed(p,i,0),f1=secFeed(p,i,1),fl=sx=>F?(!F.found?' unk':F.sec===sx?' flt':''):'';
       setAttr($('lfb_'+p+i),'class','brk sw'+(v?'':' open')+(F&&!F.found&&!v?' trip':'')+(opK===k?' operating':''));
       if(LV_ON){setAttr($('lfl_'+p+i),'class','cond mv'+(f0!==null?'':' dead')+fl(0));setAttr($('lfm_'+p+i),'class','cond mv'+(f1!==null?'':' dead')+fl(1));
-        const mk='mid:'+p+i;setAttr($('midb_'+p+i),'class','brk sw'+(noCrews()?'':' man')+' mid'+(midOn(p,i)?'':' open')+(crewFor(mk)?' operating':''));
+        const mk='mid:'+p+i;setAttr($('midb_'+p+i),'class','brk sw man mid'+(midOn(p,i)?'':' open')+(crewFor(mk)?' operating':''));
         const u=mgAt(p+i),g=$('mgg_'+p+i);const gh=$('mgh_'+p+i);if(gh){if(u)gh.removeAttribute('hidden');else gh.setAttribute('hidden','');}if(g){if(u)g.removeAttribute('hidden');else g.setAttribute('hidden','');setAttr(g,'class','mg'+(u&&u.conn?' on':'')+(crewFor('mg:'+p+i)?' operating':''));}}
       else setAttr($('lfl_'+p+i),'class','cond mv'+(f0!==null?'':' dead'));
       setAttr($('lft_'+p+i),'class','sym'+(f1===null?(S.nop[p][i]?' vf':' off'):f1==='vf'?' vf':f1==='mg'?' mg':f1!==p?' lk':'')+(F&&(!F.found||F.sec===1)?' flt':''));
@@ -1999,7 +1998,6 @@ const ico=(k,c)=>`<span class="ico" style="--tc:${c||'var(--accent)'}"><svg view
 const facts=rows=>`<dl class="facts">${rows.map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`;
 const back=`<div class="i-back"><button type="button" class="linkish" data-sel="none" data-k="back">← All controls</button></div>`;
 function opBtn(k,act,label){if(GAME==='fc')return '';
-  if(isManual(k)&&noCrews())return `<button type="button" class="btn op-btn" data-k="op-${k}" disabled>Manual: no crews today</button>`;
   if(isManual(k)){const j=crewFor(k),here=crewAt(k),dis=S.ended;
     return `<button type="button" class="btn primary op-btn" data-op="${k}:${act}" data-k="op-${k}"${dis||j?' disabled':''}>${j?`Crew ${j.n}: ${j.job.act?'done':'there'} ${fmtT(j.job.at)}`:esc(label)+(here?'':' (send crew)')}</button>`;}const pend=S.op&&S.op.k===k,dis=S.ended||(S.op&&!pend);
   return `<button type="button" class="btn primary op-btn" data-op="${k}:${act}" data-k="op-${k}"${dis||pend?' disabled':''}>${pend?'Operating… ready '+fmtT(S.op.at):esc(label)}</button>`;}
@@ -2173,8 +2171,8 @@ function qpHtml(k){const[t,id]=k.split(':');let closed,st,cls='';
   const act=closed?'open':'close',title=t==='tx'?`T${+id+1} breaker`:ucfirst(devName(k))+(t==='bc'?' at Blackout Canyon':t==='lf'||t==='nop'||t==='mid'?' · '+PR[id.slice(0,2)].name:'');
   return `<div class="qp-h"><b>${esc(title)}</b><button type="button" class="qp-x" id="qpClose" aria-label="Close this pop-up">×</button></div>
     <p class="qp-s ${cls}"><span class="qp-st">${closed?'Closed':'Open'}</span> · ${esc(st)}</p>${isManual(k)?qpCrew(k):''}
-    <div class="qp-row">${opBtn(k,act,act==='close'?'Close':'Open')}${isManual(k)&&!noCrews()&&!crewAt(k)&&!crewFor(k)?`<button type="button" class="btn" data-crew="${k}">Send crew</button>`:''}${LV_ON&&(t==='lf'||t==='mid')&&S.lff[id.slice(0,2)][+id.slice(2)]&&!mgAt(id)?opBtn('mg:'+id,'close','Generator'):''}<button type="button" class="btn" id="qpMore">Details</button></div>`;}
-function qpCrew(k){const j=crewFor(k),h=crewAt(k);return `<p class="qp-crew">${j?`Crew ${j.n} ${j.to?'walking there, arrives '+fmtT(j.arr):'on site'}${j.job.act?', will '+j.job.act+' it by '+fmtT(j.job.at):''}.`:h?`Crew ${h.n} is standing by here: operating takes ${CREW_OP} min.`:noCrews()?'Manual switch: there are no field crews on this shift.':'Manual switch: a field crew has to walk here first.'}</p>`;}
+    <div class="qp-row">${opBtn(k,act,act==='close'?'Close':'Open')}${isManual(k)&&!crewAt(k)&&!crewFor(k)?`<button type="button" class="btn" data-crew="${k}">Send crew</button>`:''}${LV_ON&&(t==='lf'||t==='mid')&&S.lff[id.slice(0,2)][+id.slice(2)]&&!mgAt(id)?opBtn('mg:'+id,'close','Generator'):''}<button type="button" class="btn" id="qpMore">Details</button></div>`;}
+function qpCrew(k){const j=crewFor(k),h=crewAt(k);return `<p class="qp-crew">${j?`Crew ${j.n} ${j.to?'walking there, arrives '+fmtT(j.arr):'on site'}${j.job.act?', will '+j.job.act+' it by '+fmtT(j.job.at):''}.`:h?`Crew ${h.n} is standing by here: operating takes ${CREW_OP} min.`:'Manual switch: a field crew has to walk here first.'}</p>`;}
 function renderQP(){const q=$('qp');if(!q)return;const k=S&&!S.ended&&S.qp&&S.sel;
   if(!k||!isSw(k)||!SELBOX[k]){if(!q.hidden){q.hidden=true;lastQP='';}return;}
   const h=qpHtml(k);if(h!==lastQP){const ae=document.activeElement,fid=ae&&q.contains(ae)?ae.id:'',fk=ae&&q.contains(ae)&&ae.dataset?ae.dataset.k:'';q.innerHTML=h;lastQP=h;const f=fid?$(fid):fk?[...q.querySelectorAll('[data-k]')].find(x=>x.dataset.k===fk):null;if(f)f.focus();}
@@ -2557,7 +2555,7 @@ function endShift(){
   S.ended=true;S.running=false;S.paused=true;hideBanner();hideTip();humTo(0);closeSheet();S.sel=null;lastInsp='';
   const L=S.lost,sc=computeScore();let g='✕',gl='alarm',gd='';
   if(!L){const k=(END-START)/720;
-    if(S.sc.easy&&S.insecureMin===0&&S.overloadMin===0&&S.incidents===0&&S.isoMin<=5*S.faults){g='A';gl='ok';gd=S.faults?'Every fault isolated and the healthy half back on within minutes. Textbook control.':'A clean shift with nothing to restore. Textbook control.';}
+    if(S.sc.easy&&S.insecureMin===0&&S.overloadMin===0&&S.incidents===0&&S.isoMin<=ISO_A*S.faults){g='A';gl='ok';gd=S.faults?'Every fault switched round quickly, so customers were soon back on. Textbook control.':'A clean shift with nothing to restore. Textbook control.';}
     else if(S.insecureMin===0&&S.overloadMin===0&&S.incidents===0&&S.ens<100){g='A';gl='ok';gd='Secure all shift, no incidents and almost no customers off. Textbook control.';}
     else if(S.insecureMin<=20*k&&S.incidents<=Math.round(k)&&S.ens<1500*k){g='B';gl='ok';gd='A solid shift with only brief exposure.';}
     else if(S.insecureMin<=90*k&&S.incidents<=Math.round(2*k)){g='C';gl='warn';gd='Blackout Canyon stayed on, but there were costly moments.';}
