@@ -23,6 +23,23 @@ python3 src/build.py
 This writes the three GitHub Pages files and standalone copies in `build/`
 (ignored by git) that keep the `window.__fc` test hook.
 
+## Domain lock
+
+The published pages only run on `der-dash.github.io` (and `localhost` for testing).
+Anywhere else they show a "play the original" screen. `build.py` switches this on
+(`SITE_LOCK`) for the GitHub Pages files only, so the copies in `build/` open anywhere,
+including straight from disk. Scores carry the site name and the scoreboard rejects
+other sites (see `scoreboard/README.md`, version 12).
+
+## Adding a shift
+
+Shifts are data in `SCENARIOS` in `game.js`. `demand` is the curve; an optional
+`surge:{start,peak,end,mw,seen}` adds a late peak on top that the look-ahead only sees
+the fraction `seen` of (EV evening). `tips:{reason:text}` overrides the shift debrief's
+tips for that shift. Add the key to `CR_DAYS` in `scoreboard/Code.gs` so its scores save,
+and if it goes in the middle of `CAREER`, also add it to `CAREER_ADDED` so existing
+careers keep their unlocks.
+
 ## Test
 
 ```

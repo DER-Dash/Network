@@ -894,6 +894,19 @@ html.kiosk .qp{width:270px;font-size:14px}
 @keyframes kUp{from{transform:translateY(24px);opacity:0}}
 @keyframes kZap{50%{filter:drop-shadow(0 0 24px #FFD23F)}}
 @media (prefers-reduced-motion:reduce){.k-intro.go,.k-intro.go *{animation:none!important}}
+/* Shift debrief */
+.debrief{margin:0 0 16px;padding:14px 16px;border-radius:6px;background:var(--sunk);border:1px solid var(--rule)}
+.debrief h3{margin:0 0 4px}
+.debrief>.fine{margin:0 0 10px}
+.debrief ol{margin:0;padding:0;list-style:none;display:grid;gap:10px;counter-reset:db}
+.debrief li{counter-increment:db;padding:10px 12px 10px 40px;position:relative;border-radius:5px;background:var(--panel);border:1px solid var(--rule)}
+.debrief li::before{content:counter(db);position:absolute;left:12px;top:10px;width:20px;height:20px;border-radius:50%;background:var(--alarm);color:#fff;font:700 12px/20px var(--f-mono);text-align:center}
+.db-h{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.db-pts{font:700 15px var(--f-mono);font-variant-numeric:tabular-nums;color:var(--alarm)}
+.db-t{font:13px var(--f-mono);color:var(--muted)}
+.db-l{flex-basis:100%;font-weight:600;overflow-wrap:anywhere}
+.db-tip{margin:6px 0 0;font-size:14px}
+.debrief>p:last-child{margin-bottom:0}
 </style>
 </head>
 <body>
@@ -1075,6 +1088,15 @@ const CFG=GAME==='fc'?{start:300,end:1380,rate:5.1,pre:'fcg-',salt:'fcg1',def:'m
     band:'Control room · keeping Blackout Canyon switched on. Mostly.',eyebrow:'Control room · Blackout Canyon 33 kV',h2:'Run the Blackout Canyon network',
     board:'Control room',share:'Firm Capacity: Control Room',other:{url:FC_URL,hdr:'Generation game →',foot:'Play the generation game',
     box:'<b>Prefer generation?</b> Try the generation game: balance solar, wind, batteries and flexibility to keep the transformers inside their rating.',cta:'Play the generation game →'}};
+// Domain lock: the published pages only run on der-dash.github.io. build.py turns SITE_LOCK on for the
+// GitHub Pages copies; the standalone copies in build/ (tests, previews) stay unlocked.
+const HOME_HOST='der-dash.github.io',SITE_LOCK=true;
+if(SITE_LOCK&&!/^(der-dash\.github\.io|localhost|127\.0\.0\.1)$/i.test(location.hostname)){siteLock();return;}
+function siteLock(){try{document.title=CFG.docTitle;document.body.className='';document.body.innerHTML=`<main class="sitelock" style="max-width:34rem;margin:12vh auto;padding:0 16px;text-align:center">
+  <svg viewBox="0 0 100 100" width="72" height="72" aria-hidden="true"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg>
+  <h1 style="margin:16px 0 8px">${CFG.share}</h1><p>This is a copy of the game running on another website. Scores and feedback only work on the original.</p>
+  <p style="margin-top:20px"><a class="btn primary big" href="${CFG.site}" target="_top" rel="noopener">Play the original at ${HOME_HOST} →</a></p>
+  <p class="fine" style="margin-top:24px">© 2026 Steve Backhouse. All rights reserved.</p></main>`;}catch(e){}}
 let R=60,START=CFG.start,END=CFG.end;const TAU=45,TRIP_T=140,SOC_MAX=60;
 const CUST_TOTAL=60000,SHORT_INT=3,CREW_ON=GAME==='cr',MANUAL=['tie','it','nop','lk','mid','mg'],CREW_SPEED=70,CREW_OP=2,DEPOT={x:1150,y:62};
 // 11 kV fault finding, auto-reclose and mobile generators (control room only)
@@ -1087,7 +1109,7 @@ const EMERG=1.2,EMERG_MIN=30,SHORT=1.5,SHORT_MIN=5,PAR_MAX=30,OV_MIN=10,INCIDENT
 const RATE={1:CFG.rate,2:CFG.rate*2,4:CFG.rate*4};
 const ISO_A=25;// easy shifts: minutes per fault that customers can be left off and still get an A
 const isManual=k=>CREW_ON&&MANUAL.includes(k.split(':')[0]);
-const CAREER=GAME==='cr'?['quiet','grid','storm','heat','jan','snow','gsp','mesh','endure']:['may','storm','jan'];
+const CAREER=GAME==='cr'?['quiet','grid','storm','heat','jan','ev','snow','gsp','mesh','endure']:['may','storm','jan'];
 const RANKS=GAME==='cr'?[[0,'Trainee control engineer'],[3,'Assistant control engineer'],[6,'Control engineer'],[10,'Senior control engineer'],[14,'Control room manager'],[18,'Head of network operations']]
   :[[0,'Trainee flexibility analyst'],[2,'Flexibility analyst'],[4,'Flexibility engineer'],[6,'Senior flexibility engineer'],[9,'DSO manager']];
 const ACH=[
@@ -1109,7 +1131,10 @@ function saveCareer(c){ls('career',JSON.stringify(c));}
 const starsOf=c=>CAREER.reduce((a,k)=>a+(c.stars[k]||0),0);
 const rankOf=n=>{let r=RANKS[0][1];RANKS.forEach(([t,nm])=>{if(n>=t)r=nm;});return r;};
 const nextRank=n=>RANKS.find(([t])=>t>n);
-const unlockedK=(c,k)=>{const i=CAREER.indexOf(k);return i<=0||CAREER.slice(i-1).some(j=>(c.stars[j]||0)>=1);};
+// Shifts added to the career later. A shift after one of these still unlocks from the shift before it,
+// so existing careers keep what they had unlocked.
+const CAREER_ADDED=['ev'];
+const unlockedK=(c,k)=>{let i=CAREER.indexOf(k);if(i<=0)return true;if(!CAREER_ADDED.includes(k))while(i>1&&CAREER_ADDED.includes(CAREER[i-1]))i--;return CAREER.slice(i-1).some(j=>(c.stars[j]||0)>=1);};
 const starStr=n=>'★'.repeat(n)+'☆'.repeat(3-n);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const fmtT=m=>{m=Math.round(m);m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');};
@@ -1132,6 +1157,8 @@ function gauss(A,b){const n=b.length,M=A.map((r,i)=>[...r,b[i]]);
   return M.map((r,i)=>r[n]/(r[i]||1e-9));}
 const FAULTS=['Lightning strike on the overhead line','Tree contact on the overhead line','Bird strike on the overhead line','Insulator flashover','Cable joint failure'];
 
+// A cold winter weekday: shared by Cold Thursday in both games and the EV evening shift
+const COLD_EVE=[[0,80],[4,72],[6,78],[7.5,106],[9,116],[11,112],[13,110],[15,114],[16.5,134],[17.5,150],[18.5,146],[20,130],[21.5,112],[23,94],[24,84]];
 const SCENARIOS={
   quiet:{color:'var(--ok)',diff:1,title:'Quiet shift',when:'Wednesday 14 October',focus:'Easy faults · first switching',soc0:0,nbShape:'demand',noGen:true,easy:true,faults:2.5,
     blurb:'A mild autumn day with no generation and no planned work. Faults are found straight away and repaired quickly, so every one is a simple switching job. If a substation feeder trips, send a crew to close its tie or an interconnector. If an 11 kV feeder trips, the fault is in the far half: open the mid-point switch and close the breaker. Put things back once repairs are done.',
@@ -1160,10 +1187,18 @@ const SCENARIOS={
     build(r){return{events:[],cutout:null,risk:[{start:720,end:1020,mult:2.5,label:'Extreme heat'}]};}},
   jan:{color:'var(--c-cold)',diff:3,title:'Cold Thursday',when:'Thursday 14 January',focus:'Peak demand',soc0:45,nbShape:'demand',
     blurb:'A cold, still evening peak pulls hard on the transformers and the neighbouring networks. T1 is out for maintenance in the morning, when icy lines are most likely to fault.',
-    demand:[[0,80],[4,72],[6,78],[7.5,106],[9,116],[11,112],[13,110],[15,114],[16.5,134],[17.5,150],[18.5,146],[20,130],[21.5,112],[23,94],[24,84]],
+    demand:COLD_EVE,
     solar:{peak:35,start:7.8,end:16.2,cloud:.2},wind:{mean:22,var:12},faults:2,
     causes:['Ice build-up on the overhead line','Conductor clash in icy wind','Cable joint failure','Insulator flashover'],
     build(r){return{events:[{tx:0,start:570,end:750,planned:true,cause:'Planned maintenance'}],cutout:null,risk:[{start:480,end:600,mult:3,label:'Ice and snow'}]};}},
+  ev:{color:'var(--c-batt)',diff:3,title:'EV evening',when:'Monday 7 December',focus:'Late surge · look-ahead reads low',start:600,end:1320,soc0:45,nbShape:'demand',
+    blurb:'A cold Monday and the first hard frost since half of Blackout Canyon bought an electric car. Until 17:00 it looks like an ordinary cold evening. Then everyone gets home and plugs in at once, and the surge comes later and bigger than the look-ahead shows: it only knows about the chargers it has seen before. T3 is back from maintenance at 17:15. Get it in service, and get load onto the neighbours, before the surge rather than during it.',
+    demand:COLD_EVE,surge:{start:17,peak:18.75,end:21.75,mw:24,seen:.35},
+    solar:{peak:35,start:7.8,end:16.2,cloud:.2},wind:{mean:22,var:12},faults:2,
+    causes:['Ice build-up on the overhead line','Overheated cable joint under EV load','Cable joint failure','Insulator flashover'],
+    tips:{risk:'On this shift the look-ahead under-reads the EV surge. Treat its 18:00–20:00 forecast as a floor: get T3 back, move substations onto the neighbours and arm flex before 17:00, not when the alarms start.',
+      sub:'Under the EV surge every tie and interconnector is near its limit. Restore through the route with the most headroom, and check the neighbours\' spare capacity before closing.'},
+    build(r){return{events:[{tx:2,start:840,end:1035,planned:true,cause:'Planned maintenance'}],cutout:null,risk:[{start:1020,end:1200,mult:2,label:'Hard frost'}]};}},
   snow:{color:'var(--c-cold)',diff:3,title:'Snow day',when:'Friday 4 December',focus:'Generation, switching and 11 kV links',soc0:40,nbShape:'demand',links:true,vfi:[1],
     blurb:'Heavy snow and the biggest peak of the winter. The Ohm No feeder is out for planned work over lunch. New 11 kV links join neighbouring substations: open a feeder breaker and close its link to move that feeder next door. Use them with generation, the battery and Volt Face to ride the evening peak.',
     demand:[[0,90],[4,80],[6,86],[7.5,116],[9,128],[11,122],[13,120],[15,126],[16.5,148],[17.5,164],[18.5,160],[20,144],[21.5,124],[23,104],[24,94]],
@@ -1210,7 +1245,7 @@ const SCENARIOS_FC={
       return{events:[],cutout:{start:s,end:s+75},risk:[{start:a,end:a+180,mult:3,label:'Severe gale'},{start:b,end:b+180,mult:3,label:'Severe gale'}]};}},
   jan:{color:'var(--c-cold)',diff:3,title:'Cold Thursday',when:'Thursday 14 January',focus:'Peak demand',soc0:45,nbShape:'demand',
     blurb:'A cold, still evening peak pulls hard on the transformers. T1 is out for maintenance in the morning, when icy lines are most likely to fault. Watch the battery charge.',
-    demand:[[0,80],[4,72],[6,78],[7.5,106],[9,116],[11,112],[13,110],[15,114],[16.5,134],[17.5,150],[18.5,146],[20,130],[21.5,112],[23,94],[24,84]],
+    demand:COLD_EVE,
     solar:{peak:35,start:7.8,end:16.2,cloud:.2},wind:{mean:22,var:12},faults:1.5,
     causes:['Ice build-up on the overhead line','Conductor clash in icy wind','Cable joint failure','Insulator flashover'],
     build(r){return{events:[{tx:0,start:570,end:750,planned:true,cause:'Planned maintenance'}],cutout:null,risk:[{start:360,end:540,mult:3,label:'Ice and snow'}]};}}};
@@ -1302,10 +1337,11 @@ const ICONS={solar:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12
   snow:'<path d="M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7M9 3.5l3 2 3-2M9 20.5l3-2 3 2"/>',
   storm:'<path d="M7 16a4 4 0 0 1 .3-8A5.5 5.5 0 0 1 18 9.5a3.3 3.3 0 0 1 0 6.5"/><path d="M13 11l-3 5h4l-2 5"/>',
   heat:'<circle cx="12" cy="7" r="3"/><path d="M12 1.5v1M6.5 7h-1M18.5 7h-1M3.5 14c2.1-1.5 4.2 1.5 6.3 0s4.2-1.5 6.3 0 2.8 1.2 4.4 0M3.5 19c2.1-1.5 4.2 1.5 6.3 0s4.2-1.5 6.3 0 2.8 1.2 4.4 0"/>',
+  plug:'<path d="M9 2v5M15 2v5M6 7h12v3a6 6 0 0 1-12 0zM12 16v3a3 3 0 0 0 3 3h3"/>',
   pylon:'<path d="M12 2 7.5 22M12 2l4.5 20M4 7h16M6 12h12M9.6 7l4.8 5M14.4 7l-4.8 5M8.6 17h6.8M8.6 17l6.8 5M15.4 17l-6.8 5"/>'};
 // Each day's scene: the icon on its card and the weather drawn behind the diagram
-const SCENE={quiet:'sun',grid:'pylon',storm:'storm',heat:'heat',jan:'snow',snow:'snow',gsp:'pylon',mesh:'pylon',endure:'storm',may:'sun',tut:'snow'};
-const WX={grid:'cloud',gsp:'cloud',mesh:'snow'};
+const SCENE={ev:'plug',quiet:'sun',grid:'pylon',storm:'storm',heat:'heat',jan:'snow',snow:'snow',gsp:'pylon',mesh:'pylon',endure:'storm',may:'sun',tut:'snow'};
+const WX={ev:'snow',grid:'cloud',gsp:'cloud',mesh:'snow'};
 const sceneOf=k=>SCENE[k]||'pylon',wxOf=k=>WX[k]||{pylon:'cloud'}[sceneOf(k)]||sceneOf(k);
 const LOGO='<svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg>';
 const BAND=`<div class="sheet-brand wu"><div class="wu-lock"><svg viewBox="0 0 100 100" role="img" aria-label="Watts Up"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg><div><b>Watts <span>Up</span></b><small>Electricity Distribution</small></div></div><p class="tag">${CFG.band}</p></div>`;
@@ -1450,14 +1486,14 @@ function newGame(key){
   const sc=SCENARIOS[key],date=todayUK(),daily=mode==='daily';
   ({start:START,end:END}=spanOf(key));
   const seed=daily?hashStr(date+'|'+key+'|'+CFG.salt):((Math.random()*2**31)|0);
-  const rng=rngFrom(seed),b=sc.build(rng);
+  const rng=rngFrom(seed),b=sc.build(rng),surgeK=sc.surge ? .85+.3*rng() : 1;
   const N={d:makeNoise(rng,15),c1:makeNoise(rng,25),c2:makeNoise(rng,6),w1:makeNoise(rng,40),w2:makeNoise(rng,5)};
   PIDS=sc.mesh?['hw','ml','rv','js','kc']:['hw','ml','rv','js'];ITIDS=sc.mesh?['hm','mr','rj','mk','rk']:['hm','mr','rj'];LKIDS=GAME==='cr'&&sc.links?['hm','mr','rj']:[];VFI=sc.vfi||[1,2];
   const share=sc.shares||{hw:.30,ml:.20,rv:.25,js:.25};
   {const D=sc.derate||1;R=Math.round(60*D);Object.values(PR).forEach(P=>{if(P.fr0==null){P.fr0=P.fr;P.tie0=P.tie;}if(P.fr0!=null)P.fr=Math.round(P.fr0*D);if(P.tie0!=null)P.tie=Math.round(P.tie0*D);});
    Object.values(ITS).forEach(t=>{if(t.r0==null)t.r0=t.r;t.r=Math.round(t.r0*D);});}
   const sched=genFaults(rng,sc,b.risk).concat(genLvFaults(seed,sc,b.risk)).sort((a,b)=>a.m-b.m),dv=sc.demand.map(x=>x[1]);
-  S={key,sc,mode,date,seed,t:START-60,dmin:Math.min(...dv),dmax:Math.max(...dv),
+  S={key,sc,mode,date,seed,surgeK,t:START-60,dmin:Math.min(...dv),dmax:Math.max(...dv),
     events:b.events.map(e=>({...e,fired:false,noticed:false})),cutout:b.cutout?{...b.cutout,fired:false,done:false}:null,
     risk:b.risk,sched,N,rng2:rngFrom(seed^0x5bd1e995),
     tx:[0,1,2].map(()=>({temp:60,out:null,em:0,sh:0,L:0,flow:0})),
@@ -1476,7 +1512,7 @@ function newGame(key){
   const c0=comps(S.t,false),L0=Math.abs(PIDS.reduce((a,p)=>a+netP(c0,p,zeroD()),0))/3/R;S.tx.forEach(t=>t.temp=20+100*L0*L0);
   buildMimic();
   for(let i=0;i<60;i++)step();
-  S.silent=false;S.alarms={};S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.peakL=0;S.ens=0;S.cust={ci:0,cml:0,si:0,off:{}};S.crewJobs=0;S.trial=0;S.isoMin=0;S.recloses=0;S.parOk=0;S.vfPeak=0;S.gspOver=0;S.gspTrips=0;S.log=[];S.full=[];S.marks=[];S.chain=[];queued=[];
+  S.silent=false;S.alarms={};S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.peakL=0;S.ens=0;S.cust={ci:0,cml:0,si:0,off:{}};S.loss=[];S.lossOpen={};S.cp={};S.crewJobs=0;S.trial=0;S.isoMin=0;S.recloses=0;S.parOk=0;S.vfPeak=0;S.gspOver=0;S.gspTrips=0;S.log=[];S.full=[];S.marks=[];S.chain=[];queued=[];
   logE(START,`Shift starts. ${sc.when}: ${sc.blurb}`,'info');
   if(daily)logE(START,`Today's challenge (${fmtDate(date)}): everyone gets the same weather and fault times.`,'info');
   S.events.filter(e=>e.planned).forEach(e=>logE(START,e.fd?`Notice: ${PR[e.fd].name} feeder planned outage ${fmtT(e.start)}–${fmtT(e.end)}. Field staff will open both ends of it at ${fmtT(e.start)}, so move ${PR[e.fd].name} and anything fed through it beforehand.`:`Notice: T${e.tx+1} planned outage ${fmtT(e.start)}–${fmtT(e.end)}. Field staff will switch it out; you restore it afterwards.`,'warn'));
@@ -1487,9 +1523,14 @@ function newGame(key){
   hideBanner();hideTip();lastSky='';lastInsp='';closeSheet();applyZoom();render(true);
 }
 
+// A late evening surge (EV charging) on top of the demand curve: rises steeply to its peak, then tails off.
+// The look-ahead only sees the fraction 'seen' of it. S.surgeK varies its size from day to day.
+function surgeMW(h){const u=S.sc.surge;if(!u||h<=u.start||h>=u.end)return 0;
+  const f=h<u.peak?Math.pow((h-u.start)/(u.peak-u.start),2.2):1-Math.pow((h-u.peak)/(u.end-u.peak),1.3);return u.mw*(S.surgeK||1)*f;}
 function comps(m,fc){
   const h=m/60,sc=S.sc,N=S.N;
   let demand=interp(sc.demand,clamp(h,0,24));if(!fc)demand*=1+.025*N.d(m);
+  if(sc.surge)demand+=surgeMW(h)*(fc?sc.surge.seen:1);
   let solar=0;const f=(h-sc.solar.start)/(sc.solar.end-sc.solar.start);
   if(sc.solar.peak>0&&f>0&&f<1){const clear=sc.solar.peak*Math.pow(Math.sin(Math.PI*f),1.4);const red=sc.solar.cloud*(fc?1:1+.7*N.c1(m)+.3*N.c2(m));solar=Math.max(0,clear*(1-red));}
   let wind=0;if(sc.wind.mean>0){wind=sc.wind.mean+sc.wind.var*N.w1(m);if(!fc)wind+=4*N.w2(m);wind=clamp(wind,0,60);}
@@ -1505,15 +1546,27 @@ function availability(c,m){if(NOGEN())return zeroD();const a={solar:c.solar,wind
   SERVICES.forEach(s=>{if(s.gen&&S.allow[s.id]<=0)a[s.id]=0;if(S.fail[s.id]>m)a[s.id]=0;});return a;}
 function spareOf(k,m){const sc=S.sc,nb=(sc.nb&&sc.nb[k])||NBS[k];let sh;
   if(sc.nbShape==='solar'){const h=m/60,f=(h-sc.solar.start)/(sc.solar.end-sc.solar.start);sh=f>0&&f<1?Math.pow(Math.sin(Math.PI*f),1.4):0;}
-  else sh=(interp(sc.demand,clamp(m/60,0,24))-S.dmin)/(S.dmax-S.dmin);
+  else sh=(interp(sc.demand,clamp(m/60,0,24))+.5*surgeMW(m/60)-S.dmin)/(S.dmax-S.dmin);
   return nb.base-nb.dip*sh;}
 
+/* ---------- Shift debrief: every point lost, with the reason ---------- */
+// Losses of the same kind on the same thing within a couple of minutes join into one episode.
+function lose(m,k,r,l,pts){if(S.silent||!(pts>0))return;const o=S.lossOpen||(S.lossOpen={});let e=o[k];
+  if(!e||m>e.to+2){e=o[k]={k,r,l,from:m,to:m,pts:0};(S.loss||(S.loss=[])).push(e);}e.to=m;e.pts+=pts;}
+// why half sx of 11 kV feeder p,i is off supply
+function offWhy(p,i,sx,sup){const f=S.lff&&S.lff[p]&&S.lff[p][i],fn=`${lfName(p,i)} (${PR[p].name})`;
+  if(f){if(!f.found)return{k:'lvfind:'+p+i,r:'lvfind',l:`Fault not yet found on the ${fn}`};
+    if(sx===f.sec)return{k:'lvrep:'+p+i,r:'repair',l:`Faulted half of the ${fn} under repair`};
+    return{k:'lvh:'+p+i,r:f.sec===1?'lvnear':'lvfar',l:`Healthy half of the ${fn} left off`};}
+  if(!subOn(p,sup)){const fd=S.fd[p]&&S.fd[p].fault;return{k:'sub:'+p,r:fd?(fd.planned?'sub_plan':'sub_fd'):'sub',l:`${PR[p].name} off supply`};}
+  return{k:'lvoff:'+p+i,r:'lvoff',l:`${ucfirst(lfName(p,i))} at ${PR[p].name} left off`};}
 function logE(m,text,lvl){S.log.unshift({m,text,lvl});if(S.log.length>60)S.log.pop();logDirty=true;}
 function mark(m,type,label){if(!S.silent)S.marks.push({m,type,label});}
 // a breaker trip or auto-reclose, shown on the alarm list until it's acknowledged
 function alEv(m,kind,name,sel,note){if(S.silent)return;const id='ev'+(S.alEvN=(S.alEvN||0)+1);S.alarms[id]={id,ev:kind,lvl:kind,name,sel:sel||'',note:note||'',since:m,L:0,ack:false};}
 function queueAlert(text,lvl,pause){if(!S.silent)queued.push({text,lvl,pause,m:S.t});}
-function incident(m,msg,el){S.incidents++;S.chain.push('a switching incident');mark(m,'incident','Incident');logE(m,'Switching incident: '+msg,'alarm');queueAlert('Switching incident: '+msg,'alarm',true);play('incident');fx(el);}
+function incident(m,msg,el){S.incidents++;
+  lose(m,'inc'+S.incidents,/for more than/.test(msg)?'par':/mobile generator/.test(msg)?'inc_mg':/before (its|it was)|onto (the faulted|its fault)|still working/.test(msg)?'inc_early':'oop','Switching incident: '+msg.split(/\. /)[0].replace(/\.$/,''),INCIDENT_PTS);S.chain.push('a switching incident');mark(m,'incident','Incident');logE(m,'Switching incident: '+msg,'alarm');queueAlert('Switching incident: '+msg,'alarm',true);play('incident');fx(el);}
 function openEdge(id){const[t,k]=id.split(':');if(t==='bs')S.bs[k].closed=false;else if(t==='bc')S.fd[k].brk=false;else if(t==='in')S.fd[k].inc=false;else if(t==='tie')S.tie[k].closed=false;else if(t==='it')S.it[k].closed=false;else if(t==='lk')S.lk[k]=false;}
 const isClosed=id=>{const[t,k]=id.split(':');return t==='bs'?S.bs[k].closed:t==='bc'?S.fd[k].brk:t==='in'?S.fd[k].inc:t==='tie'?S.tie[k].closed:t==='lk'?!!S.lk[k]:S.it[k].closed;};
 const fdOn=p=>{const f=S.fd[p];return !!PR[p].fd&&f.brk&&f.inc&&!f.fault;};
@@ -1537,7 +1590,7 @@ function locate(m,p,i,sec,how){const f=S.lff[p][i];if(!f||f.found)return;f.found
 function checkLv(m,opK){if(!LV_ON||!S.lff)return;
   PIDS.forEach(p=>LF[p].forEach((v,i)=>{const f=S.lff[p][i];if(!f)return;
     for(let g=0;g<3;g++){const d=srcDev(p,i,f.sec);if(!d)break;const live=[0,1].filter(s=>srcDev(p,i,s)===d);tripDev(d);
-      if(opK){S.trial++;mark(m,'trip','Closed onto fault');const s=`The ${devName(d)} tripped straight away: it was closed onto the fault on the ${lfName(p,i)} at ${PR[p].name}.`;logE(m,s,'alarm');alEv(m,'trip',ucfirst(devName(d)),d,'closed onto fault');queueAlert(s,'alarm',false);play('fault');fx(elOf(d));}
+      if(opK){S.trial++;lose(m,'trial:'+p+i,'trial',`Closed the ${devName(d)} onto a fault`,TRIAL_PTS);mark(m,'trip','Closed onto fault');const s=`The ${devName(d)} tripped straight away: it was closed onto the fault on the ${lfName(p,i)} at ${PR[p].name}.`;logE(m,s,'alarm');alEv(m,'trip',ucfirst(devName(d)),d,'closed onto fault');queueAlert(s,'alarm',false);play('fault');fx(elOf(d));}
       else if(f.start!==m){const s=`The ${devName(d)} tripped: supply came back onto the faulted ${lfName(p,i)} at ${PR[p].name}.`;logE(m,s,'alarm');alEv(m,'trip',ucfirst(devName(d)),d,'onto fault');queueAlert(s,'alarm',false);play('trip');}
       if(live.length===1)locate(m,p,i,live[0],'Protection operated on that half only.');}
     if(!f.found&&!midOn(p,i)){const lv=[0,1].filter(s=>secFeed(p,i,s)!==null);if(lv.length===1)locate(m,p,i,1-lv[0],`The ${lv[0]?'second':'first'} half is holding on load.`);}}));}
@@ -1581,14 +1634,14 @@ function step(){
       const s=`Fault on the ${devName('it:'+id)}: ${f.cause.toLowerCase()}. ${was?'It tripped. ':''}Repair expected by ${fmtT(m+f.dur)}.`;logE(m,s,'alarm');if(was)alEv(m,'trip',ucfirst(devName('it:'+id)),'it:'+id,'fault');queueAlert(s,'alarm',true);play('fault');fx('itg_'+id);}
     else if(type==='lv'){const[p,i]=lfP(id);if(!PIDS.includes(p)||S.lff[p][i])continue;const devs=[0,1].map(s=>srcDev(p,i,s)),dv=devs[f.sec];if(!dv)continue;
       const nm=lfName(p,i),fedN=[0,1].filter(s=>devs[s]===dv).reduce((a,s)=>a+custOf(p,i,s),0);
-      if(f.tr){S.cust.si+=fedN;S.recloses++;mark(m,'ar','Auto-reclose');alEv(m,'ar',`${ucfirst(devName(dv))} (${PR[p].name})`,dv,'held in');logE(m,`${ucfirst(nm)} at ${PR[p].name} tripped and auto-reclosed: a transient fault (${f.cause.toLowerCase()}) cleared itself. ${nf(fedN)} customers had a short interruption.`,'info');play('ar');continue;}
+      if(f.tr){S.cust.si+=fedN;lose(m,'ar'+m,'ar','Auto-reclose',fedN/500);S.recloses++;mark(m,'ar','Auto-reclose');alEv(m,'ar',`${ucfirst(devName(dv))} (${PR[p].name})`,dv,'held in');logE(m,`${ucfirst(nm)} at ${PR[p].name} tripped and auto-reclosed: a transient fault (${f.cause.toLowerCase()}) cleared itself. ${nf(fedN)} customers had a short interruption.`,'info');play('ar');continue;}
       S.lff[p][i]={sec:f.sec,dur:f.dur,found:!!S.sc.easy,until:S.sc.easy?m+f.dur:null,start:m,label:f.cause,oh:!!LF_OH[p][i]};S.faults++;S.chain.push(`a fault on the ${nm}`);mark(m,'fault',LFN[p][i]+' fault');
       checkLv(m,null);const f2=S.lff[p][i];
       const how=LF_OH[p][i]&&dv.startsWith('lf:')?`The breaker at ${PR[p].name} tripped, auto-reclosed onto a permanent fault and locked out.`:`The ${devName(dv)} tripped${LF_OH[p][i]?' and locked out':' (underground cable, so no auto-reclose)'}.`;
       const s=`Fault on the ${nm} at ${PR[p].name}: ${f.cause.toLowerCase()}. ${how} ${nf(fedN)} customers are off.`+(f2.found?` It's in the ${SECN[f2.sec]}, repair expected by ${fmtT(f2.until)}.${S.sc.easy&&f2.sec?' Send a crew to open the mid-point switch, then close the breaker to restore the first half. Close the mid-point switch after the repair.':''}`:` The fault could be in either half. Send a crew to open the mid-point switch, then trial-close the breaker to find it. Line patrol will find it by ${fmtT(m+PATROL)} otherwise.`);
       logE(m,s,'alarm');if(LF_OH[p][i]&&dv.startsWith('lf:'))alEv(m,'ar',`${ucfirst(devName(dv))} (${PR[p].name})`,dv,'onto a permanent fault');alEv(m,'trip',`${ucfirst(devName(dv))} (${PR[p].name})`,dv,LF_OH[p][i]&&dv.startsWith('lf:')?'locked out':'fault');queueAlert(s,'alarm',true);play('fault');fx(elOf(dv));}
     else if(type==='ar'){const p=id;if(!PIDS.includes(p)||!fdOn(p)||Math.abs(S.flows['bc:'+p]||0)<.5)continue;let n=0;PIDS.forEach(q=>LF[q].forEach((v,i)=>[0,1].forEach(s=>{if(secFeed(q,i,s)===p)n+=custOf(q,i,s);})));
-      S.cust.si+=n;S.recloses++;mark(m,'ar','Auto-reclose');alEv(m,'ar',`${PR[p].name} 33 kV feeder`,'bc:'+p,'held in');logE(m,`${PR[p].name} 33 kV feeder tripped and auto-reclosed: a transient fault (${f.cause.toLowerCase()}) cleared itself. ${nf(n)} customers had a short interruption.`,'info');play('ar');fx('fdg_'+p);}
+      S.cust.si+=n;lose(m,'ar'+m,'ar','Auto-reclose',n/500);S.recloses++;mark(m,'ar','Auto-reclose');alEv(m,'ar',`${PR[p].name} 33 kV feeder`,'bc:'+p,'held in');logE(m,`${PR[p].name} 33 kV feeder tripped and auto-reclosed: a transient fault (${f.cause.toLowerCase()}) cleared itself. ${nf(n)} customers had a short interruption.`,'info');play('ar');fx('fdg_'+p);}
     else{const p=id,fd=S.fd[p];if(fd.fault||(S.sc.easy&&PIDS.some(q=>S.fd[q].fault&&!S.fd[q].fault.planned)))continue;// easy shifts: one feeder fault at a time
       fd.fault={until:m+f.dur,ready:false,label:f.cause};S.faults++;S.chain.push(`a fault on the ${PR[p].name} feeder`);mark(m,'fault',`${PR[p].name} feeder fault`);
       const was=fd.brk&&fd.inc;fd.brk=false;fd.inc=false;
@@ -1667,7 +1720,7 @@ function step(){
     if(!S.silent){
       if(m===G.warn){const s1=`National Grid warning: a supergrid transformer at Steve Towers is failing. From ${fmtT(G.start)} you will have to hold Blackout Canyon plus Ampy Place to ${G.limit} MW until ${fmtT(G.end)}. Ampy Place shares the grid supply, so it does not help. Use Watts This, Volt Face and, if you must, 11 kV feeders.`;logE(m,s1,'alarm');queueAlert(s1,'alarm',true);play('warn');}
       if(m===G.start){const s2=`National Grid instruction: Steve Towers is down to one supergrid transformer. Get below ${G.limit} MW by ${fmtT(G.deadline)} (now ${Math.round(S.gspLoad)} MW).`;logE(m,s2,'alarm');queueAlert(s2,'alarm',true);play('emerg');mark(m,'fail','GSP limit');}
-      if(m>=G.deadline&&m<G.end){if(S.gspLoad>G.limit+.5){S.gspOver++;S.insecureMin++;
+      if(m>=G.deadline&&m<G.end){if(S.gspLoad>G.limit+.5){S.gspOver++;S.insecureMin++;lose(m,'gsp','gsp','Over the National Grid limit at Steve Towers',20);
           if(S.gspOver>=15){S.gspOver=0;const live=S.tx.map((t,i)=>[t,i]).filter(([t])=>!t.out).sort((a,b)=>Math.abs(b[0].flow)-Math.abs(a[0].flow));
             if(live.length){const[t,i]=live[0];t.out={kind:'trip',until:m+90,ready:false,label:'Disconnected by National Grid'};S.gspTrips++;S.trips++;S.chain.push('National Grid disconnecting T'+(i+1));mark(m,'trip','GSP disconnect');alEv(m,'trip','T'+(i+1),'tx:'+i,'National Grid');
               const s3=`National Grid disconnected T${i+1} at Steve Towers to protect the grid, because Blackout Canyon stayed above the ${G.limit} MW limit. It can be closed again after 90 minutes.`;logE(m,s3,'alarm');queueAlert(s3,'alarm',true);play('trip');fx('cct'+i);}}}
@@ -1675,8 +1728,8 @@ function step(){
       if(m===G.end){logE(m,'National Grid has lifted the Steve Towers limit. Normal running can resume.','ok');queueAlert('National Grid has lifted the Steve Towers limit.','ok',false);play('ok');}}}
   let allOff=true;
   {const C=S.cust;PIDS.forEach(p=>LF[p].forEach((f,i)=>SECF.forEach((h,sx)=>{const k=p+i+'s'+sx,fed=secFeed(p,i,sx,sup)!==null,n=Math.round(CUST_TOTAL*S.share[p]*f*h);
-    if(!fed){const o=C.off[k]=(C.off[k]||0)+1;if(o===SHORT_INT){C.ci+=n;C.cml+=SHORT_INT*n;}else if(o>SHORT_INT)C.cml+=n;}
-    else if(C.off[k]){if(C.off[k]<SHORT_INT)C.si+=n;C.off[k]=0;}})));
+    if(!fed){const o=C.off[k]=(C.off[k]||0)+1,w=(C.why||(C.why={}))[k]=offWhy(p,i,sx,sup);let d=0;if(o===SHORT_INT){C.ci+=n;C.cml+=SHORT_INT*n;d=n/100+SHORT_INT*n/500;}else if(o>SHORT_INT){C.cml+=n;d=n/500;}lose(m,w.k,w.r,w.l,d);}
+    else if(C.off[k]){if(C.off[k]<SHORT_INT){C.si+=n;const w=C.why&&C.why[k];if(w)lose(m,w.k,w.r,w.l,n/500);}C.off[k]=0;}})));
    S.ens=C.ci/100+C.cml/500+C.si/500;S.vfPeak=Math.max(S.vfPeak,S.vfLoad||0);}
   PIDS.forEach(p=>{if(sup[p]==='off'){if(p==='ml')S.cost.gen+=c.solar*SV.solar.use/60;if(p==='rv')S.cost.gen+=c.wind*SV.wind.use/60;}else allOff=false;});
   if(allOff&&!S.silent){loseSite(m);return;}
@@ -1692,7 +1745,8 @@ function step(){
     else{S.cost.use+=ap*s.use/60;S.cost.short+=mp*s.use*1.5/60;}});
   if(autoTot>.5&&!S.autoOn)mark(m,'flex','Flex in');S.autoOn=autoTot>.5;
   S.soc=clamp(S.soc+(S.act.bchg*.92-S.act.bdis)/60,0,SOC_MAX);
-  S.sec=security(av);if(S.sec.insecure&&!S.silent)S.insecureMin++;
+  {const cp=S.cp||(S.cp={});Object.entries(SPEND_L).forEach(([k,l])=>{lose(m,'sp:'+k,'sp_'+k,l,(S.cost[k]-(cp[k]||0))/10);cp[k]=S.cost[k];});}
+  S.sec=security(av);if(S.sec.insecure&&!S.silent){S.insecureMin++;lose(m,'risk','risk',`${ucfirst(secName(S.sec.secs||[]))} at risk: not secure for the next loss`,20);}
   S.hist.push({m,net,n});if(S.hist.length>70)S.hist.shift();
   if(!S.silent)S.full.push({m,net,n,ins:S.sec.insecure,off:PIDS.filter(p=>sup[p]==='off').length});
   S.t++;
@@ -1839,7 +1893,7 @@ const ucfirst=s=>s[0].toUpperCase()+s.slice(1);
 function loseSite(m){
   queued=[];const ch=S.chain.length?S.chain.slice(-4):['a loss of supply'];
   const why=ch.length>1?ch.slice(0,-1).join(', ')+' and then '+ch[ch.length-1]:ch[0];
-  S.lost={m,why};mark(m,'lost','Site lost');
+  S.lost={m,why};mark(m,'lost','Site lost');lose(m,'lost','lost','Blackout Canyon lost',(END-m)*10+5000);
   logE(m,`Blackout Canyon lost. After ${why}, all ${PIDS.length===5?'five':'four'} substations were off supply at once.`,'alarm');
   S.net=0;play('lost');fx('pMimic');endShift();
 }
@@ -2412,6 +2466,7 @@ function tipOk(){const wasPause=S.tipPause;hideTip();if(TIPS.every(x=>S.tipShown
 function renderLog(){if(!logDirty)return;logDirty=false;
   $('log').innerHTML=S.log.length?S.log.map(l=>`<li class="${l.lvl}"><time>${fmtT(l.m)}</time><span>${esc(l.text)}</span></li>`).join(''):'<li class="empty">Nothing yet.</li>';}
 const spendOf=c=>c.arm+c.use+c.short+c.curt+c.gen;
+const SPEND_L={arm:'Availability fees for armed flex',use:'Armed flex switching in',short:'Flex called at short notice',curt:'Curtailing generation',gen:'Compensation for generators off supply'};
 function render(force){
   txt('clock',fmtT(S.t));txt('kSpend',gbp(spendOf(S.cost)));txt('kInc',String(S.incidents));$('kInc').classList.toggle('bad',S.incidents>0);
   {const n=S.sec?S.sec.n:S.n,abs=S.sec?S.sec.abs:Math.abs(S.net||0),live=S.tx.filter(t=>!t.out),maxL=live.length?Math.max(...live.map(t=>t.L)):0;let fv,fs,fc,dt;
@@ -2686,6 +2741,35 @@ function drawReplay(){
   return `<div class="replay"><h3>Your shift</h3><div class="scroll"><svg class="rp" viewBox="0 0 ${W} ${H}" role="img" aria-label="Blackout Canyon net flow through the shift against capacity, with faults and switching marked">${s}</svg></div><div class="legend" style="margin-top:6px">${legend}</div>
     <p class="rp-sum">Peak loading ${Math.round(S.peakL*100)}% · ${S.faults} ${S.faults===1?'fault':'faults'} · ${S.incidents} ${S.incidents===1?'incident':'incidents'} · ${nf(S.cust.ci)} customers interrupted (${(S.cust.cml/CUST_TOTAL).toFixed(1)} min lost each) · ${S.insecureMin} min at risk</p></div>`;
 }
+// Tips for the debrief, by reason. A shift can override any of them with its own tips:{reason:text}.
+const DB_TIPS={
+  sub:'A whole substation off costs points every minute. Get it back first, through its tie or an interconnector, and tidy up afterwards.',
+  sub_fd:'A 33 kV feeder fault leaves the substation off until you switch it round. Close its tie or an interconnector straight away, and send a crew to stand by when a weather warning starts.',
+  sub_plan:'Planned outages are announced at the start of the shift and again an hour before. Move the substation onto another route before field staff open the feeder.',
+  lvfind:'Don\'t wait for line patrol. Send a crew to open the mid-point switch, then close the breaker: if it holds, the fault is in the far half and the near half is back on.',
+  lvnear:'With the fault in the far half, open the mid-point switch and close the breaker at the substation. The near half comes straight back.',
+  lvfar:'With the fault in the near half, the far half can come back from the other end: Volt Face, an 11 kV link or a mobile generator.',
+  lvoff:'These customers were on a healthy feeder. After a repair or a trip, check the alarm list and close the breaker and mid-point switch to put everyone back.',
+  risk:'Minutes at risk count while losing one more transformer would overload the rest. Use the look-ahead and move load onto the neighbours before the peak, not during it.',
+  gsp:'Get under the National Grid limit before the deadline. Watts This and Volt Face take load off Steve Towers; Ampy Place is on the same grid supply, so moving load there doesn\'t help.',
+  oop:'Watts This and Volt Face are on a different grid supply from Blackout Canyon and Ampy Place. When moving load between them, open the old supply before closing the new one: break before make.',
+  par:'Make before break onto Ampy Place is fine, but open one side within '+PAR_MAX+' minutes of closing the other.',
+  inc_mg:'A mobile generator can\'t be paralleled with anything. Disconnect it before closing any other supply onto its section.',
+  inc_early:'Wait for the "repaired" or "finished" message before closing anything back onto faulted plant. Closing early trips it and adds 30 minutes.',
+  trial:'Each close onto a fault costs '+TRIAL_PTS+' points. Open the mid-point switch first so only half the feeder is tried, and keep the faulted half isolated until the repair is done.',
+  sp_arm:'Availability fees run for as long as flex is armed. Arm what the look-ahead says the peak needs, and disarm once it has passed.',
+  sp_use:'Armed flex switched in because loading went past firm capacity. Moving load onto the neighbours first costs nothing.',
+  sp_short:'Calling flex by hand costs 1.5 times the armed price. Arm it ahead of the peak instead.',
+  sp_curt:'Curtailment compensation adds up quickly. Curtail only what is needed and release it as soon as loading allows.',
+  sp_gen:'Generators on a substation that is off supply still get compensation. Restore those substations quickly.',
+  lost:'Every substation was off at once. Keep a healthy route ready for each substation, and get transformers under their emergency rating before protection trips them.'};
+const UNAVOID={repair:1,ar:1};// faulted sections and auto-recloses: nothing the player could have done
+const tipOf=r=>{const b=r.split('_')[0],t=S.sc.tips||{};return t[r]||t[b]||DB_TIPS[r]||DB_TIPS[b]||'';};
+function drawDebrief(){if(GAME!=='cr')return'';const all=S.loss||[],top=all.filter(e=>!UNAVOID[e.r]&&e.pts>=1).sort((a,b)=>b.pts-a.pts).slice(0,3);
+  const un=Math.round(all.filter(e=>UNAVOID[e.r]).reduce((a,e)=>a+e.pts,0)),when=e=>fmtT(e.from)+(e.to>e.from?'–'+fmtT(e.to+1):'');
+  const unl=un?`<p class="fine">Another ${nf(un)} points went on faulted sections waiting for repair and on auto-recloses: nothing to be done about those.</p>`:'';
+  if(!top.length)return `<div class="debrief"><h3>Shift debrief</h3><p>Nothing cost you points that you could have saved. Textbook.</p>${unl}</div>`;
+  return `<div class="debrief"><h3>Shift debrief</h3><p class="fine">The ${top.length===1?'moment':top.length+' moments'} that cost the most points, and what to try next time.</p><ol>${top.map(e=>`<li><div class="db-h"><b class="db-pts">−${nf(e.pts)}</b><span class="db-t">${when(e)}</span><span class="db-l">${esc(e.l)}</span></div><p class="db-tip">${esc(tipOf(e.r))}</p></li>`).join('')}</ol>${unl}</div>`;}
 function showEnd(){
   const c=S.cost,F=S.final,L=S.lost,sg=v=>(v<0?'−':'+')+nf(Math.abs(v));
   const costs=NOGEN()?'':`<table class="sum"><tbody>
@@ -2726,7 +2810,7 @@ function showEnd(){
       ${CR.newUnl.length?`<p>Unlocked: <b>${CR.newUnl.map(k=>esc(SCENARIOS[k].title)).join(', ')}</b></p>`:''}
       ${CR.newA.length?`<div class="ach">${CR.newA.map(a=>`<span class="badge got" title="${esc(a.d)}">🏅 ${esc(a.name)}</span>`).join('')}</div>`:''}
       ${S.mode!=='career'?'':CR.next?(unlockedK(career(),CR.next)?`<button type="button" class="btn primary big" data-next="${CR.next}">Start next day: ${esc(SCENARIOS[CR.next].title)} →</button>`:`<p class="fine">Finish this shift to unlock ${esc(SCENARIOS[CR.next].title)}. Press Try again below.</p>`):`<p><b>That's every career shift done.</b> Replay any of them to earn more stars.</p>`}</div>`:'';
-  $('sheet').innerHTML=`${BAND}<p class="eyebrow">${esc(S.sc.title)}, ${esc(S.sc.when)} · ${S.mode==='daily'?"Today's challenge, "+fmtDate(S.date):S.mode==='career'?'Career · '+esc(CR?CR.rank:''):'Free play'}</p>${head}${cbox}${drawReplay()}${score}${sub}${costs}${btns}`;
+  $('sheet').innerHTML=`${BAND}<p class="eyebrow">${esc(S.sc.title)}, ${esc(S.sc.when)} · ${S.mode==='daily'?"Today's challenge, "+fmtDate(S.date):S.mode==='career'?'Career · '+esc(CR?CR.rank:''):'Free play'}</p>${head}${cbox}${drawDebrief()}${drawReplay()}${score}${sub}${costs}${btns}`;
   $('overlay').hidden=false;
 }
 
@@ -2739,9 +2823,10 @@ async function submitScore(){
   if(rude(nm)){setMsg('Please choose a different name.','err');inp.focus();return;}
   saveName(nm);const F=S.final;btn.disabled=true;setMsg('Sending…');
   try{
-    const r=await fetch(SCORE_URL,{method:'POST',body:JSON.stringify({game:GAME,name:nm,day:S.key,mode:modeKey(S.mode,S.date),result:F.result,survived:F.surv,spend:Math.round(F.spend),faults:S.faults,risk:S.insecureMin,ens:Math.round(S.ens),incidents:S.incidents,grade:F.grade})});
+    const r=await fetch(SCORE_URL,{method:'POST',body:JSON.stringify({game:GAME,site:location.hostname,name:nm,day:S.key,mode:modeKey(S.mode,S.date),result:F.result,survived:F.surv,spend:Math.round(F.spend),faults:S.faults,risk:S.insecureMin,ens:Math.round(S.ens),incidents:S.incidents,grade:F.grade})});
     const j=await r.json();
     if(!j.ok){if(j.error==='name'){btn.disabled=false;setMsg('Please choose a different name.','err');return;}
+      if(j.error==='site'){setMsg(`Scores can only be saved on the original game at ${HOME_HOST}.`,'err');unlockEnd();return;}
       if(!(j.version>=(GAME==='cr'?3:1))){setMsg("The scoreboard isn't switched on yet, so this score wasn't saved.",'err');unlockEnd();return;}throw new Error(j.error||'rejected');}
     S.submitted={rank:j.rank,total:j.total};lastSubmit={name:j.name||nm,score:j.score,day:S.key,mode:S.mode};
     track('score_submitted',{scenario:S.key,mode:S.mode,score:j.score});

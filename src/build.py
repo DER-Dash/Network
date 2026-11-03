@@ -45,6 +45,7 @@ META={
 def page(game,s):
     m=META[game];desc,url=m['desc'],m['url']
     s,n=re.subn(r"window\.__fc=\{.*?select\};\n","",s,flags=re.S)
+    assert s.count('SITE_LOCK=false;')==1;s=s.replace('SITE_LOCK=false;','SITE_LOCK=true;')  # domain lock on for GitHub Pages
     assert n==1 and '__fc' not in s
     s=s.replace('<meta charset="utf-8">\n','',1)
     i=s.index('<style>');j=s.index('</style>')+len('</style>')

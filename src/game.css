@@ -418,3 +418,16 @@ html.kiosk .qp{width:270px;font-size:14px}
 @keyframes kUp{from{transform:translateY(24px);opacity:0}}
 @keyframes kZap{50%{filter:drop-shadow(0 0 24px #FFD23F)}}
 @media (prefers-reduced-motion:reduce){.k-intro.go,.k-intro.go *{animation:none!important}}
+/* Shift debrief */
+.debrief{margin:0 0 16px;padding:14px 16px;border-radius:6px;background:var(--sunk);border:1px solid var(--rule)}
+.debrief h3{margin:0 0 4px}
+.debrief>.fine{margin:0 0 10px}
+.debrief ol{margin:0;padding:0;list-style:none;display:grid;gap:10px;counter-reset:db}
+.debrief li{counter-increment:db;padding:10px 12px 10px 40px;position:relative;border-radius:5px;background:var(--panel);border:1px solid var(--rule)}
+.debrief li::before{content:counter(db);position:absolute;left:12px;top:10px;width:20px;height:20px;border-radius:50%;background:var(--alarm);color:#fff;font:700 12px/20px var(--f-mono);text-align:center}
+.db-h{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.db-pts{font:700 15px var(--f-mono);font-variant-numeric:tabular-nums;color:var(--alarm)}
+.db-t{font:13px var(--f-mono);color:var(--muted)}
+.db-l{flex-basis:100%;font-weight:600;overflow-wrap:anywhere}
+.db-tip{margin:6px 0 0;font-size:14px}
+.debrief>p:last-child{margin-bottom:0}

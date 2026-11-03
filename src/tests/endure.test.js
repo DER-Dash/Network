@@ -22,6 +22,6 @@ async function open(md){const d=mk(),w=d.window,doc=w.document;await wait(30);do
  {const {doc,G}=await open('free');doc.querySelector('[data-scn="endure"]').click();doc.querySelector('[data-scn="storm"]').click();
   ok(doc.getElementById('startBtn').textContent==='Start shift at 08:00','back to 08:00 on Storm day');doc.getElementById('startBtn').click();ok(G.S.t===480,'Storm day starts at 08:00');}
  // career: it's the last shift and locked to begin with
- {const {doc}=await open('career');const b=doc.querySelector('[data-scn="endure"]');ok(b&&b.disabled,'locked in a new career');ok(/Shift 9/.test(b.textContent),'career shift 9');}
+ {const {doc}=await open('career');const b=doc.querySelector('[data-scn="endure"]');ok(b&&b.disabled,'locked in a new career');ok(/Shift 10/.test(b.textContent),'career shift 10');}
  ok(!errs.length,'no script errors '+errs.slice(0,3).join(' | '));
  console.log(fails?fails+' failed':'all passed');process.exit(fails?1:0);})();

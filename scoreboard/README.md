@@ -72,3 +72,15 @@ To switch it on:
    Keep the same deployment so the web app URL doesn't change.
 
 At most 20 feedback messages are accepted in any 10 minutes, to protect the daily email quota.
+
+## Version 12 (EV evening and the domain lock)
+
+Accepts scores for the new **EV evening** control room shift (`ev`), and only
+accepts scores sent from the games on `der-dash.github.io`. Copies of the game
+re-hosted on other websites get "Invalid score". Paste in the new `Code.gs`,
+save, then **Deploy → Manage deployments → Edit (pencil) → Version: New version
+→ Deploy**.
+
+The check uses the website name the game sends with each score, because Apps
+Script can't see where a request came from. It stops copies of the game from
+posting scores, but someone deliberately faking requests could still get past it.
