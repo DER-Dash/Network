@@ -844,6 +844,55 @@ html.kiosk .qp{width:270px;font-size:14px}
   #startBtn{position:fixed;z-index:1;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));box-shadow:0 6px 20px rgba(0,0,0,.35)}
   .pick{padding-bottom:72px}
 }
+
+/* Day cards: scene icon, difficulty bolts and best score */
+.scns{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.scn{padding:14px 16px;gap:6px}
+.scn b{font-size:21px}
+.scn-top{display:flex;align-items:center;gap:10px}
+.scn .ico{width:46px;height:46px;border-radius:10px}
+.scn .ico svg{width:28px;height:28px}
+.scn .diff svg{width:12px;height:17px}
+.scn .best{font-size:13px;color:var(--muted)}
+.scn .best b{font:600 14px var(--f-mono);letter-spacing:0;text-transform:none;color:var(--ink)}
+
+/* Weather behind the network diagram, set by the shift */
+.wx{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0;border-radius:4px}
+.wx i{position:absolute;inset:0;display:none}
+.mimic-svg{position:relative;z-index:1}
+.wx-sun .wx-a,.wx-heat .wx-a{display:block;background:radial-gradient(circle at 93% 4%,color-mix(in srgb,var(--c-solar) 38%,transparent),transparent 34%);animation:wxGlow 6s ease-in-out infinite alternate}
+.wx-heat .wx-b{display:block;inset:30% 0 0;background:repeating-linear-gradient(180deg,transparent 0 22px,color-mix(in srgb,var(--c-gas) 9%,transparent) 22px 30px);animation:wxHaze 4s ease-in-out infinite alternate}
+.wx-cloud .wx-a,.wx-storm .wx-a,.wx-snow .wx-a{display:block;inset:-10% -30% auto -10%;height:45%;opacity:.5;
+  background:radial-gradient(ellipse 14% 40% at 12% 40%,var(--rule),transparent 70%),radial-gradient(ellipse 18% 50% at 38% 30%,var(--rule),transparent 70%),radial-gradient(ellipse 12% 35% at 62% 45%,var(--rule),transparent 70%),radial-gradient(ellipse 16% 45% at 86% 30%,var(--rule),transparent 70%);
+  animation:wxDrift 60s linear infinite alternate}
+.wx-storm .wx-a{opacity:.85;filter:brightness(.85)}
+.wx-storm .wx-b{display:block;background:repeating-linear-gradient(105deg,transparent 0 14px,color-mix(in srgb,var(--mv) 14%,transparent) 14px 15px);background-size:200px 200px;animation:wxRain .5s linear infinite}
+.wx-storm .wx-c{display:block;background:color-mix(in srgb,var(--zap) 35%,#fff);opacity:0;animation:wxFlash 11s infinite}
+.wx-snow .wx-b,.wx-snow .wx-c{display:block;background-image:radial-gradient(circle,color-mix(in srgb,var(--mv) 30%,transparent) 1.6px,transparent 2.4px),radial-gradient(circle,color-mix(in srgb,var(--mv) 22%,transparent) 1.2px,transparent 2px);background-size:90px 90px,60px 60px;background-position:0 0,30px 40px;animation:wxSnow 9s linear infinite}
+.wx-snow .wx-c{background-size:130px 130px,75px 75px;animation-duration:15s;opacity:.7}
+@keyframes wxGlow{to{opacity:.6}}
+@keyframes wxHaze{to{transform:translateY(-8px);opacity:.6}}
+@keyframes wxDrift{to{transform:translateX(20%)}}
+@keyframes wxRain{to{background-position:-60px 200px}}
+@keyframes wxSnow{to{background-position:30px 270px,60px 280px}}
+@keyframes wxFlash{0%,90%,93%,95%,100%{opacity:0}91%{opacity:.45}94%{opacity:.3}}
+@media (prefers-reduced-motion:reduce){.wx i{animation:none!important}.wx-storm .wx-c{display:none}}
+
+/* Display mode: brand card between demo loops */
+.k-intro{position:fixed;inset:0;z-index:40;display:grid;place-items:center;cursor:pointer;background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--wu-navy) 75%,#fff),var(--wu-navy) 70%);color:#fff;text-align:center;padding:24px}
+.k-intro.go{animation:kFade 6s both}
+.k-in{display:grid;gap:clamp(18px,4vh,40px);justify-items:center}
+.k-intro .wu-lock svg{width:clamp(90px,14vw,170px);height:auto}
+.k-intro .wu-lock b{font-size:clamp(56px,9vw,120px)}
+.k-intro.go .wu-lock{animation:kPop .9s cubic-bezier(.2,1.4,.4,1) both}
+.k-intro.go .wu-lock svg{animation:kZap 1.6s .9s ease-in-out 2}
+.k-q{margin:0;font:700 clamp(28px,5vw,68px)/1.05 var(--f-display);letter-spacing:.03em;text-transform:uppercase;color:#FFD23F;text-wrap:balance}
+.k-intro.go .k-q{animation:kUp .8s 1s both}
+@keyframes kFade{0%{opacity:0}8%,90%{opacity:1}100%{opacity:0}}
+@keyframes kPop{from{transform:scale(.6);opacity:0}}
+@keyframes kUp{from{transform:translateY(24px);opacity:0}}
+@keyframes kZap{50%{filter:drop-shadow(0 0 24px #FFD23F)}}
+@media (prefers-reduced-motion:reduce){.k-intro.go,.k-intro.go *{animation:none!important}}
 </style>
 </head>
 <body>
@@ -891,7 +940,7 @@ html.kiosk .qp{width:270px;font-size:14px}
       <div class="legend"><span><i style="border-color:var(--hv)"></i>132 kV</span><span><i style="border-color:var(--mv)"></i>33 kV</span><span><i style="border-color:var(--c-kn)"></i>To Ampy Place</span><span><i style="border-color:var(--c-fm)"></i>To Watts This</span><span id="lgLK" hidden><i style="border-color:var(--c-lk);border-top-style:dashed"></i>11 kV link</span><span id="lgVF"><i style="border-color:var(--c-vf);border-top-style:dashed"></i>Volt Face 11 kV backfeed</span><span><i style="border-color:var(--mv);border-top-style:dashed"></i>Interconnector</span><span>■ closed · □ open</span><span id="lgMan">○ manual: needs a field crew</span><span>Select anything to control it</span></div>
       <button class="zoom-btn" type="button" id="zoomBtn" aria-pressed="true">Fit</button>
     </div>
-    <div class="mscroll" id="mscroll"><div id="qp" class="qp" role="dialog" aria-label="Switch control" hidden></div><svg id="mimic" class="mimic-svg" viewBox="0 0 1200 610" role="img" aria-label="Network diagram of Blackout Canyon, its four substations and two neighbouring networks"></svg></div>
+    <div class="mscroll" id="mscroll"><div id="wx" class="wx" aria-hidden="true"><i class="wx-a"></i><i class="wx-b"></i><i class="wx-c"></i></div><div id="qp" class="qp" role="dialog" aria-label="Switch control" hidden></div><svg id="mimic" class="mimic-svg" viewBox="0 0 1200 610" role="img" aria-label="Network diagram of Blackout Canyon, its four substations and two neighbouring networks"></svg></div>
   </section>
   <section class="panel p-ahead" id="pAhead" aria-label="Look-ahead">
     <div class="ph"><h2>Look-ahead</h2>
@@ -951,6 +1000,7 @@ html.kiosk .qp{width:270px;font-size:14px}
 <nav class="dock" aria-label="Game controls"><b id="dClock">05:00</b><span id="dPill" class="pill ok">N-1 secure</span><span id="dAl" class="al-count"></span><button id="dCtl" type="button" class="btn icon-btn" aria-label="Open the control panel"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button><button id="dSpeed" type="button" class="btn" aria-label="Change speed">1×</button><button id="dPlay" type="button" class="btn primary">Start</button></nav>
 
 <div id="coach" class="coach" role="dialog" aria-live="polite" hidden></div>
+<div id="kIntro" class="k-intro" hidden><div class="k-in"><div class="wu-lock"><svg viewBox="0 0 100 100" role="img" aria-label="Watts Up"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg><div><b>Watts <span>Up</span></b></div></div><p class="k-q">Can you keep the lights on?</p></div></div>
 <div id="tip" class="tip" role="dialog" aria-live="polite" hidden><span class="tk" id="tipK">Tip</span><p id="tipP"></p><div class="row"><button type="button" class="btn" id="tipSkip">Turn off tips</button><button type="button" class="btn primary" id="tipOk">Got it</button></div></div>
 
 <div id="cookie" class="cookie" role="dialog" aria-label="Cookies" hidden><p>Can we use Google Analytics cookies to count how many people play and how games go? Nothing is used for advertising.</p><div class="row"><button type="button" class="btn" id="cookieNo">No thanks</button><button type="button" class="btn primary" id="cookieYes">Accept</button></div></div>
@@ -1246,7 +1296,16 @@ const ICONS={solar:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12
   tx:'<circle cx="12" cy="9" r="5.5"/><circle cx="12" cy="15" r="5.5"/>',
   tie:'<path d="M3 12h6M15 12h6"/><rect x="9" y="8" width="6" height="8"/>',
   sub:'<path d="M3 8h18M7 8v10M12 8v10M17 8v10"/>',
-  nb:'<path d="M3 7h13l-3-3M21 17H8l3 3"/>'};
+  nb:'<path d="M3 7h13l-3-3M21 17H8l3 3"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+  snow:'<path d="M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7M9 3.5l3 2 3-2M9 20.5l3-2 3 2"/>',
+  storm:'<path d="M7 16a4 4 0 0 1 .3-8A5.5 5.5 0 0 1 18 9.5a3.3 3.3 0 0 1 0 6.5"/><path d="M13 11l-3 5h4l-2 5"/>',
+  heat:'<circle cx="12" cy="7" r="3"/><path d="M12 1.5v1M6.5 7h-1M18.5 7h-1M3.5 14c2.1-1.5 4.2 1.5 6.3 0s4.2-1.5 6.3 0 2.8 1.2 4.4 0M3.5 19c2.1-1.5 4.2 1.5 6.3 0s4.2-1.5 6.3 0 2.8 1.2 4.4 0"/>',
+  pylon:'<path d="M12 2 7.5 22M12 2l4.5 20M4 7h16M6 12h12M9.6 7l4.8 5M14.4 7l-4.8 5M8.6 17h6.8M8.6 17l6.8 5M15.4 17l-6.8 5"/>'};
+// Each day's scene: the icon on its card and the weather drawn behind the diagram
+const SCENE={quiet:'sun',grid:'pylon',storm:'storm',heat:'heat',jan:'snow',snow:'snow',gsp:'pylon',mesh:'pylon',endure:'storm',may:'sun',tut:'snow'};
+const WX={grid:'cloud',gsp:'cloud',mesh:'snow'};
+const sceneOf=k=>SCENE[k]||'pylon',wxOf=k=>WX[k]||{pylon:'cloud'}[sceneOf(k)]||sceneOf(k);
 const LOGO='<svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg>';
 const BAND=`<div class="sheet-brand wu"><div class="wu-lock"><svg viewBox="0 0 100 100" role="img" aria-label="Watts Up"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg><div><b>Watts <span>Up</span></b><small>Electricity Distribution</small></div></div><p class="tag">${CFG.band}</p></div>`;
 const SPK_ON='<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
@@ -1423,6 +1482,7 @@ function newGame(key){
   S.risk.forEach(w=>logE(START,`Weather warning: ${w.label.toLowerCase()} ${fmtT(w.start)}–${fmtT(w.end)}. Faults are ${w.mult}× more likely.`,'warn'));
   $('scnLabel').innerHTML=esc(sc.title+' · Blackout Canyon 33 kV')+(daily?` <span class="mode-tag">Daily ${esc(fmtDate(date))}</span>`:'');
   $('dayLabel').textContent=sc.when;
+  {const w=$('wx');if(w)w.className='wx wx-'+wxOf(key);}
   hideBanner();hideTip();lastSky='';lastInsp='';closeSheet();applyZoom();render(true);
 }
 
@@ -2413,6 +2473,11 @@ function tutStart(auto,kiosk){speed=1;document.querySelectorAll('[data-speed]').
   const m0=mode;mode='free';newGame('tut');mode=m0;
   S.silent=true;while(S.t<930)step();S.silent=false;S.log=[];S.full=[];S.marks=[];S.alarms={};S.cust={ci:0,cml:0,si:0,off:{}};S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.ens=0;S.peakL=0;queued=[];
   logE(S.t,'Tutorial: Cold Thursday, 15:30. The evening peak is building.','info');S.tut={i:-1,auto:!!auto||!!kiosk,kiosk:!!kiosk,shown:0,acted:false,doneAt:0};kioskLayout(!!kiosk);if(kiosk){tutRepeat=true;keepAwake(true);const ck=$('cookie');if(ck)ck.hidden=true;}hideTip();begin();tutGo(0);track('tutorial_start',{auto:!!auto,kiosk:!!kiosk});}
+// Display mode: brand card between demo loops
+let introTimer=0;
+function kioskIntro(){const el=$('kIntro');el.hidden=false;el.classList.remove('go');void el.offsetWidth;el.classList.add('go');
+  clearTimeout(introTimer);introTimer=setTimeout(endIntro,6000);}
+function endIntro(){clearTimeout(introTimer);const el=$('kIntro');if(el.hidden)return;el.hidden=true;if(S&&S.tut&&S.tut.kiosk)tutStart(true,true);}
 function tutGo(i){const T=S.tut;if(!T)return;T.i=i;const st=TUT[i];if(!st){tutDone();return;}
   if(st.enter)st.enter();T.shown=performance.now();T.acted=false;T.doneAt=0;T.pressing=false;
   S.paused=st.t==='next';acc=0;S.sel=null;S.qp=false;lastInsp='';if(PHONE)closeSheet();
@@ -2429,7 +2494,7 @@ function tutTick(now){const T=S&&S.tut;if(!T||S.ended)return;const st=TUT[T.i];i
     else if(T.auto&&!T.acted&&now-T.shown>2600)tutAct();
     else if(T.acted&&!st.go&&!S.op&&!crewFor(st.k)&&now-T.shown>4000&&!st.done())T.acted=false;}
   else if(T.auto&&T.i<TUT.length-1&&now-T.shown>readMs(st))tutGo(T.i+1);
-  else if(T.auto&&T.i===TUT.length-1&&tutRepeat&&now-T.shown>Math.max(9000,readMs(st))){tutStart(true,T.kiosk);return;}
+  else if(T.auto&&T.i===TUT.length-1&&tutRepeat&&now-T.shown>Math.max(9000,readMs(st))){if(T.kiosk){if(!T.intro){T.intro=true;kioskIntro();}}else tutStart(true,false);return;}
   renderCoach(false);}
 let lastCoach='';
 function renderCoach(force){const el=$('coach');if(!el)return;const T=S&&S.tut;
@@ -2517,7 +2582,7 @@ function startSheet(){
   const date=todayUK();
   const cc=career(),keys=mode==='career'?CAREER.filter(k=>SCENARIOS[k]):Object.keys(SCENARIOS).filter(k=>!SCENARIOS[k].hidden);
   if(mode==='career'&&!unlockedK(cc,chosen)){chosen=CAREER.find(k=>unlockedK(cc,k)&&!(cc.stars[k]>=1))||CAREER[0];}
-  const sc=keys.map(k=>[k,SCENARIOS[k]]).map(([k,v])=>`<button type="button" class="scn${mode==='career'&&!unlockedK(cc,k)?' locked':''}" data-scn="${k}"${mode==='career'&&!unlockedK(cc,k)?' disabled':''} style="--sc:${v.color}" aria-pressed="${k===chosen}"><span class="f">${mode==='career'?`Shift ${CAREER.indexOf(k)+1} · `:''}${v.focus}</span><b>${v.title}${mode==='career'?` <span class="stars">${unlockedK(cc,k)?starStr(cc.stars[k]||0):'🔒'}</span>`:''}</b>${diffHtml(v.diff,v.color)}<span class="d">${v.when}</span><p>${v.blurb}</p></button>`).join('');
+  const sc=keys.map(k=>[k,SCENARIOS[k]]).map(([k,v])=>`<button type="button" class="scn${mode==='career'&&!unlockedK(cc,k)?' locked':''}" data-scn="${k}"${mode==='career'&&!unlockedK(cc,k)?' disabled':''} style="--sc:${v.color}" aria-pressed="${k===chosen}"><span class="scn-top">${ico(sceneOf(k),v.color)}<span class="f">${mode==='career'?`Shift ${CAREER.indexOf(k)+1} · `:''}${v.focus}</span></span><b>${v.title}${mode==='career'?` <span class="stars">${unlockedK(cc,k)?starStr(cc.stars[k]||0):'🔒'}</span>`:''}</b>${diffHtml(v.diff,v.color)}<span class="d">${v.when}</span><span class="best">${ls('best-'+k)?'Your best: <b>'+nf(+ls('best-'+k))+'</b>':'Not played yet'}</span><p>${v.blurb}</p></button>`).join('');
   $('sheet').innerHTML=`${BAND}<div class="hero"><div class="hero-t">
     <h2 class="hero-h">Firm Capacity<span>${GAME==='cr'?'Control room':'Generation'}</span></h2>
     <p class="pitch">${GAME==='cr'?"You're on shift in the control room. Keep the lights on.":"You're the DSO on shift. Keep Blackout Canyon inside firm capacity."}</p>
@@ -2585,6 +2650,7 @@ function endShift(){
     play('done');
   }
   S.final={...sc,grade:L?'Lost':g,gl,gd,result:L?'lost':'complete'};
+  if(sc.total>(+ls('best-'+S.key)||0))ls('best-'+S.key,String(sc.total));
   {const c=career(),before=starsOf(c),done=!L,st=L?0:{A:3,B:2,C:1,D:1}[g]||0,newA=[];const prevUnl=CAREER.filter(k=>unlockedK(c,k));
    const award=(id,ok)=>{if(ok&&!c.ach[id]&&ACH.some(a=>a.id===id)){c.ach[id]=1;newA.push(ACH.find(a=>a.id===id));}};
    award('first',done);award('clean',done&&S.incidents===0);award('solid',done&&S.insecureMin===0);award('quick',done&&S.cust.ci===0&&S.cust.si>0);award('nobody',done&&S.cust.ci===0&&S.cust.si===0);
@@ -2723,6 +2789,7 @@ function applyZoom(){const z=PHONE&&zoomed;$('mimic').classList.toggle('zoom',z)
 /* ---------- Events ---------- */
 function begin(){ls('played','1');$('overlay').hidden=true;S.running=true;S.paused=false;acc=0;audio();if(MUS.on&&!MUS.timer)setMusic(true);track('shift_start',{scenario:S.key,mode:S.mode});render(true);}
 document.addEventListener('click',e=>{
+  if(e.target.closest('#kIntro')){endIntro();return;}
   const adj=e.target.closest('[data-adj]');if(adj){nudge(adj.dataset.adj,+adj.dataset.d);return;}
   const op=e.target.closest('[data-op]');if(op){if(op.disabled)return;const[t,i,a]=op.dataset.op.split(':');if(op.closest('#qp')&&S){S.qp=false;}issueOp(t+':'+i,a);return;}
   const st=e.target.closest('[data-f]');if(st){adjust(st.dataset.f,st.dataset.id,+st.dataset.d);return;}

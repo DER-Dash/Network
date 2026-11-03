@@ -236,7 +236,16 @@ const ICONS={solar:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12
   tx:'<circle cx="12" cy="9" r="5.5"/><circle cx="12" cy="15" r="5.5"/>',
   tie:'<path d="M3 12h6M15 12h6"/><rect x="9" y="8" width="6" height="8"/>',
   sub:'<path d="M3 8h18M7 8v10M12 8v10M17 8v10"/>',
-  nb:'<path d="M3 7h13l-3-3M21 17H8l3 3"/>'};
+  nb:'<path d="M3 7h13l-3-3M21 17H8l3 3"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+  snow:'<path d="M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7M9 3.5l3 2 3-2M9 20.5l3-2 3 2"/>',
+  storm:'<path d="M7 16a4 4 0 0 1 .3-8A5.5 5.5 0 0 1 18 9.5a3.3 3.3 0 0 1 0 6.5"/><path d="M13 11l-3 5h4l-2 5"/>',
+  heat:'<circle cx="12" cy="7" r="3"/><path d="M12 1.5v1M6.5 7h-1M18.5 7h-1M3.5 14c2.1-1.5 4.2 1.5 6.3 0s4.2-1.5 6.3 0 2.8 1.2 4.4 0M3.5 19c2.1-1.5 4.2 1.5 6.3 0s4.2-1.5 6.3 0 2.8 1.2 4.4 0"/>',
+  pylon:'<path d="M12 2 7.5 22M12 2l4.5 20M4 7h16M6 12h12M9.6 7l4.8 5M14.4 7l-4.8 5M8.6 17h6.8M8.6 17l6.8 5M15.4 17l-6.8 5"/>'};
+// Each day's scene: the icon on its card and the weather drawn behind the diagram
+const SCENE={quiet:'sun',grid:'pylon',storm:'storm',heat:'heat',jan:'snow',snow:'snow',gsp:'pylon',mesh:'pylon',endure:'storm',may:'sun',tut:'snow'};
+const WX={grid:'cloud',gsp:'cloud',mesh:'snow'};
+const sceneOf=k=>SCENE[k]||'pylon',wxOf=k=>WX[k]||{pylon:'cloud'}[sceneOf(k)]||sceneOf(k);
 const LOGO='<svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg>';
 const BAND=`<div class="sheet-brand wu"><div class="wu-lock"><svg viewBox="0 0 100 100" role="img" aria-label="Watts Up"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg><div><b>Watts <span>Up</span></b><small>Electricity Distribution</small></div></div><p class="tag">${CFG.band}</p></div>`;
 const SPK_ON='<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
@@ -413,6 +422,7 @@ function newGame(key){
   S.risk.forEach(w=>logE(START,`Weather warning: ${w.label.toLowerCase()} ${fmtT(w.start)}–${fmtT(w.end)}. Faults are ${w.mult}× more likely.`,'warn'));
   $('scnLabel').innerHTML=esc(sc.title+' · Blackout Canyon 33 kV')+(daily?` <span class="mode-tag">Daily ${esc(fmtDate(date))}</span>`:'');
   $('dayLabel').textContent=sc.when;
+  {const w=$('wx');if(w)w.className='wx wx-'+wxOf(key);}
   hideBanner();hideTip();lastSky='';lastInsp='';closeSheet();applyZoom();render(true);
 }
 
@@ -1403,6 +1413,11 @@ function tutStart(auto,kiosk){speed=1;document.querySelectorAll('[data-speed]').
   const m0=mode;mode='free';newGame('tut');mode=m0;
   S.silent=true;while(S.t<930)step();S.silent=false;S.log=[];S.full=[];S.marks=[];S.alarms={};S.cust={ci:0,cml:0,si:0,off:{}};S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.ens=0;S.peakL=0;queued=[];
   logE(S.t,'Tutorial: Cold Thursday, 15:30. The evening peak is building.','info');S.tut={i:-1,auto:!!auto||!!kiosk,kiosk:!!kiosk,shown:0,acted:false,doneAt:0};kioskLayout(!!kiosk);if(kiosk){tutRepeat=true;keepAwake(true);const ck=$('cookie');if(ck)ck.hidden=true;}hideTip();begin();tutGo(0);track('tutorial_start',{auto:!!auto,kiosk:!!kiosk});}
+// Display mode: brand card between demo loops
+let introTimer=0;
+function kioskIntro(){const el=$('kIntro');el.hidden=false;el.classList.remove('go');void el.offsetWidth;el.classList.add('go');
+  clearTimeout(introTimer);introTimer=setTimeout(endIntro,6000);}
+function endIntro(){clearTimeout(introTimer);const el=$('kIntro');if(el.hidden)return;el.hidden=true;if(S&&S.tut&&S.tut.kiosk)tutStart(true,true);}
 function tutGo(i){const T=S.tut;if(!T)return;T.i=i;const st=TUT[i];if(!st){tutDone();return;}
   if(st.enter)st.enter();T.shown=performance.now();T.acted=false;T.doneAt=0;T.pressing=false;
   S.paused=st.t==='next';acc=0;S.sel=null;S.qp=false;lastInsp='';if(PHONE)closeSheet();
@@ -1419,7 +1434,7 @@ function tutTick(now){const T=S&&S.tut;if(!T||S.ended)return;const st=TUT[T.i];i
     else if(T.auto&&!T.acted&&now-T.shown>2600)tutAct();
     else if(T.acted&&!st.go&&!S.op&&!crewFor(st.k)&&now-T.shown>4000&&!st.done())T.acted=false;}
   else if(T.auto&&T.i<TUT.length-1&&now-T.shown>readMs(st))tutGo(T.i+1);
-  else if(T.auto&&T.i===TUT.length-1&&tutRepeat&&now-T.shown>Math.max(9000,readMs(st))){tutStart(true,T.kiosk);return;}
+  else if(T.auto&&T.i===TUT.length-1&&tutRepeat&&now-T.shown>Math.max(9000,readMs(st))){if(T.kiosk){if(!T.intro){T.intro=true;kioskIntro();}}else tutStart(true,false);return;}
   renderCoach(false);}
 let lastCoach='';
 function renderCoach(force){const el=$('coach');if(!el)return;const T=S&&S.tut;
@@ -1507,7 +1522,7 @@ function startSheet(){
   const date=todayUK();
   const cc=career(),keys=mode==='career'?CAREER.filter(k=>SCENARIOS[k]):Object.keys(SCENARIOS).filter(k=>!SCENARIOS[k].hidden);
   if(mode==='career'&&!unlockedK(cc,chosen)){chosen=CAREER.find(k=>unlockedK(cc,k)&&!(cc.stars[k]>=1))||CAREER[0];}
-  const sc=keys.map(k=>[k,SCENARIOS[k]]).map(([k,v])=>`<button type="button" class="scn${mode==='career'&&!unlockedK(cc,k)?' locked':''}" data-scn="${k}"${mode==='career'&&!unlockedK(cc,k)?' disabled':''} style="--sc:${v.color}" aria-pressed="${k===chosen}"><span class="f">${mode==='career'?`Shift ${CAREER.indexOf(k)+1} · `:''}${v.focus}</span><b>${v.title}${mode==='career'?` <span class="stars">${unlockedK(cc,k)?starStr(cc.stars[k]||0):'🔒'}</span>`:''}</b>${diffHtml(v.diff,v.color)}<span class="d">${v.when}</span><p>${v.blurb}</p></button>`).join('');
+  const sc=keys.map(k=>[k,SCENARIOS[k]]).map(([k,v])=>`<button type="button" class="scn${mode==='career'&&!unlockedK(cc,k)?' locked':''}" data-scn="${k}"${mode==='career'&&!unlockedK(cc,k)?' disabled':''} style="--sc:${v.color}" aria-pressed="${k===chosen}"><span class="scn-top">${ico(sceneOf(k),v.color)}<span class="f">${mode==='career'?`Shift ${CAREER.indexOf(k)+1} · `:''}${v.focus}</span></span><b>${v.title}${mode==='career'?` <span class="stars">${unlockedK(cc,k)?starStr(cc.stars[k]||0):'🔒'}</span>`:''}</b>${diffHtml(v.diff,v.color)}<span class="d">${v.when}</span><span class="best">${ls('best-'+k)?'Your best: <b>'+nf(+ls('best-'+k))+'</b>':'Not played yet'}</span><p>${v.blurb}</p></button>`).join('');
   $('sheet').innerHTML=`${BAND}<div class="hero"><div class="hero-t">
     <h2 class="hero-h">Firm Capacity<span>${GAME==='cr'?'Control room':'Generation'}</span></h2>
     <p class="pitch">${GAME==='cr'?"You're on shift in the control room. Keep the lights on.":"You're the DSO on shift. Keep Blackout Canyon inside firm capacity."}</p>
@@ -1575,6 +1590,7 @@ function endShift(){
     play('done');
   }
   S.final={...sc,grade:L?'Lost':g,gl,gd,result:L?'lost':'complete'};
+  if(sc.total>(+ls('best-'+S.key)||0))ls('best-'+S.key,String(sc.total));
   {const c=career(),before=starsOf(c),done=!L,st=L?0:{A:3,B:2,C:1,D:1}[g]||0,newA=[];const prevUnl=CAREER.filter(k=>unlockedK(c,k));
    const award=(id,ok)=>{if(ok&&!c.ach[id]&&ACH.some(a=>a.id===id)){c.ach[id]=1;newA.push(ACH.find(a=>a.id===id));}};
    award('first',done);award('clean',done&&S.incidents===0);award('solid',done&&S.insecureMin===0);award('quick',done&&S.cust.ci===0&&S.cust.si>0);award('nobody',done&&S.cust.ci===0&&S.cust.si===0);
@@ -1713,6 +1729,7 @@ function applyZoom(){const z=PHONE&&zoomed;$('mimic').classList.toggle('zoom',z)
 /* ---------- Events ---------- */
 function begin(){ls('played','1');$('overlay').hidden=true;S.running=true;S.paused=false;acc=0;audio();if(MUS.on&&!MUS.timer)setMusic(true);track('shift_start',{scenario:S.key,mode:S.mode});render(true);}
 document.addEventListener('click',e=>{
+  if(e.target.closest('#kIntro')){endIntro();return;}
   const adj=e.target.closest('[data-adj]');if(adj){nudge(adj.dataset.adj,+adj.dataset.d);return;}
   const op=e.target.closest('[data-op]');if(op){if(op.disabled)return;const[t,i,a]=op.dataset.op.split(':');if(op.closest('#qp')&&S){S.qp=false;}issueOp(t+':'+i,a);return;}
   const st=e.target.closest('[data-f]');if(st){adjust(st.dataset.f,st.dataset.id,+st.dataset.d);return;}
