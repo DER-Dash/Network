@@ -307,6 +307,19 @@ html.kiosk .qp{width:270px;font-size:14px}
 .asym .mg text{font:700 8px var(--f-mono);fill:var(--c-gas)}
 .asym .mg.on text{fill:#fff}
 .mg.operating circle{stroke-dasharray:3 2}
+/* Priority customers: hospital, care home, PSR */
+.pri{--pc:var(--alarm)}
+.pri-care{--pc:var(--c-dsr)}
+.pri-psr{--pc:var(--c-batt)}
+.pri circle{fill:var(--panel);stroke:var(--pc);stroke-width:1.6}
+.asym .pri text{font:700 9px var(--f-mono);fill:var(--pc);pointer-events:none}
+.pri.off circle{fill:var(--alarm);stroke:var(--alarm);animation:opb 1s steps(2) infinite}
+.asym .pri.off text{fill:#fff}
+.pri-tag{display:inline-grid;place-items:center;width:1.35em;height:1.35em;border-radius:50%;border:1.5px solid var(--pc);color:var(--pc);font:700 .7em var(--f-mono);vertical-align:.1em;--pc:var(--alarm)}
+.pri-tag.pri-care{--pc:var(--c-dsr)}.pri-tag.pri-psr{--pc:var(--c-batt)}
+.i-plain{list-style:none;padding:0;margin:0 0 8px;display:grid;gap:6px;font-size:.88em}
+.i-plain li.off{color:var(--alarm)}
+@media (prefers-reduced-motion:reduce){.pri.off circle{animation:none}}
 /* Start screen: hero, main action, how-it-works cards */
 .hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px 28px;align-items:center;margin:0 0 16px}
 @media (max-width:700px){.hero{grid-template-columns:minmax(0,1fr)}.hero-art{max-width:380px;justify-self:center}}

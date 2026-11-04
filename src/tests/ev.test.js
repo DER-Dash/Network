@@ -35,7 +35,7 @@ async function start(scn,md,store){const d=mk(html,'https://e.test/',store),w=d.
   S.sched.push({k:'fd:js',m:S.t,dur:45,cause:'Cable joint failure',done:false});let n=0;while(!S.ended&&n<800){G.run(1);n++;}
   const top=(S.loss||[]).filter(e=>e.r!=='repair'&&e.r!=='ar').sort((a,b)=>b.pts-a.pts);
   ok(top[0]&&top[0].k==='sub:js'&&top[0].r==='sub_fd','biggest loss: Joule Street off after its feeder fault');
-  const lost=(S.loss||[]).reduce((a,e)=>a+e.pts,0),ded=-(S.final.parts.ens+S.final.parts.risk+S.final.parts.inc+S.final.parts.trial+S.final.parts.spend);
+  const lost=(S.loss||[]).reduce((a,e)=>a+e.pts,0),ded=-(S.final.parts.ens+S.final.parts.risk+S.final.parts.inc+S.final.parts.trial+S.final.parts.spend+(S.final.parts.prio||0));
   ok(Math.abs(lost-ded)<=6,`debrief adds up to the points lost (${lost.toFixed(0)} vs ${ded})`);
   const db=doc.querySelector('.debrief');ok(db&&/Joule Street off supply/.test(db.textContent)&&/tie or an interconnector/.test(db.textContent),'debrief shows the moment and a tip');
   ok(db.querySelectorAll('li').length>=1&&db.querySelectorAll('li').length<=3,'at most three moments');}

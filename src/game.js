@@ -30,6 +30,13 @@ const LV_ON=GAME==='cr',SECF=[.5,.5],PATROL=60,TRIAL_PTS=50,MG_N=2,MG_CAP=8,MG_C
 const LF_OH={hw:[0,1,1],ml:[0,1,1],rv:[0,1,1],js:[0,1,1],kc:[0,0,1]};// 1 = overhead line (auto-reclose), 0 = underground cable
 const OH_CAUSES=['Tree branch blown onto the line','Lightning strike','Conductor clash in the wind','Bird contact on the line','Broken insulator'];
 const CABLE_CAUSES=['Cable joint failure','Third-party dig-in','Cable insulation failure'];
+// Priority customers (control room only): a hospital, care homes and Priority Services Register customers on some
+// 11 kV feeders. While their half of the feeder is off supply they cost pts a minute on top of the usual CI/CML.
+const PRIO_ON=GAME==='cr';
+const PRK={hosp:{label:'Hospital',ch:'H',pts:25},care:{label:'Care home',ch:'C',pts:15},psr:{label:'Priority Services Register customers',ch:'P',pts:10}};
+const PRIO={hw1:{kind:'hosp',name:'Kings Hill Hospital',sec:1},ml2:{kind:'care',name:'Mill Lane Care Home',sec:0},rv1:{kind:'psr',name:'Resistor Row PSR customers',sec:1},js2:{kind:'care',name:'Watt Way Care Home',sec:1},kc1:{kind:'psr',name:'Close South PSR customers',sec:0}};
+const prioOf=(p,i)=>PRIO_ON?PRIO[p+i]||null:null;
+const prioTxt=P=>`${P.name}: ${P.kind==='psr'?'on':'fed from'} the ${P.sec?'second':'first'} half · ${PRK[P.kind].pts} extra points a minute while off`;
 const SECN=['first half (breaker to mid-point switch)','second half (beyond the mid-point switch)'];
 const EMERG=1.2,EMERG_MIN=30,SHORT=1.5,SHORT_MIN=5,PAR_MAX=30,OV_MIN=10,INCIDENT_PTS=500,AL_ON=.8,AL_OFF=.75;
 const RATE={1:CFG.rate,2:CFG.rate*2,4:CFG.rate*4};
@@ -438,7 +445,7 @@ function newGame(key){
   const c0=comps(S.t,false),L0=Math.abs(PIDS.reduce((a,p)=>a+netP(c0,p,zeroD()),0))/3/R;S.tx.forEach(t=>t.temp=20+100*L0*L0);
   buildMimic();
   for(let i=0;i<60;i++)step();
-  S.silent=false;S.alarms={};S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.peakL=0;S.ens=0;S.cust={ci:0,cml:0,si:0,off:{}};S.loss=[];S.lossOpen={};S.cp={};S.crewJobs=0;S.trial=0;S.isoMin=0;S.recloses=0;S.parOk=0;S.vfPeak=0;S.gspOver=0;S.gspTrips=0;S.log=[];S.full=[];S.marks=[];S.chain=[];queued=[];
+  S.silent=false;S.alarms={};S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.peakL=0;S.ens=0;S.cust={ci:0,cml:0,si:0,off:{},pri:0,pmin:{}};S.loss=[];S.lossOpen={};S.cp={};S.crewJobs=0;S.trial=0;S.isoMin=0;S.recloses=0;S.parOk=0;S.vfPeak=0;S.gspOver=0;S.gspTrips=0;S.log=[];S.full=[];S.marks=[];S.chain=[];queued=[];
   logE(START,`Shift starts. ${sc.when}: ${sc.blurb}`,'info');
   if(daily)logE(START,`Today's challenge (${fmtDate(date)}): everyone gets the same weather and fault times.`,'info');
   S.events.filter(e=>e.planned).forEach(e=>logE(START,e.fd?`Notice: ${PR[e.fd].name} feeder planned outage ${fmtT(e.start)}–${fmtT(e.end)}. Field staff will open both ends of it at ${fmtT(e.start)}, so move ${PR[e.fd].name} and anything fed through it beforehand.`:`Notice: T${e.tx+1} planned outage ${fmtT(e.start)}–${fmtT(e.end)}. Field staff will switch it out; you restore it afterwards.`,'warn'));
@@ -654,8 +661,12 @@ function step(){
       if(m===G.end){logE(m,'National Grid has lifted the Steve Towers limit. Normal running can resume.','ok');queueAlert('National Grid has lifted the Steve Towers limit.','ok',false);play('ok');}}}
   let allOff=true;
   {const C=S.cust;PIDS.forEach(p=>LF[p].forEach((f,i)=>SECF.forEach((h,sx)=>{const k=p+i+'s'+sx,fed=secFeed(p,i,sx,sup)!==null,n=Math.round(CUST_TOTAL*S.share[p]*f*h);
-    if(!fed){const o=C.off[k]=(C.off[k]||0)+1,w=(C.why||(C.why={}))[k]=offWhy(p,i,sx,sup);let d=0;if(o===SHORT_INT){C.ci+=n;C.cml+=SHORT_INT*n;d=n/100+SHORT_INT*n/500;}else if(o>SHORT_INT){C.cml+=n;d=n/500;}lose(m,w.k,w.r,w.l,d);}
-    else if(C.off[k]){if(C.off[k]<SHORT_INT){C.si+=n;const w=C.why&&C.why[k];if(w)lose(m,w.k,w.r,w.l,n/500);}C.off[k]=0;}})));
+    const P=prioOf(p,i),pr=P&&P.sec===sx?P:null;
+    if(!fed){const o=C.off[k]=(C.off[k]||0)+1,w=(C.why||(C.why={}))[k]=offWhy(p,i,sx,sup);let d=0;if(o===SHORT_INT){C.ci+=n;C.cml+=SHORT_INT*n;d=n/100+SHORT_INT*n/500;}else if(o>SHORT_INT){C.cml+=n;d=n/500;}lose(m,w.k,w.r,w.l,d);
+      if(pr&&!S.silent){const x=PRK[pr.kind].pts;C.pri+=x;C.pmin[p+i]=(C.pmin[p+i]||0)+1;lose(m,'prio:'+p+i,w.r==='repair'?'prio_rep':'prio',`${pr.name} off supply (${lfName(p,i)}, ${PR[p].name})`,x);
+        if(o===1){const s=`${pr.name} is off supply on the ${lfName(p,i)} at ${PR[p].name}. ${PRK[pr.kind].label==='Hospital'?'The hospital':pr.kind==='care'?'The care home':'These customers'} cost${pr.kind==='psr'?'':'s'} ${x} extra points a minute until restored.`;logE(m,s,'alarm');queueAlert(s,'alarm',false);}}}
+    else if(C.off[k]){if(C.off[k]<SHORT_INT){C.si+=n;const w=C.why&&C.why[k];if(w)lose(m,w.k,w.r,w.l,n/500);}
+      if(pr&&!S.silent)logE(m,`${pr.name} back on supply after ${C.off[k]} min.`,'ok');C.off[k]=0;}})));
    S.ens=C.ci/100+C.cml/500+C.si/500;S.vfPeak=Math.max(S.vfPeak,S.vfLoad||0);}
   PIDS.forEach(p=>{if(sup[p]==='off'){if(p==='ml')S.cost.gen+=c.solar*SV.solar.use/60;if(p==='rv')S.cost.gen+=c.wind*SV.wind.use/60;}else allOff=false;});
   if(allOff&&!S.silent){loseSite(m);return;}
@@ -925,6 +936,7 @@ function buildMimic(){
     if(a.type==='load'){const p=a.prim,by=ay+16;
       sym=LDX.map((dx,i)=>LV_ON?`<line id="lfl_${p}${i}" class="cond mv" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${ay+44}"/><line id="lfm_${p}${i}" class="cond mv" x1="${x+dx}" y1="${ay+56}" x2="${x+dx}" y2="${y+4}"/><rect id="lfb_${p}${i}" class="brk sw" x="${x+dx-6}" y="${by+6}" width="12" height="12"/><rect id="midb_${p}${i}" class="brk sw man mid" x="${x+dx-6}" y="${ay+44}" width="12" height="12" rx="6"/><path id="lft_${p}${i}" class="sym" d="M${x+dx-7} ${y+4} L${x+dx+7} ${y+4} L${x+dx} ${y+17} Z"/>`
         :`<line id="lfl_${p}${i}" class="cond mv" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${y+4}"/><rect id="lfb_${p}${i}" class="brk sw" x="${x+dx-6}" y="${by+8}" width="12" height="12"/><path id="lft_${p}${i}" class="sym" d="M${x+dx-7} ${y+4} L${x+dx+7} ${y+4} L${x+dx} ${y+17} Z"/>`).join('');
+      if(PRIO_ON)LDX.forEach((dx,i)=>{const P=prioOf(p,i);if(!P)return;const fx=x+dx+12,K=PRK[P.kind];sym+=`<g id="pri_${p}${i}" class="pri pri-${P.kind}"><title>${esc(P.name)}</title><circle cx="${fx}" cy="${y-3}" r="7"/><text x="${fx}" y="${y+0.3}" text-anchor="middle">${K.ch}</text></g>`;});
       if(LV_ON)LDX.forEach((dx,i)=>{const fx=x+dx;sym+=`<g id="mgg_${p}${i}" class="mg" hidden><path class="mg-l" d="M${fx} ${VF_ON&&VFI.includes(i)?y+40:y+17} V${y+45.5}"/><circle cx="${fx}" cy="${y+52}" r="6.5"/><text x="${fx}" y="${y+55}" text-anchor="middle">G</text></g>`;SELBOX['mg:'+p+i]=[fx-9,y+43,18,18];});
       s+=`<line id="alb_load_${p}" class="cond mv" x1="${x+LDX[0]-2}" y1="${by}" x2="${x+LDX[2]+2}" y2="${by}" style="stroke-width:3"/>`;
       if(VF_ON)VFI.forEach(i=>{const fx=x+LDX[i];sym+=`<path id="nopl_${p}${i}" class="vf-l" d="M${fx} ${y+17} V${y+24} M${fx} ${y+34} V${y+40}"/><rect id="nopb_${p}${i}" class="brk sw nop open" x="${fx-5}" y="${y+24}" width="10" height="10" rx="5"/>`;});}
@@ -1019,6 +1031,7 @@ function renderMimic(){
         const mk='mid:'+p+i;setAttr($('midb_'+p+i),'class','brk sw man mid'+(midOn(p,i)?'':' open')+(crewFor(mk)?' operating':''));
         const u=mgAt(p+i),g=$('mgg_'+p+i);const gh=$('mgh_'+p+i);if(gh){if(u)gh.removeAttribute('hidden');else gh.setAttribute('hidden','');}if(g){if(u)g.removeAttribute('hidden');else g.setAttribute('hidden','');setAttr(g,'class','mg'+(u&&u.conn?' on':'')+(crewFor('mg:'+p+i)?' operating':''));}}
       else setAttr($('lfl_'+p+i),'class','cond mv'+(f0!==null?'':' dead'));
+      {const P=prioOf(p,i);if(P)setAttr($('pri_'+p+i),'class','pri pri-'+P.kind+(secFeed(p,i,P.sec)===null?' off':''));}
       setAttr($('lft_'+p+i),'class','sym'+(f1===null?(S.nop[p][i]?' vf':' off'):f1==='vf'?' vf':f1==='mg'?' mg':f1!==p?' lk':'')+(F&&(!F.found||F.sec===1)?' flt':''));
       if(VF_ON&&VFI.includes(i)){const nk='nop:'+p+i,nc=S.nop[p][i];setAttr($('nopb_'+p+i),'class','brk sw nop'+(nc?'':' open')+(opK===nk?' operating':''));setAttr($('nopl_'+p+i),'class','vf-l'+(nc?' on':''));}});});
   LKIDS.forEach(k=>{const id='lk:'+k,c2=!!S.lk[k],f=(S.lkLoad||{})[k]||0,par=(S.flows||{})[id];setAttr($('lksw_'+k),'class','brk sw man'+(c2?'':' open')+(opK===id||crewFor(id)?' operating':''));setAttr($('lkl_'+k),'class','lk-l'+(c2?' on':''));
@@ -1159,12 +1172,13 @@ function primHtml(p){const P=PR[p],c=S.c,on=S.sup[p]!=='off';
 function assetHtml(id){const a=ASB[id];
   if(a.type==='load'){const p=a.prim;return `${back}<div class="i-h">${ico('load','var(--muted)')}<div><h3>${PR[p].name} demand</h3><div class="kind">Homes and businesses</div></div></div>
     ${facts([['Demand now',S.sup[p]==='off'?'Off supply':mw(dem(S.c,p))],['Supply',esc(supTxt(p))]])}
-    <h4 class="i-sub">11 kV feeders</h4><ul class="i-list">${S.lf[p].map((v,i)=>`<li><button type="button" data-sel="lf:${p}${i}" data-k="lf-${p}${i}"><span class="nm">${esc(LFN[p][i])}</span><span class="st${lvFaultTxt(p,i)?' off':v||S.nop[p][i]?'':' warn'}">${lvFaultTxt(p,i)?esc(ucfirst(lvFaultTxt(p,i))):(v?'From '+esc(PR[p].name):S.nop[p][i]?'From Volt Face':'Open · customers off')+(LV_ON&&!midOn(p,i)?' · split':'')+(LV_ON&&mgOn(p,i)?' · generator':'')}</span><span class="v">${mw(S.c.demand*S.share[p]*LF[p][i])}</span></button></li>`).join('')}</ul>
+    <h4 class="i-sub">11 kV feeders</h4><ul class="i-list">${S.lf[p].map((v,i)=>`<li><button type="button" data-sel="lf:${p}${i}" data-k="lf-${p}${i}"><span class="nm">${esc(LFN[p][i])}${prioOf(p,i)?` <span class="pri-tag pri-${prioOf(p,i).kind}" title="${esc(prioOf(p,i).name)}">${PRK[prioOf(p,i).kind].ch}</span>`:''}</span><span class="st${lvFaultTxt(p,i)?' off':v||S.nop[p][i]?'':' warn'}">${lvFaultTxt(p,i)?esc(ucfirst(lvFaultTxt(p,i))):(v?'From '+esc(PR[p].name):S.nop[p][i]?'From Volt Face':'Open · customers off')+(LV_ON&&!midOn(p,i)?' · split':'')+(LV_ON&&mgOn(p,i)?' · generator':'')}</span><span class="v">${mw(S.c.demand*S.share[p]*LF[p][i])}</span></button></li>`).join('')}</ul>
     <div class="op-row">${S.lf[p].map((v,i)=>opBtn('lf:'+p+i,v?'open':'close',`${v?'Open':'Close'} ${LFN[p][i]}`)).join('')}</div>
     ${VF_ON?`<div class="op-row">${VFI.map(i=>opBtn('nop:'+p+i,S.nop[p][i]?'open':'close',`${S.nop[p][i]?'Open':'Close'} ${LFN[p][i]} backfeed`)).join('')}</div><p class="i-note">Backfeeds move a feeder onto Volt Face, a neighbouring 11 kV network on a different grid supply. Open the feeder breaker first, then close the backfeed.</p>`:''}
     ${LV_ON?`<h4 class="i-sub">Mid-point switches</h4><div class="op-row">${S.lf[p].map((v,i)=>opBtn('mid:'+p+i,midOn(p,i)?'open':'close',`${midOn(p,i)?'Open':'Close'} ${LFN[p][i]} mid-point`)).join('')}</div>
     <h4 class="i-sub">Mobile generators · ${S.mgu.filter(u=>!u.conn&&!u.pend).length} of ${MG_N} free · ${MG_CAP} MW each</h4><div class="op-row">${S.lf[p].map((v,i)=>{const u=mgAt(p+i);return u&&(u.conn||u.pend)?opBtn('mg:'+p+i,'open',`Disconnect generator at ${LFN[p][i]}`):opBtn('mg:'+p+i,'close',`${u?'Reconnect':'Send'} generator to ${LFN[p][i]}`);}).join('')}</div>
     <p class="i-note">Fault finding: when a feeder locks out you don't know which half is faulted. Open its mid-point switch (manual, so a crew goes), then trial-close the breaker. If it holds, the fault is in the second half; if it trips, it's in the first. Repairs start once the fault is found. A mobile generator connects at the far end of a feeder after ${MG_CONN} minutes and carries up to ${MG_CAP} MW, so it can usually supply one dead half.</p>`:''}
+    ${PRIO_ON&&S.lf[p].some((v,i)=>prioOf(p,i))?`<h4 class="i-sub">Priority customers</h4><ul class="i-plain">${S.lf[p].map((v,i)=>{const P=prioOf(p,i);return P?`<li class="${secFeed(p,i,P.sec)===null?'off':''}"><span class="pri-tag pri-${P.kind}">${PRK[P.kind].ch}</span> ${esc(prioTxt(P))}${secFeed(p,i,P.sec)===null?' · <b>off supply now</b>':''}</li>`:'';}).join('')}</ul>`:''}
     <p class="i-note">Opening an 11 kV feeder takes its customers off supply to cut the load on the network. Every minute customers are off supply costs 1 point per MW, so use it as a last resort and close it again as soon as you can.</p>`;}
   const p=a.prim,off=S.sup[p]==='off';
   if(id==='batt'){const b=S.act.bdis-S.act.bchg,f=S.fail.bdis>S.t||S.fail.bchg>S.t;
@@ -1216,9 +1230,9 @@ function qpHtml(k){const[t,id]=k.split(':');let closed,st,cls='';
     cls=!closed&&S.lf[p][i]?'warn':S.vfLoad>S.spare.vf?'alarm':'';}
   else if(t==='lf'){const[p,i]=lfP(id),mwv=S.c?Math.round(S.c.demand*S.share[p]*LF[p][i]):0;closed=S.lf[p][i];
     st=!closed&&S.nop[p][i]?`fed from Volt Face (${mwv} MW)`:!closed?`${mwv} MW of customers off`:S.sup[p]==='off'?'substation off supply':`${mwv} MW of demand`;cls=closed?'':'warn';
-    const F=lvFaultTxt(p,i);if(F){st=F+' · '+st;cls='alarm';}}
+    const F=lvFaultTxt(p,i);if(F){st=F+' · '+st;cls='alarm';}const P=prioOf(p,i);if(P)st+=` · ${P.name} (${P.sec?'second':'first'} half)${secFeed(p,i,P.sec)===null?' off':''}`;}
   else if(t==='mid'){const[p,i]=lfP(id);closed=midOn(p,i);const F=lvFaultTxt(p,i);
-    st=F||`splits ${LFN[p][i]} in two · ${Math.round(lfMW(p,i)*SECF[1])} MW beyond it`;cls=F?'alarm':closed?'':'warn';}
+    const P=prioOf(p,i);st=F||`splits ${LFN[p][i]} in two · ${Math.round(lfMW(p,i)*SECF[1])} MW beyond it`;if(P)st+=` · ${P.name} on the ${P.sec?'far':'near'} side`;cls=F?'alarm':closed?'':'warn';}
   else if(t==='mg'){const[p,i]=lfP(id),u=mgAt(id);closed=!!(u&&u.conn);const ld=srcMW(p,i,'mg');
     st=closed?`supplying ${ld.toFixed(1)}/${MG_CAP} MW`:u&&u.pend?'on its way':'parked here, disconnected';cls=closed&&ld>MG_CAP*AL_ON?'warn':'';}
   else{closed=S.bs[id].closed;st=closed?`${Math.round(Math.abs(S.bsf[id]||0))} MW across`:'busbar running split';cls=closed?'':'warn';}
@@ -1453,7 +1467,7 @@ async function keepAwake(on){try{if(on&&'wakeLock' in navigator&&!wakeLock){wake
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S&&S.tut&&S.tut.kiosk)keepAwake(true);});
 function tutStart(auto,kiosk){speed=1;document.querySelectorAll('[data-speed]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.speed==='1'));txt('dSpeed','1×');
   const m0=mode;mode='free';newGame('tut');mode=m0;
-  S.silent=true;while(S.t<930)step();S.silent=false;S.log=[];S.full=[];S.marks=[];S.alarms={};S.cust={ci:0,cml:0,si:0,off:{}};S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.ens=0;S.peakL=0;queued=[];
+  S.silent=true;while(S.t<930)step();S.silent=false;S.log=[];S.full=[];S.marks=[];S.alarms={};S.cust={ci:0,cml:0,si:0,off:{},pri:0,pmin:{}};S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.ens=0;S.peakL=0;queued=[];
   logE(S.t,'Tutorial: Cold Thursday, 15:30. The evening peak is building.','info');S.tut={i:-1,auto:!!auto||!!kiosk,kiosk:!!kiosk,shown:0,acted:false,doneAt:0};kioskLayout(!!kiosk);if(kiosk){tutRepeat=true;keepAwake(true);const ck=$('cookie');if(ck)ck.hidden=true;}hideTip();begin();tutGo(0);track('tutorial_start',{auto:!!auto,kiosk:!!kiosk});}
 // Display mode: brand card between demo loops
 let introTimer=0;
@@ -1582,6 +1596,7 @@ function startSheet(){
     <li><b>The 3-minute rule:</b> customers count as interrupted (CI) only if they're off for 3 minutes or more, and every minute after that adds customer minutes lost (CML). Restore within 3 minutes and it's only a short interruption.</li>
     <li><b>11 kV links</b> (Snow day and Storm endurance) join an 11 kV feeder at one substation to a feeder at the next. Open a feeder breaker and close its link to move that feeder onto the neighbouring substation. With both on the same grid supply you can close the link first for a transfer with no interruption. Each link is rated 15 MW.</li>
     <li><b>Volt Face</b> is a neighbouring 11 kV network on a different grid supply. The second and third 11 kV feeders at each substation have a backfeed from it (the small switch under the feeder). Open the feeder breaker first, then close the backfeed, and those customers move onto Volt Face, which takes the load off Blackout Canyon. Volt Face has limited spare capacity too.</li>
+    ${PRIO_ON?`<li><b>Priority customers:</b> some 11 kV feeders supply a hospital (<b>H</b>), a care home (<b>C</b>) or Priority Services Register customers (<b>P</b>), marked next to the feeder. While their half of the feeder is off they cost extra points every minute: ${PRK.hosp.pts} for the hospital, ${PRK.care.pts} for a care home and ${PRK.psr.pts} for PSR customers, on top of the usual customer minutes lost. Restore them first, and shed feeders without them.</li>`:''}
     <li><b>Demand feeders:</b> each substation supplies three 11 kV feeders, each with its own breaker. Opening one sheds that part of the demand, which can save an overload, but its customers count as off supply until you close it again.</li>
     <li><b>Auto-reclose:</b> most faults on overhead lines are transient. The breaker trips, recloses a few seconds later and stays in, so customers only get a short interruption. A permanent fault makes it lock out. Underground cables (the first feeder at each substation) don't auto-reclose.</li>
     <li><b>Fault finding:</b> when an 11 kV feeder locks out you don't know which half the fault is in. Each feeder has a manual mid-point switch (the small circle halfway down). Open it, then trial-close the feeder breaker: if it holds, the fault is in the far half and the near half is back on; if it trips, the fault is in the near half. Each close onto a fault costs ${TRIAL_PTS} points. Repairs only start once the fault is found, and line patrol finds it after ${PATROL} minutes if you don't.</li>
@@ -1616,7 +1631,7 @@ async function fillDailyTop(){const day=dailyK(),key=day+'|'+todayUK();
 /* ---------- End of shift ---------- */
 function computeScore(){
   const spend=spendOf(S.cost),L=S.lost,surv=(L?L.m:END)-START;
-  const parts={surv:surv*10,bonus:L?0:5000,risk:-S.insecureMin*20,spend:-Math.round(spend/10),ens:-Math.round(S.ens),inc:-S.incidents*INCIDENT_PTS,trial:-(S.trial||0)*TRIAL_PTS};
+  const parts={surv:surv*10,bonus:L?0:5000,risk:-S.insecureMin*20,spend:-Math.round(spend/10),ens:-Math.round(S.ens),inc:-S.incidents*INCIDENT_PTS,trial:-(S.trial||0)*TRIAL_PTS,prio:-Math.round(S.cust.pri||0)};
   return{total:Math.max(0,Object.values(parts).reduce((a,b)=>a+b,0)),parts,surv,spend};
 }
 function endShift(){
@@ -1625,8 +1640,8 @@ function endShift(){
   const L=S.lost,sc=computeScore();let g='✕',gl='alarm',gd='';
   if(!L){const k=(END-START)/720;
     if(S.sc.easy&&S.insecureMin===0&&S.overloadMin===0&&S.incidents===0&&S.isoMin<=ISO_A*S.faults){g='A';gl='ok';gd=S.faults?'Every fault switched round quickly, so customers were soon back on. Textbook control.':'A clean shift with nothing to restore. Textbook control.';}
-    else if(S.insecureMin===0&&S.overloadMin===0&&S.incidents===0&&S.ens<100){g='A';gl='ok';gd='Secure all shift, no incidents and almost no customers off. Textbook control.';}
-    else if(S.insecureMin<=20*k&&S.incidents<=Math.round(k)&&S.ens<1500*k){g='B';gl='ok';gd='A solid shift with only brief exposure.';}
+    else if(S.insecureMin===0&&S.overloadMin===0&&S.incidents===0&&S.ens+(S.cust.pri||0)<100){g='A';gl='ok';gd='Secure all shift, no incidents and almost no customers off. Textbook control.';}
+    else if(S.insecureMin<=20*k&&S.incidents<=Math.round(k)&&S.ens+(S.cust.pri||0)<1500*k){g='B';gl='ok';gd='A solid shift with only brief exposure.';}
     else if(S.insecureMin<=90*k&&S.incidents<=Math.round(2*k)){g='C';gl='warn';gd='Blackout Canyon stayed on, but there were costly moments.';}
     else{g='D';gl='warn';gd='You got through it, but customers and the network took a beating.';}
     play('done');
@@ -1675,6 +1690,8 @@ const DB_TIPS={
   lvfind:'Don\'t wait for line patrol. Send a crew to open the mid-point switch, then close the breaker: if it holds, the fault is in the far half and the near half is back on.',
   lvnear:'With the fault in the far half, open the mid-point switch and close the breaker at the substation. The near half comes straight back.',
   lvfar:'With the fault in the near half, the far half can come back from the other end: Volt Face, an 11 kV link or a mobile generator.',
+  prio:'Hospitals, care homes and Priority Services Register customers cost far more while they\'re off. Restore their half of the feeder first, and when you have to shed load, open a feeder without them.',
+  prio_rep:'The priority customers were on the faulted half, so only the repair could bring them back.',
   lvoff:'These customers were on a healthy feeder. After a repair or a trip, check the alarm list and close the breaker and mid-point switch to put everyone back.',
   risk:'Minutes at risk count while losing one more transformer would overload the rest. Use the look-ahead and move load onto the neighbours before the peak, not during it.',
   gsp:'Get under the National Grid limit before the deadline. Watts This and Volt Face take load off Steve Towers; Ampy Place is on the same grid supply, so moving load there doesn\'t help.',
@@ -1689,7 +1706,7 @@ const DB_TIPS={
   sp_curt:'Curtailment compensation adds up quickly. Curtail only what is needed and release it as soon as loading allows.',
   sp_gen:'Generators on a substation that is off supply still get compensation. Restore those substations quickly.',
   lost:'Every substation was off at once. Keep a healthy route ready for each substation, and get transformers under their emergency rating before protection trips them.'};
-const UNAVOID={repair:1,ar:1};// faulted sections and auto-recloses: nothing the player could have done
+const UNAVOID={repair:1,ar:1,prio_rep:1};// faulted sections and auto-recloses: nothing the player could have done
 const tipOf=r=>{const b=r.split('_')[0],t=S.sc.tips||{};return t[r]||t[b]||DB_TIPS[r]||DB_TIPS[b]||'';};
 function drawDebrief(){if(GAME!=='cr')return'';const all=S.loss||[],top=all.filter(e=>!UNAVOID[e.r]&&e.pts>=1).sort((a,b)=>b.pts-a.pts).slice(0,3);
   const un=Math.round(all.filter(e=>UNAVOID[e.r]).reduce((a,e)=>a+e.pts,0)),when=e=>fmtT(e.from)+(e.to>e.from?'–'+fmtT(e.to+1):'');
@@ -1711,6 +1728,7 @@ function showEnd(){
       <tr><td>Full shift bonus</td><td>${sg(F.parts.bonus)}</td></tr>
       <tr><td>Minutes at risk (${S.insecureMin} × 20)</td><td>${sg(F.parts.risk)}</td></tr>
       <tr><td>Customer interruptions: ${nf(S.cust.ci)} CI, ${nf(S.cust.cml)} CML, ${nf(S.cust.si)} short (under 3 min)</td><td>${sg(F.parts.ens)}</td></tr>
+      ${PRIO_ON?`<tr><td>Priority customers off (${nf(Object.values(S.cust.pmin||{}).reduce((a,b)=>a+b,0))} min${Object.keys(S.cust.pmin||{}).length?': '+esc(Object.entries(S.cust.pmin).map(([k,v])=>`${PRIO[k].name} ${v}`).join(', ')):''})</td><td>${sg(F.parts.prio)}</td></tr>`:''}
       <tr><td>Switching incidents (${S.incidents} × ${INCIDENT_PTS})</td><td>${sg(F.parts.inc)}</td></tr>
       ${LV_ON?`<tr><td>Closed onto a fault (${S.trial||0} × ${TRIAL_PTS})</td><td>${sg(F.parts.trial)}</td></tr>`:''}
       ${NOGEN()?'':`<tr><td>Spend (${gbp(F.spend)} ÷ 10)</td><td>${sg(F.parts.spend)}</td></tr>`}</tbody></table></div>`;
