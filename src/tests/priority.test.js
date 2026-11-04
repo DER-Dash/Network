@@ -5,7 +5,7 @@ const gen=fs.readFileSync(path.join(__dirname,'..','..','build','generation.html
 let errs=[],fails=0;const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const ok=(c,m)=>{console.log((c?'ok ':'FAIL ')+m);if(!c)fails++;};
 function mk(src){return new JSDOM(src,{url:'https://e.test/',runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){w.matchMedia=()=>({matches:false,addEventListener(){}});w.Element.prototype.scrollIntoView=function(){};w.onerror=(m,s,l,c)=>errs.push(m+' @'+l+':'+c);}});}
-async function start(src,scn){const d=mk(src),w=d.window,doc=w.document;await wait(30);const G=w.__fc;doc.querySelector('[data-mode="free"]').click();const b=doc.querySelector(`[data-scn="${scn}"]`);if(b&&!b.disabled)b.click();doc.getElementById('ovTips').checked=false;doc.getElementById('ovPause').checked=false;doc.getElementById('startBtn').click();return{w,doc,G,S:G.S};}
+async function start(src,scn){const d=mk(src),w=d.window,doc=w.document;await wait(30);const G=w.__fc;doc.querySelector('[data-mode="free"]').click();const b=doc.querySelector(`[data-scn="${scn}"]`);if(b&&!b.disabled)b.click();doc.getElementById('ovTips').checked=false;doc.getElementById('ovPause').checked=false;doc.getElementById('startBtn').click();{const h=doc.getElementById('hoGo');if(h&&!doc.getElementById('hoOverlay').hidden)h.click();}return{w,doc,G,S:G.S};}
 (async()=>{
  {const {doc,G,S}=await start(html,'quiet');S.sched.length=0;G.run(3);
   ok(doc.getElementById('pri_hw1')&&doc.getElementById('pri_js2')&&!doc.getElementById('pri_hw0'),'badges drawn on the tagged feeders only');

@@ -5,7 +5,7 @@ let errs=[],fails=0;const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const ok=(c,m)=>{console.log((c?'ok ':'FAIL ')+m);if(!c)fails++;};
 function mk(store){return new JSDOM(html,{url:'https://e.test/',runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){w.matchMedia=()=>({matches:false,addEventListener(){}});w.Element.prototype.scrollIntoView=function(){};w.onerror=(m,s,l,c)=>errs.push(m+' @'+l+':'+c);
   if(store)Object.entries(store).forEach(([k,v])=>w.localStorage.setItem(k,v));}});}
-async function start(scn,md,store){const d=mk(store),w=d.window,doc=w.document;await wait(30);const G=w.__fc;doc.querySelector(`[data-mode="${md||'free'}"]`).click();const b=doc.querySelector(`[data-scn="${scn}"]`);if(b&&!b.disabled)b.click();doc.getElementById('ovTips').checked=false;doc.getElementById('ovPause').checked=false;doc.getElementById('startBtn').click();return{w,doc,G,S:G.S};}
+async function start(scn,md,store){const d=mk(store),w=d.window,doc=w.document;await wait(30);const G=w.__fc;doc.querySelector(`[data-mode="${md||'free'}"]`).click();const b=doc.querySelector(`[data-scn="${scn}"]`);if(b&&!b.disabled)b.click();doc.getElementById('ovTips').checked=false;doc.getElementById('ovPause').checked=false;doc.getElementById('startBtn').click();{const h=doc.getElementById('hoGo');if(h&&!doc.getElementById('hoOverlay').hidden)h.click();}return{w,doc,G,S:G.S};}
 const busy=(S,k)=>S.crews.some(c=>c.job&&c.job.k===k);
 // one minute of play. smart: switch round every fault; otherwise just wait for repairs and close things back.
 function play(G,S,smart){

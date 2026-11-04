@@ -1,7 +1,7 @@
 const {JSDOM}=require('jsdom');const html=require('fs').readFileSync(require('path').join(__dirname,'..','..','build','control-room.html'),'utf8');
 let errs=[];const wait=ms=>new Promise(r=>setTimeout(r,ms));const r=Math.round;
 const mk=()=>new JSDOM(html,{url:'https://e.test/',runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){w.matchMedia=()=>({matches:false,addEventListener(){}});w.Element.prototype.scrollIntoView=function(){};w.onerror=(m,s,l,c)=>errs.push(m+' @'+l+':'+c);}});
-async function start(scn){const d=mk(),w=d.window,doc=w.document;await wait(30);const G=w.__fc;doc.querySelector('[data-mode="free"]').click();doc.querySelector(`[data-scn="${scn}"]`).click();doc.getElementById('ovTips').checked=false;doc.getElementById('ovPause').checked=false;doc.getElementById('startBtn').click();return{doc,G,S:G.S};}
+async function start(scn){const d=mk(),w=d.window,doc=w.document;await wait(30);const G=w.__fc;doc.querySelector('[data-mode="free"]').click();doc.querySelector(`[data-scn="${scn}"]`).click();doc.getElementById('ovTips').checked=false;doc.getElementById('ovPause').checked=false;doc.getElementById('startBtn').click();{const h=doc.getElementById('hoGo');if(h&&!doc.getElementById('hoOverlay').hidden)h.click();}return{doc,G,S:G.S};}
 const until=(G,f,max=60)=>{for(let i=0;i<max&&!f();i++)G.run(1);};
 (async()=>{
  {const {doc,G,S}=await start('snow');S.sched.length=0;S.events.length=0;G.run(5);

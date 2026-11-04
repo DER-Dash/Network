@@ -2,7 +2,7 @@ const {JSDOM}=require('jsdom');const fs=require('fs');const html=fs.readFileSync
 let errs=[];const wait=ms=>new Promise(r=>setTimeout(r,ms));
 (async()=>{const d=new JSDOM(html,{url:'https://e.test/',runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){w.matchMedia=()=>({matches:false,addEventListener(){}});w.Element.prototype.scrollIntoView=function(){};w.onerror=(m,s,l,c)=>errs.push(m+' @'+l+':'+c);}});const w=d.window,doc=w.document;await wait(30);const G=w.__fc;
  for(const scn of ['mesh','jan']){
- doc.querySelector('[data-mode="free"]').click();doc.querySelector(`[data-scn="${scn}"]`).click();doc.getElementById('ovTips').checked=false;doc.getElementById('ovPause').checked=false;doc.getElementById('startBtn').click();
+ doc.querySelector('[data-mode="free"]').click();doc.querySelector(`[data-scn="${scn}"]`).click();doc.getElementById('ovTips').checked=false;doc.getElementById('ovPause').checked=false;doc.getElementById('startBtn').click();{const h=doc.getElementById('hoGo');if(h&&!doc.getElementById('hoOverlay').hidden)h.click();}
  const S=G.S;S.sched.length=0;G.run(2);const pn0=S.pn.hw,e0=S.ens;
  const click=sel=>doc.querySelector(sel).dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
  click('#mimic [data-sel="lf:hw0"]');const qp=doc.getElementById('qp');console.log(scn,'popup',qp.hidden?'HIDDEN':qp.textContent.replace(/\s+/g,' ').trim());

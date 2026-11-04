@@ -3,7 +3,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));const r=Math.round;let errs=[];
 function mk(){return new JSDOM(html,{url:'https://e.test/',runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){w.matchMedia=()=>({matches:false,addEventListener(){}});w.onerror=(m)=>errs.push(m);}});}
 (async()=>{for(const k of ['may','jan','storm']){const res=[];
  for(let n=0;n<6;n++){const d=mk(),w=d.window,doc=w.document;await wait(20);const G=w.__fc;
-  doc.querySelector('[data-mode="free"]').click();doc.querySelector(`[data-scn="${k}"]`).click();doc.getElementById('ovTips').checked=false;doc.getElementById('ovPause').checked=false;doc.getElementById('startBtn').click();
+  doc.querySelector('[data-mode="free"]').click();doc.querySelector(`[data-scn="${k}"]`).click();doc.getElementById('ovTips').checked=false;doc.getElementById('ovPause').checked=false;doc.getElementById('startBtn').click();{const h=doc.getElementById('hoGo');if(h&&!doc.getElementById('hoOverlay').hidden)h.click();}
   const S=G.S;Object.assign(S.armed,{bdis:30,chp:25,dsr:15,solar:60,wind:40,bchg:30});
   for(let t=0;t<1200&&!S.ended;t++){const live=S.tx.filter(x=>!x.out),L=Math.max(0,...live.map(x=>x.L)),imp=S.net>0;
    // keep under 95% with manual action

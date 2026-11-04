@@ -307,6 +307,15 @@ html.kiosk .qp{width:270px;font-size:14px}
 .asym .mg text{font:700 8px var(--f-mono);fill:var(--c-gas)}
 .asym .mg.on text{fill:#fff}
 .mg.operating circle{stroke-dasharray:3 2}
+/* Handover note before a career shift */
+.handover{max-width:36rem;margin:8px auto 4px;padding:0 4px}
+.handover h2{margin:2px 0 14px;font:700 clamp(28px,5vw,40px)/1 var(--f-display);text-transform:uppercase}
+.ho-eyebrow{margin:0;font:600 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--sc,var(--muted))}
+.ho-note{margin:0 0 12px;padding:16px 18px;border-left:4px solid var(--sc,var(--accent));border-radius:4px 10px 10px 4px;background:var(--panel);box-shadow:0 1px 0 var(--line,rgba(0,0,0,.08)) inset}
+.ho-note blockquote{margin:0;font-size:1.05em;line-height:1.5}
+.ho-note figcaption{margin-top:10px;font:600 13px var(--f-mono);color:var(--muted)}
+.ho-note figcaption::before{content:'— '}
+.ho-go{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;margin-top:14px}
 /* Priority customers: hospital, care home, PSR */
 .pri{--pc:var(--alarm)}
 .pri-care{--pc:var(--c-dsr)}

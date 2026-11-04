@@ -4,7 +4,7 @@ let errs=[],fails=0;const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const ok=(c,m)=>{if(!c){fails++;console.log('FAIL',m);}else console.log('ok',m);};
 function mk(){return new JSDOM(html,{url:'https://e.test/',runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){w.matchMedia=()=>({matches:false,addEventListener(){}});w.Element.prototype.scrollIntoView=function(){};w.onerror=(m,s,l,c)=>errs.push(m+' @'+l+':'+c);}});}
 async function start(scn){const d=mk(),w=d.window,doc=w.document;await wait(30);const G=w.__fc;doc.querySelector('[data-mode="free"]').click();doc.querySelector(`[data-scn="${scn}"]`).click();
-  doc.getElementById('ovTips').checked=false;doc.getElementById('ovPause').checked=false;doc.getElementById('startBtn').click();const S=G.S;S.sched.length=0;S.events.length=0;G.run(2);return{w,doc,G,S};}
+  doc.getElementById('ovTips').checked=false;doc.getElementById('ovPause').checked=false;doc.getElementById('startBtn').click();{const h=doc.getElementById('hoGo');if(h&&!doc.getElementById('hoOverlay').hidden)h.click();}const S=G.S;S.sched.length=0;S.events.length=0;G.run(2);return{w,doc,G,S};}
 const until=(G,S,f,max)=>{const t0=S.t;while(!f()&&S.t<t0+(max||120))G.run(1);return S.t-t0;};
 const fault=(S,k,sec,tr,dur)=>S.sched.push({k,m:S.t,dur:dur||80,sec,tr:!!tr,cause:'Test fault',done:false});
 (async()=>{

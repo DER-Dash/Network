@@ -783,6 +783,15 @@ html.kiosk .qp{width:270px;font-size:14px}
 .asym .mg text{font:700 8px var(--f-mono);fill:var(--c-gas)}
 .asym .mg.on text{fill:#fff}
 .mg.operating circle{stroke-dasharray:3 2}
+/* Handover note before a career shift */
+.handover{max-width:36rem;margin:8px auto 4px;padding:0 4px}
+.handover h2{margin:2px 0 14px;font:700 clamp(28px,5vw,40px)/1 var(--f-display);text-transform:uppercase}
+.ho-eyebrow{margin:0;font:600 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--sc,var(--muted))}
+.ho-note{margin:0 0 12px;padding:16px 18px;border-left:4px solid var(--sc,var(--accent));border-radius:4px 10px 10px 4px;background:var(--panel);box-shadow:0 1px 0 var(--line,rgba(0,0,0,.08)) inset}
+.ho-note blockquote{margin:0;font-size:1.05em;line-height:1.5}
+.ho-note figcaption{margin-top:10px;font:600 13px var(--f-mono);color:var(--muted)}
+.ho-note figcaption::before{content:'— '}
+.ho-go{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;margin-top:14px}
 /* Priority customers: hospital, care home, PSR */
 .pri{--pc:var(--alarm)}
 .pri-care{--pc:var(--c-dsr)}
@@ -1272,6 +1281,32 @@ const SCENARIOS_FC={
 if(SCENARIOS.jan)SCENARIOS.tut={...SCENARIOS.jan,hidden:true,title:'Tutorial · Cold Thursday',focus:'Learn the control room',faults:0,
   blurb:'Cold Thursday, 15:30: the evening peak is building. Learn generation, flexibility and switching on the real network.',build(r){return{events:[],cutout:null,risk:[]};}};
 if(GAME==='fc'){Object.keys(SCENARIOS).forEach(k=>delete SCENARIOS[k]);Object.assign(SCENARIOS,SCENARIOS_FC);}
+// Handover notes: a short note from the engineer going off shift, shown before each career shift starts
+const HANDOVER=GAME==='cr'?{
+  quiet:{from:'Pat, night shift',text:'Quiet night, nothing tripped. Everything is in its normal running arrangement and all three crews are back at the depot. Kings Hill Hospital is on the far half of the Kings Hill feeder, so if that one locks out, get the far half back first.'},
+  grid:{from:'Pat, night shift',text:'No flexibility contracts today, so it\'s switching or nothing. T3 comes out for maintenance at 13:00 and freezing fog is forecast from 17:00. Decide where each substation goes before T3 comes out, not after.'},
+  storm:{from:'Pat, night shift',text:'The wind is picking up, with one band of severe gale due in the morning and another in the afternoon. Spinney Windy Things will cut out if the gusts get too strong. Send a crew to stand by at a tie before each band arrives.'},
+  heat:{from:'Jo, night shift',text:'It never cooled down overnight. The cables are still warm and every rating is down 15%. The heat peaks between 12:00 and 17:00, which is when the cable joints go, and Ampy Place and Watts This have less spare than usual.'},
+  jan:{from:'Jo, night shift',text:'Icy night, and the lines are still carrying ice. T1 comes out for maintenance at 09:30, right after the worst of it, and is back at 12:30. Don\'t let the evening peak catch you with the battery flat.'},
+  ev:{from:'Sam, early shift',text:'Feels like a normal cold Monday, but there are far more electric cars about than last winter. T3 comes out at 14:00 and isn\'t back until 17:15. Last Monday the look-ahead said 18:00 would be fine, and it wasn\'t. Don\'t trust it after 17:00.'},
+  snow:{from:'Jo, night shift',text:'Snow all night, and heavier snow is forecast from 15:00. The Ohm No feeder comes out at 10:00 for four hours of planned work, so move Ohm No before field staff open it. The new 11 kV links are commissioned and ready to use.'},
+  gsp:{from:'Jo, night shift',text:'National Grid rang about a supergrid transformer at Steve Towers that has been gassing. Nothing official yet, but if it fails they\'ll want demand cut fast. Know how much Watts This and Volt Face can take before the afternoon.'},
+  mesh:{from:'Pat, night shift',text:'Kilowatt Close is live, fed through Shocking Place with a backup route from Ohm No. The Shocking Place feeder comes out at 09:00 for planned work, so sort out both of them first thing. Close South has Priority Services Register customers: don\'t leave them off.'},
+  endure:{from:'Pat, night shift',text:'Three trips since midnight, all repaired and back to normal running, and it\'s getting worse, not better. Three crews have to cover the whole storm, so plan their trips. Use the quiet spells to put the network back to normal.'}}
+:{
+  may:{from:'Sam, night shift',text:'Clear skies, so the solar farm will be flat out by mid-morning while demand stays low. T2 comes out for maintenance at 10:00 and is out through the solar peak until 15:00. Thunderstorms may build in the afternoon.'},
+  storm:{from:'Sam, night shift',text:'Two bands of severe gale are on the way. Spinney Windy Things may cut out in the gusts, so don\'t count on the wind farm. Watch both directions: export while it\'s blowing, import when it stops.'},
+  jan:{from:'Jo, night shift',text:'Ice on the lines overnight, and more is forecast until 09:00. T1 comes out for maintenance at 09:30 and is back at 12:30. Keep the battery charged for the evening peak.'}};
+function handoverSheet(){const h=HANDOVER[S.key],sc=S.sc,n=CAREER.indexOf(S.key)+1;
+  let ho=$('hoOverlay');if(!ho){ho=document.createElement('div');ho.id='hoOverlay';ho.className='overlay';ho.setAttribute('role','dialog');ho.setAttribute('aria-modal','true');ho.setAttribute('aria-label','Handover');ho.innerHTML='<div class="sheet" id="hoSheet"></div>';document.body.appendChild(ho);}
+  $('hoSheet').innerHTML=`${BAND}<div class="handover" style="--sc:${sc.color}">
+    <p class="ho-eyebrow">Shift ${n} · ${esc(sc.title)} · ${esc(sc.when)}</p>
+    <h2>Handover</h2>
+    <figure class="ho-note"><blockquote>${esc(h.text)}</blockquote><figcaption>${esc(h.from)}, ${fmtT(START)}</figcaption></figure>
+    <p class="fine">It's also in the event log if you need it later.</p>
+    <div class="ho-go"><button type="button" class="btn" id="hoBack">Back</button><button type="button" class="btn primary big" id="hoGo">Take the handover · start at ${fmtT(START)}</button></div></div>`;
+  $('overlay').hidden=true;ho.hidden=false;ho.scrollTop=0;const g=$('hoGo');if(g)g.focus();}
+const hideHO=()=>{const ho=$('hoOverlay');if(ho)ho.hidden=true;};
 
 /* ---------- Network ---------- */
 const PR={
@@ -1536,6 +1571,7 @@ function newGame(key){
   logE(START,`Shift starts. ${sc.when}: ${sc.blurb}`,'info');
   if(daily)logE(START,`Today's challenge (${fmtDate(date)}): everyone gets the same weather and fault times.`,'info');
   S.events.filter(e=>e.planned).forEach(e=>logE(START,e.fd?`Notice: ${PR[e.fd].name} feeder planned outage ${fmtT(e.start)}–${fmtT(e.end)}. Field staff will open both ends of it at ${fmtT(e.start)}, so move ${PR[e.fd].name} and anything fed through it beforehand.`:`Notice: T${e.tx+1} planned outage ${fmtT(e.start)}–${fmtT(e.end)}. Field staff will switch it out; you restore it afterwards.`,'warn'));
+  if(S.mode==='career'&&HANDOVER[key])logE(START,`Handover from ${HANDOVER[key].from}: ${HANDOVER[key].text}`,'info');
   S.risk.forEach(w=>logE(START,`Weather warning: ${w.label.toLowerCase()} ${fmtT(w.start)}–${fmtT(w.end)}. Faults are ${w.mult}× more likely.`,'warn'));
   $('scnLabel').innerHTML=esc(sc.title+' · Blackout Canyon 33 kV')+(daily?` <span class="mode-tag">Daily ${esc(fmtDate(date))}</span>`:'');
   $('dayLabel').textContent=sc.when;
@@ -2904,7 +2940,7 @@ function applyZoom(){const z=PHONE&&zoomed;$('mimic').classList.toggle('zoom',z)
   if(z){const sc=$('mscroll');sc.scrollLeft=Math.max(0,(sc.scrollWidth-sc.clientWidth)*.3);}}
 
 /* ---------- Events ---------- */
-function begin(){ls('played','1');$('overlay').hidden=true;S.running=true;S.paused=false;acc=0;audio();if(MUS.on&&!MUS.timer)setMusic(true);track('shift_start',{scenario:S.key,mode:S.mode});render(true);}
+function begin(){ls('played','1');$('overlay').hidden=true;hideHO();S.running=true;S.paused=false;acc=0;audio();if(MUS.on&&!MUS.timer)setMusic(true);track('shift_start',{scenario:S.key,mode:S.mode});render(true);}
 document.addEventListener('click',e=>{
   if(e.target.closest('#kIntro')){endIntro();return;}
   const adj=e.target.closest('[data-adj]');if(adj){nudge(adj.dataset.adj,+adj.dataset.d);return;}
@@ -2915,7 +2951,7 @@ document.addEventListener('click',e=>{
   const hg=e.target.closest('[data-go]');if(hg){heroGo(hg.dataset.go);return;}
   const tu=e.target.closest('[data-tut]');if(tu){if(tu.dataset.tut==='play')ls('played','1');tutClick(tu.dataset.tut);return;}
   const cw=e.target.closest('[data-crew]');if(cw&&S){if(cw.closest('#qp'))S.qp=false;dispatch(cw.dataset.crew,null);return;}
-  const nx=e.target.closest('[data-next]');if(nx){chosen=nx.dataset.next;ls('day',chosen);newGame(chosen);begin();return;}
+  const nx=e.target.closest('[data-next]');if(nx){chosen=nx.dataset.next;ls('day',chosen);newGame(chosen);if(S.mode==='career'&&HANDOVER[S.key]){handoverSheet();return;}begin();return;}
   const rnd=e.target.closest('[data-random]');if(rnd){const ks=Object.keys(SCENARIOS).filter(k=>!SCENARIOS[k].hidden&&k!==chosen),k=ks[Math.floor(Math.random()*ks.length)]||chosen,b=document.querySelector(`[data-scn="${k}"]`);if(b){b.click();b.scrollIntoView({block:'nearest',behavior:'smooth'});}return;}
   const sc=e.target.closest('[data-scn]');if(sc){if(sc.disabled)return;chosen=sc.dataset.scn;ls('day',chosen);document.querySelectorAll('[data-scn]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.scn===chosen));newGame(chosen);txt('startBtn','Start shift at '+fmtT(START));txt('runTxt',runText());return;}
   const md=e.target.closest('[data-mode]');if(md){mode=md.dataset.mode;ls('mode',mode);const sy=$('sheet').scrollTop;if(mode==='career'&&!unlockedK(career(),chosen))chosen=CAREER[0];newGame(chosen);startSheet();$('sheet').scrollTop=sy;return;}
@@ -2941,7 +2977,9 @@ document.addEventListener('click',e=>{
   if(id==='tipSkip'){tipsOn=false;ls('tips','off');tipOk();return;}
   if(id==='dSpeed'){speed=speed===1?2:speed===2?4:1;document.querySelectorAll('[data-speed]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.speed===speed));txt('dSpeed',speed+'×');return;}
   if(id==='dPlay'){$('playBtn').click();return;}
-  if(id==='startBtn'){autoPause=$('ovPause').checked;$('autoPause').checked=autoPause;tipsOn=$('ovTips').checked;ls('tips',tipsOn?'on':'off');if(S.key!==chosen||S.t!==START||S.mode!==mode)newGame(chosen);begin();return;}
+  if(id==='startBtn'){autoPause=$('ovPause').checked;$('autoPause').checked=autoPause;tipsOn=$('ovTips').checked;ls('tips',tipsOn?'on':'off');if(S.key!==chosen||S.t!==START||S.mode!==mode)newGame(chosen);if(S.mode==='career'&&HANDOVER[S.key]){handoverSheet();return;}begin();return;}
+  if(id==='hoGo'){begin();return;}
+  if(id==='hoBack'){hideHO();startSheet();return;}
   if(id==='replayBtn'){newGame(S.key);begin();return;}
   if(id==='againBtn'||id==='newBtn'){if(S.running)S.paused=true;hideTip();newGame(chosen);startSheet();return;}
   if(id==='playBtn'){if(S.ended)return;if(!S.running)begin();else{S.paused=!S.paused;if(!S.paused){hideBanner();if(tipActive)hideTip();}acc=0;render(true);}return;}
