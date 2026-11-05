@@ -453,3 +453,5 @@ html.kiosk .qp{width:270px;font-size:14px}
 .db-l{flex-basis:100%;font-weight:600;overflow-wrap:anywhere}
 .db-tip{margin:6px 0 0;font-size:14px}
 .debrief>p:last-child{margin-bottom:0}
+/* 33/11 kV transformer at each substation */
+.ptg.out .wdg{stroke-dasharray:4 4;opacity:.5}
