@@ -218,7 +218,7 @@ const PR={
   ml:{id:'ml',name:'Shocking Place',share:.20,nb:'kn',tie:40,fr:170,x1:370,x2:560,fx:465},
   rv:{id:'rv',name:'Ohm No',share:.25,nb:'fm',tie:40,fr:80,x1:610,x2:830,fx:715},
   js:{id:'js',name:'Joule Street',share:.25,nb:'fm',tie:45,fr:70,x1:880,x2:1060,fx:970}};
-PR.kc={id:'kc',name:'Kilowatt Close',share:.19,nb:null,fd:false,x1:500,x2:760,fx:600,y:GAME==='cr'?574:544,lx:540};
+PR.kc={id:'kc',name:'Kilowatt Close',share:.19,nb:null,fd:false,x1:500,x2:760,fx:600,y:GAME==='cr'?588:558,lx:540};
 ['hw','ml','rv','js'].forEach(p=>PR[p].fd=true);
 let PIDS=['hw','ml','rv','js'];
 const NBS={kn:{id:'kn',name:'Ampy Place',same:true,base:65,dip:25},fm:{id:'fm',name:'Watts This',same:false,base:60,dip:22},vf:{id:'vf',name:'Volt Face',same:false,base:52,dip:14}};
@@ -226,12 +226,12 @@ let VFI=[1,2];const VF_ON=GAME==='cr';
 const LINKS={hm:{a:['hw',2],b:['ml',0],r:15},mr:{a:['ml',2],b:['rv',0],r:15},rj:{a:['rv',2],b:['js',0],r:15}};let LKIDS=[];
 const grpOf=s=>!s||s==='off'?null:s==='fm'?'wt':'st';
 const ITS={hm:{id:'hm',a:'hw',b:'ml',x:345,r:30},mr:{id:'mr',a:'ml',b:'rv',x:585,r:30},rj:{id:'rj',a:'rv',b:'js',x:855,r:30}};
-ITS.mk={id:'mk',a:'ml',b:'kc',x:520,sy:GAME==='cr'?492:442,r:40,v:true,nc:true,left:true};ITS.rk={id:'rk',a:'rv',b:'kc',x:690,sy:GAME==='cr'?492:442,r:40,v:true};
+ITS.mk={id:'mk',a:'ml',b:'kc',x:520,sy:GAME==='cr'?499:449,r:40,v:true,nc:true,left:true};ITS.rk={id:'rk',a:'rv',b:'kc',x:690,sy:GAME==='cr'?499:449,r:40,v:true};
 let ITIDS=['hm','mr','rj'];
 const pY=p=>PR[p].y||PY;
 const TIESW={hw:{x:75,y:330,path:'M110 330 H40',lx:48,ly:354,anc:'start'},
-  ml:{x:210,y:589,path:'M380 330 V589 H40',lx:210,ly:611,anc:'middle'},
-  rv:{x:1090,y:619,path:'M830 330 V619 H1160',lx:1090,ly:641,anc:'middle'},
+  ml:{x:210,y:603,path:'M380 330 V603 H40',lx:210,ly:625,anc:'middle'},
+  rv:{x:1090,y:633,path:'M830 330 V633 H1160',lx:1090,ly:655,anc:'middle'},
   js:{x:1110,y:330,path:'M1060 330 H1160',lx:1152,ly:354,anc:'end'}};
 const TXX=[460,600,740],BCY=200,PY=330;
 const SECS={B1:{tx:[0],x1:180,x2:521},B2:{tx:[1],x1:539,x2:661},B3:{tx:[2],x1:679,x2:1000}};
@@ -259,7 +259,7 @@ const ASSETS=[
   {id:'load_kc',type:'load',prim:'kc',x:600,name:'Demand'}];
 const LF={hw:[.4,.35,.25],ml:[.45,.3,.25],rv:[.4,.35,.25],js:[.35,.35,.3],kc:[.5,.3,.2]};
 const LFN={hw:['Town Centre','Kings Hill','Hertz House Park'],ml:['Marsh Road','Station','Mill Lane'],rv:['Ohm Street','Resistor Row','Circuit Park'],js:['High Street','Joule Park','Watt Way'],kc:['Close North','Close South','Ampere Avenue']};
-const LDX=GAME==='cr'?[-26,0,26]:[-22,0,22],LVD=GAME==='cr'?18:0,TXD=44,lfOn=p=>S.lf[p].reduce((a,on,i)=>a+(on?LF[p][i]:0),0);
+const LDX=GAME==='cr'?[-26,0,26]:[-22,0,22],LVD=GAME==='cr'?18:0,TXD=58,lfOn=p=>S.lf[p].reduce((a,on,i)=>a+(on?LF[p][i]:0),0);
 function linkOf(p,i){for(const k of LKIDS){const L=LINKS[k];if(L.a[0]===p&&L.a[1]===i)return{k,q:L.b[0],j:L.b[1]};if(L.b[0]===p&&L.b[1]===i)return{k,q:L.a[0],j:L.a[1]};}return null;}
 const subOn=(p,sup)=>{const v=(sup||S.supNow||S.sup||{})[p];return !!v&&v!=='off';};
 // 33/11 kV transformer at each substation, fed through an automatic 33 kV breaker. With it open (or tripped)
@@ -919,19 +919,19 @@ const SELBOX={};
 const arw=(id,x,y)=>`<path id="${id}" class="arw hid" d="M${x-6} ${y-4}L${x+6} ${y-4}L${x} ${y+5}Z"/>`;
 function setArw(id,v,axis){const e=$(id);if(!e)return;const on=Math.abs(v)>=.5;e.classList.toggle('hid',!on);if(!on)return;
   const r=axis==='v'?(v>0?0:180):(v>0?-90:90);const t=`rotate(${r}deg)`;if(e.style.transform!==t)e.style.transform=t;}
-const TIEARW={hw:[96,330,-1],ml:[300,589,-1],rv:[1000,619,1],js:[1085,330,1]};
+const TIEARW={hw:[96,330,-1],ml:[300,603,-1],rv:[1000,633,1],js:[1085,330,1]};
 const ADJ_TIP={batt:['Discharge more: offsets Hertz House\'s load','Charge more: adds load at Hertz House'],dsr:['Reduce demand more','Reduce demand less'],chp:['Run the gas engine harder','Run the gas engine less'],solar:['Curtail less','Curtail more'],wind:['Curtail less','Curtail more']};
 function adjBtn(id,x,y,d){const up=d>0,tip=(ADJ_TIP[id]||['Turn up','Turn down'])[up?0:1];return `<g class="adj" id="adj_${id}_${up?'u':'d'}" data-adj="${id}" data-d="${d}" role="button" aria-label="${tip}"><title>${tip}</title><rect x="${x}" y="${y}" width="22" height="19" rx="4"/><path d="${up?`M${x+5} ${y+13.5}h12l-6-8z`:`M${x+5} ${y+5.5}h12l-6 8z`}"/></g>`;}
 function buildMimic(){
   const ng=S&&NOGEN();
   let s=`<text class="t-bus" x="400" y="26">STEVE TOWERS GSP · 132 kV</text><line class="bus hv" x1="400" y1="40" x2="800" y2="40"/>`;
-  s+=`<rect class="hit" data-sel="nb:kn" x="12" y="222" width="104" height="384"/>
+  s+=`<rect class="hit" data-sel="nb:kn" x="12" y="222" width="104" height="398"/>
     <text class="nb-name kn" x="16" y="236">AMPY PLACE</text><text id="nbs_kn" class="nb-s" x="16" y="251">Spare 65 MW</text><text class="nb-r" x="16" y="264">Same grid supply</text>
-    <line class="bus nbus kn" x1="40" y1="276" x2="40" y2="604"/>`;
-  s+=`<rect class="hit" data-sel="nb:fm" x="1074" y="222" width="122" height="414"/>
+    <line class="bus nbus kn" x1="40" y1="276" x2="40" y2="618"/>`;
+  s+=`<rect class="hit" data-sel="nb:fm" x="1074" y="222" width="122" height="428"/>
     <text class="nb-name fm" x="1188" y="236" text-anchor="end">WATTS THIS</text><text id="nbs_fm" class="nb-s" x="1188" y="251" text-anchor="end">Spare 60 MW</text><text class="nb-r" x="1188" y="264" text-anchor="end">Different grid supply</text>
-    <line class="bus nbus fm" x1="1160" y1="276" x2="1160" y2="634"/>`;
-  SELBOX['nb:kn']=[10,220,110,388];SELBOX['nb:fm']=[1072,220,126,418];
+    <line class="bus nbus fm" x1="1160" y1="276" x2="1160" y2="648"/>`;
+  SELBOX['nb:kn']=[10,220,110,402];SELBOX['nb:fm']=[1072,220,126,432];
   TXX.forEach((x,i)=>{
     s+=`<g id="cct${i}" class="cct">
     <line id="ca${i}" class="cond hv" x1="${x}" y1="40" x2="${x}" y2="76"/><line id="fa${i}" class="flow" x1="${x}" y1="44" x2="${x}" y2="76"/>
@@ -996,9 +996,9 @@ function buildMimic(){
     if(a.type==='wind')sym=`<circle class="sym-o" cx="${x}" cy="${y+14}" r="14"/><g id="blades" class="blades"><path class="sym-l" d="M${x} ${y+14} V${y+4} M${x} ${y+14} L${x+8.7} ${y+19} M${x} ${y+14} L${x-8.7} ${y+19}"/></g>`;
     if(a.type==='batt')sym=`<path class="sym-l" d="M${x-15} ${y} h30 M${x-8} ${y+6} h16 M${x-15} ${y+12} h30 M${x-8} ${y+18} h16" style="stroke-width:2.5"/>`;
     if(a.type==='chp')sym=`<circle class="sym-o" cx="${x}" cy="${y+14}" r="14"/><text x="${x}" y="${y+19}" text-anchor="middle" style="font:700 13px var(--f-display)">G~</text>`;
-    s+=a.type==='load'?`<g id="ptg_${a.prim}" class="ptg"><title>${esc(PR[a.prim].name)} 33/11 kV transformer and its automatic 33 kV breaker</title><line id="al_${a.id}" class="cond mv" x1="${x}" y1="${bY}" x2="${x}" y2="${bY+21}"/><line id="alt_${a.id}" class="cond mv" x1="${x}" y1="${bY+51}" x2="${x}" y2="${ay+16}"/>
-      <rect id="ptb_${a.prim}" class="brk sw" x="${x-7}" y="${bY+5}" width="14" height="14"/><circle class="wdg mv" cx="${x}" cy="${bY+30}" r="9"/><circle class="wdg mv" cx="${x}" cy="${bY+42}" r="9"/>
-      <g id="ptf_${a.prim}" hidden><path class="bolt" d="M${x-14} ${bY+20} l-6 10 h5 l-4 10 l9 -13 h-5 l4 -7 z"/></g><text id="ptt_${a.prim}" class="fd-t" x="${x+14}" y="${bY+17}"></text>
+    s+=a.type==='load'?`<g id="ptg_${a.prim}" class="ptg"><title>${esc(PR[a.prim].name)} 33/11 kV transformer and its automatic 33 kV breaker</title><line id="al_${a.id}" class="cond mv" x1="${x}" y1="${bY}" x2="${x}" y2="${bY+33}"/><line id="alt_${a.id}" class="cond mv" x1="${x}" y1="${bY+63}" x2="${x}" y2="${ay+16}"/>
+      <rect id="ptb_${a.prim}" class="brk sw" x="${x-7}" y="${bY+12}" width="14" height="14"/><circle class="wdg mv" cx="${x}" cy="${bY+42}" r="9"/><circle class="wdg mv" cx="${x}" cy="${bY+54}" r="9"/>
+      <g id="ptf_${a.prim}" hidden><path class="bolt" d="M${x-14} ${bY+32} l-6 10 h5 l-4 10 l9 -13 h-5 l4 -7 z"/></g><text id="ptt_${a.prim}" class="fd-t" x="${x+14}" y="${bY+24}"></text>
       <rect class="hit" data-sel="pt:${a.prim}" x="${x-15}" y="${bY+2}" width="30" height="${TXD+8}"/></g>`:`<line id="al_${a.id}" class="cond mv" x1="${x}" y1="${ay}" x2="${x}" y2="${y}"/><line id="afl_${a.id}" class="flow" x1="${x}" y1="${ay+4}" x2="${x}" y2="${y}"/>`;
     s+=`
       <g class="asym" style="--sc:${a.type==='load'?'var(--ink)':col}">${sym}</g>
@@ -1027,7 +1027,7 @@ function buildMimic(){
   s+=`<rect id="selbox" class="selbox" x="0" y="0" width="0" height="0" rx="6" visibility="hidden"/>`;
   if(GAME==='fc')s=s.replace(/<rect class="hit" data-sel="(?:bc|in|tie|it|bs|lf|nop|lk|nb|pt):[^"]*"[^>]*\/>/g,'');
   {const lg=$('lgLK');if(lg)lg.hidden=!LKIDS.length;}
-  const el=$('mimic');el.setAttribute('viewBox',PIDS.includes('kc')?(LVD?'0 0 1200 750':'0 0 1200 684'):'0 0 1200 654');el.innerHTML=s;
+  const el=$('mimic');el.setAttribute('viewBox',PIDS.includes('kc')?(LVD?'0 0 1200 764':'0 0 1200 698'):'0 0 1200 668');el.innerHTML=s;
 }
 function txt(id,v){const e=$(id);if(e&&e.textContent!==v)e.textContent=v;}
 function setAttr(e,k,v){if(e&&e.getAttribute(k)!==v)e.setAttribute(k,v);}
@@ -1313,7 +1313,7 @@ function renderQP(){const q=$('qp');if(!q)return;const k=S&&!S.ended&&S.qp&&S.se
   if(!k||!isSw(k)||!SELBOX[k]){if(!q.hidden){q.hidden=true;lastQP='';}return;}
   const h=qpHtml(k);if(h!==lastQP){const ae=document.activeElement,fid=ae&&q.contains(ae)?ae.id:'',fk=ae&&q.contains(ae)&&ae.dataset?ae.dataset.k:'';q.innerHTML=h;lastQP=h;const f=fid?$(fid):fk?[...q.querySelectorAll('[data-k]')].find(x=>x.dataset.k===fk):null;if(f)f.focus();}
   q.hidden=false;
-  const ms=$('mscroll'),r=$('mimic').getBoundingClientRect(),mr=ms.getBoundingClientRect();if(!r.width)return;const vb=($('mimic').getAttribute('viewBox')||'0 0 1200 654').split(' ').map(Number),sc=Math.min(r.width/vb[2],r.height/vb[3]),padX=(r.width-vb[2]*sc)/2,padY=(r.height-vb[3]*sc)/2,bx=SELBOX[k],W=q.offsetWidth,H=q.offsetHeight,ox=r.left-mr.left+ms.scrollLeft+padX,oy=r.top-mr.top+ms.scrollTop+padY,cw=vb[2]*sc,ch=vb[3]*sc;
+  const ms=$('mscroll'),r=$('mimic').getBoundingClientRect(),mr=ms.getBoundingClientRect();if(!r.width)return;const vb=($('mimic').getAttribute('viewBox')||'0 0 1200 668').split(' ').map(Number),sc=Math.min(r.width/vb[2],r.height/vb[3]),padX=(r.width-vb[2]*sc)/2,padY=(r.height-vb[3]*sc)/2,bx=SELBOX[k],W=q.offsetWidth,H=q.offsetHeight,ox=r.left-mr.left+ms.scrollLeft+padX,oy=r.top-mr.top+ms.scrollTop+padY,cw=vb[2]*sc,ch=vb[3]*sc;
   let l=ox+(bx[0]+bx[2]/2)*sc-W/2,tp=oy+(bx[1]+bx[3])*sc+6;
   if(tp+H>oy+ch)tp=oy+bx[1]*sc-H-6;
   l=Math.max(ox+4,Math.min(l,ox+cw-W-4));tp=Math.max(oy+2,tp);
