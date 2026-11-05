@@ -84,3 +84,9 @@ save, then **Deploy → Manage deployments → Edit (pencil) → Version: New ve
 The check uses the website name the game sends with each score, because Apps
 Script can't see where a request came from. It stops copies of the game from
 posting scores, but someone deliberately faking requests could still get past it.
+
+## Version 13 (Christmas Day)
+
+Accepts scores for the new **Christmas Day** control room shift (`xmas`). Paste in
+the new `Code.gs`, save, then **Deploy → Manage deployments → Edit (pencil) →
+Version: New version → Deploy**.

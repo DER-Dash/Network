@@ -1,5 +1,6 @@
 /**
  * Firm Capacity scoreboard and feedback (Watts Up), version 7.
+ * Version 13: accepts the Christmas Day ('xmas') control room shift.
  * Version 12: accepts the EV evening ('ev') control room shift, and only accepts
  *   scores sent from the games at der-dash.github.io (the 'site' field).
  * Version 11: accepts the Quiet shift ('quiet') control room shift.
@@ -29,7 +30,7 @@
  * formula as the game, so the sheet never trusts a score sent by the browser.
  * Rows saved before version 2 have no mode and count as free play.
  */
-const VERSION = 12;
+const VERSION = 13;
 // Scores are only accepted from the games on this site. Apps Script can't see the request's
 // origin, so the games send their hostname; copies of the game hosted elsewhere send theirs.
 const HOME_SITE = 'der-dash.github.io';
@@ -39,7 +40,7 @@ const SHEET_NAME = 'Scores';
 const CR_SHEET_NAME = 'Control room scores';
 const sheetFor_ = game => game === 'cr' ? CR_SHEET_NAME : SHEET_NAME;
 const DAYS = ['may', 'jan', 'storm'];
-const CR_DAYS = ['quiet', 'jan', 'storm', 'grid', 'mesh', 'heat', 'gsp', 'snow', 'endure', 'ev'];
+const CR_DAYS = ['quiet', 'jan', 'storm', 'grid', 'mesh', 'heat', 'gsp', 'snow', 'endure', 'ev', 'xmas'];
 const SHIFT_MINUTES = 1080; // generation game: 05:00 to 23:00
 const CR_SHIFT_MINUTES = 720; // control room game: 08:00 to 20:00
 const CR_SHIFT_BY_DAY = { endure: 1080 }; // control room shifts of a different length

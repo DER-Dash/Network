@@ -72,6 +72,12 @@
     <div class="ph"><h2>Alarms <span id="alCount" class="al-count"></span></h2><button type="button" class="btn" id="ackBtn" hidden>Acknowledge</button></div>
     <div id="alBody"></div>
   </section>
+  <section class="panel p-calls" id="pCalls" aria-label="Customer calls">
+    <div class="ph"><h2>Customer calls <span id="callCount" class="al-count"></span></h2>
+      <button class="tog" type="button" data-tog="pCalls" aria-label="Show or hide customer calls"><svg viewBox="0 0 14 14"><path d="M3 5l4 4 4-4"/></svg></button>
+    </div>
+    <div id="callBody" aria-live="polite"></div>
+  </section>
   <section class="panel p-insp" id="pInsp" aria-label="Control panel">
     <div class="ph"><h2>Control</h2><button class="i-close" type="button" id="inspClose" aria-label="Close the control panel">×</button></div>
     <div id="inspBody"></div>

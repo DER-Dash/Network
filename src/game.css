@@ -124,8 +124,8 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .p-alarm.ringing{box-shadow:0 0 0 2px var(--warn)}
 @media (prefers-reduced-motion:reduce){.al.unack button{animation:none}}
 .dock .al-count{margin-left:-4px}
-.desk{grid-template-areas:"mimic alarm" "mimic insp" "mimic sec" "ahead log"}
-@media (max-width:920px){.desk{grid-template-areas:"mimic" "alarm" "insp" "sec" "ahead" "log"}}
+.desk{grid-template-areas:"mimic alarm" "mimic calls" "mimic insp" "mimic sec" "ahead log"}
+@media (max-width:920px){.desk{grid-template-areas:"mimic" "alarm" "calls" "insp" "sec" "ahead" "log"}}
 .p-alarm #alBody{max-height:220px;overflow-y:auto}
 @media (max-width:700px){
   .dock{gap:6px}
@@ -409,11 +409,11 @@ html.kiosk .qp{width:270px;font-size:14px}
 .mimic-svg{position:relative;z-index:1}
 .wx-sun .wx-a,.wx-heat .wx-a{display:block;background:radial-gradient(circle at 93% 4%,color-mix(in srgb,var(--c-solar) 38%,transparent),transparent 34%);animation:wxGlow 6s ease-in-out infinite alternate}
 .wx-heat .wx-b{display:block;inset:30% 0 0;background:repeating-linear-gradient(180deg,transparent 0 22px,color-mix(in srgb,var(--c-gas) 9%,transparent) 22px 30px);animation:wxHaze 4s ease-in-out infinite alternate}
-.wx-cloud .wx-a,.wx-storm .wx-a,.wx-snow .wx-a{display:block;inset:-10% -30% auto -10%;height:45%;opacity:.5;
+.wx-cloud .wx-a,.wx-storm .wx-a,.wx-snow .wx-a,.wx-rain .wx-a{display:block;inset:-10% -30% auto -10%;height:45%;opacity:.5;
   background:radial-gradient(ellipse 14% 40% at 12% 40%,var(--rule),transparent 70%),radial-gradient(ellipse 18% 50% at 38% 30%,var(--rule),transparent 70%),radial-gradient(ellipse 12% 35% at 62% 45%,var(--rule),transparent 70%),radial-gradient(ellipse 16% 45% at 86% 30%,var(--rule),transparent 70%);
   animation:wxDrift 60s linear infinite alternate}
-.wx-storm .wx-a{opacity:.85;filter:brightness(.85)}
-.wx-storm .wx-b{display:block;background:repeating-linear-gradient(105deg,transparent 0 14px,color-mix(in srgb,var(--mv) 14%,transparent) 14px 15px);background-size:200px 200px;animation:wxRain .5s linear infinite}
+.wx-storm .wx-a,.wx-rain .wx-a{opacity:.85;filter:brightness(.85)}
+.wx-storm .wx-b,.wx-rain .wx-b{display:block;background:repeating-linear-gradient(105deg,transparent 0 14px,color-mix(in srgb,var(--mv) 14%,transparent) 14px 15px);background-size:200px 200px;animation:wxRain .5s linear infinite}
 .wx-storm .wx-c{display:block;background:color-mix(in srgb,var(--zap) 35%,#fff);opacity:0;animation:wxFlash 11s infinite}
 .wx-snow .wx-b,.wx-snow .wx-c{display:block;background-image:radial-gradient(circle,color-mix(in srgb,var(--mv) 30%,transparent) 1.6px,transparent 2.4px),radial-gradient(circle,color-mix(in srgb,var(--mv) 22%,transparent) 1.2px,transparent 2px);background-size:90px 90px,60px 60px;background-position:0 0,30px 40px;animation:wxSnow 9s linear infinite}
 .wx-snow .wx-c{background-size:130px 130px,75px 75px;animation-duration:15s;opacity:.7}
@@ -455,3 +455,32 @@ html.kiosk .qp{width:270px;font-size:14px}
 .debrief>p:last-child{margin-bottom:0}
 /* 33/11 kV transformer at each substation */
 .ptg.out .wdg{stroke-dasharray:4 4;opacity:.5}
+
+/* Customer calls */
+.p-calls{grid-area:calls;--pc:var(--warn)}
+.p-calls.ringing{box-shadow:0 0 0 2px var(--warn)}
+#callBody{max-height:260px;overflow-y:auto}
+.call-list{list-style:none;margin:0;padding:0;display:grid;gap:5px}
+.call{border:1px solid var(--rule);border-left:5px solid var(--muted);background:var(--sunk);border-radius:4px;padding:6px 10px;font-size:13px}
+.call.hint{border-left-color:var(--warn)}
+.call.prio{border-left-color:var(--alarm)}
+.call.done{opacity:.6}
+.call-h{display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 8px;align-items:baseline}
+.call-tm{font:700 12px var(--f-mono)}
+.call-w{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.call-s{grid-column:2;font-size:12px;color:var(--muted)}
+.call-q{margin:4px 0 0;font-style:italic}
+.call.hint .call-q,.call.prio .call-q{font-weight:600}
+.call-a{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.call-a .btn{padding:3px 9px;font-size:12.5px;min-height:30px}
+/* Flood gauge (Christmas Day) */
+.flood .fl-box{fill:var(--sunk);stroke:var(--c-cold);stroke-width:1.5}
+.flood .fl-w{fill:var(--c-cold);opacity:.45;transition:y .6s,height .6s}
+.flood .fl-sg{stroke:var(--warn);stroke-width:2;stroke-dasharray:5 3}
+.flood .fl-k{font:700 9.5px var(--f-display);letter-spacing:.08em;fill:var(--muted);text-transform:uppercase}
+.flood .fl-t{font:700 12px var(--f-mono);fill:var(--c-cold)}
+.flood.near .fl-box{stroke:var(--warn);stroke-width:2.5}
+.flood.near .fl-t{fill:var(--warn)}
+.flood.in .fl-w{opacity:.7}
+.flood.in .fl-t{fill:var(--alarm)}
+@media (prefers-reduced-motion:reduce){.flood .fl-w{transition:none}}
