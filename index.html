@@ -2505,7 +2505,7 @@ function assetHtml(id){const a=ASB[id];
 function inspHtml(){const sel=S.sel;if(!sel)return summaryHtml();const[type,id]=sel.split(':');
   if(type==='tx')return txHtml(+id);if(type==='pt')return ptHtml(id);if(type==='bc'||type==='in')return bcHtml(id);if(type==='lf'||type==='nop'||type==='mid'||type==='mg')return assetHtml('load_'+id.slice(0,2));if(type==='lk')return lkHtml(id);if(type==='nb'&&id==='vf')return vfHtml();if(type==='tie')return tieHtml(id);if(type==='it')return itHtml(id);if(type==='bs')return bsHtml(id);if(type==='nb')return nbHtml(id);if(type==='prim')return primHtml(id);if(type==='as'&&ASB[id]&&(!NOGEN()||ASB[id].type==='load'))return assetHtml(id);return summaryHtml();}
 function renderInsp(){const h=inspHtml();if(h===lastInsp)return;lastInsp=h;const el=$('inspBody'),ae=document.activeElement,k=ae&&el.contains(ae)&&ae.dataset?ae.dataset.k:null;el.innerHTML=h;if(k){const f=el.querySelector(`[data-k="${k}"]`);if(f)f.focus();}}
-const QP_T=GAME==='fc'?[]:['tx','bc','in','tie','it','bs','lf','nop','lk','mid','mg'],isSw=k=>!!k&&QP_T.includes(k.split(':')[0]);
+const QP_T=GAME==='fc'?[]:['tx','pt','bc','in','tie','it','bs','lf','nop','lk','mid','mg'],isSw=k=>!!k&&QP_T.includes(k.split(':')[0]);
 function select(k,fromDiagram){S.sel=k==='none'?null:k;S.qp=!!fromDiagram&&isSw(S.sel);lastInsp='';
   if(PHONE){if(S.qp)closeSheet();else if(S.sel)openSheet();}render(true);}
 function lvFaultTxt(p,i){const F=S.lff&&S.lff[p]&&S.lff[p][i];if(!F)return '';
@@ -2534,6 +2534,9 @@ function qpHtml(k){const[t,id]=k.split(':');let closed,st,cls='';
     const F=lvFaultTxt(p,i);if(F){st=F+' · '+st;cls='alarm';}const P=prioOf(p,i);if(P)st+=` · ${P.name} (${P.sec?'second':'first'} half)${secFeed(p,i,P.sec)===null?' off':''}`;}
   else if(t==='mid'){const[p,i]=lfP(id);closed=midOn(p,i);const F=lvFaultTxt(p,i);
     const P=prioOf(p,i);st=F||`splits ${LFN[p][i]} in two · ${Math.round(lfMW(p,i)*SECF[1])} MW beyond it`;if(P)st+=` · ${P.name} on the ${P.sec?'far':'near'} side`;cls=F?'alarm':closed?'':'warn';}
+  else if(t==='pt'){const T=S.pt[id],f=T.fault,mwv=Math.round(LF[id].reduce((a,v,i)=>a+srcMW(id,i,id),0));closed=T.closed;
+    st=f&&!f.ready?(f.flood?`flooded · testing until ${fmtT(f.until)}`:`fault until ${fmtT(f.until)}`):f?(f.flood?'dried and tested: ready to close':'repaired: ready to close'):closed?(subOn(id)?`feeding ${mwv} MW of 11 kV feeders`:'33 kV bar off supply'):'11 kV feeders off their own substation';
+    const F=S.flood&&S.flood.p===id&&S.flood.warned&&!S.flood.arrived?` · flood due ${fmtT(Math.round(S.flood.at/5)*5)}`:'';st+=F;cls=f&&!f.ready?'alarm':f||F&&floodLive(id)?'warn':closed?'':'warn';}
   else if(t==='mg'){const[p,i]=lfP(id),u=mgAt(id);closed=!!(u&&u.conn);const ld=srcMW(p,i,'mg');
     st=closed?`supplying ${ld.toFixed(1)}/${MG_CAP} MW`:u&&u.pend?'on its way':'parked here, disconnected';cls=closed&&ld>MG_CAP*AL_ON?'warn':'';}
   else{closed=S.bs[id].closed;st=closed?`${Math.round(Math.abs(S.bsf[id]||0))} MW across`:'busbar running split';cls=closed?'':'warn';}
