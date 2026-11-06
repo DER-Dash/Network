@@ -727,6 +727,18 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .coach-ring{fill:none;stroke:var(--zap);stroke-width:4;pointer-events:none;animation:coachp 1s ease-in-out infinite}
 @keyframes coachp{50%{stroke-opacity:.25}}
 .coach-hl{outline:3px solid var(--zap)!important;outline-offset:3px}
+.coach{transition:left .4s cubic-bezier(.2,.7,.2,1),top .4s cubic-bezier(.2,.7,.2,1)}
+.coach.step-in>*{animation:coachIn .32s ease-out both}
+@keyframes coachIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.coach .coach-st.ok{color:#7CE3A1}
+.stepper button.coach-hl,.qp button.coach-hl{outline:none!important;background:var(--zap)!important;color:#0B1F3A!important;animation:coachBtn 1.1s ease-in-out infinite}
+@keyframes coachBtn{50%{filter:brightness(1.18)}}
+.tut-press{animation:tutPress .42s ease-out}
+@keyframes tutPress{0%{transform:scale(1)}35%{transform:scale(.88);filter:brightness(1.25)}100%{transform:scale(1)}}
+.adj.tut-press{transform-box:fill-box;transform-origin:center}
+.adj.tut-press rect{fill:var(--zap);stroke:var(--zap)}
+@media (max-width:700px){.coach.coach-up{top:calc(8px + env(safe-area-inset-top,0px));bottom:auto}}
+@media (prefers-reduced-motion:reduce){.coach{transition:none}.coach.step-in>*,.tut-press{animation:none}}
 .tut-cta{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;border:2px solid var(--zap);border-radius:8px;padding:12px 14px;margin:12px 0 4px;background:var(--sunk)}
 .tut-cta b{display:block;font-size:15.5px}.tut-cta span{font-size:13.5px;color:var(--muted)}
 .tut-b{display:flex;gap:8px;flex-wrap:wrap}
@@ -758,6 +770,12 @@ html.kiosk .coach .coach-st{font-size:clamp(16px,1.2vw,24px)}
 html.kiosk .coach-row{margin-top:auto}
 html.kiosk .coach .btn{font-size:clamp(14px,1vw,18px)}
 html.kiosk .qp{width:270px;font-size:14px}
+/* Display mode: show the Control panel under the coach when a step uses it (arming DSR) */
+html.kiosk.k-insp .col-r{display:block!important;position:fixed;right:16px;bottom:16px;width:min(30vw,560px);z-index:17;margin:0}
+html.kiosk.k-insp .col-r>section:not(#pInsp){display:none!important}
+html.kiosk.k-insp #pInsp{display:block!important;margin:0;max-height:calc(100vh - var(--kh,96px) - 240px);overflow:auto;box-sizing:border-box;border:2px solid var(--zap);box-shadow:0 12px 34px rgba(0,0,0,.35)}
+html.kiosk.k-insp #pInsp .i-close{display:none}
+html.kiosk.k-insp .coach{bottom:calc(28px + var(--ih,300px))}
 
 /* 11 kV links between substations */
 :root{--c-lk:#0e8f86}
@@ -2264,6 +2282,9 @@ function buildMimic(){
   const el=$('mimic');el.setAttribute('viewBox',PIDS.includes('kc')?(LVD?'0 0 1200 764':'0 0 1200 698'):'0 0 1200 668');el.innerHTML=s;
 }
 function txt(id,v){const e=$(id);if(e&&e.textContent!==v)e.textContent=v;}
+// Two-line sub-label under a generator or flexibility symbol (lines split on \n), so neighbouring labels don't run into each other
+function sub2(id,v){const e=$(id);if(!e||e.dataset.v===v)return;e.dataset.v=v;const x=e.getAttribute('x');
+  e.innerHTML=v.split('\n').map((l,i)=>`<tspan x="${x}" dy="${i?'1.15em':'0'}">${esc(l)}</tspan>`).join('');}
 function setAttr(e,k,v){if(e&&e.getAttribute(k)!==v)e.setAttribute(k,v);}
 function setFlow(el,v){if(!el)return;if(Math.abs(v)<.5){el.classList.add('idle');return;}el.classList.remove('idle');el.classList.toggle('rev',v<0);
   const d=Math.max(.35,2.2-Math.abs(v)/60).toFixed(1)+'s';if(el.style.animationDuration!==d)el.style.animationDuration=d;}
@@ -2331,16 +2352,16 @@ function renderMimic(){
   if(!NOGEN()){
     const cut=!!(S.cutout&&S.cutout.fired&&!S.cutout.done);
     const gen=(id,raw,p)=>{const out=on(p)?raw-a[id]:0;txt('av_'+id,on(p)?mw(out):'Off');setFlow($('afl_'+id),-out);setAttr($('al_'+id),'class','cond mv'+(on(p)?'':' dead'));
-      txt('as_'+id,!on(p)?'':a[id]>.5?`−${Math.round(a[id])} curtailed`:S.fail[id]>S.t?'not responding':id==='wind'&&cut?'high-wind stop':S.armed[id]>0?`auto −${S.armed[id]}`:out>.5?'full output':'');
+      sub2('as_'+id,!on(p)?'':a[id]>.5?`−${Math.round(a[id])}\ncurtailed`:S.fail[id]>S.t?'not\nresponding':id==='wind'&&cut?'high-wind\nstop':S.armed[id]>0?`auto −${S.armed[id]}`:out>.5?'full\noutput':'');
       setAttr($('as_'+id),'class','a-sub'+(a[id]>.5||S.fail[id]>S.t||(id==='wind'&&cut)?'':' muted'));return out;};
     const wnd=gen('wind',c.wind,'rv');gen('solar',c.solar,'ml');
     const bl=$('blades');if(bl)bl.classList.toggle('still',wnd<1);
     const bat=on('hw')?a.bdis-a.bchg:0;
     txt('av_batt',!on('hw')?'Off':Math.abs(bat)<.5?'Idle':mw(Math.abs(bat)));setFlow($('afl_batt'),-bat);setAttr($('al_batt'),'class','cond mv'+(on('hw')?'':' dead'));
-    txt('as_batt',(Math.abs(bat)<.5||!on('hw')?'':bat>0?'discharging · ':'charging · ')+`${Math.round(S.soc/SOC_MAX*100)}%`+(S.armed.bdis||S.armed.bchg?' · armed':''));setAttr($('as_batt'),'class','a-sub'+(bat<-.5?'':' muted'));
+    sub2('as_batt',`${Math.round(S.soc/SOC_MAX*100)}%`+(S.armed.bdis||S.armed.bchg?' · armed':'')+(Math.abs(bat)<.5||!on('hw')?'':bat>0?'\ndischarging':'\ncharging'));setAttr($('as_batt'),'class','a-sub'+(bat<-.5?'':' muted'));
     ['chp','dsr'].forEach(id=>{const p=SV[id].prim,v=on(p)?a[id]:0;txt('av_'+id,!on(p)?'Off':v>.5?(id==='dsr'?'−':'+')+mw(v):'Standby');
       setFlow($('afl_'+id),id==='chp'?-v:0);setAttr($('al_'+id),'class','cond mv'+(on(p)?'':' dead'));
-      txt('as_'+id,S.fail[id]>S.t?'not responding':S.armed[id]>0?`armed ${S.armed[id]}`:'');setAttr($('as_'+id),'class','a-sub'+(S.fail[id]>S.t?'':' muted'));});
+      sub2('as_'+id,S.fail[id]>S.t?'not\nresponding':S.armed[id]>0?`armed ${S.armed[id]}`:'');setAttr($('as_'+id),'class','a-sub'+(S.fail[id]>S.t?'':' muted'));});
     ASSETS.filter(x=>x.type!=='load').forEach(x=>{const off=!on(x.prim)||S.ended;['u','d'].forEach(k=>{const e=$(`adj_${x.id}_${k}`);if(e)e.classList.toggle('dis',off);});});
   }
   if(CREW_ON){const tNow=S.t+(S.running&&!S.paused&&!S.ended?acc:0);S.crews.forEach((c,i)=>{const g=$('crew'+c.n);if(!g)return;const p=crewPos(c,tNow),same=S.crews.filter((d,j)=>j<i&&!d.to&&!c.to&&Math.abs(d.x-c.x)<1&&Math.abs(d.y-c.y)<1).length,
@@ -2735,7 +2756,7 @@ function render(force){
 let lastRender=0;
 function frame(now){
   const dt=Math.min(.25,(now-lastFrame)/1000);lastFrame=now;
-  if(S&&S.running&&!S.paused&&!S.ended){acc+=dt*RATE[speed]*(anyOver()?.5:1);while(acc>=1&&!S.paused&&!S.ended){acc-=1;step();}}
+  if(S&&S.running&&!S.paused&&!S.ended){acc+=dt*RATE[speed]*(anyOver()?.5:1)*tutRate();while(acc>=1&&!S.paused&&!S.ended){acc-=1;step();}}
   if(S&&now-lastRender>90){lastRender=now;checkTips();render(false);tutTick(now);
     const live=S.tx.filter(t=>!t.out);humTo(S.running&&!S.paused&&!S.ended&&live.length?Math.max(...live.map(t=>t.L)):0);}
   requestAnimationFrame(frame);
@@ -2746,9 +2767,10 @@ const TUT=[
   {t:'next',x:'pMimic',h:'Welcome to the control room',b:'It\'s Cold Thursday, 15:30, and the evening peak is building. This is Blackout Canyon: power comes from the Steve Towers grid supply point at the top, through three transformers (T1–T3), onto the 33 kV busbar, and out to four substations: Hertz House, Shocking Place, Ohm No and Joule Street.'},
   {t:'next',x:'kFirmBox',h:'Firm capacity',b:()=>`Each transformer is rated ${R} MW. Firm capacity is what you could still carry if one more transformer tripped: ${2*R} MW with all three in. You're importing about ${Math.round(Math.abs(S.net))} MW now, and the peak at 17:30 will be well over firm capacity.`},
   {t:'next',x:'as:batt',h:'Generation and flexibility',b:'Each substation has demand, and some have generation or flexibility: the Kings Hill battery and demand response at Hertz House, solar at Shocking Place, wind and a gas CHP at Ohm No. The ▲ ▼ buttons beside each one turn it up or down now. Every MW you produce locally is a MW Blackout Canyon doesn\'t have to import.'},
-  {t:'act',x:'as:batt',go:()=>nudge('batt',1,true),done:()=>S.manual.bdis>=20,h:'Discharge the battery',b:'Press ▲ beside the Kings Hill Battery four times to discharge 20 MW into Hertz House. Batteries are quick but limited: watch its charge.'},
-  {t:'act',x:'as:chp',go:()=>nudge('chp',1,true),done:()=>S.manual.chp>=15,h:'Run the CHP',b:'Press ▲ beside the Ohm No CHP three times to run 15 MW. Running something now costs 1.5× its normal price, so spend only what you need.'},
-  {t:'act',x:'as:dsr',go:()=>{select('as:dsr');adjust('arm','dsr',5);},done:()=>S.armed.dsr>=10,h:'Arm demand response',b:'Better still, arm flexibility in advance. Select the Hertz House DSR and press + on Armed twice (10 MW). Armed services cost a small fee per hour, and switch in by themselves the moment a transformer overloads.'},
+  {t:'act',x:'as:batt',press:'#adj_batt_u',done:()=>S.manual.bdis>=20,h:'Discharge the battery',b:'Press ▲ beside the Kings Hill Battery four times to discharge 20 MW into Hertz House. Batteries are quick but limited: watch its charge.'},
+  {t:'act',x:'as:chp',press:'#adj_chp_u',done:()=>S.manual.chp>=15,h:'Run the CHP',b:'Press ▲ beside the Ohm No CHP three times to run 15 MW. Running something now costs 1.5× its normal price, so spend only what you need.'},
+  {t:'act',x:'as:dsr',sel:'as:dsr',press:'#pInsp [data-f="arm"][data-id="dsr"][data-d="5"]',done:()=>S.armed.dsr>=10,h:'Arm demand response',b:'Better still, arm flexibility in advance. Tap the Hertz House DSR on the diagram, then press + on Armed in the Control panel twice (10 MW). Armed services cost a small fee per hour, and switch in by themselves the moment a transformer overloads.',
+    hint:()=>S.sel==='as:dsr'?'Now press + on Armed in the Control panel.':'Your turn: tap the DSR on the diagram.'},
   {t:'next',x:'depot',h:'Remote and manual switches',b:'Now switching. Squares are remote-controlled breakers: they operate from here in a minute. Circles are manual switches: a field crew has to walk there from this depot first, so they take longer.'},
   {t:'next',x:'bc:js',h:'A fault!',enter(){S.sched.push({k:'fd:js',m:S.t,dur:900,cause:'Ice build-up on the overhead line',done:false});for(let i=0;i<2;i++)step();},b:'Ice has brought down the Joule Street 33 kV feeder. Its breaker at Blackout Canyon and its incomer at Joule Street both tripped, so Joule Street is off supply.'},
   {t:'act',x:'tie:js',k:'tie:js',a:'close',done:()=>S.tie.js.closed,h:'Restore from Watts This',b:'Tap the Joule Street – Watts This tie (the orange circle on the right) and press Close. Watts This is on a different grid supply, but Joule Street is dead, so closing onto it is safe. A crew will walk there first.'},
@@ -2763,10 +2785,14 @@ const TUT=[
   {t:'next',x:'pAlarm',h:'Alarms',b:'Anything over 80% of its rating raises an alarm here, with a countdown if it will trip. Press Acknowledge to quieten them.'},
   {t:'next',x:'pSec',h:'Next-loss check',b:()=>`This tells you whether you'd survive another transformer trip, and what to do if not. You're carrying about ${Math.round(Math.abs(S.net))} MW on two transformers now. Keep it green and you're running a secure network.`},
   {t:'next',x:null,h:'Tutorial complete',b:'You\'ve used the battery, CHP and armed demand response, restored a faulted feeder from a neighbour, made a make-before-break transfer after a transformer trip, and moved a feeder onto Volt Face. That\'s the control room. Ready for your first shift?'}];
-const readMs=st=>Math.max(4500,(typeof st.b==='function'?st.b():st.b).length*55);
+const KIOSK=()=>!!(S&&S.tut&&S.tut.kiosk);
+// Demo pacing (ms): wait before acting, gap between presses, pause on the result before moving on. Display mode is slower.
+const PACE=()=>KIOSK()?{wait:5200,press:1400,op:2600,after:3800}:{wait:2800,press:800,op:1500,after:1800};
+const SHOW_AFTER=15000;  // tutorial: offer "Show me" only if the player hasn't managed it by then
+const readMs=st=>{const n=(typeof st.b==='function'?st.b():st.b).length;return KIOSK()?Math.max(7500,n*80):Math.max(4500,n*55);};
 let tutRepeat=ls('tutRepeat')==='on',wakeLock=null;
 function kioskLayout(on){const h=document.documentElement;h.classList.toggle('kiosk',!!on);
-  if(on){const b=document.querySelector('header.bar');h.style.setProperty('--kh',(b?b.getBoundingClientRect().height:90)+'px');hideBanner();}else h.style.removeProperty('--kh');
+  if(on){const b=document.querySelector('header.bar');h.style.setProperty('--kh',(b?b.getBoundingClientRect().height:90)+'px');hideBanner();}else{h.style.removeProperty('--kh');h.classList.remove('k-insp');}
   if(S)render(true);}
 addEventListener('resize',()=>{if(document.documentElement.classList.contains('kiosk'))kioskLayout(true);});
 async function keepAwake(on){try{if(on&&'wakeLock' in navigator&&!wakeLock){wakeLock=await navigator.wakeLock.request('screen');wakeLock.addEventListener('release',()=>{wakeLock=null;});}else if(!on&&wakeLock){await wakeLock.release();wakeLock=null;}}catch(e){}}
@@ -2781,38 +2807,77 @@ function kioskIntro(){const el=$('kIntro');el.hidden=false;el.classList.remove('
   clearTimeout(introTimer);introTimer=setTimeout(endIntro,6000);}
 function endIntro(){clearTimeout(introTimer);const el=$('kIntro');if(el.hidden)return;el.hidden=true;if(S&&S.tut&&S.tut.kiosk)tutStart(true,true);}
 function tutGo(i){const T=S.tut;if(!T)return;T.i=i;const st=TUT[i];if(!st){tutDone();return;}
-  if(st.enter)st.enter();T.shown=performance.now();T.acted=false;T.doneAt=0;T.pressing=false;
+  if(st.enter)st.enter();T.shown=performance.now();T.acted=false;T.doneAt=0;T.pressing=false;T.scrolled=false;
+  document.documentElement.classList.toggle('k-insp',!!(T.kiosk&&st.sel));
   S.paused=st.t==='next';acc=0;S.sel=null;S.qp=false;lastInsp='';if(PHONE)closeSheet();
   if(st.t==='next'&&i===TUT.length-1)S.paused=true;
   renderCoach(true);render(true);
   if(PHONE){const pm=$('pMimic');if(pm)window.scrollTo({top:pm.getBoundingClientRect().top+window.scrollY-8,behavior:'smooth'});}
+  else if(!T.kiosk&&st.x){const e=SELBOX[st.x]?$('coachRing'):$(st.x),r=e&&e.getBoundingClientRect();if(r&&r.height&&(r.bottom<90||r.top>innerHeight-90))e.scrollIntoView({block:'nearest',behavior:'smooth'});}
   if(st.x&&SELBOX[st.x]&&PHONE){const sc=$('mscroll'),svg=$('mimic'),k=svg.getBoundingClientRect().width/1200,b=SELBOX[st.x];sc.scrollLeft=Math.max(0,(b[0]+b[2]/2)*k-sc.clientWidth/2);}}
-function tutAct(){const st=TUT[S.tut.i];if(!st||st.t!=='act'||st.done())return;S.tut.acted=true;
-  if(st.go){S.tut.pressing=true;return;}
-  if(isManual(st.k)?!crewFor(st.k):!S.op){select(st.k,true);setTimeout(()=>{if(!S||!S.tut)return;issueOp(st.k,st.a);S.qp=false;render(true);},900);}}
+function tutAct(){const st=TUT[S.tut.i];if(!st||st.t!=='act'||st.done())return;S.tut.acted=true;S.tut.actAt=performance.now();
+  if(st.press){S.tut.pressing=true;S.tut.lastGo=0;return;}
+  if(isManual(st.k)?!crewFor(st.k):!S.op){const i=S.tut.i;select(st.k,true);
+    // show the pop-up for a moment, flash its button, then operate
+    setTimeout(()=>{if(!S||!S.tut||S.tut.i!==i)return;flashEl(document.querySelector(`#qp [data-op="${st.k}:${st.a}"]`));
+      setTimeout(()=>{if(!S||!S.tut||S.tut.i!==i)return;issueOp(st.k,st.a);S.qp=false;render(true);},380);},PACE().op);}}
+function flashEl(e){if(!e)return;e.classList.remove('tut-press');void e.getBoundingClientRect();e.classList.add('tut-press');setTimeout(()=>e.classList.remove('tut-press'),420);}
+// One demo press on the real control, so viewers see where it is: select first if the control is in the Control panel
+function tutPress(st){if(st.sel&&S.sel!==st.sel){select(st.sel);return;}
+  const e=document.querySelector(st.press);if(!e)return;flashEl(e);e.dispatchEvent(new MouseEvent('click',{bubbles:true}));}
+// Tutorial clock: slower while someone is reading or doing a step, full speed while a crew walks or a breaker operates
+function tutRate(){const T=S.tut;if(!T)return 1;const st=TUT[T.i];const busy=st&&st.t==='act'&&(S.op||crewFor(st.k));return (T.kiosk?.6:1)*(busy?1:.4);}
 function tutTick(now){const T=S&&S.tut;if(!T||S.ended)return;const st=TUT[T.i];if(!st)return;
-  if(st.t==='act'&&st.go&&T.pressing&&!st.done()&&now-(T.lastGo||0)>650){T.lastGo=now;st.go();}
-  if(st.t==='act'){if(st.done()){if(!T.doneAt){T.doneAt=now;play('ok');}else if(now-T.doneAt>900)tutGo(T.i+1);}
-    else if(T.auto&&!T.acted&&now-T.shown>2600)tutAct();
-    else if(T.acted&&!st.go&&!S.op&&!crewFor(st.k)&&now-T.shown>4000&&!st.done())T.acted=false;}
+  if(st.t==='act'&&st.press&&T.pressing&&!st.done()&&now-(T.lastGo||0)>PACE().press){T.lastGo=now;tutPress(st);}
+  // Bring the control into view once it's showing in the Control panel
+  if(st.t==='act'&&st.sel&&S.sel===st.sel&&!T.scrolled&&!T.kiosk&&!PHONE&&!st.done()){const e=document.querySelector(st.press);if(e){T.scrolled=true;e.scrollIntoView({block:'nearest',behavior:'smooth'});}}
+  if(st.t==='act'){if(st.done()){if(!T.doneAt){T.doneAt=now;play('ok');if(!T.auto){S.paused=true;acc=0;}renderCoach(true);}
+      else if(T.auto&&now-T.doneAt>PACE().after)tutGo(T.i+1);}
+    else if(T.doneAt&&!T.auto){T.doneAt=0;S.paused=false;}  // undone before pressing Next: carry on
+    else if(T.auto&&!T.acted&&now-T.shown>PACE().wait)tutAct();
+    else if(T.acted&&!st.press&&!S.op&&!crewFor(st.k)&&now-(T.actAt||0)>PACE().op+2500&&!st.done())T.acted=false;}
   else if(T.auto&&T.i<TUT.length-1&&now-T.shown>readMs(st))tutGo(T.i+1);
   else if(T.auto&&T.i===TUT.length-1&&tutRepeat&&now-T.shown>Math.max(9000,readMs(st))){if(T.kiosk){if(!T.intro){T.intro=true;kioskIntro();}}else tutStart(true,false);return;}
   renderCoach(false);}
 let lastCoach='';
+let coachStep=-1,coachPos=-1,coachIn=0;
 function renderCoach(force){const el=$('coach');if(!el)return;const T=S&&S.tut;
-  if(!T||S.ended){if(!el.hidden){el.hidden=true;lastCoach='';}document.querySelectorAll('.coach-hl').forEach(e=>e.classList.remove('coach-hl'));setAttr($('coachRing'),'visibility','hidden');return;}
-  const st=TUT[T.i],last=T.i===TUT.length-1,b=typeof st.b==='function'?st.b():st.b,
-    wait=st.t==='act'&&(S.op&&S.op.k===st.k||crewFor(st.k)),j=st.t==='act'&&crewFor(st.k);
+  if(!T||S.ended){if(!el.hidden){el.hidden=true;lastCoach='';}coachStep=-1;coachPos=-1;el.removeAttribute('style');el.classList.remove('coach-up');document.documentElement.classList.remove('k-insp');
+    document.querySelectorAll('.coach-hl').forEach(e=>e.classList.remove('coach-hl'));setAttr($('coachRing'),'visibility','hidden');return;}
+  const st=TUT[T.i],last=T.i===TUT.length-1,b=typeof st.b==='function'?st.b():st.b,act=st.t==='act',done=act&&st.done(),
+    wait=act&&(S.op&&S.op.k===st.k||crewFor(st.k)),j=act&&crewFor(st.k),
+    showMe=act&&!T.auto&&!wait&&!done&&performance.now()-T.shown>SHOW_AFTER;
+  const stTxt=!act?'':done?(T.auto?'✓ Done':'✓ Done. Press Next when you\'re ready.'):wait?(j?`Crew ${j.n} ${j.to?'walking there, arrives '+fmtT(j.arr):'on site'}…`:'Operating…'):T.auto?'Watch: the demo does this for you.':st.hint?st.hint():'Your turn: do this on the diagram.';
   const h=`<div class="coach-top"><span class="coach-n">${T.kiosk?'Demonstration':'Tutorial'} · ${T.i+1} of ${TUT.length}</span><button type="button" class="coach-x" data-tut="exit" aria-label="Exit the tutorial">×</button></div>
     <h3>${esc(st.h)}</h3><p>${esc(b)}</p>
-    ${st.t==='act'?`<p class="coach-st">${st.done()?'✓ Done':wait?(j?`Crew ${j.n} ${j.to?'walking there, arrives '+fmtT(j.arr):'on site'}…`:'Operating…'):T.auto?'Watch: the demo does this for you.':'Your turn: do this on the diagram.'}</p>`:''}
+    ${act?`<p class="coach-st${done?' ok':''}">${esc(stTxt)}</p>`:''}
     ${T.auto&&last&&tutRepeat?`<p class="coach-st">Starting again in a few seconds…</p>`:''}
     <div class="coach-row">${T.auto?`<button type="button" class="btn${tutRepeat?' on':''}" data-tut="repeat" aria-pressed="${tutRepeat}">↻ Repeat: ${tutRepeat?'on':'off'}</button>`:''}${T.kiosk?'':last?`<button type="button" class="btn primary" data-tut="career">Start my career</button><button type="button" class="btn" data-tut="menu">Start screen</button><button type="button" class="btn" data-tut="again">Replay demo</button>`
-      :`<button type="button" class="btn" data-tut="mode">${T.auto?'Let me do it':'Auto-play'}</button>${st.t==='act'&&!T.auto&&!wait&&!st.done()?'<button type="button" class="btn" data-tut="show">Show me</button>':''}${st.t==='next'?`<button type="button" class="btn primary" data-tut="next">${T.auto?'Next now':'Next'}</button>`:''}`}</div>`;
-  if(force||h!==lastCoach){el.innerHTML=h;lastCoach=h;}el.hidden=false;
+      :`<button type="button" class="btn" data-tut="mode">${T.auto?'Let me do it':'Auto-play'}</button>${showMe?'<button type="button" class="btn" data-tut="show">Stuck? Show me</button>':''}${st.t==='next'||done?`<button type="button" class="btn primary" data-tut="next">${T.auto?'Next now':'Next'}</button>`:''}`}</div>`;
+  if(force||h!==lastCoach){el.innerHTML=h;lastCoach=h;}
+  const fresh=el.hidden;el.hidden=false;
+  if(coachStep!==T.i){coachStep=T.i;el.classList.remove('step-in');void el.offsetWidth;el.classList.add('step-in');clearTimeout(coachIn);coachIn=setTimeout(()=>el.classList.remove('step-in'),450);}
   document.querySelectorAll('.coach-hl').forEach(e=>e.classList.remove('coach-hl'));
   const r=$('coachRing');if(st.x&&SELBOX[st.x]){const bx=SELBOX[st.x];setAttr(r,'x',String(bx[0]-6));setAttr(r,'y',String(bx[1]-6));setAttr(r,'width',String(bx[2]+12));setAttr(r,'height',String(bx[3]+12));setAttr(r,'visibility','visible');}
-  else{setAttr(r,'visibility','hidden');const e=st.x&&$(st.x);if(e)e.classList.add('coach-hl');}}
+  else{setAttr(r,'visibility','hidden');const e=st.x&&$(st.x);if(e)e.classList.add('coach-hl');}
+  // Point at the control itself (e.g. + on Armed) while it's still to do
+  const ps=st.press||(st.k&&`#qp [data-op="${st.k}:${st.a}"]`);if(act&&ps&&!done&&!wait){const e=document.querySelector(ps);if(e&&!(e instanceof SVGElement))e.classList.add('coach-hl');}
+  if(T.kiosk){const p=$('pInsp');if(st.sel&&p)document.documentElement.style.setProperty('--ih',p.offsetHeight+'px');return;}
+  placeCoach(el,st,fresh);}
+// Keep the coach off whatever the step is about: the highlighted part of the diagram, its pop-up and the Control panel
+function coachAvoid(st){const out=[],add=e=>{if(!e)return;const b=e.getBoundingClientRect();if(b.width&&b.height)out.push(b);};
+  if(st.x&&st.x!=='pMimic')add(SELBOX[st.x]?$('coachRing'):$(st.x));
+  if(st.t==='act'){const q=$('qp');if(q&&!q.hidden)add(q);if(st.press)add(document.querySelector(st.press));if(st.sel&&S.sel===st.sel)add($('pInsp'));}
+  return out;}
+function placeCoach(el,st,fresh){const W=innerWidth,H=innerHeight,w=el.offsetWidth,h=el.offsetHeight,m=16,av=coachAvoid(st);
+  const C=PHONE?[[8,H-70-h],[8,8]]:[[W-m-w,H-m-h],[m,H-m-h],[W-m-w,m],[m,m]];
+  const ov=C.map(([x,y])=>av.reduce((a,b)=>a+Math.max(0,Math.min(x+w,b.right)-Math.max(x,b.left))*Math.max(0,Math.min(y+h,b.bottom)-Math.max(y,b.top)),0));
+  let k=coachPos<0||coachPos>=C.length?0:coachPos;const best=ov.indexOf(Math.min(...ov));if(ov[k]>0&&ov[best]<ov[k])k=best;
+  if(PHONE){el.removeAttribute('style');el.classList.toggle('coach-up',k===1);coachPos=k;return;}
+  el.classList.remove('coach-up');
+  if(fresh||coachPos<0)el.style.transition='none';
+  el.style.left=Math.max(8,Math.round(C[k][0]))+'px';el.style.top=Math.max(8,Math.round(C[k][1]))+'px';el.style.right='auto';el.style.bottom='auto';
+  if(el.style.transition==='none'){void el.offsetWidth;el.style.transition='';}coachPos=k;}
 function tutDone(){if(!S)return;S.tut=null;S.ended=true;S.running=false;S.paused=true;renderCoach(true);track('tutorial_done',{});
   $('sheet').innerHTML=`${BAND}<p class="eyebrow">Tutorial</p><h2>You're ready for the control room</h2>
     <ul class="rules"><li>▲ ▼ turn generation and flexibility up or down now; arming it makes it switch in by itself when a transformer overloads.</li><li>Remote breakers (squares) operate in a minute; manual switches (circles) need a field crew.</li><li>Different grid supply (Watts This, Volt Face): open the old route first, then close the new one.</li><li>Same grid supply (Ampy Place): close the new route, then open the old one within ${PAR_MAX} minutes.</li><li>Restore customers inside 3 minutes and it only counts as a short interruption.</li><li>Keep the next-loss check green before things go wrong.</li></ul>
@@ -2825,7 +2890,7 @@ function tutClick(a){
   if(!S)return;
   if(a==='next'&&S.tut){tutGo(S.tut.i+1);return;}
   if(a==='show'&&S.tut){tutAct();return;}
-  if(a==='mode'&&S.tut){S.tut.auto=!S.tut.auto;S.tut.shown=performance.now();S.tut.acted=false;renderCoach(true);return;}
+  if(a==='mode'&&S.tut){const T=S.tut,st=TUT[T.i];T.auto=!T.auto;T.shown=performance.now();T.acted=false;T.pressing=false;if(st&&st.t==='act'&&st.done()){T.doneAt=performance.now();S.paused=!T.auto;}renderCoach(true);return;}
   if(a==='exit'||a==='menu'){keepAwake(false);kioskLayout(false);S.tut=null;renderCoach(true);S.running=false;S.paused=true;newGame(chosen);startSheet();return;}
   if(a==='career'){kioskLayout(false);S.tut=null;renderCoach(true);mode='career';ls('mode',mode);const c=career();chosen=CAREER.find(k=>unlockedK(c,k)&&!(c.stars[k]>=1))||CAREER[0];ls('day',chosen);newGame(chosen);startSheet();return;}}
 
