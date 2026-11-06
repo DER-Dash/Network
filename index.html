@@ -920,7 +920,7 @@ html.kiosk.k-insp .coach{bottom:calc(28px + var(--ih,300px))}
 
 /* Display mode: brand card between demo loops */
 .k-intro{position:fixed;inset:0;z-index:40;display:grid;place-items:center;cursor:pointer;background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--wu-navy) 75%,#fff),var(--wu-navy) 70%);color:#fff;text-align:center;padding:24px}
-.k-intro.go{animation:kFade 6s both}
+.k-intro.go{animation:kFade 11s both}
 .k-in{display:grid;gap:clamp(18px,4vh,40px);justify-items:center}
 .k-intro .wu-lock svg{width:clamp(90px,14vw,170px);height:auto}
 .k-intro .wu-lock b{font-size:clamp(56px,9vw,120px)}
@@ -928,7 +928,7 @@ html.kiosk.k-insp .coach{bottom:calc(28px + var(--ih,300px))}
 .k-intro.go .wu-lock svg{animation:kZap 1.6s .9s ease-in-out 2}
 .k-q{margin:0;font:700 clamp(28px,5vw,68px)/1.05 var(--f-display);letter-spacing:.03em;text-transform:uppercase;color:#FFD23F;text-wrap:balance}
 .k-intro.go .k-q{animation:kUp .8s 1s both}
-@keyframes kFade{0%{opacity:0}8%,90%{opacity:1}100%{opacity:0}}
+@keyframes kFade{0%{opacity:0}4%,95%{opacity:1}100%{opacity:0}}
 @keyframes kPop{from{transform:scale(.6);opacity:0}}
 @keyframes kUp{from{transform:translateY(24px);opacity:0}}
 @keyframes kZap{50%{filter:drop-shadow(0 0 24px #FFD23F)}}
@@ -2803,7 +2803,7 @@ function tutStart(auto,kiosk){speed=1;document.querySelectorAll('[data-speed]').
 // Display mode: brand card between demo loops
 let introTimer=0;
 function kioskIntro(){const el=$('kIntro');el.hidden=false;el.classList.remove('go');void el.offsetWidth;el.classList.add('go');
-  clearTimeout(introTimer);introTimer=setTimeout(endIntro,6000);}
+  clearTimeout(introTimer);introTimer=setTimeout(endIntro,11000);}
 function endIntro(){clearTimeout(introTimer);const el=$('kIntro');if(el.hidden)return;el.hidden=true;if(S&&S.tut&&S.tut.kiosk)tutStart(true,true);}
 function tutGo(i){const T=S.tut;if(!T)return;T.i=i;const st=TUT[i];if(!st){tutDone();return;}
   if(st.enter)st.enter();T.shown=performance.now();T.acted=false;T.doneAt=0;T.pressing=false;T.scrolled=false;

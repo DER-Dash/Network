@@ -1653,7 +1653,7 @@ function tutStart(auto,kiosk){speed=1;document.querySelectorAll('[data-speed]').
 // Display mode: brand card between demo loops
 let introTimer=0;
 function kioskIntro(){const el=$('kIntro');el.hidden=false;el.classList.remove('go');void el.offsetWidth;el.classList.add('go');
-  clearTimeout(introTimer);introTimer=setTimeout(endIntro,6000);}
+  clearTimeout(introTimer);introTimer=setTimeout(endIntro,11000);}
 function endIntro(){clearTimeout(introTimer);const el=$('kIntro');if(el.hidden)return;el.hidden=true;if(S&&S.tut&&S.tut.kiosk)tutStart(true,true);}
 function tutGo(i){const T=S.tut;if(!T)return;T.i=i;const st=TUT[i];if(!st){tutDone();return;}
   if(st.enter)st.enter();T.shown=performance.now();T.acted=false;T.doneAt=0;T.pressing=false;T.scrolled=false;
