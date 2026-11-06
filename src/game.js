@@ -1054,7 +1054,7 @@ function buildMimic(){
       <rect id="fbk_${p}" class="brk sw" x="${x-9}" y="${BCY+14}" width="18" height="18"/>
       <rect id="fin_${p}" class="brk sw" x="${x-9}" y="${PY-50}" width="18" height="18"/><text class="bs-t" x="${x-14}" y="${PY-37}" text-anchor="end">IN</text>
       <g id="fdb_${p}" hidden><path class="bolt" d="M${x+20} 238 l-8 14 h7 l-5 13 l12 -17 h-7 l6 -10 z"/></g>
-      <text id="fdt_${p}" class="fd-t" x="${x+14}" y="${BCY+28}"></text>
+      <text id="fdt_${p}" class="fd-t" x="${p==='ml'?x-14:x+14}" y="${BCY+28}"${p==='ml'?' text-anchor="end"':''}></text>
       <text id="fdv_${p}" class="fd-v" x="${x+12}" y="262"></text>${arw('fda_'+p,x,252)}
       <rect class="hit" data-sel="bc:${p}" x="${x-22}" y="${BCY+6}" width="44" height="38"/></g>`;
     if(P.fd)SELBOX['bc:'+p]=[x-16,BCY+8,32,32],SELBOX['in:'+p]=[x-16,PY-57,32,32];
@@ -1072,7 +1072,7 @@ function buildMimic(){
   ITIDS.forEach(k=>{const t=ITS[k],x1=PR[t.a].x2,x2=PR[t.b].x1;
     if(t.v){s+=`<g id="itg_${k}"><path id="itl_${k}" class="tie-l it" d="M${t.x} ${pY(t.a)} V${pY(t.b)}"/>
       <rect id="itsw_${k}" class="brk sw open man" x="${t.x-9}" y="${t.sy-9}" width="18" height="18" rx="${CREW_ON?9:0}"/>
-      <text id="itt_${k}" class="tie-t" x="${t.left?t.x:t.x+14}" y="${t.left?t.sy+28:t.sy+4}" text-anchor="${t.left?'middle':'start'}">open</text>${arw('ita_'+k,t.x,t.sy-38)}
+      <text id="itt_${k}" class="tie-t" x="${t.left?t.x-14:t.x+14}" y="${t.sy+4}" text-anchor="${t.left?'end':'start'}">open</text>${arw('ita_'+k,t.x,t.sy-38)}
       <rect class="hit" data-sel="it:${k}" x="${t.left?t.x-40:t.x-22}" y="${t.sy-22}" width="${t.left?80:102}" height="${t.left?56:44}"/></g>`;
       SELBOX['it:'+k]=[t.x-17,t.sy-17,34,34];return;}
     s+=`<g id="itg_${k}"><path id="itl_${k}" class="tie-l it" d="M${x1} ${PY} H${x2}"/>
@@ -1152,16 +1152,18 @@ function edgeTxt(id,closed,lim){const L=S.edL[id]||0,ov=S.ov[id]||0,fl=Math.abs(
   return closed?(ov>0?`TRIP IN ${OV_MIN-ov} MIN`:`${Math.round(fl)}/${lim} MW`):`open · ${lim} MW`;}
 const edgeCls=(id,closed)=>{const L=S.edL[id]||0;return 'tie-t'+(closed&&L>1?' alarm':closed&&L>.85?' warn':'');};
 
+// Circuit loading colour, like a control-room mimic: amber above the alarm level (80%), red over its rating
+const heat=L=>L>1?' h3':L>AL_ON?' h2':'';
 function renderMimic(){
   const opK=S.op?S.op.k:null,IS=S.islands,secAlive=sc=>{const I=IS.find(J=>J.secs.includes(sc));return !!(I&&I.alive);};
   S.tx.forEach((t,i)=>{
     const g=$('cct'+i);g.classList.toggle('out',!!t.out);g.classList.toggle('planned',!!t.out&&t.out.kind==='planned');g.classList.toggle('ready',!!t.out&&!!t.out.ready);
     g.dataset.lvl=t.out?'':t.L>1?'alarm':t.L>.9?'warn':'ok';
     const b=$('bolt'+i);if(t.out&&!t.out.ready&&(t.out.kind==='fault'||t.out.kind==='trip'))b.removeAttribute('hidden');else b.setAttribute('hidden','');
-    const hc=t.out?'':t.L>1?' h3':t.L>.8?' h2':' h1',w=t.out?'':(3.5+2.5*Math.min(t.L,1.5)).toFixed(1);
+    const hc=t.out?'':heat(t.L),w=t.out?'':(3.5+2.5*Math.min(t.L,1.5)).toFixed(1);
     [['ca','hv'],['cb','mv']].forEach(([p,v])=>{const e=$(p+i);setAttr(e,'class','cond '+v+hc);if(e&&e.style.strokeWidth!==(w?w+'px':''))e.style.strokeWidth=w?w+'px':'';});
     txt('load'+i,t.out?(t.out.ready?'READY':t.out.kind==='planned'?'PLANNED':t.out.kind==='trip'?'TRIPPED':t.out.kind==='open'?'OPEN':'FAULTED'):Math.round(t.L*100)+'%');
-    txt('flow'+i,t.out?(t.out.ready?'Close breaker':'Back '+fmtT(t.out.until)):`${Math.round(Math.abs(t.flow))} MW ${arrow(t.flow)}`);
+    txt('flow'+i,t.out?(t.out.ready?'Close it':'Back '+fmtT(t.out.until)):`${Math.round(Math.abs(t.flow))} MW ${arrow(t.flow)}`);
     const f=clamp((t.temp-20)/(TRIP_T-20),0,1);const tf=$('tf'+i);setAttr(tf,'width',(62*f).toFixed(1));
     setAttr(tf,'class','tfill'+(t.temp>=TRIP_T-8?' alarm':t.temp>=TRIP_T-25?' warn':''));
     txt('tt'+i,`${Math.round(t.temp)}°C`);
@@ -1172,7 +1174,7 @@ function renderMimic(){
   ['B1','B2','B3'].forEach(sc=>setAttr($('bus_'+sc),'class','bus mv'+(secAlive(sc)?'':' dead')));
   BSIDS.forEach(k=>{setAttr($('bsb_'+k),'class','brk sw'+(S.bs[k].closed?'':' open')+(opK==='bs:'+k?' operating':''));setArw('bsa_'+k,S.bs[k].closed?S.bsf[k]:0,'h');});
   PIDS.forEach(p=>{const f=S.fd[p],sup=S.sup[p],fid='bc:'+p,en=fdOn(p)&&secAlive(FSEC[p]),fl=S.flows[fid]||0;
-    if(PR[p].fd){setAttr($('fdl_'+p),'class','cond mv fd-'+p+(en?'':' dead'));setFlow($('fdf_'+p),en?fl:0);setArw('fda_'+p,en?fl:0,'v');
+    if(PR[p].fd){setAttr($('fdl_'+p),'class','cond mv fd-'+p+(en?heat(S.edL[fid]||0):' dead'));setFlow($('fdf_'+p),en?fl:0);setArw('fda_'+p,en?fl:0,'v');
     setAttr($('fbk_'+p),'class','brk sw'+(f.brk?'':' open')+(f.fault&&!f.fault.ready&&!f.fault.planned?' trip':'')+(opK===fid?' operating':''));
     setAttr($('fin_'+p),'class','brk sw'+(f.inc?'':' open')+(f.fault&&!f.fault.ready&&!f.fault.planned?' trip':'')+(opK==='in:'+p?' operating':''));
     const fb=$('fdb_'+p);if(f.fault&&!f.fault.ready&&!f.fault.planned)fb.removeAttribute('hidden');else fb.setAttribute('hidden','');
@@ -1181,12 +1183,12 @@ function renderMimic(){
     setAttr($('pb_'+p),'class','bus mv'+(sup==='off'?' dead':''));
     const ds=sup==='par'&&!S.tie[p].closed?(fdOn(p)?'bc':'kn'):sup;txt('ps_'+p,supLbl(ds));txt('pn_'+p,sup==='off'?'':`net ${Math.round(Math.abs(S.pn[p]))} MW ${S.pn[p]>=0?'▼':'▲'}`);setAttr($('ps_'+p),'class','p-stat'+(ds==='off'?' off':ds==='par'?' par':ds==='kn'||ds==='fm'?' nb '+ds:''));
     const tid='tie:'+p,tc=S.tie[p].closed;if(!PR[p].nb)return;
-    setAttr($('tl_'+p),'class','tie-l '+PR[p].nb+(tc?' on':''));
+    setAttr($('tl_'+p),'class','tie-l '+PR[p].nb+(tc?' on'+heat(S.edL[tid]||0):''));
     setAttr($('tsw_'+p),'class','brk sw'+(tc?'':' open')+(opK===tid?' operating':''));
-    setArw('tia_'+p,tc?(S.flows[tid]||0)*TIEARW[p][2]:0,'h');txt('tt_'+p,edgeTxt(tid,tc,tieLimit(p)));setAttr($('tt_'+p),'class',edgeCls(tid,tc));
+    setArw('tia_'+p,tc?(S.flows[tid]||0)*TIEARW[p][2]:0,'h');{const et=edgeTxt(tid,tc,tieLimit(p));if(p==='hw'||p==='js')sub2('tt_'+p,et.replace(' · ','\n'));else txt('tt_'+p,et);}setAttr($('tt_'+p),'class',edgeCls(tid,tc));
   });
   ITIDS.forEach(k=>{const id='it:'+k,c=S.it[k].closed,ft=S.it[k].fault;setArw('ita_'+k,c&&!ft?(S.flows[id]||0):0,ITS[k].v?'v':'h');
-    setAttr($('itl_'+k),'class','tie-l it'+(c?' on':''));setAttr($('itsw_'+k),'class','brk sw'+(c?'':' open')+(opK===id?' operating':''));
+    setAttr($('itl_'+k),'class','tie-l it'+(c&&!ft?' on'+heat(S.edL[id]||0):c?' on':''));setAttr($('itsw_'+k),'class','brk sw'+(c?'':' open')+(opK===id?' operating':''));
     txt('itt_'+k,ft?(ft.ready?'REPAIRED':'FAULT'):edgeTxt(id,c,ITS[k].r));setAttr($('itt_'+k),'class',ft&&!ft.ready?'tie-t alarm':edgeCls(id,c));});
   ['kn','fm'].forEach(nb=>{const sp=Math.max(0,S.spare[nb]),u=Math.abs(S.inj[nb]||0),L=u/Math.max(1,sp);txt('nbs_'+nb,u>=.5?`Using ${Math.round(u)} of ${Math.round(sp)} MW`:`Spare ${Math.round(sp)} MW`);setAttr($('nbs_'+nb),'class','nb-s'+(u<.5?'':L>1?' alarm':L>=AL_ON?' warn':''));});
   const c=S.c,a=S.act,on=p=>S.sup[p]!=='off';
@@ -1222,7 +1224,7 @@ function renderMimic(){
     ASSETS.filter(x=>x.type!=='load').forEach(x=>{const off=!on(x.prim)||S.ended;['u','d'].forEach(k=>{const e=$(`adj_${x.id}_${k}`);if(e)e.classList.toggle('dis',off);});});
   }
   if(CREW_ON){const tNow=S.t+(S.running&&!S.paused&&!S.ended?acc:0);S.crews.forEach((c,i)=>{const g=$('crew'+c.n);if(!g)return;const p=crewPos(c,tNow),same=S.crews.filter((d,j)=>j<i&&!d.to&&!c.to&&Math.abs(d.x-c.x)<1&&Math.abs(d.y-c.y)<1).length,
-    off=c.to?(i-1)*7:(c.at==='depot'?(i-1)*16:14+same*12);setAttr(g,'transform',`translate(${(p.x+off).toFixed(1)} ${(p.y+(c.at==='depot'&&!c.to?16:-4)+(c.to?(i-1)*5:0)).toFixed(1)}) scale(1.25)`);g.classList.toggle('walk',!!c.to&&S.running&&!S.paused);g.classList.toggle('busy',!!c.job);});}
+    off=c.to?(i-1)*7:(c.at==='depot'?(i-1)*16:14+same*12);setAttr(g,'transform',`translate(${(p.x+off).toFixed(1)} ${(p.y+(c.at==='depot'&&!c.to?16:-4)+(c.to?(i-1)*5:0)).toFixed(1)}) scale(1.25)`);g.classList.toggle('walk',!!c.to&&S.running&&!S.paused);g.classList.toggle('home',c.at==='depot'&&!c.to);g.classList.toggle('busy',!!c.job);});}
   if(S.sc.gsp){const G=S.sc.gsp,on=S.t>=G.start&&S.t<G.end;txt('gspT',on?`LIMIT ${G.limit} MW · NOW ${Math.round(S.gspLoad)} MW`:S.t>=G.warn&&S.t<G.start?'SUPERGRID FAULT EXPECTED':'');setAttr($('gspT'),'class','gsp-t'+(on&&S.gspLoad>G.limit?' alarm':on?' ok':''));}
   const sb=$('selbox'),bx=S.sel&&SELBOX[S.sel];
   if(bx){setAttr(sb,'x',String(bx[0]));setAttr(sb,'y',String(bx[1]));setAttr(sb,'width',String(bx[2]));setAttr(sb,'height',String(bx[3]));setAttr(sb,'visibility','visible');}else setAttr(sb,'visibility','hidden');
