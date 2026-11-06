@@ -638,7 +638,7 @@ function renderCalls(){const el=$('callBody');if(!el||!CALLS_ON)return;
     return `<li class="call ${c.kind}${on?' done':''}"><div class="call-h"><span class="call-tm">${fmtT(c.m)}</span><span class="call-w">${esc(c.who)}</span><span class="call-s">${on?'Back on':`${esc(PR[c.p].name)} · ${c.sx?'second':'first'} half`}</span></div>
       <p class="call-q">“${esc(c.txt)}”</p>${on?'':`<div class="call-a"><button type="button" class="btn" data-sel="lf:${c.p}${c.i}" data-k="cs-${c.id}">Show feeder</button><button type="button" class="btn" data-poll="${c.p}" data-k="cp-${c.id}"${pend?' disabled':''}>${pend?'Polling…':`Poll ${esc(PR[c.p].name)} RTU`}</button></div>`}</li>`;}).join('')}</ul>${all.length>L.length?`<p class="fine">${nf(all.length)} calls so far this shift.</p>`:''}`
     :'<p class="empty">No calls. Customers ring in when their supply goes off. Some say what they saw or heard, which tells you which half of the feeder the fault is in.</p>';
-  if(h!==lastCalls){lastCalls=h;const ae=document.activeElement,fk=ae&&el.contains(ae)&&ae.dataset?ae.dataset.k:null;el.innerHTML=h;if(fk){const f=el.querySelector(`[data-k="${fk}"]`);if(f)f.focus();}}
+  if(h!==lastCalls){lastCalls=h;const ae=document.activeElement,fk=ae&&el.contains(ae)&&ae.dataset?ae.dataset.k:null;el.innerHTML=h;callSeen=slideNew(el,callSeen);if(fk){const f=el.querySelector(`[data-k="${fk}"]`);if(f)f.focus();}}
   txt('callCount',n?String(n):'');setAttr($('callCount'),'class','al-count'+(n?' high':''));
   {const pc=$('pCalls');if(pc)pc.classList.toggle('ringing',L.some(c=>live(c)&&S.t-c.m<5));}}
 // The diagram shows what the RTUs have reported: a trip that hasn't come through yet still shows the breaker closed.
@@ -864,7 +864,7 @@ let lastAl='';
 function renderAlarms(){const red=a=>a.lvl==='over'||a.ev==='trip',list=Object.values(S.alarms).sort((a,b)=>red(b)-red(a)||!!b.ev-!!a.ev||b.since-a.since||b.L-a.L),un=list.filter(a=>!a.ack).length;
   const h=list.length?`<ul class="al-list">${list.map(a=>a.ev?`<li class="al ${a.ev==='trip'?'over':'high'} unack"><button type="button" data-sel="${a.sel}" data-k="al-${a.id}"><span class="al-l">${a.ev==='trip'?'Trip':'Auto-reclose'}</span><span class="al-n">${esc(a.name)}</span><span class="al-v"></span><span class="al-t">at ${fmtT(a.since)}${a.note?' · '+esc(a.note):''}</span></button></li>`:`<li class="al ${a.lvl}${a.ack?'':' unack'}"><button type="button" data-sel="${a.sel}" data-k="al-${a.id}"><span class="al-l">${a.lvl==='over'?'Overload':'High load'}</span><span class="al-n">${esc(a.name)}</span><span class="al-v">${Math.round(a.L*100)}%</span><span class="al-t">since ${fmtT(a.since)}${a.trip!=null?' · trips in '+a.trip+' min':a.lvl==='over'&&a.id.startsWith('nb:')?' · ties trip in '+OV_MIN+' min if it stays over':''}</span></button></li>`).join('')}</ul>`
     :'<p class="empty">No alarms. Anything above 80% of its rating, and every breaker trip or auto-reclose, shows here.</p>';
-  const k=h+'|'+un;if(k!==lastAl){lastAl=k;$('alBody').innerHTML=h;}
+  const k=h+'|'+un;if(k!==lastAl){lastAl=k;$('alBody').innerHTML=h;alSeen=slideNew($('alBody'),alSeen);}
   txt('alCount',list.length?String(list.length):'');setAttr($('alCount'),'class','al-count'+(list.some(red)?' over':list.length?' high':''));
   $('ackBtn').hidden=!un;setAttr($('pAlarm'),'class','panel p-alarm'+(un?' ringing':''));
   setAttr($('dAl'),'class','al-count'+(list.some(red)?' over':list.length?' high':''));txt('dAl',list.length?String(list.length):'');}
@@ -1134,7 +1134,15 @@ function txt(id,v){const e=$(id);if(e&&e.textContent!==v)e.textContent=v;}
 // Two-line sub-label under a generator or flexibility symbol (lines split on \n), so neighbouring labels don't run into each other
 function sub2(id,v){const e=$(id);if(!e||e.dataset.v===v)return;e.dataset.v=v;const x=e.getAttribute('x');
   e.innerHTML=v.split('\n').map((l,i)=>`<tspan x="${x}" dy="${i?'1.15em':'0'}">${esc(l)}</tspan>`).join('');}
-function setAttr(e,k,v){if(e&&e.getAttribute(k)!==v)e.setAttribute(k,v);}
+const RMQ=matchMedia('(prefers-reduced-motion: reduce)');
+function anim(e,frames,o){if(e&&e.animate&&!RMQ.matches)try{e.animate(frames,o);}catch(x){}}
+function setAttr(e,k,v){if(!e)return;const old=e.getAttribute(k);if(old===v)return;e.setAttribute(k,v);
+  // a breaker or switch that has just opened or closed gives a short pulse, so the change is easy to spot
+  if(k==='class'&&old&&/\bbrk\b/.test(v)&&/\bopen\b/.test(old)!==/\bopen\b/.test(v))anim(e,[{transform:'scale(1.45)'},{transform:'scale(1)'}],{duration:340,easing:'cubic-bezier(.2,.7,.2,1)'});}
+// Slide in list items (alarms, calls) that weren't there last time
+function slideNew(box,seen){const now=new Set();box.querySelectorAll('[data-k]').forEach(b=>{const k=b.dataset.k,li=b.closest('li');if(!li||now.has(k))return;now.add(k);
+  if(seen&&!seen.has(k))anim(li,[{opacity:0,transform:'translateX(16px)'},{opacity:1,transform:'none'}],{duration:340,easing:'cubic-bezier(.2,.7,.2,1)'});});return now;}
+let alSeen=null,callSeen=null;
 function setFlow(el,v){if(!el)return;if(Math.abs(v)<.5){el.classList.add('idle');return;}el.classList.remove('idle');el.classList.toggle('rev',v<0);
   const d=Math.max(.35,2.2-Math.abs(v)/60).toFixed(1)+'s';if(el.style.animationDuration!==d)el.style.animationDuration=d;}
 const arrow=v=>v>=0?'▼':'▲';
@@ -1652,9 +1660,14 @@ function tutStart(auto,kiosk){speed=1;document.querySelectorAll('[data-speed]').
   logE(S.t,'Tutorial: Cold Thursday, 15:30. The evening peak is building.','info');S.tut={i:-1,auto:!!auto||!!kiosk,kiosk:!!kiosk,shown:0,acted:false,doneAt:0};kioskLayout(!!kiosk);if(kiosk){tutRepeat=true;keepAwake(true);const ck=$('cookie');if(ck)ck.hidden=true;}hideTip();begin();tutGo(0);track('tutorial_start',{auto:!!auto,kiosk:!!kiosk});}
 // Display mode: brand card between demo loops
 let introTimer=0;
-function kioskIntro(){const el=$('kIntro');el.hidden=false;el.classList.remove('go');void el.offsetWidth;el.classList.add('go');
+function kioskIntro(){const el=$('kIntro');el.classList.remove('splash','out');el.hidden=false;el.classList.remove('go');void el.offsetWidth;el.classList.add('go');
   clearTimeout(introTimer);introTimer=setTimeout(endIntro,11000);}
-function endIntro(){clearTimeout(introTimer);const el=$('kIntro');if(el.hidden)return;el.hidden=true;if(S&&S.tut&&S.tut.kiosk)tutStart(true,true);}
+function splash(){let seen=false;try{seen=sessionStorage.getItem(CFG.pre+'splash')==='1';sessionStorage.setItem(CFG.pre+'splash','1');}catch(e){}
+  if(seen)return;const el=$('kIntro');el.classList.add('splash');el.hidden=false;el.classList.remove('go');void el.offsetWidth;el.classList.add('go');
+  clearTimeout(introTimer);introTimer=setTimeout(endIntro,3400);}
+function endIntro(){clearTimeout(introTimer);const el=$('kIntro');if(el.hidden)return;
+  if(el.classList.contains('splash')&&el.classList.contains('go')&&!el.classList.contains('out')&&!RMQ.matches){el.classList.add('out');introTimer=setTimeout(endIntro,380);return;}
+  el.hidden=true;el.classList.remove('splash','out');if(S&&S.tut&&S.tut.kiosk)tutStart(true,true);}
 function tutGo(i){const T=S.tut;if(!T)return;T.i=i;const st=TUT[i];if(!st){tutDone();return;}
   if(st.enter)st.enter();T.shown=performance.now();T.acted=false;T.doneAt=0;T.pressing=false;T.scrolled=false;
   document.documentElement.classList.toggle('k-insp',!!(T.kiosk&&st.sel));
@@ -2109,6 +2122,8 @@ document.title=CFG.docTitle;document.querySelectorAll('.bar .mode-tag').forEach(
 if(!CALLS_ON){const l=$('pCalls');if(l)l.remove();}if(!VF_ON){const l=$('lgVF');if(l)l.remove();}if(!CREW_ON){const l=$('lgMan');if(l)l.remove();}
 txt('clock',fmtT(START));txt('dClock',fmtT(START));
 setSound(SND.on);applyCollapsed();{const b=$('musicBtn');if(b){b.setAttribute('aria-pressed',String(MUS.on));b.classList.toggle('on',MUS.on);}}
-if(GAME==='cr'&&/(^|[?&#])demo\b/.test(location.search+location.hash))setTimeout(()=>tutStart(true,true),300);newGame(chosen);startSheet();initConsent();requestAnimationFrame(frame);
+txt('kTitle',GAME==='cr'?'Firm Capacity · Control room':'Firm Capacity · Generation');
+if(GAME==='cr'&&/(^|[?&#])demo\b/.test(location.search+location.hash))setTimeout(()=>tutStart(true,true),300);else splash();
+newGame(chosen);startSheet();initConsent();requestAnimationFrame(frame);
 window.__fc={get S(){return S;},run(n){for(let i=0;i<n&&S&&!S.ended;i++)step();render(true);},op(k,a){issueOp(k,a);},comps:(m,f)=>comps(m,f),tutGo:i=>tutGo(i),tutAct:()=>tutAct(),select};
 })();

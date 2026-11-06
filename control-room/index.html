@@ -922,6 +922,7 @@ html.kiosk.k-insp .coach{bottom:calc(28px + var(--ih,300px))}
 /* Display mode: brand card between demo loops */
 .k-intro{position:fixed;inset:0;z-index:40;display:grid;place-items:center;cursor:pointer;background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--wu-navy) 75%,#fff),var(--wu-navy) 70%);color:#fff;text-align:center;padding:24px}
 .k-intro.go{animation:kFade 11s both}
+.k-intro.go{display:grid;margin:0;gap:0;flex-wrap:nowrap;justify-content:normal}  /* the card's .go class also matches the sheet's .go button row */
 .k-in{display:grid;gap:clamp(18px,4vh,40px);justify-items:center}
 .k-intro .wu-lock svg{width:clamp(90px,14vw,170px);height:auto}
 .k-intro .wu-lock b{font-size:clamp(56px,9vw,120px)}
@@ -978,6 +979,62 @@ html.kiosk.k-insp .coach{bottom:calc(28px + var(--ih,300px))}
 .flood.in .fl-w{opacity:.7}
 .flood.in .fl-t{fill:var(--alarm)}
 @media (prefers-reduced-motion:reduce){.flood .fl-w{transition:none}}
+
+/* ---------- Header: identity, clock and KPIs on top; one slim toolbar below ---------- */
+.controls .links{display:contents}
+.links .btn{background:none!important;border-color:transparent!important;color:var(--brand-muted)!important;font-weight:600}
+.links .btn:hover{color:var(--brand-ink)!important;background:var(--brand-2)!important}
+.kpi:not(.kpi-firm){padding-left:18px;border-left:1px solid var(--brand-line)}
+@media (min-width:701px){
+  .bar-in{row-gap:8px;padding-block:8px}
+  .bar .kpis{order:1;gap:18px;align-items:center}
+  .bar .controls{order:2;flex:1 0 100%;padding-top:8px;border-top:1px solid var(--brand-line)}
+  .controls .links{display:flex;align-items:center;gap:2px;margin-left:auto}
+  .controls .links .btn{padding-inline:10px}
+}
+@media (max-width:700px){.kpi:not(.kpi-firm){padding-left:10px}}
+
+/* ---------- Numbers: one style everywhere (JetBrains Mono is loaded at 500 and 600, so no faked bold) ---------- */
+.clock b,.kpi .v,.facts dd,.stepper output,.a-val,.tx-load,.al-v,.i-list .v,.c-av,.chip .cv,.dock b,.score-big b,.db-pts,.db-t,.call-tm,.log time,
+.tx-flow,.ttxt,.a-sub,.fd-v,.tie-t,.nb-s,.p-net,.p-stat,.ic-v,.ax,.ha-t,.gsp-t,.crew-t,.prices b,.banner .msg b,.soc,.allow,.num,.seg button,.al-count,
+.flood .fl-t,.scn .best b,.board-t td,.sum td{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+.al-count,.al-v,.crew-t,.gsp-t,.call-tm,.db-pts,.score-big b,.flood .fl-t,.asym .mg text,.asym .pri text,.pri-tag,.debrief li::before{font-weight:600}
+.db-t{font-weight:500}
+.kpi .v,.facts dd,.stepper output,.c-av,.chip .cv,.i-list .v,.al-v,.a-val,.tx-load,.dock b,.clock b{font-weight:600;letter-spacing:-.01em}
+.kpi .v{font-size:18px}
+.kpi .k,.facts dt,.lbl{letter-spacing:.1em}
+
+/* ---------- Motion ---------- */
+.brk{transition:fill .25s ease,stroke .25s ease;transform-box:fill-box;transform-origin:center}
+.cond{transition:stroke .45s ease,opacity .45s ease}
+.flow{transition:opacity .5s ease;pointer-events:none}
+.flow.idle{display:inline!important;opacity:0;animation-play-state:paused}
+.banner:not([hidden]){animation:bnIn .32s cubic-bezier(.2,.7,.2,1)}
+@keyframes bnIn{from{opacity:0;transform:translateY(-8px)}}
+.overlay:not([hidden]){animation:ovIn .25s ease-out}
+.overlay:not([hidden]) .sheet{animation:shIn .38s cubic-bezier(.2,.7,.2,1)}
+@keyframes ovIn{from{opacity:0}}
+@keyframes shIn{from{opacity:0;transform:translateY(14px) scale(.985)}}
+.qp:not([hidden]){animation:qpIn .2s ease-out}
+@keyframes qpIn{from{opacity:0;transform:translateY(-4px)}}
+.kpi-firm{transition:background-color .4s ease,border-color .4s ease}
+
+/* ---------- Opening card (once per visit) ---------- */
+.k-t{margin:0;font:600 clamp(15px,1.6vw,22px) var(--f-display);letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.72)}
+.k-bar{display:none}
+.k-intro.splash .k-bar{display:block;width:min(260px,60vw);height:3px;border-radius:2px;background:rgba(255,255,255,.14);overflow:hidden;position:relative}
+.k-intro.splash .k-bar::after{content:"";position:absolute;inset:0;background:#FFD23F;transform-origin:left;transform:scaleX(0)}
+.k-intro.splash.go{animation:kSplashIn .35s ease-out both}
+.k-intro.splash.go .k-bar::after{animation:kLoad 2.9s .3s cubic-bezier(.4,0,.2,1) both}
+.k-intro.splash.go .k-t{animation:kUp .7s .5s both}
+.k-intro.splash.go .k-q{animation:kUp .8s .8s both}
+.k-intro.splash.go.out{animation:kOut .38s ease both}
+@keyframes kOut{to{opacity:0}}
+.k-intro.go .k-t{animation:kUp .7s .6s both}
+@keyframes kSplashIn{from{opacity:0}}
+@keyframes kLoad{to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){.brk,.cond,.flow,.kpi-firm{transition:none}.banner,.overlay,.overlay .sheet,.qp,.k-intro.splash .k-bar::after{animation:none!important}.k-intro.splash .k-bar::after{transform:none}}
+@media (min-width:701px) and (max-width:1180px){.controls .links .btn{padding-inline:7px;font-size:14px}.bar .chk{font-size:12.5px}.bar .kpis{gap:12px}.kpi:not(.kpi-firm){padding-left:12px}}
 </style>
 </head>
 <body>
@@ -999,10 +1056,12 @@ html.kiosk.k-insp .coach{bottom:calc(28px + var(--ih,300px))}
       <label class="chk"><input type="checkbox" id="autoPause" checked> Pause on faults and overloads</label>
       <button id="muteBtn" class="btn icon-btn" type="button" aria-label="Sound on" aria-pressed="true"></button>
       <button id="musicBtn" class="btn icon-btn" type="button" aria-label="Music off. Turn music on" aria-pressed="false" title="Background music"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></button>
-      <button id="boardBtn" class="btn" type="button">Scoreboard</button>
-      <a class="btn" id="hdrOther" href="https://der-dash.github.io/Network/" target="_top">Generation game →</a>
-      <button class="btn" type="button" data-feedback>Feedback</button>
+      <span class="links">
       <button id="newBtn" class="btn" type="button">New shift</button>
+      <button id="boardBtn" class="btn" type="button">Scoreboard</button>
+      <button class="btn" type="button" data-feedback>Feedback</button>
+      <a class="btn" id="hdrOther" href="https://der-dash.github.io/Network/" target="_top">Generation game →</a>
+      </span>
     </div>
     <div class="kpis">
       <div class="kpi kpi-firm" id="kFirmBox"><span class="k">Firm capacity</span><span class="v" id="kFirm">0 / 120 MW</span><span class="s" id="kFirmSub">120 MW headroom</span></div>
@@ -1091,7 +1150,7 @@ html.kiosk.k-insp .coach{bottom:calc(28px + var(--ih,300px))}
 <nav class="dock" aria-label="Game controls"><b id="dClock">08:00</b><span id="dPill" class="pill ok">N-1 secure</span><span id="dAl" class="al-count"></span><button id="dCtl" type="button" class="btn icon-btn" aria-label="Open the control panel"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button><button id="dSpeed" type="button" class="btn" aria-label="Change speed">1×</button><button id="dPlay" type="button" class="btn primary">Start</button></nav>
 
 <div id="coach" class="coach" role="dialog" aria-live="polite" hidden></div>
-<div id="kIntro" class="k-intro" hidden><div class="k-in"><div class="wu-lock"><svg viewBox="0 0 100 100" role="img" aria-label="Watts Up"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg><div><b>Watts <span>Up</span></b></div></div><p class="k-q">Can you keep the lights on?</p></div></div>
+<div id="kIntro" class="k-intro" hidden><div class="k-in"><div class="wu-lock"><svg viewBox="0 0 100 100" role="img" aria-label="Watts Up"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg><div><b>Watts <span>Up</span></b></div></div><p class="k-t" id="kTitle"></p><p class="k-q">Can you keep the lights on?</p><i class="k-bar" aria-hidden="true"></i></div></div>
 <div id="tip" class="tip" role="dialog" aria-live="polite" hidden><span class="tk" id="tipK">Tip</span><p id="tipP"></p><div class="row"><button type="button" class="btn" id="tipSkip">Turn off tips</button><button type="button" class="btn primary" id="tipOk">Got it</button></div></div>
 
 <div id="cookie" class="cookie" role="dialog" aria-label="Cookies" hidden><p>Can we use Google Analytics cookies to count how many people play and how games go? Nothing is used for advertising.</p><div class="row"><button type="button" class="btn" id="cookieNo">No thanks</button><button type="button" class="btn primary" id="cookieYes">Accept</button></div></div>
@@ -1789,7 +1848,7 @@ function renderCalls(){const el=$('callBody');if(!el||!CALLS_ON)return;
     return `<li class="call ${c.kind}${on?' done':''}"><div class="call-h"><span class="call-tm">${fmtT(c.m)}</span><span class="call-w">${esc(c.who)}</span><span class="call-s">${on?'Back on':`${esc(PR[c.p].name)} · ${c.sx?'second':'first'} half`}</span></div>
       <p class="call-q">“${esc(c.txt)}”</p>${on?'':`<div class="call-a"><button type="button" class="btn" data-sel="lf:${c.p}${c.i}" data-k="cs-${c.id}">Show feeder</button><button type="button" class="btn" data-poll="${c.p}" data-k="cp-${c.id}"${pend?' disabled':''}>${pend?'Polling…':`Poll ${esc(PR[c.p].name)} RTU`}</button></div>`}</li>`;}).join('')}</ul>${all.length>L.length?`<p class="fine">${nf(all.length)} calls so far this shift.</p>`:''}`
     :'<p class="empty">No calls. Customers ring in when their supply goes off. Some say what they saw or heard, which tells you which half of the feeder the fault is in.</p>';
-  if(h!==lastCalls){lastCalls=h;const ae=document.activeElement,fk=ae&&el.contains(ae)&&ae.dataset?ae.dataset.k:null;el.innerHTML=h;if(fk){const f=el.querySelector(`[data-k="${fk}"]`);if(f)f.focus();}}
+  if(h!==lastCalls){lastCalls=h;const ae=document.activeElement,fk=ae&&el.contains(ae)&&ae.dataset?ae.dataset.k:null;el.innerHTML=h;callSeen=slideNew(el,callSeen);if(fk){const f=el.querySelector(`[data-k="${fk}"]`);if(f)f.focus();}}
   txt('callCount',n?String(n):'');setAttr($('callCount'),'class','al-count'+(n?' high':''));
   {const pc=$('pCalls');if(pc)pc.classList.toggle('ringing',L.some(c=>live(c)&&S.t-c.m<5));}}
 // The diagram shows what the RTUs have reported: a trip that hasn't come through yet still shows the breaker closed.
@@ -2015,7 +2074,7 @@ let lastAl='';
 function renderAlarms(){const red=a=>a.lvl==='over'||a.ev==='trip',list=Object.values(S.alarms).sort((a,b)=>red(b)-red(a)||!!b.ev-!!a.ev||b.since-a.since||b.L-a.L),un=list.filter(a=>!a.ack).length;
   const h=list.length?`<ul class="al-list">${list.map(a=>a.ev?`<li class="al ${a.ev==='trip'?'over':'high'} unack"><button type="button" data-sel="${a.sel}" data-k="al-${a.id}"><span class="al-l">${a.ev==='trip'?'Trip':'Auto-reclose'}</span><span class="al-n">${esc(a.name)}</span><span class="al-v"></span><span class="al-t">at ${fmtT(a.since)}${a.note?' · '+esc(a.note):''}</span></button></li>`:`<li class="al ${a.lvl}${a.ack?'':' unack'}"><button type="button" data-sel="${a.sel}" data-k="al-${a.id}"><span class="al-l">${a.lvl==='over'?'Overload':'High load'}</span><span class="al-n">${esc(a.name)}</span><span class="al-v">${Math.round(a.L*100)}%</span><span class="al-t">since ${fmtT(a.since)}${a.trip!=null?' · trips in '+a.trip+' min':a.lvl==='over'&&a.id.startsWith('nb:')?' · ties trip in '+OV_MIN+' min if it stays over':''}</span></button></li>`).join('')}</ul>`
     :'<p class="empty">No alarms. Anything above 80% of its rating, and every breaker trip or auto-reclose, shows here.</p>';
-  const k=h+'|'+un;if(k!==lastAl){lastAl=k;$('alBody').innerHTML=h;}
+  const k=h+'|'+un;if(k!==lastAl){lastAl=k;$('alBody').innerHTML=h;alSeen=slideNew($('alBody'),alSeen);}
   txt('alCount',list.length?String(list.length):'');setAttr($('alCount'),'class','al-count'+(list.some(red)?' over':list.length?' high':''));
   $('ackBtn').hidden=!un;setAttr($('pAlarm'),'class','panel p-alarm'+(un?' ringing':''));
   setAttr($('dAl'),'class','al-count'+(list.some(red)?' over':list.length?' high':''));txt('dAl',list.length?String(list.length):'');}
@@ -2285,7 +2344,15 @@ function txt(id,v){const e=$(id);if(e&&e.textContent!==v)e.textContent=v;}
 // Two-line sub-label under a generator or flexibility symbol (lines split on \n), so neighbouring labels don't run into each other
 function sub2(id,v){const e=$(id);if(!e||e.dataset.v===v)return;e.dataset.v=v;const x=e.getAttribute('x');
   e.innerHTML=v.split('\n').map((l,i)=>`<tspan x="${x}" dy="${i?'1.15em':'0'}">${esc(l)}</tspan>`).join('');}
-function setAttr(e,k,v){if(e&&e.getAttribute(k)!==v)e.setAttribute(k,v);}
+const RMQ=matchMedia('(prefers-reduced-motion: reduce)');
+function anim(e,frames,o){if(e&&e.animate&&!RMQ.matches)try{e.animate(frames,o);}catch(x){}}
+function setAttr(e,k,v){if(!e)return;const old=e.getAttribute(k);if(old===v)return;e.setAttribute(k,v);
+  // a breaker or switch that has just opened or closed gives a short pulse, so the change is easy to spot
+  if(k==='class'&&old&&/\bbrk\b/.test(v)&&/\bopen\b/.test(old)!==/\bopen\b/.test(v))anim(e,[{transform:'scale(1.45)'},{transform:'scale(1)'}],{duration:340,easing:'cubic-bezier(.2,.7,.2,1)'});}
+// Slide in list items (alarms, calls) that weren't there last time
+function slideNew(box,seen){const now=new Set();box.querySelectorAll('[data-k]').forEach(b=>{const k=b.dataset.k,li=b.closest('li');if(!li||now.has(k))return;now.add(k);
+  if(seen&&!seen.has(k))anim(li,[{opacity:0,transform:'translateX(16px)'},{opacity:1,transform:'none'}],{duration:340,easing:'cubic-bezier(.2,.7,.2,1)'});});return now;}
+let alSeen=null,callSeen=null;
 function setFlow(el,v){if(!el)return;if(Math.abs(v)<.5){el.classList.add('idle');return;}el.classList.remove('idle');el.classList.toggle('rev',v<0);
   const d=Math.max(.35,2.2-Math.abs(v)/60).toFixed(1)+'s';if(el.style.animationDuration!==d)el.style.animationDuration=d;}
 const arrow=v=>v>=0?'▼':'▲';
@@ -2803,9 +2870,14 @@ function tutStart(auto,kiosk){speed=1;document.querySelectorAll('[data-speed]').
   logE(S.t,'Tutorial: Cold Thursday, 15:30. The evening peak is building.','info');S.tut={i:-1,auto:!!auto||!!kiosk,kiosk:!!kiosk,shown:0,acted:false,doneAt:0};kioskLayout(!!kiosk);if(kiosk){tutRepeat=true;keepAwake(true);const ck=$('cookie');if(ck)ck.hidden=true;}hideTip();begin();tutGo(0);track('tutorial_start',{auto:!!auto,kiosk:!!kiosk});}
 // Display mode: brand card between demo loops
 let introTimer=0;
-function kioskIntro(){const el=$('kIntro');el.hidden=false;el.classList.remove('go');void el.offsetWidth;el.classList.add('go');
+function kioskIntro(){const el=$('kIntro');el.classList.remove('splash','out');el.hidden=false;el.classList.remove('go');void el.offsetWidth;el.classList.add('go');
   clearTimeout(introTimer);introTimer=setTimeout(endIntro,11000);}
-function endIntro(){clearTimeout(introTimer);const el=$('kIntro');if(el.hidden)return;el.hidden=true;if(S&&S.tut&&S.tut.kiosk)tutStart(true,true);}
+function splash(){let seen=false;try{seen=sessionStorage.getItem(CFG.pre+'splash')==='1';sessionStorage.setItem(CFG.pre+'splash','1');}catch(e){}
+  if(seen)return;const el=$('kIntro');el.classList.add('splash');el.hidden=false;el.classList.remove('go');void el.offsetWidth;el.classList.add('go');
+  clearTimeout(introTimer);introTimer=setTimeout(endIntro,3400);}
+function endIntro(){clearTimeout(introTimer);const el=$('kIntro');if(el.hidden)return;
+  if(el.classList.contains('splash')&&el.classList.contains('go')&&!el.classList.contains('out')&&!RMQ.matches){el.classList.add('out');introTimer=setTimeout(endIntro,380);return;}
+  el.hidden=true;el.classList.remove('splash','out');if(S&&S.tut&&S.tut.kiosk)tutStart(true,true);}
 function tutGo(i){const T=S.tut;if(!T)return;T.i=i;const st=TUT[i];if(!st){tutDone();return;}
   if(st.enter)st.enter();T.shown=performance.now();T.acted=false;T.doneAt=0;T.pressing=false;T.scrolled=false;
   document.documentElement.classList.toggle('k-insp',!!(T.kiosk&&st.sel));
@@ -3260,7 +3332,9 @@ document.title=CFG.docTitle;document.querySelectorAll('.bar .mode-tag').forEach(
 if(!CALLS_ON){const l=$('pCalls');if(l)l.remove();}if(!VF_ON){const l=$('lgVF');if(l)l.remove();}if(!CREW_ON){const l=$('lgMan');if(l)l.remove();}
 txt('clock',fmtT(START));txt('dClock',fmtT(START));
 setSound(SND.on);applyCollapsed();{const b=$('musicBtn');if(b){b.setAttribute('aria-pressed',String(MUS.on));b.classList.toggle('on',MUS.on);}}
-if(GAME==='cr'&&/(^|[?&#])demo\b/.test(location.search+location.hash))setTimeout(()=>tutStart(true,true),300);newGame(chosen);startSheet();initConsent();requestAnimationFrame(frame);
+txt('kTitle',GAME==='cr'?'Firm Capacity · Control room':'Firm Capacity · Generation');
+if(GAME==='cr'&&/(^|[?&#])demo\b/.test(location.search+location.hash))setTimeout(()=>tutStart(true,true),300);else splash();
+newGame(chosen);startSheet();initConsent();requestAnimationFrame(frame);
 })();
 </script>
 <!-- app install -->

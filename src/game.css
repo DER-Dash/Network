@@ -446,6 +446,7 @@ html.kiosk.k-insp .coach{bottom:calc(28px + var(--ih,300px))}
 /* Display mode: brand card between demo loops */
 .k-intro{position:fixed;inset:0;z-index:40;display:grid;place-items:center;cursor:pointer;background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--wu-navy) 75%,#fff),var(--wu-navy) 70%);color:#fff;text-align:center;padding:24px}
 .k-intro.go{animation:kFade 11s both}
+.k-intro.go{display:grid;margin:0;gap:0;flex-wrap:nowrap;justify-content:normal}  /* the card's .go class also matches the sheet's .go button row */
 .k-in{display:grid;gap:clamp(18px,4vh,40px);justify-items:center}
 .k-intro .wu-lock svg{width:clamp(90px,14vw,170px);height:auto}
 .k-intro .wu-lock b{font-size:clamp(56px,9vw,120px)}
@@ -502,3 +503,59 @@ html.kiosk.k-insp .coach{bottom:calc(28px + var(--ih,300px))}
 .flood.in .fl-w{opacity:.7}
 .flood.in .fl-t{fill:var(--alarm)}
 @media (prefers-reduced-motion:reduce){.flood .fl-w{transition:none}}
+
+/* ---------- Header: identity, clock and KPIs on top; one slim toolbar below ---------- */
+.controls .links{display:contents}
+.links .btn{background:none!important;border-color:transparent!important;color:var(--brand-muted)!important;font-weight:600}
+.links .btn:hover{color:var(--brand-ink)!important;background:var(--brand-2)!important}
+.kpi:not(.kpi-firm){padding-left:18px;border-left:1px solid var(--brand-line)}
+@media (min-width:701px){
+  .bar-in{row-gap:8px;padding-block:8px}
+  .bar .kpis{order:1;gap:18px;align-items:center}
+  .bar .controls{order:2;flex:1 0 100%;padding-top:8px;border-top:1px solid var(--brand-line)}
+  .controls .links{display:flex;align-items:center;gap:2px;margin-left:auto}
+  .controls .links .btn{padding-inline:10px}
+}
+@media (max-width:700px){.kpi:not(.kpi-firm){padding-left:10px}}
+
+/* ---------- Numbers: one style everywhere (JetBrains Mono is loaded at 500 and 600, so no faked bold) ---------- */
+.clock b,.kpi .v,.facts dd,.stepper output,.a-val,.tx-load,.al-v,.i-list .v,.c-av,.chip .cv,.dock b,.score-big b,.db-pts,.db-t,.call-tm,.log time,
+.tx-flow,.ttxt,.a-sub,.fd-v,.tie-t,.nb-s,.p-net,.p-stat,.ic-v,.ax,.ha-t,.gsp-t,.crew-t,.prices b,.banner .msg b,.soc,.allow,.num,.seg button,.al-count,
+.flood .fl-t,.scn .best b,.board-t td,.sum td{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+.al-count,.al-v,.crew-t,.gsp-t,.call-tm,.db-pts,.score-big b,.flood .fl-t,.asym .mg text,.asym .pri text,.pri-tag,.debrief li::before{font-weight:600}
+.db-t{font-weight:500}
+.kpi .v,.facts dd,.stepper output,.c-av,.chip .cv,.i-list .v,.al-v,.a-val,.tx-load,.dock b,.clock b{font-weight:600;letter-spacing:-.01em}
+.kpi .v{font-size:18px}
+.kpi .k,.facts dt,.lbl{letter-spacing:.1em}
+
+/* ---------- Motion ---------- */
+.brk{transition:fill .25s ease,stroke .25s ease;transform-box:fill-box;transform-origin:center}
+.cond{transition:stroke .45s ease,opacity .45s ease}
+.flow{transition:opacity .5s ease;pointer-events:none}
+.flow.idle{display:inline!important;opacity:0;animation-play-state:paused}
+.banner:not([hidden]){animation:bnIn .32s cubic-bezier(.2,.7,.2,1)}
+@keyframes bnIn{from{opacity:0;transform:translateY(-8px)}}
+.overlay:not([hidden]){animation:ovIn .25s ease-out}
+.overlay:not([hidden]) .sheet{animation:shIn .38s cubic-bezier(.2,.7,.2,1)}
+@keyframes ovIn{from{opacity:0}}
+@keyframes shIn{from{opacity:0;transform:translateY(14px) scale(.985)}}
+.qp:not([hidden]){animation:qpIn .2s ease-out}
+@keyframes qpIn{from{opacity:0;transform:translateY(-4px)}}
+.kpi-firm{transition:background-color .4s ease,border-color .4s ease}
+
+/* ---------- Opening card (once per visit) ---------- */
+.k-t{margin:0;font:600 clamp(15px,1.6vw,22px) var(--f-display);letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.72)}
+.k-bar{display:none}
+.k-intro.splash .k-bar{display:block;width:min(260px,60vw);height:3px;border-radius:2px;background:rgba(255,255,255,.14);overflow:hidden;position:relative}
+.k-intro.splash .k-bar::after{content:"";position:absolute;inset:0;background:#FFD23F;transform-origin:left;transform:scaleX(0)}
+.k-intro.splash.go{animation:kSplashIn .35s ease-out both}
+.k-intro.splash.go .k-bar::after{animation:kLoad 2.9s .3s cubic-bezier(.4,0,.2,1) both}
+.k-intro.splash.go .k-t{animation:kUp .7s .5s both}
+.k-intro.splash.go .k-q{animation:kUp .8s .8s both}
+.k-intro.splash.go.out{animation:kOut .38s ease both}
+@keyframes kOut{to{opacity:0}}
+.k-intro.go .k-t{animation:kUp .7s .6s both}
+@keyframes kSplashIn{from{opacity:0}}
+@keyframes kLoad{to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){.brk,.cond,.flow,.kpi-firm{transition:none}.banner,.overlay,.overlay .sheet,.qp,.k-intro.splash .k-bar::after{animation:none!important}.k-intro.splash .k-bar::after{transform:none}}
+@media (min-width:701px) and (max-width:1180px){.controls .links .btn{padding-inline:7px;font-size:14px}.bar .chk{font-size:12.5px}.bar .kpis{gap:12px}.kpi:not(.kpi-firm){padding-left:12px}}

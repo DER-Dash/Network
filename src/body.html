@@ -16,10 +16,12 @@
       <label class="chk"><input type="checkbox" id="autoPause" checked> Pause on faults and overloads</label>
       <button id="muteBtn" class="btn icon-btn" type="button" aria-label="Sound on" aria-pressed="true"></button>
       <button id="musicBtn" class="btn icon-btn" type="button" aria-label="Music off. Turn music on" aria-pressed="false" title="Background music"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></button>
-      <button id="boardBtn" class="btn" type="button">Scoreboard</button>
-      <a class="btn" id="hdrOther" href="https://der-dash.github.io/Network/" target="_top">Generation game →</a>
-      <button class="btn" type="button" data-feedback>Feedback</button>
+      <span class="links">
       <button id="newBtn" class="btn" type="button">New shift</button>
+      <button id="boardBtn" class="btn" type="button">Scoreboard</button>
+      <button class="btn" type="button" data-feedback>Feedback</button>
+      <a class="btn" id="hdrOther" href="https://der-dash.github.io/Network/" target="_top">Generation game →</a>
+      </span>
     </div>
     <div class="kpis">
       <div class="kpi kpi-firm" id="kFirmBox"><span class="k">Firm capacity</span><span class="v" id="kFirm">0 / 120 MW</span><span class="s" id="kFirmSub">120 MW headroom</span></div>
@@ -108,7 +110,7 @@
 <nav class="dock" aria-label="Game controls"><b id="dClock">08:00</b><span id="dPill" class="pill ok">N-1 secure</span><span id="dAl" class="al-count"></span><button id="dCtl" type="button" class="btn icon-btn" aria-label="Open the control panel"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button><button id="dSpeed" type="button" class="btn" aria-label="Change speed">1×</button><button id="dPlay" type="button" class="btn primary">Start</button></nav>
 
 <div id="coach" class="coach" role="dialog" aria-live="polite" hidden></div>
-<div id="kIntro" class="k-intro" hidden><div class="k-in"><div class="wu-lock"><svg viewBox="0 0 100 100" role="img" aria-label="Watts Up"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg><div><b>Watts <span>Up</span></b></div></div><p class="k-q">Can you keep the lights on?</p></div></div>
+<div id="kIntro" class="k-intro" hidden><div class="k-in"><div class="wu-lock"><svg viewBox="0 0 100 100" role="img" aria-label="Watts Up"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg><div><b>Watts <span>Up</span></b></div></div><p class="k-t" id="kTitle"></p><p class="k-q">Can you keep the lights on?</p><i class="k-bar" aria-hidden="true"></i></div></div>
 <div id="tip" class="tip" role="dialog" aria-live="polite" hidden><span class="tk" id="tipK">Tip</span><p id="tipP"></p><div class="row"><button type="button" class="btn" id="tipSkip">Turn off tips</button><button type="button" class="btn primary" id="tipOk">Got it</button></div></div>
 
 <div id="cookie" class="cookie" role="dialog" aria-label="Cookies" hidden><p>Can we use Google Analytics cookies to count how many people play and how games go? Nothing is used for advertising.</p><div class="row"><button type="button" class="btn" id="cookieNo">No thanks</button><button type="button" class="btn primary" id="cookieYes">Accept</button></div></div>
