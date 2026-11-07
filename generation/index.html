@@ -1283,11 +1283,11 @@ html.kiosk.k-insp .coach{bottom:calc(28px + var(--ih,300px))}
 const $=id=>document.getElementById(id);
 const GAME='fc'; // replaced with 'fc' when the generation game is built
 const CR_URL='https://der-dash.github.io/Network/control-room/',FC_URL='https://der-dash.github.io/Network/';
-const CFG=GAME==='fc'?{start:300,end:1380,rate:5.1,pre:'fcg-',salt:'fcg1',def:'may',tag:'Generation',docTitle:'Firm Capacity',site:FC_URL,
+const CFG=GAME==='fc'?{start:300,end:1380,rate:4.5,pre:'fcg-',salt:'fcg1',def:'may',tag:'Generation',docTitle:'Firm Capacity',site:FC_URL,
     band:'Generation · keeping Blackout Canyon inside firm capacity. Mostly.',eyebrow:'Generation · Blackout Canyon 33 kV',h2:'Keep Blackout Canyon inside firm capacity',
     board:'Generation',share:'Firm Capacity',other:{url:CR_URL,hdr:'Control room game →',foot:'Play the control room game',
     box:'<b>Prefer switching?</b> Try the control room game: switch, transfer and restore supply across Blackout Canyon\'s substations through faults and planned work.',cta:'Play the control room game →'}}
-  :{start:480,end:1200,rate:3.4,pre:'fc4-',salt:'fc5',def:'mesh',tag:'Control room',docTitle:'Firm Capacity Control Room',site:CR_URL,
+  :{start:480,end:1200,rate:3,pre:'fc4-',salt:'fc5',def:'mesh',tag:'Control room',docTitle:'Firm Capacity Control Room',site:CR_URL,
     band:'Control room · keeping Blackout Canyon switched on. Mostly.',eyebrow:'Control room · Blackout Canyon 33 kV',h2:'Run the Blackout Canyon network',
     board:'Control room',share:'Firm Capacity: Control Room',other:{url:FC_URL,hdr:'Generation game →',foot:'Play the generation game',
     box:'<b>Prefer generation?</b> Try the generation game: balance solar, wind, batteries and flexibility to keep the transformers inside their rating.',cta:'Play the generation game →'}};
@@ -1304,6 +1304,9 @@ let R=60,START=CFG.start,END=CFG.end;const TAU=45,TRIP_T=140,SOC_MAX=60;
 const CUST_TOTAL=60000,SHORT_INT=3,CREW_ON=GAME==='cr',MANUAL=['tie','it','nop','lk','mid','mg'],CREW_SPEED=70,CREW_OP=2,DEPOT={x:1150,y:62};
 // 11 kV fault finding, auto-reclose and mobile generators (control room only)
 const LV_ON=GAME==='cr',SECF=[.5,.5],PATROL=60,TRIAL_PTS=50,MG_N=2,MG_CAP=8,MG_CONN=45;
+// A fault in the second half takes at least this long to repair once found, so a generator connected to the LV
+// there (crew travel plus MG_CONN) gets its customers back well before the repair is done.
+const LV_REP_MIN=MG_CONN+60;
 const LF_OH={hw:[0,1,1],ml:[0,1,1],rv:[0,1,1],js:[0,1,1],kc:[0,0,1]};// 1 = overhead line (auto-reclose), 0 = underground cable
 const OH_CAUSES=['Tree branch blown onto the line','Lightning strike','Conductor clash in the wind','Bird contact on the line','Broken insulator'];
 const CABLE_CAUSES=['Cable joint failure','Third-party dig-in','Cable insulation failure'];
@@ -1571,12 +1574,15 @@ const ptOn=p=>!S.pt||!S.pt[p]||S.pt[p].closed,subLv=(p,sup)=>subOn(p,sup)&&ptOn(
 const midOn=(p,i)=>!S.mid||!S.mid[p]||S.mid[p][i]!==false;
 const mgAt=k=>(S.mgu||[]).find(u=>u.site===k);
 const mgOn=(p,i)=>{const u=mgAt(p+i);return !!(u&&u.conn);};
+// a generator connected to the LV boards of the second half's substations: it feeds those customers directly,
+// clear of the 11 kV cable, so it works with the fault still there but cannot feed the first half
+const mgLv=(p,i)=>{const u=mgAt(p+i);return !!(u&&u.conn&&u.lv);};
 function farSrc(p,i,sup){if(VF_ON&&VFI.includes(i)&&S.nop[p][i])return'vf';
   const l=linkOf(p,i);if(l&&S.lk[l.k]&&S.lf[l.q]&&S.lf[l.q][l.j]&&midOn(l.q,l.j)&&subLv(l.q,sup))return l.q;
-  if(mgOn(p,i))return'mg';return null;}
-function secFeed(p,i,s,sup){if(!S.lf[p])return null;const mid=midOn(p,i);
-  if(S.lf[p][i]){const n=subLv(p,sup)?p:null;return s===0||mid?n:farSrc(p,i,sup);}
-  return s===1||mid?farSrc(p,i,sup):null;}
+  if(mgOn(p,i)&&!mgLv(p,i))return'mg';return null;}
+function secFeed(p,i,s,sup){if(!S.lf[p])return null;const mid=midOn(p,i);let r;
+  if(S.lf[p][i]){const n=subLv(p,sup)?p:null;r=s===0||mid?n:farSrc(p,i,sup);}else r=s===1||mid?farSrc(p,i,sup):null;
+  return r===null&&s===1&&mgLv(p,i)?'mg':r;}
 function feedOf(p,i,sup){const a=secFeed(p,i,0,sup);return a!==null?a:secFeed(p,i,1,sup);}
 const secOff=(p,i)=>[0,1].filter(s=>secFeed(p,i,s)===null);
 function dem(c,p){let f=0;PIDS.forEach(q=>LF[q].forEach((v,i)=>SECF.forEach((h,s)=>{if(secFeed(q,i,s)===p)f+=S.share[q]*v*h;})));return c.demand*f;}
@@ -1899,7 +1905,7 @@ const fdOn=p=>{const f=S.fd[p];return !!PR[p].fd&&f.brk&&f.inc&&!f.fault;};
 const lfName=(p,i)=>`${LFN[p][i]} 11 kV feeder`;
 const custOf=(p,i,s)=>Math.round(CUST_TOTAL*S.share[p]*LF[p][i]*SECF[s]);
 // the device that puts supply onto half s of feeder p,i
-function srcDev(p,i,s){const src=secFeed(p,i,s);if(src===null)return null;
+function srcDev(p,i,s){const src=secFeed(p,i,s);if(src===null||(src==='mg'&&mgLv(p,i)))return null;
   if(src===p&&S.lf[p][i])return 'lf:'+p+i;if(src==='vf')return 'nop:'+p+i;if(src==='mg')return 'mg:'+p+i;
   const l=linkOf(p,i);return l?'lk:'+l.k:null;}
 function tripDev(k){const[t,id]=k.split(':');
@@ -1909,7 +1915,7 @@ function ptHow(p){const o=[];if(LKIDS.some(k=>LINKS[k].a[0]===p||LINKS[k].b[0]==
   return `Open the feeder breakers, then restore what you can from the far ends with ${o.join(', ').replace(/, ([^,]*)$/,' or $1')}.`;}
 function farOpts(p,i){const o=[];if(VF_ON&&VFI.includes(i))o.push('the Volt Face backfeed');if(linkOf(p,i))o.push('the 11 kV link');o.push('a mobile generator');return o.join(', ').replace(/, ([^,]*)$/,' or $1');}
 function locate(m,p,i,sec,how){const f=S.lff[p][i];if(!f||f.found)return;f.found=true;f.sec=sec;f.until=m+f.dur;mark(m,'xfer','Fault found');
-  const nxt=sec===1?(S.lf[p][i]?`The first half is back on. Keep the mid-point switch open until the repair is done.`:`Keep the mid-point switch open and close the breaker at ${PR[p].name} to restore the first half.`):`Keep the mid-point switch open. The second half can be restored from the far end with ${farOpts(p,i)}.`;
+  const nxt=sec===1?(S.lf[p][i]?`The first half is back on. Keep the mid-point switch open until the repair is done.`:`Keep the mid-point switch open and close the breaker at ${PR[p].name} to restore the first half.`)+` Send a mobile generator to connect to the LV on the second half and its customers are back in about ${MG_CONN} minutes, before the repair is done.`:`Keep the mid-point switch open. The second half can be restored from the far end with ${farOpts(p,i)}.`;
   const s=`${how} The fault on the ${lfName(p,i)} at ${PR[p].name} is in the ${SECN[sec]}. Repair expected by ${fmtT(f.until)}. ${nxt}`;
   logE(m,s,'ok');queueAlert(s,'ok',false);play('ok');}
 // Protection: a half with an unrepaired fault cannot stay energised. Trips whatever is feeding it, and uses
@@ -2029,7 +2035,7 @@ function step(){
     else if(type==='lv'){const[p,i]=lfP(id);if(!PIDS.includes(p)||S.lff[p][i])continue;const devs=[0,1].map(s=>srcDev(p,i,s)),dv=devs[f.sec];if(!dv)continue;
       const nm=lfName(p,i),fedN=[0,1].filter(s=>devs[s]===dv).reduce((a,s)=>a+custOf(p,i,s),0);
       if(f.tr){S.cust.si+=fedN;lose(m,'ar'+m,'ar','Auto-reclose',fedN/500);S.recloses++;mark(m,'ar','Auto-reclose');alEv(m,'ar',`${ucfirst(devName(dv))} (${PR[p].name})`,dv,'held in');logE(m,`${ucfirst(nm)} at ${PR[p].name} tripped and auto-reclosed: a transient fault (${f.cause.toLowerCase()}) cleared itself. ${nf(fedN)} customers had a short interruption.`,'info');play('ar');continue;}
-      S.lff[p][i]={sec:f.sec,dur:f.dur,found:!!S.sc.easy,until:S.sc.easy?m+f.dur:null,start:m,label:f.cause,oh:!!LF_OH[p][i]};S.faults++;S.chain.push(`a fault on the ${nm}`);mark(m,'fault',LFN[p][i]+' fault');
+      const dur=f.sec===1?Math.max(f.dur,LV_REP_MIN):f.dur;S.lff[p][i]={sec:f.sec,dur,found:!!S.sc.easy,until:S.sc.easy?m+dur:null,start:m,label:f.cause,oh:!!LF_OH[p][i]};S.faults++;S.chain.push(`a fault on the ${nm}`);mark(m,'fault',LFN[p][i]+' fault');
       checkLv(m,null);const f2=S.lff[p][i];
       const how=LF_OH[p][i]&&dv.startsWith('lf:')?`The breaker at ${PR[p].name} tripped, auto-reclosed onto a permanent fault and locked out.`:`The ${devName(dv)} tripped${LF_OH[p][i]?' and locked out':' (underground cable, so no auto-reclose)'}.`;
       const mk=t=>`Fault on the ${nm} at ${PR[p].name}: ${f.cause.toLowerCase()}. ${how} ${nf(fedN)} customers are off.`+(f2.found?` It's in the ${SECN[f2.sec]}, repair expected by ${fmtT(f2.until)}.${S.sc.easy&&f2.sec?' Send a crew to open the mid-point switch, then close the breaker to restore the first half. Close the mid-point switch after the repair.':''}`:` The fault could be in either half. Send a crew to open the mid-point switch, then trial-close the breaker to find it. Line patrol will find it by ${fmtT(t+PATROL)} otherwise.`);
@@ -2275,7 +2281,9 @@ function doOp0(op,m){const[type,id]=op.k.split(':');play('op');
     if(op.act==='open'){u.pend=false;if(!u.conn)return;u.conn=false;mark(m,'xfer','Generator off');logE(m,`The ${nm} was disconnected. It stays parked there until you send it somewhere else.`,'info');return;}
     u.pend=false;if(u.conn)return;
     if(secFeed(p,i,1)!==null){const s=`The crew could not connect the ${nm}: the far end of ${fn} is still live. Make that half dead first (open the mid-point switch or the backfeed), then connect it.`;logE(m,s,'warn');queueAlert(s,'warn',false);return;}
+    {const F=S.lff[p][i];u.lv=!!(F&&F.found&&F.sec===1);}
     u.conn=true;const ld=srcMW(p,i,'mg');mark(m,'xfer','Generator on');
+    if(u.lv){logE(m,`Mobile generator ${u.n} connected to the LV at the second-half substations of ${fn}: about ${Math.round(ld)} MW of customers are back on (rated ${MG_CAP} MW) while the 11 kV fault is repaired. Disconnect it before you put the feeder back together.`,ld>MG_CAP?'warn':'ok');return;}
     logE(m,`Mobile generator ${u.n} connected at the far end of ${fn}: supplying about ${Math.round(ld)} MW (rated ${MG_CAP} MW).${ld>MG_CAP?' That is over its rating, so it will trip. Open the mid-point switch first.':''}`,ld>MG_CAP?'warn':'ok');return;}
   if(type==='nop'){const[p,i]=lfP(id),v=S.nop[p][i];if((op.act==='close')===v)return;const mwv=Math.round(lfMW(p,i)),fn=LFN[p][i];
     if(op.act==='close'&&S.lf[p][i]&&midOn(p,i)){alEv(m,'trip',ucfirst(nm),k,'out of phase');incident(m,`The ${nm} was closed while the ${fn} feeder breaker at ${PR[p].name} was still closed. That paralleled Blackout Canyon with Volt Face, which is on a different grid supply, so the backfeed tripped straight away. Open the feeder breaker first.`,'nopb_'+id);return;}
@@ -2700,7 +2708,7 @@ function assetHtml(id){const a=ASB[id];
     ${VF_ON?`<div class="op-row">${VFI.map(i=>opBtn('nop:'+p+i,S.nop[p][i]?'open':'close',`${S.nop[p][i]?'Open':'Close'} ${LFN[p][i]} backfeed`)).join('')}</div><p class="i-note">Backfeeds move a feeder onto Volt Face, a neighbouring 11 kV network on a different grid supply. Open the feeder breaker first, then close the backfeed.</p>`:''}
     ${LV_ON?`<h4 class="i-sub">Mid-point switches</h4><div class="op-row">${S.lf[p].map((v,i)=>opBtn('mid:'+p+i,midOn(p,i)?'open':'close',`${midOn(p,i)?'Open':'Close'} ${LFN[p][i]} mid-point`)).join('')}</div>
     <h4 class="i-sub">Mobile generators · ${S.mgu.filter(u=>!u.conn&&!u.pend).length} of ${MG_N} free · ${MG_CAP} MW each</h4><div class="op-row">${S.lf[p].map((v,i)=>{const u=mgAt(p+i);return u&&(u.conn||u.pend)?opBtn('mg:'+p+i,'open',`Disconnect generator at ${LFN[p][i]}`):opBtn('mg:'+p+i,'close',`${u?'Reconnect':'Send'} generator to ${LFN[p][i]}`);}).join('')}</div>
-    <p class="i-note">Fault finding: when a feeder locks out you don't know which half is faulted. Open its mid-point switch (manual, so a crew goes), then trial-close the breaker. If it holds, the fault is in the second half; if it trips, it's in the first. Repairs start once the fault is found. A mobile generator connects at the far end of a feeder after ${MG_CONN} minutes and carries up to ${MG_CAP} MW, so it can usually supply one dead half.</p>`:''}
+    <p class="i-note">Fault finding: when a feeder locks out you don't know which half is faulted. Open its mid-point switch (manual, so a crew goes), then trial-close the breaker. If it holds, the fault is in the second half; if it trips, it's in the first. Repairs start once the fault is found. A mobile generator connects at the far end of a feeder after ${MG_CONN} minutes and carries up to ${MG_CAP} MW, so it can usually supply one dead half. With the fault found in the second half, it connects to the LV there instead and brings those customers back while the 11 kV fault is repaired.</p>`:''}
     ${PRIO_ON&&S.lf[p].some((v,i)=>prioOf(p,i))?`<h4 class="i-sub">Priority customers</h4><ul class="i-plain">${S.lf[p].map((v,i)=>{const P=prioOf(p,i);return P?`<li class="${secFeed(p,i,P.sec)===null?'off':''}"><span class="pri-tag pri-${P.kind}">${PRK[P.kind].ch}</span> ${esc(prioTxt(P))}${secFeed(p,i,P.sec)===null?' · <b>off supply now</b>':''}</li>`:'';}).join('')}</ul>`:''}
     <p class="i-note">Opening an 11 kV feeder takes its customers off supply to cut the load on the network. Every minute customers are off supply costs 1 point per MW, so use it as a last resort and close it again as soon as you can.</p>`;}
   const p=a.prim,off=S.sup[p]==='off';
@@ -3181,7 +3189,7 @@ function startSheet(){
     <li><b>Auto-reclose:</b> most faults on overhead lines are transient. The breaker trips, recloses a few seconds later and stays in, so customers only get a short interruption. A permanent fault makes it lock out. Underground cables (the first feeder at each substation) don't auto-reclose.</li>
     <li><b>Fault finding:</b> when an 11 kV feeder locks out you don't know which half the fault is in. Each feeder has a manual mid-point switch (the small circle halfway down). Open it, then trial-close the feeder breaker: if it holds, the fault is in the far half and the near half is back on; if it trips, the fault is in the near half. Each close onto a fault costs ${TRIAL_PTS} points. Repairs only start once the fault is found, and line patrol finds it after ${PATROL} minutes if you don't.</li>
     <li><b>Customer calls:</b> customers ring in when their supply goes off. Some say what they saw or heard, such as a bang from a pole, which tells you which half of the feeder the fault is in. Now and then a substation's RTU is slow to report a trip, so the calls arrive before the alarm and the diagram still shows the breaker closed: poll the RTU from the call to get the trip through.</li>
-    <li><b>Mobile generators:</b> ${MG_N} trailer generators of ${MG_CAP} MW each. A crew tows one to the far end of a feeder and connects it in ${MG_CONN} minutes, so it can supply a dead half that has no backfeed. It trips if it's overloaded or if another supply is closed onto it.</li>
+    <li><b>Mobile generators:</b> ${MG_N} trailer generators of ${MG_CAP} MW each. A crew tows one to the far end of a feeder and connects it in ${MG_CONN} minutes, so it can supply a dead half that has no backfeed. If the fault is found in the second half, the generator connects to the LV at that half's substations instead, so its customers are back while the 11 kV is repaired: second-half repairs take at least ${LV_REP_MIN} minutes, longer than the generator takes. Disconnect it before putting the feeder back together. It trips if it's overloaded or if another supply is closed onto it.</li>
     <li><b>Feeders have a breaker at each end:</b> one at Blackout Canyon and an incomer at the substation. A feeder fault trips both, and the feeder only carries power again once both are closed.</li>
     <li>Planned work and faulted equipment must be finished before you close it again. Closing either end of a feeder before then is an incident. Repaired transformers and feeders stay out until you close their breakers. Each operation takes one minute.</li>
     <li>Customers off supply cost points every minute. If every substation is off supply at once, Blackout Canyon is lost and the shift ends.</li>
@@ -3270,7 +3278,7 @@ const DB_TIPS={
   sub_fd:'A 33 kV feeder fault leaves the substation off until you switch it round. Close its tie or an interconnector straight away, and send a crew to stand by when a weather warning starts.',
   sub_plan:'Planned outages are announced at the start of the shift and again an hour before. Move the substation onto another route before field staff open the feeder.',
   lvfind:'Don\'t wait for line patrol. Send a crew to open the mid-point switch, then close the breaker: if it holds, the fault is in the far half and the near half is back on.',
-  lvnear:'With the fault in the far half, open the mid-point switch and close the breaker at the substation. The near half comes straight back.',
+  lvnear:'With the fault in the far half, open the mid-point switch and close the breaker at the substation. The near half comes straight back, and a mobile generator on the LV brings the far half back before the repair is done.',
   lvfar:'With the fault in the near half, the far half can come back from the other end: Volt Face, an 11 kV link or a mobile generator.',
   prio:'Hospitals, care homes and Priority Services Register customers cost far more while they\'re off. Restore their half of the feeder first, and when you have to shed load, open a feeder without them.',
   prio_rep:'The priority customers were on the faulted half, so only the repair could bring them back.',
