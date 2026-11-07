@@ -26,7 +26,14 @@
 .adj:hover path{fill:var(--on-accent)}
 .adj.dis{opacity:.25;pointer-events:none}
 
-.p-name{font:700 13px var(--f-display);letter-spacing:.1em;fill:var(--ink)}
+.p-name{font:800 13px var(--f-display);letter-spacing:.1em;fill:var(--ink)}
+/* substation names: a halo in the background colour keeps lines from cutting through them */
+.snm{paint-order:stroke;stroke:var(--panel);stroke-width:4px;stroke-linejoin:round}
+.t-bus.snm{fill:var(--ink);font-weight:700}
+/* names at an unacknowledged alarm flash until it is acknowledged */
+.snm.flash{animation:snmFlash 1s steps(1,end) infinite}
+@keyframes snmFlash{0%{fill:var(--alarm)}50%{fill:var(--ink);opacity:.35}}
+@media (prefers-reduced-motion:reduce){.snm.flash{animation:none;fill:var(--alarm);text-decoration:underline}}
 .p-stat{font:600 11px var(--f-mono);fill:var(--muted)}
 .p-stat.off{fill:var(--alarm)}.p-stat.par{fill:var(--warn)}.p-stat.nb{fill:var(--c-wind)}
 .fd-t{font:700 11px var(--f-display);letter-spacing:.08em;fill:var(--alarm)}
@@ -571,7 +578,7 @@ html.kiosk.k-insp .coach{bottom:calc(28px + var(--ih,300px))}
 .mimic-svg .a-val{font-size:14px}
 .mimic-svg .a-name{font-size:12.5px}
 .mimic-svg .tx-load{font-size:16px}
-.mimic-svg .p-name,.mimic-svg .nb-name{font-size:14px}
+.mimic-svg .p-name{font-size:15px;letter-spacing:.05em}.mimic-svg .nb-name{font-size:15px}.mimic-svg .t-bus.snm{font-size:14px}
 .mimic-svg .fd-t,.mimic-svg .tx-em,.mimic-svg .fl-t{font-size:12.5px}
 .mimic-svg .bs-t,.mimic-svg .crew-t,.mimic-svg .ha-t,.mimic-svg .fl-k{font-size:11px}
 

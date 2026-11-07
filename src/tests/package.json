@@ -3,7 +3,7 @@
   "private": true,
   "description": "Headless checks for the Firm Capacity games. Run python3 src/build.py first.",
   "scripts": {
-    "test": "node career-sync-server.test.js && node career-sync.test.js && node calls-flood.test.js && node feeders.test.js && node crews-career.test.js && node links.test.js && node tutorial.test.js && node endure.test.js && node lv.test.js && node quiet.test.js && node ev.test.js && node priority.test.js && node handover.test.js && node pt.test.js"
+    "test": "node career-sync-server.test.js && node career-sync.test.js && node calls-flood.test.js && node feeders.test.js && node crews-career.test.js && node links.test.js && node tutorial.test.js && node endure.test.js && node lv.test.js && node quiet.test.js && node ev.test.js && node priority.test.js && node handover.test.js && node pt.test.js && node names.test.js"
   },
   "dependencies": { "jsdom": "^24.0.0" }
 }

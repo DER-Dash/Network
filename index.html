@@ -501,7 +501,14 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .adj:hover path{fill:var(--on-accent)}
 .adj.dis{opacity:.25;pointer-events:none}
 
-.p-name{font:700 13px var(--f-display);letter-spacing:.1em;fill:var(--ink)}
+.p-name{font:800 13px var(--f-display);letter-spacing:.1em;fill:var(--ink)}
+/* substation names: a halo in the background colour keeps lines from cutting through them */
+.snm{paint-order:stroke;stroke:var(--panel);stroke-width:4px;stroke-linejoin:round}
+.t-bus.snm{fill:var(--ink);font-weight:700}
+/* names at an unacknowledged alarm flash until it is acknowledged */
+.snm.flash{animation:snmFlash 1s steps(1,end) infinite}
+@keyframes snmFlash{0%{fill:var(--alarm)}50%{fill:var(--ink);opacity:.35}}
+@media (prefers-reduced-motion:reduce){.snm.flash{animation:none;fill:var(--alarm);text-decoration:underline}}
 .p-stat{font:600 11px var(--f-mono);fill:var(--muted)}
 .p-stat.off{fill:var(--alarm)}.p-stat.par{fill:var(--warn)}.p-stat.nb{fill:var(--c-wind)}
 .fd-t{font:700 11px var(--f-display);letter-spacing:.08em;fill:var(--alarm)}
@@ -1046,7 +1053,7 @@ html.kiosk.k-insp .coach{bottom:calc(28px + var(--ih,300px))}
 .mimic-svg .a-val{font-size:14px}
 .mimic-svg .a-name{font-size:12.5px}
 .mimic-svg .tx-load{font-size:16px}
-.mimic-svg .p-name,.mimic-svg .nb-name{font-size:14px}
+.mimic-svg .p-name{font-size:15px;letter-spacing:.05em}.mimic-svg .nb-name{font-size:15px}.mimic-svg .t-bus.snm{font-size:14px}
 .mimic-svg .fd-t,.mimic-svg .tx-em,.mimic-svg .fl-t{font-size:12.5px}
 .mimic-svg .bs-t,.mimic-svg .crew-t,.mimic-svg .ha-t,.mimic-svg .fl-k{font-size:11px}
 
@@ -2164,6 +2171,14 @@ function updateAlarms(m,sol){const A=S.alarms,seen={};
       if(lvl==='over'&&a.lvl!=='over'){a.ack=false;const s=`Overload alarm: ${c.name} at ${Math.round(c.L*100)}%.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);play('emerg');}
       Object.assign(a,{L:c.L,trip:c.trip,lvl,name:c.name});}});
   Object.keys(A).forEach(k=>{if(!seen[k]&&!A[k].ev)delete A[k];});}
+// The substations (or Blackout Canyon, the grid supply point or a neighbour) an alarm is at. Their names flash until it is acknowledged.
+function alSubs(a){if(a.id==='gsp')return['gsp'];const[t,i='']=(a.sel||'').split(':');
+  if(t==='tx'||t==='bs')return['bc'];if(t==='nb')return[i];
+  if(['bc','in','prim','pt'].includes(t))return[i];if(['lf','mid','nop','mg'].includes(t))return[i.slice(0,2)];
+  if(t==='tie')return PR[i]?[i,PR[i].nb]:[];if(t==='it')return ITS[i]?[ITS[i].a,ITS[i].b]:[];if(t==='lk')return LINKS[i]?[LINKS[i].a[0],LINKS[i].b[0]]:[];
+  if(t==='as'){const A=ASSETS.find(x=>x.id===i);return A?[A.prim]:[];}return[];}
+function flashNames(){const on=new Set();Object.values(S.alarms).forEach(a=>{if(!a.ack)alSubs(a).forEach(k=>on.add(k));});
+  document.querySelectorAll('#mimic .snm').forEach(e=>e.classList.toggle('flash',on.has(e.id.slice(4))));}
 const anyOver=()=>S&&Object.values(S.alarms).some(a=>a.lvl==='over');
 let lastAl='';
 function renderAlarms(){const red=a=>a.lvl==='over'||a.ev==='trip',list=Object.values(S.alarms).sort((a,b)=>red(b)-red(a)||!!b.ev-!!a.ev||b.since-a.since||b.L-a.L),un=list.filter(a=>!a.ack).length;
@@ -2172,7 +2187,7 @@ function renderAlarms(){const red=a=>a.lvl==='over'||a.ev==='trip',list=Object.v
   const k=h+'|'+un;if(k!==lastAl){lastAl=k;$('alBody').innerHTML=h;alSeen=slideNew($('alBody'),alSeen);}
   txt('alCount',list.length?String(list.length):'');setAttr($('alCount'),'class','al-count'+(list.some(red)?' over':list.length?' high':''));
   $('ackBtn').hidden=!un;setAttr($('pAlarm'),'class','panel p-alarm'+(un?' ringing':''));
-  setAttr($('dAl'),'class','al-count'+(list.some(red)?' over':list.length?' high':''));txt('dAl',list.length?String(list.length):'');}
+  setAttr($('dAl'),'class','al-count'+(list.some(red)?' over':list.length?' high':''));txt('dAl',list.length?String(list.length):'');flashNames();}
 function ackAll(){Object.values(S.alarms).forEach(a=>{if(a.ev)delete S.alarms[a.id];else a.ack=true;});lastAl='';render(true);}
 
 /* ---------- Switching ---------- */
@@ -2326,12 +2341,12 @@ const ADJ_TIP={batt:['Discharge more: offsets Hertz House\'s load','Charge more:
 function adjBtn(id,x,y,d){const up=d>0,tip=(ADJ_TIP[id]||['Turn up','Turn down'])[up?0:1];return `<g class="adj" id="adj_${id}_${up?'u':'d'}" data-adj="${id}" data-d="${d}" role="button" aria-label="${tip}"><title>${tip}</title><rect x="${x}" y="${y}" width="22" height="19" rx="4"/><path d="${up?`M${x+5} ${y+13.5}h12l-6-8z`:`M${x+5} ${y+5.5}h12l-6 8z`}"/></g>`;}
 function buildMimic(){
   const ng=S&&NOGEN();
-  let s=`<text class="t-bus" x="400" y="26">STEVE TOWERS GSP · 132 kV</text><line class="bus hv" x1="400" y1="40" x2="800" y2="40"/>`;
+  let s=`<text id="snm_gsp" class="t-bus snm" x="400" y="26">STEVE TOWERS GSP · 132 kV</text><line class="bus hv" x1="400" y1="40" x2="800" y2="40"/>`;
   s+=`<rect class="hit" data-sel="nb:kn" x="12" y="222" width="104" height="398"/>
-    <text class="nb-name kn" x="16" y="236">AMPY PLACE</text><text id="nbs_kn" class="nb-s" x="16" y="251">Spare 65 MW</text><text class="nb-r" x="16" y="264">Same grid supply</text>
+    <text id="snm_kn" class="nb-name kn snm" x="16" y="236">AMPY PLACE</text><text id="nbs_kn" class="nb-s" x="16" y="251">Spare 65 MW</text><text class="nb-r" x="16" y="264">Same grid supply</text>
     <line class="bus nbus kn" x1="40" y1="276" x2="40" y2="618"/>`;
   s+=`<rect class="hit" data-sel="nb:fm" x="1074" y="222" width="122" height="428"/>
-    <text class="nb-name fm" x="1188" y="236" text-anchor="end">WATTS THIS</text><text id="nbs_fm" class="nb-s" x="1188" y="251" text-anchor="end">Spare 60 MW</text><text class="nb-r" x="1188" y="264" text-anchor="end">Different grid supply</text>
+    <text id="snm_fm" class="nb-name fm snm" x="1188" y="236" text-anchor="end">WATTS THIS</text><text id="nbs_fm" class="nb-s" x="1188" y="251" text-anchor="end">Spare 60 MW</text><text class="nb-r" x="1188" y="264" text-anchor="end">Different grid supply</text>
     <line class="bus nbus fm" x1="1160" y1="276" x2="1160" y2="648"/>`;
   SELBOX['nb:kn']=[10,220,110,402];SELBOX['nb:fm']=[1072,220,126,432];
   TXX.forEach((x,i)=>{
@@ -2351,7 +2366,7 @@ function buildMimic(){
     <rect class="hit" data-sel="tx:${i}" x="${x-24}" y="46" width="132" height="132"/></g>`;
     SELBOX['tx:'+i]=[x-26,44,136,136];});
   ['B1','B2','B3'].forEach(sc=>{s+=`<line class="bus mv" id="bus_${sc}" x1="${SECS[sc].x1}" y1="${BCY}" x2="${SECS[sc].x2}" y2="${BCY}"/>`;});
-  s+=`<text class="t-bus" x="1000" y="${BCY-10}" text-anchor="end" style="font-size:12px">BLACKOUT CANYON 33 kV</text>`;
+  s+=`<text id="snm_bc" class="t-bus snm" x="1000" y="${BCY-10}" text-anchor="end">BLACKOUT CANYON 33 kV</text>`;
   BSIDS.forEach(k=>{const x=BSX[k];s+=`<g id="bsg_${k}"><rect id="bsb_${k}" class="brk sw" x="${x-8}" y="${BCY-8}" width="16" height="16"/><text class="bs-t" x="${x}" y="${BCY+24}" text-anchor="middle">BS</text>${arw('bsa_'+k,x,BCY-16)}
     <rect class="hit" data-sel="bs:${k}" x="${x-18}" y="${BCY-26}" width="36" height="56"/></g>`;SELBOX['bs:'+k]=[x-15,BCY-15,30,30];});
   PIDS.forEach(p=>{const P=PR[p],x=P.fx,sw=TIESW[p],py=pY(p);
@@ -2365,7 +2380,11 @@ function buildMimic(){
     if(P.fd)SELBOX['bc:'+p]=[x-16,BCY+8,32,32],SELBOX['in:'+p]=[x-16,PY-57,32,32];
     s+=`<rect class="hit" data-sel="prim:${p}" x="${P.x1-4}" y="${py-38}" width="${P.x2-P.x1+8}" height="48"/>
       <line id="pb_${p}" class="bus mv" x1="${P.x1}" y1="${py}" x2="${P.x2}" y2="${py}"/>
-      <text class="p-name" x="${P.lx||P.x1}" y="${py-22}">${P.name.toUpperCase()}</text><text id="ps_${p}" class="p-stat" x="${P.lx||P.x1}" y="${py-9}">From BC</text><text id="pn_${p}" class="p-net" x="${P.x2}" y="${py-9}" text-anchor="end"></text>`;
+      <text id="pn_${p}" class="p-net" x="${P.x2}" y="${py-9}" text-anchor="end"></text>`;
+    // control room: name and supply beside the 33/11 kV transformer; generation game: on the busbar, where the generators leave room
+    {const L=GAME==='cr'&&ASSETS.find(a=>a.id==='load_'+p),nx=L?L.x+17:P.lx||P.x1,ny=L?py+44:py-22;
+      s+=`<text id="snm_${p}" class="p-name snm" x="${nx}" y="${ny}">${P.name.toUpperCase()}</text><text id="ps_${p}" class="p-stat" x="${nx}" y="${ny+14}">From BC</text>`;
+      if(L)s+=`<rect class="hit" data-sel="prim:${p}" x="${nx-2}" y="${ny-16}" width="${P.name.length*10+8}" height="34"/>`;}
     if(P.fd)s+=`<rect class="hit" data-sel="in:${p}" x="${x-22}" y="${PY-62}" width="44" height="42"/>`;
     SELBOX['prim:'+p]=[P.x1-6,py-40,P.x2-P.x1+12,52];
     if(P.nb)s+=`<g id="tieg_${p}"><path id="tl_${p}" class="tie-l ${P.nb}" d="${sw.path}"/>
@@ -2418,7 +2437,7 @@ function buildMimic(){
     s+=`<g id="lkg_${k}"><path id="lkl_${k}" class="lk-l" d="M${xa} ${y+17} V${y+22} H${oa} V${yl} H${ob} V${y+22} H${xb} V${y+17}"/>
       <rect id="lksw_${k}" class="brk sw open man" x="${mx-8}" y="${yl-8}" width="16" height="16" rx="8"/><text id="lkt_${k}" class="tie-t" x="${mx}" y="${yl+20}" text-anchor="middle">open</text>
       <rect class="hit" data-sel="lk:${k}" x="${mx-24}" y="${yl-20}" width="48" height="46"/></g>`;SELBOX['lk:'+k]=[mx-15,yl-15,30,30];});
-  if(VF_ON){s+=`<g id="vfg"><text class="nb-name vf" x="16" y="34">VOLT FACE 11 kV</text><text id="nbs_vf" class="nb-s" x="16" y="49">Spare 44 MW</text><text class="nb-r" x="16" y="62">Backfeeds 11 kV demand feeders</text><text class="nb-r" x="16" y="75">Different grid supply: open first</text>
+  if(VF_ON){s+=`<g id="vfg"><text id="snm_vf" class="nb-name vf snm" x="16" y="34">VOLT FACE 11 kV</text><text id="nbs_vf" class="nb-s" x="16" y="49">Spare 44 MW</text><text class="nb-r" x="16" y="62">Backfeeds 11 kV demand feeders</text><text class="nb-r" x="16" y="75">Different grid supply: open first</text>
       <path class="vf-l" d="M16 84 h26"/><rect class="brk sw nop open" x="46" y="79" width="10" height="10" rx="5"/><text class="nb-r" x="62" y="88">backfeed under each feeder</text>
       <rect class="hit" data-sel="nb:vf" x="8" y="18" width="210" height="76"/></g>`;SELBOX['nb:vf']=[8,18,210,76];}
   if(S.sc.gsp)s+=`<text id="gspT" class="gsp-t" x="812" y="44"></text>`;
