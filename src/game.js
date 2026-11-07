@@ -408,7 +408,7 @@ function track(name,params){try{if(GA&&consent()==='yes'&&typeof window.gtag==='
 function initConsent(){if(!GA)return;$('cookieSettings').hidden=false;const c=consent();if(c==='yes')loadGA();else if(c!=='no')$('cookie').hidden=false;}
 function setConsent(yes){try{localStorage.setItem('fc-consent',yes?'yes':'no');}catch(e){}$('cookie').hidden=true;if(yes)loadGA();else{window['ga-disable-'+GA]=true;
   document.cookie.split(';').map(c=>c.split('=')[0].trim()).filter(n=>/^_ga/.test(n)).forEach(n=>{document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.'+location.hostname;});}}
-const MQ=matchMedia('(max-width: 700px)');let PHONE=MQ.matches;
+const MQ=matchMedia('(max-width: 700px), (max-height: 500px) and (orientation: landscape)');let PHONE=MQ.matches;
 let S=null,speed=1,autoPause=true,chosen=ls('day')||CFG.def,mode=ls('mode')||'daily',acc=0,lastFrame=performance.now(),lastChart=0,logDirty=true,queued=[];
 if(!SCENARIOS[chosen])chosen='mesh';if(mode!=='daily'&&mode!=='free')mode='daily';
 let tipsOn=ls('tips')!=='off',zoomed=true;
