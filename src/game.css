@@ -626,3 +626,24 @@ html.kiosk.k-insp .coach{bottom:calc(28px + var(--ih,300px))}
   .banner{left:auto;right:max(8px,env(safe-area-inset-right,0px));width:min(520px,60vw);max-height:40vh}
   .tip{width:min(400px,48vw)}
 }
+
+/* ---------- Phones during a shift: one slim sticky row of numbers, the rest behind the menu button ---------- */
+.bar-more{display:none}
+button.al-count{border:0;font:inherit;cursor:pointer}
+@media (max-width:700px), (max-height:500px) and (orientation:landscape){
+  html.in-shift:not(.kiosk) .bar{position:sticky;top:0}
+  html.in-shift:not(.kiosk) .bar-in{padding-block:6px;gap:6px 10px}
+  html.in-shift:not(.kiosk) .bar .brand,html.in-shift:not(.kiosk) .bar .clock,html.in-shift:not(.kiosk) .bar .sky{display:none}
+  html.in-shift:not(.kiosk):not(.bar-open) .bar .controls{display:none}
+  html.in-shift:not(.kiosk) .bar .kpis{border-top:0;padding-top:0;flex-wrap:nowrap;align-items:center;gap:8px;width:100%}
+  html.in-shift:not(.kiosk) .kpi .k{font-size:9.5px}
+  html.in-shift:not(.kiosk) .kpi .v{font-size:14px}
+  html.in-shift:not(.kiosk) .kpi-firm .s{display:none}
+  html.in-shift:not(.kiosk) .bar-more{display:inline-grid;place-items:center;flex:none;margin-left:auto;width:38px;height:34px}
+  html.in-shift:not(.kiosk) .bar-more svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+  html.bar-open .bar-more{background:var(--zap);border-color:var(--zap);color:var(--zap-ink)}
+}
+@media (max-height:500px) and (orientation:landscape){
+  .qp.side.side-l{right:auto;left:max(8px,env(safe-area-inset-left,0px))!important}
+  .qp.side{position:fixed;left:auto!important;top:calc(var(--barh,56px) + 6px)!important;right:max(8px,env(safe-area-inset-right,0px));width:min(380px,46vw);max-height:calc(100vh - var(--barh,56px) - 82px - env(safe-area-inset-bottom,0px));overflow-y:auto}
+}

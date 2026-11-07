@@ -6,7 +6,7 @@
     </div>
     <div class="clock"><b id="clock">08:00</b><span id="dayLabel"></span></div>
     <div class="sky" id="sky" aria-hidden="true"></div>
-    <div class="controls">
+    <div class="controls" id="barCtl">
       <button id="playBtn" class="btn primary" type="button">Start</button>
       <div class="seg" role="group" aria-label="Game speed">
         <button type="button" data-speed="0.5" aria-pressed="false" aria-label="Half speed">½×</button>
@@ -28,6 +28,7 @@
       <div class="kpi"><span class="k">Spend</span><span class="v" id="kSpend">£0</span></div>
       <div class="kpi"><span class="k">Incidents</span><span class="v" id="kInc">0</span></div>
       <div class="kpi"><span class="k">At risk</span><span class="v" id="kIns">0 min</span></div>
+      <button id="barMore" type="button" class="btn icon-btn bar-more" aria-expanded="false" aria-controls="barCtl" aria-label="Menu: sound, new shift, scoreboard, feedback"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
     </div>
   </div>
   <div id="banner" class="banner" hidden>
@@ -107,7 +108,7 @@
 </main>
 <footer class="foot"><span>© 2026 Steve Backhouse. All rights reserved. No copying or re-hosting without permission. Blackout Canyon and every site in this game are made up. Watts Up Ltd: keeping the lights on.</span><button type="button" class="linkish" data-feedback>Send feedback</button><a id="otherGame" href="https://der-dash.github.io/Network/" target="_top">Play the generation game</a><button type="button" class="linkish" id="cookieSettings" hidden>Cookie settings</button></footer>
 
-<nav class="dock" aria-label="Game controls"><b id="dClock">08:00</b><span id="dPill" class="pill ok">N-1 secure</span><span id="dAl" class="al-count"></span><button id="dCtl" type="button" class="btn icon-btn" aria-label="Open the control panel"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button><button id="dSpeed" type="button" class="btn" aria-label="Change speed">1×</button><button id="dPlay" type="button" class="btn primary">Start</button></nav>
+<nav class="dock" aria-label="Game controls"><b id="dClock">08:00</b><span id="dPill" class="pill ok">N-1 secure</span><button id="dAl" type="button" class="al-count" aria-label="Show the most urgent alarm"></button><button id="dCtl" type="button" class="btn icon-btn" aria-label="Open the control panel"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button><button id="dSpeed" type="button" class="btn" aria-label="Change speed">1×</button><button id="dPlay" type="button" class="btn primary">Start</button></nav>
 
 <div id="coach" class="coach" role="dialog" aria-live="polite" hidden></div>
 <div id="kIntro" class="k-intro" hidden><div class="k-in"><div class="wu-lock"><svg viewBox="0 0 100 100" role="img" aria-label="Watts Up"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg><div><b>Watts <span>Up</span></b></div></div><p class="k-t" id="kTitle"></p><p class="k-q">Can you keep the lights on?</p><i class="k-bar" aria-hidden="true"></i></div></div>

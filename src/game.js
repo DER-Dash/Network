@@ -414,7 +414,7 @@ function track(name,params){try{if(GA&&consent()==='yes'&&typeof window.gtag==='
 function initConsent(){if(!GA)return;$('cookieSettings').hidden=false;const c=consent();if(c==='yes')loadGA();else if(c!=='no')$('cookie').hidden=false;}
 function setConsent(yes){try{localStorage.setItem('fc-consent',yes?'yes':'no');}catch(e){}$('cookie').hidden=true;if(yes)loadGA();else{window['ga-disable-'+GA]=true;
   document.cookie.split(';').map(c=>c.split('=')[0].trim()).filter(n=>/^_ga/.test(n)).forEach(n=>{document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.'+location.hostname;});}}
-const MQ=matchMedia('(max-width: 700px), (max-height: 500px) and (orientation: landscape)');let PHONE=MQ.matches;
+const MQ=matchMedia('(max-width: 700px), (max-height: 500px) and (orientation: landscape)');let PHONE=MQ.matches;const SIDEQ=matchMedia('(max-height: 500px) and (orientation: landscape)');
 let S=null,speed=1,autoPause=true,chosen=ls('day')||CFG.def,mode=ls('mode')||'daily',acc=0,lastFrame=performance.now(),lastChart=0,logDirty=true,queued=[];
 if(!SCENARIOS[chosen])chosen='mesh';if(mode!=='daily'&&mode!=='free')mode='daily';
 let tipsOn=ls('tips')!=='off',zoomed=true;
@@ -1459,7 +1459,7 @@ function inspHtml(){const sel=S.sel;if(!sel)return summaryHtml();const[type,id]=
   if(type==='tx')return txHtml(+id);if(type==='pt')return ptHtml(id);if(type==='bc'||type==='in')return bcHtml(id);if(type==='lf'||type==='nop'||type==='mid'||type==='mg')return assetHtml('load_'+id.slice(0,2));if(type==='lk')return lkHtml(id);if(type==='nb'&&id==='vf')return vfHtml();if(type==='tie')return tieHtml(id);if(type==='it')return itHtml(id);if(type==='bs')return bsHtml(id);if(type==='nb')return nbHtml(id);if(type==='prim')return primHtml(id);if(type==='as'&&ASB[id]&&(!NOGEN()||ASB[id].type==='load'))return assetHtml(id);return summaryHtml();}
 function renderInsp(){const h=inspHtml();if(h===lastInsp)return;lastInsp=h;const el=$('inspBody'),ae=document.activeElement,k=ae&&el.contains(ae)&&ae.dataset?ae.dataset.k:null;el.innerHTML=h;if(k){const f=el.querySelector(`[data-k="${k}"]`);if(f)f.focus();}}
 const QP_T=GAME==='fc'?[]:['tx','pt','bc','in','tie','it','bs','lf','nop','lk','mid','mg'],isSw=k=>!!k&&QP_T.includes(k.split(':')[0]);
-function select(k,fromDiagram){S.sel=k==='none'?null:k;S.qp=!!fromDiagram&&isSw(S.sel);lastInsp='';
+function select(k,fromDiagram){S.sel=k==='none'?null:k;S.qpSide=false;S.qp=!!fromDiagram&&isSw(S.sel);lastInsp='';
   if(PHONE){if(S.qp)closeSheet();else if(S.sel)openSheet();}render(true);}
 function lvFaultTxt(p,i){const F=S.lff&&S.lff[p]&&S.lff[p][i];if(!F)return '';
   return F.found?`fault in the ${F.sec?'second':'first'} half · repair ${fmtT(F.until)}`:`faulted · location unknown (patrol ${fmtT(F.start+PATROL)})`;}
@@ -1501,12 +1501,32 @@ function qpCrew(k){const j=crewFor(k),h=crewAt(k);return `<p class="qp-crew">${j
 function renderQP(){const q=$('qp');if(!q)return;const k=S&&!S.ended&&S.qp&&S.sel;
   if(!k||!isSw(k)||!SELBOX[k]){if(!q.hidden){q.hidden=true;lastQP='';}return;}
   const h=qpHtml(k);if(h!==lastQP){const ae=document.activeElement,fid=ae&&q.contains(ae)?ae.id:'',fk=ae&&q.contains(ae)&&ae.dataset?ae.dataset.k:'';q.innerHTML=h;lastQP=h;const f=fid?$(fid):fk?[...q.querySelectorAll('[data-k]')].find(x=>x.dataset.k===fk):null;if(f)f.focus();}
-  q.hidden=false;
+  q.hidden=false;q.classList.toggle('side',!!S.qpSide&&SIDEQ.matches);q.classList.toggle('side-l',!!S.qpSide&&!!S.qpLeft&&SIDEQ.matches);
   const ms=$('mscroll'),r=$('mimic').getBoundingClientRect(),mr=ms.getBoundingClientRect();if(!r.width)return;const vb=($('mimic').getAttribute('viewBox')||'0 0 1200 668').split(' ').map(Number),sc=Math.min(r.width/vb[2],r.height/vb[3]),padX=(r.width-vb[2]*sc)/2,padY=(r.height-vb[3]*sc)/2,bx=SELBOX[k],W=q.offsetWidth,H=q.offsetHeight,ox=r.left-mr.left+ms.scrollLeft+padX,oy=r.top-mr.top+ms.scrollTop+padY,cw=vb[2]*sc,ch=vb[3]*sc;
   let l=ox+(bx[0]+bx[2]/2)*sc-W/2,tp=oy+(bx[1]+bx[3])*sc+6;
   if(tp+H>oy+ch)tp=oy+bx[1]*sc-H-6;
   l=Math.max(ox+4,Math.min(l,ox+cw-W-4));tp=Math.max(oy+2,tp);
   q.style.left=Math.round(l)+'px';q.style.top=Math.round(tp)+'px';}
+// Phones during a shift: the header shrinks to one sticky row of numbers; this opens and closes the rest of it
+function setBar(open){document.documentElement.classList.toggle('bar-open',open);setAttr($('barMore'),'aria-expanded',String(open));}
+// Tapping an alarm on a phone zooms the diagram onto the device, scrolls it into view and opens its controls
+function jumpTo(k){if(!PHONE||!k||!SELBOX[k]){select(k||'none');return;}
+  if(!zoomed){zoomed=true;applyZoom();}
+  select(k,isSw(k));S.qpSide=true;
+  requestAnimationFrame(()=>{const ms=$('mscroll'),svg=$('mimic'),r=svg.getBoundingClientRect(),vb=(svg.getAttribute('viewBox')||'0 0 1200 668').split(' ').map(Number),
+      sc=Math.min(r.width/vb[2],r.height/vb[3]),bx=SELBOX[k],cx=(r.width-vb[2]*sc)/2+(bx[0]+bx[2]/2)*sc,cy=(r.height-vb[3]*sc)/2+(bx[1]+bx[3]/2)*sc;
+    const side=SIDEQ.matches,qw=side?Math.min(380,innerWidth*.46)+16:0;// short landscape: the pop-up is docked on the right
+    ms.scrollLeft=Math.max(0,cx-(ms.clientWidth-qw)/2);
+    // a device near the right-hand end can't scroll clear of a right-hand panel, so the panel goes on the left instead
+    {const dx=svg.getBoundingClientRect().left+cx;S.qpLeft=side&&dx>innerWidth-qw;if(S.qpLeft)ms.scrollLeft=Math.max(0,cx-qw-(ms.clientWidth-qw)/2);}ms.scrollTop=Math.max(0,cy-ms.clientHeight/2);
+    // then scroll the page so the device sits in the middle of what's visible between the header and the dock
+    const bar=document.querySelector('.bar'),top=bar&&getComputedStyle(bar).position==='sticky'?bar.offsetHeight:0,dk=document.querySelector('.dock'),bot=dk&&dk.offsetParent?dk.offsetHeight:0,
+      y=svg.getBoundingClientRect().top+window.scrollY+cy;
+    window.scrollTo(0,Math.max(0,y-top-(innerHeight-top-bot)/2));
+    // keep the controls pop-up clear of the header and the dock
+    lastQP='';renderQP();const q=$('qp');if(q&&!q.hidden&&!side){const qr=q.getBoundingClientRect();
+      if(qr.top<top+6)window.scrollBy(0,qr.top-top-6);else if(qr.bottom>innerHeight-bot-6)window.scrollBy(0,Math.min(qr.bottom-(innerHeight-bot-6),qr.top-top-6));}
+    const sb=$('selbox');if(sb)anim(sb,[{strokeWidth:9,opacity:.2},{strokeWidth:3,opacity:1}],{duration:500,iterations:2});});}
 function openSheet(){$('pInsp').classList.add('open');}
 function closeSheet(){$('pInsp').classList.remove('open');}
 
@@ -1666,6 +1686,7 @@ function renderLog(){if(!logDirty)return;logDirty=false;
 const spendOf=c=>c.arm+c.use+c.short+c.curt+c.gen;
 const SPEND_L={arm:'Availability fees for armed flex',use:'Armed flex switching in',short:'Flex called at short notice',curt:'Curtailing generation',gen:'Compensation for generators off supply'};
 function render(force){
+  {const r=document.documentElement,on=!!(S.running&&!S.ended);if(r.classList.contains('in-shift')!==on){r.classList.toggle('in-shift',on);if(!on)setBar(false);}}
   txt('clock',fmtT(S.t));txt('kSpend',gbp(spendOf(S.cost)));txt('kInc',String(S.incidents));$('kInc').classList.toggle('bad',S.incidents>0);
   {const n=S.sec?S.sec.n:S.n,abs=S.sec?S.sec.abs:Math.abs(S.net||0),live=S.tx.filter(t=>!t.out),maxL=live.length?Math.max(...live.map(t=>t.L)):0;let fv,fs,fc,dt;
     if(n>=2){const cap=(n-1)*R,hd=cap-abs;fv=`${Math.round(abs)} / ${cap} MW`;
@@ -2144,6 +2165,7 @@ document.addEventListener('click',e=>{
   const op=e.target.closest('[data-op]');if(op){if(op.disabled)return;const[t,i,a]=op.dataset.op.split(':');if(op.closest('#qp')&&S){S.qp=false;}issueOp(t+':'+i,a);return;}
   const st=e.target.closest('[data-f]');if(st){adjust(st.dataset.f,st.dataset.id,+st.dataset.d);return;}
   const pl=e.target.closest('[data-poll]');if(pl&&S){if(!pl.disabled)pollRtu(pl.dataset.poll);return;}
+  {const al=e.target.closest('.al-list [data-sel]');if(al&&S&&PHONE){jumpTo(al.dataset.sel);return;}}
   const sl=e.target.closest('[data-sel]');if(sl&&S){select(sl.dataset.sel,!!sl.closest('#mimic'));return;}
   if(S&&S.sel&&e.target.closest&&e.target.closest('#mimic')){select('none');return;}
   const hg=e.target.closest('[data-go]');if(hg){heroGo(hg.dataset.go);return;}
@@ -2173,6 +2195,8 @@ document.addEventListener('click',e=>{
   if(id==='qpClose'){S.qp=false;S.sel=null;lastInsp='';render(true);return;}
   if(id==='qpMore'){S.qp=false;lastInsp='';if(PHONE)openSheet();else $('pInsp').scrollIntoView({block:'nearest',behavior:'smooth'});render(true);return;}
   if(id==='inspClose'){S.sel=null;lastInsp='';closeSheet();render(true);return;}
+  if(id==='barMore'){setBar(!document.documentElement.classList.contains('bar-open'));return;}
+  if(id==='dAl'&&S){const b=[...document.querySelectorAll('.al-list [data-sel]')].find(x=>SELBOX[x.dataset.sel]);if(b)jumpTo(b.dataset.sel);else{const pa=$('pAlarm');if(pa)window.scrollTo({top:pa.getBoundingClientRect().top+window.scrollY-70,behavior:'smooth'});}return;}
   if(id==='dCtl'){if($('pInsp').classList.contains('open'))closeSheet();else{openSheet();render(true);}return;}
   if(id==='tipOk'){tipOk();return;}
   if(id==='tipSkip'){tipsOn=false;ls('tips','off');tipOk();return;}
