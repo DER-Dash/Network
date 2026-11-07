@@ -599,3 +599,7 @@ html.kiosk.k-insp .coach{bottom:calc(28px + var(--ih,300px))}
 .sync-msg{font-size:13px;font-weight:600;min-height:0}
 .sync-msg:empty{display:none}
 .sync-end{margin-top:8px}
+.sync-tabs{display:flex;gap:0;margin:6px 0 8px;border:1px solid var(--rule);border-radius:6px;overflow:hidden;width:max-content;max-width:100%}
+.sync-t{border:0;background:var(--sunk);color:var(--ink);font:600 13px var(--f-body);padding:8px 12px;min-height:38px;cursor:pointer}
+.sync-t+.sync-t{border-left:1px solid var(--rule)}
+.sync-t[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}

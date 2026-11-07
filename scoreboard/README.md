@@ -109,3 +109,9 @@ careers in their own columns and a star total for each.
 Paste in the new `Code.gs`, save, then **Deploy → Manage deployments → Edit (pencil) →
 Version: New version → Deploy**. It is safe to deploy before the game update: scores and
 feedback work exactly as before.
+
+## Version 15 (load a saved career)
+
+The game's new **Load a saved career** form asks the scoreboard only to load. If no
+career is saved under that name, it now says so instead of saving a new one under a
+misspelt name. Paste in the new `Code.gs`, save, then deploy a **New version** as before.

@@ -1,5 +1,7 @@
 /**
  * Firm Capacity scoreboard and feedback (Watts Up), version 7.
+ * Version 15: career sync can be asked only to load ({intent:'load'}): an unknown name
+ *   then returns error 'none' instead of saving a new career under it.
  * Version 14: career sync. POST {type:'career', game, site, name, pin, career} saves a
  *   player's career on a 'Careers' tab under their name and a 4-digit PIN, merged with
  *   what is already saved there, and returns the merged career. See careerSync_.
@@ -33,7 +35,7 @@
  * formula as the game, so the sheet never trusts a score sent by the browser.
  * Rows saved before version 2 have no mode and count as free play.
  */
-const VERSION = 14;
+const VERSION = 15;
 // Scores are only accepted from the games on this site. Apps Script can't see the request's
 // origin, so the games send their hostname; copies of the game hosted elsewhere send theirs.
 const HOME_SITE = 'der-dash.github.io';
@@ -198,6 +200,7 @@ function careerSync_(d) {
   const names = last >= 2 ? sh.getRange(2, 1, last - 1, 1).getValues().map(r => String(r[0]).toLowerCase()) : [];
   const i = names.indexOf(key), hash = pinHash_(key, pin), mine = cleanCareer_(d.career, game);
   if (i < 0) {
+    if (d.intent === 'load') return json_({ ok: false, error: 'none' });
     const row = [name, hash, new Date(), '', '', '', ''];
     row[col - 1] = JSON.stringify(mine); row[col + 1] = starTotal_(mine);
     sh.appendRow(row);

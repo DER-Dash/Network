@@ -20,7 +20,9 @@ const msg=d=>($(d,'syncMsg')||{}).textContent||'';
 (async()=>{
  // Phone: three shifts done, saves its career online
  const phone=device(CR,{'fc4-career':JSON.stringify({stars:{quiet:3,grid:2,storm:1},ach:{first:1,clean:1},best:{}})});await careerMode(phone);
- ok(!!$(phone,'syncBox')&&!!$(phone,'syncBtn'),'career screen offers to save the career online');
+ ok(!!$(phone,'syncBox')&&/Save career online/.test($(phone,'syncBtn').textContent),'device with progress: career screen opens on Save');
+ click(phone,phone.window.document.querySelector('[data-sytab="load"]'));await wait(10);ok(/Load my career/.test($(phone,'syncBtn').textContent),'Load tab switches the form');
+ click(phone,phone.window.document.querySelector('[data-sytab="save"]'));await wait(10);
  await link(phone,'Sparky Sue','12a4');ok(/4 digits/.test(msg(phone)),'bad PIN caught before sending');
  await link(phone,'Sparky Sue','4321');
  ok(/Saved\. Your career is online as Sparky Sue/.test(msg(phone)),'saved online: '+msg(phone));
@@ -28,12 +30,16 @@ const msg=d=>($(d,'syncMsg')||{}).textContent||'';
  ok(JSON.parse(phone.window.localStorage.getItem('fc-sync')).name==='Sparky Sue','link remembered on the phone');
 
  // Laptop: brand new, loads the career with the same name and PIN
- const laptop=device(CR);await careerMode(laptop);
+ const laptop=device(CR);await wait(40);
+ {const lb=laptop.window.document.querySelector('[data-go="load"]');ok(!!lb&&/Load your career/.test(lb.textContent),'new device: start screen offers "Load your career"');
+  click(laptop,lb);await wait(30);ok(!!$(laptop,'syncBox')&&/Load my career/.test($(laptop,'syncBtn').textContent),'it opens Career on the load form');}
+ await link(laptop,'Sparky Sew','4321');ok(/No career is saved under that name/.test(msg(laptop)),'misspelt name on load: '+msg(laptop));
+ ok(!AS.sheets.Careers.rows.some(r=>r[0]==='Sparky Sew'),'and nothing is saved under the misspelt name');
  ok(laptop.window.document.querySelector('[data-scn="storm"]').disabled,'laptop starts with only the first shift');
  await link(laptop,'Sparky Sue','9999');ok(/different PIN/.test(msg(laptop))&&/4 tries left/.test(msg(laptop)),'wrong PIN refused: '+msg(laptop));
  await link(laptop,'sparky sue','4321');
  ok(car(laptop).stars.storm===1&&car(laptop).ach.clean===1,'laptop now has the phone\'s stars and achievements');
- ok(/Welcome back, Sparky Sue/.test(msg(laptop)),'welcome back message');
+ ok(/Loaded\. Welcome back, Sparky Sue/.test(msg(laptop)),'loaded message: '+msg(laptop));
  ok(!laptop.window.document.querySelector('[data-scn="heat"]').disabled,'shifts the phone unlocked are open on the laptop');
 
  // Laptop plays a career shift: synced straight after

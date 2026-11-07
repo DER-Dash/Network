@@ -360,10 +360,11 @@ function mergeCareer(a,b){const o={stars:{...(a.stars||{})},ach:{...(a.ach||{})}
 const SYNC_ERR={name:'Please choose a different name: 2 to 20 letters or numbers, nothing rude.',pin_format:'The PIN must be 4 digits.',
   pin:'That name is already saved with a different PIN. If it\'s yours, check the PIN. If not, pick another name.',locked:'Too many wrong PINs for that name. Try again in 15 minutes.',
   site:'Career saving only works on the game\'s own website.',net:'Couldn\'t reach the scoreboard. Check your connection and try again.',
+  none:'No career is saved under that name. Check the spelling, or choose Save this career to start one.',
   old:'The scoreboard hasn\'t been updated for saving careers yet. Try again later.'};
-let syncBusy=false,syncNote='';
-async function syncCareer(name,pin){if(syncBusy)return{ok:false,error:'busy'};syncBusy=true;
-  try{const r=await fetch(SCORE_URL,{method:'POST',body:JSON.stringify({type:'career',game:GAME,site:location.hostname,name,pin,career:career()})});const j=await r.json();
+let syncBusy=false,syncNote='',syncTab='';
+async function syncCareer(name,pin,intent){if(syncBusy)return{ok:false,error:'busy'};syncBusy=true;
+  try{const r=await fetch(SCORE_URL,{method:'POST',body:JSON.stringify({type:'career',intent:intent||'sync',game:GAME,site:location.hostname,name,pin,career:career()})});const j=await r.json();
     if(!j||!j.ok){const e=(j&&j.error)||'net';return{ok:false,error:SYNC_ERR[e]?e:'old',triesLeft:j&&j.triesLeft};}
     const before=JSON.stringify(career()),m=mergeCareer(career(),j.career);saveCareer(m);syncSet({name:j.name,pin,at:Date.now()});
     return{ok:true,created:!!j.created,changed:JSON.stringify(m)!==before,name:j.name};}
@@ -378,20 +379,23 @@ function syncWhen(at){if(!at)return'';const t=new Date(at);return t.toDateString
 function syncBox(){const L=syncGet(),w=L?syncWhen(L.at):'',note=`<p class="sync-msg" id="syncMsg" role="status">${esc(syncNote)}</p>`;
   if(L)return `<div class="sync on" id="syncBox"><p><b class="sync-k">Saved online</b> as <b>${esc(L.name)}</b>${w?` · last synced ${w}`:''}. It syncs after every shift. On another phone or computer, open Career and enter the same name and PIN.</p>
     <div class="sync-row"><button type="button" class="btn" id="syncNow">Sync now</button><button type="button" class="btn" id="syncOff">Stop syncing on this device</button></div>${note}</div>`;
-  return `<div class="sync" id="syncBox"><p class="sync-h">Play your career on any device</p><p class="fine">Save it online with a name and a 4-digit PIN. On another phone or computer, enter the same name and PIN to carry on where you left off. Stars and achievements from every device are kept, and the same name and PIN work in both games.</p>
-    <div class="sync-row"><label>Name<input id="syName" maxlength="20" autocomplete="nickname" placeholder="e.g. Sparky Sue" value="${esc(getName())}"></label><label>PIN<input id="syPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="4 digits"></label><button type="button" class="btn primary" id="syncBtn">Save career online</button></div>
-    ${note}<p class="fine">Saved in the game's scoreboard: the name, the PIN scrambled so nobody can read it, and your stars and achievements. Forgotten your PIN? Send feedback and ask for the name to be freed up.</p></div>`;}
+  const tab=syncTab||(starsOf(career())?'save':'load'),ld=tab==='load';
+  return `<div class="sync" id="syncBox"><p class="sync-h">Play your career on any device</p>
+    <div class="sync-tabs" role="group" aria-label="Save or load a career"><button type="button" class="sync-t" data-sytab="save" aria-pressed="${!ld}">Save this career</button><button type="button" class="sync-t" data-sytab="load" aria-pressed="${ld}">Load a saved career</button></div>
+    <p class="fine">${ld?'Saved your career on another phone or computer? Enter the same name and PIN to carry on here. Any progress on this device is kept too.':'Save it online with a name and a 4-digit PIN. On another phone or computer, choose <b>Load a saved career</b> and enter the same name and PIN. The same name and PIN work in both games.'}</p>
+    <div class="sync-row"><label>Name<input id="syName" maxlength="20" autocomplete="nickname" placeholder="e.g. Sparky Sue" value="${esc(getName())}"></label><label>PIN<input id="syPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="4 digits"></label><button type="button" class="btn primary" id="syncBtn" data-intent="${tab}">${ld?'Load my career':'Save career online'}</button></div>
+    ${note}<p class="fine">${ld?'Forgotten your PIN? Send feedback and ask for the name to be freed up.':'Saved in the game\'s scoreboard: the name, the PIN scrambled so nobody can read it, and your stars and achievements. Forgotten your PIN? Send feedback and ask for the name to be freed up.'}</p></div>`;}
 // re-draw the start screen after a sync, if it's showing, without losing the player's place
 function refreshStart(force){const sh=$('sheet');if(!sh||$('overlay').hidden||!sh.querySelector('#pick'))return;
   const ae=document.activeElement;if(!force&&ae&&sh.contains(ae)&&ae.tagName==='INPUT'){const b=$('syncBox');if(b)b.outerHTML=syncBox();return;}
   const y=sh.scrollTop;startSheet();sh.scrollTop=y;}
 const syncSay=t=>{const m=$('syncMsg');if(m)m.textContent=t;};
-async function syncLink(){const n=(($('syName')||{}).value||'').replace(/\s+/g,' ').trim(),p=(($('syPin')||{}).value||'').trim();
+async function syncLink(){const ld=(($('syncBtn')||{}).dataset||{}).intent==='load',n=(($('syName')||{}).value||'').replace(/\s+/g,' ').trim(),p=(($('syPin')||{}).value||'').trim();
   if(n.length<2||rude(n)){syncSay(SYNC_ERR.name);return;}if(!/^\d{4}$/.test(p)){syncSay(SYNC_ERR.pin_format);return;}
-  const b=$('syncBtn');if(b)b.disabled=true;syncSay('Saving…');const r=await syncCareer(n,p);if(b)b.disabled=false;
+  const b=$('syncBtn');if(b)b.disabled=true;syncSay(ld?'Loading…':'Saving…');const r=await syncCareer(n,p,ld?'load':'sync');if(b)b.disabled=false;
   if(!r.ok){if(r.error!=='busy')syncSay(r.error==='pin'&&r.triesLeft?`${SYNC_ERR.pin} ${r.triesLeft} ${r.triesLeft===1?'try':'tries'} left before a 15-minute wait.`:SYNC_ERR[r.error]||SYNC_ERR.net);return;}
   if(!getName())saveName(r.name);
-  syncNote=r.created?`Saved. Your career is online as ${r.name}.`:r.changed?`Welcome back, ${r.name}. Your progress from your other devices is loaded here.`:`Synced as ${r.name}. Everything is up to date.`;
+  syncNote=r.created?(ld?`Nothing was saved under ${r.name} yet, so this device's career is now saved online under that name.`:`Saved. Your career is online as ${r.name}.`):ld?(r.changed?`Loaded. Welcome back, ${r.name}.`:`Loaded ${r.name}'s career. This device was already up to date.`):r.changed?`Welcome back, ${r.name}. Your progress from your other devices is loaded here.`:`Synced as ${r.name}. Everything is up to date.`;
   track('career_sync',{created:r.created?1:0});refreshStart(true);}
 async function syncNow(){syncSay('Syncing…');const r=await syncQuiet();if(!r)return;
   if(r.ok)syncNote=r.changed?'Synced. New progress from another device is loaded here.':'Synced. Everything is up to date.';refreshStart(true);}
@@ -1842,18 +1846,21 @@ function heroArt(){const cr=GAME==='cr',X=[80,160,240],F=[60,125,195,260];
   ${cr?`<g class="ha-crew"><g class="ha-bob"><circle cx="0" cy="-15" r="3.6"/><path d="M0 -11 V-3 M0 -9 l-5 4 M0 -9 l5 4 M0 -3 l-4 7 M0 -3 l4 7"/></g></g><path class="ha-path" d="M14 196 H306"/>`
     :`<g class="ha-wt" transform="translate(296 168)"><path class="ha-tower" d="M0 0 V34"/><g class="ha-blades"><path d="M0 0 V-14 M0 0 L12 7 M0 0 L-12 7"/></g></g><g class="ha-sun" transform="translate(24 176)"><circle r="7"/><path d="M0 -12v3M0 9v3M-12 0h3M9 0h3M-8.5 -8.5l2 2M6.5 6.5l2 2M-8.5 8.5l2 -2M6.5 -6.5l2 -2"/></g>`}
 </svg>`;}
+const loadBtn=()=>syncGet()?'':`<button type="button" class="btn sec-go" data-go="load"><small>Played on another device?</small>Load your career</button>`;
 function mainAction(){const cr=GAME==='cr';
   if(!played()){const e=easiestK();
     return `<div class="cta-main">${cr?`<button type="button" class="btn primary big hero-go" data-tut="play"><small>New here? Start with</small>Play the tutorial</button><button type="button" class="btn big hero-go" data-tut="demo"><small>Or sit back and</small>Watch the demo</button>`
       :`<button type="button" class="btn primary big hero-go" data-go="first"><small>New here? Start with the easiest day</small>Play ${esc(SCENARIOS[e].title)}</button>`}</div>
-    <div class="cta-sec"><button type="button" class="btn sec-go" data-go="skip"><small>Played before?</small>Choose your own shift ↓</button></div>
+    <div class="cta-sec"><button type="button" class="btn sec-go" data-go="skip"><small>Played before?</small>Choose your own shift ↓</button>${loadBtn()}</div>
     ${cr?`<p class="cta-alt">For a stand or screen: <button type="button" class="linkish" data-tut="kiosk" title="Runs the demo on its own, over and over, and keeps the screen awake. For a display stand.">display mode</button></p>`:''}`;}
   const c=career(),nk=careerNext(),done=CAREER.filter(k=>SCENARIOS[k]).every(k=>c.stars[k]>=1),dk=dailyK();
   return `<div class="cta-main"><button type="button" class="btn primary big hero-go" data-go="career"><small>${done?'Career complete · play again':starsOf(c)?'Continue your career':'Start your career'}</small>Shift ${CAREER.indexOf(nk)+1}: ${esc(SCENARIOS[nk].title)}</button>
     <button type="button" class="btn big hero-go" data-go="daily"><small>Today's challenge · ${esc(fmtDate(todayUK()))}<span class="daily-top"></span></small>${esc(SCENARIOS[dk].title)}</button></div>
-    <div class="cta-sec"><button type="button" class="btn sec-go" data-go="skip"><small>Something else?</small>Choose your own shift ↓</button>${cr?`<button type="button" class="btn sec-go" data-tut="play"><small>Need a refresher?</small>Play the tutorial</button>`:''}</div>
+    <div class="cta-sec"><button type="button" class="btn sec-go" data-go="skip"><small>Something else?</small>Choose your own shift ↓</button>${loadBtn()}${cr?`<button type="button" class="btn sec-go" data-tut="play"><small>Need a refresher?</small>Play the tutorial</button>`:''}</div>
     ${cr?`<p class="cta-alt">Or <button type="button" class="linkish" data-tut="demo">watch the demo</button> · For a stand or screen: <button type="button" class="linkish" data-tut="kiosk" title="Runs the demo on its own, over and over, and keeps the screen awake. For a display stand.">display mode</button></p>`:''}`;}
 function heroGo(g){
+  if(g==='load'){mode='career';chosen=careerNext();syncTab='load';syncNote='';ls('mode',mode);ls('day',chosen);newGame(chosen);startSheet();
+    const b=$('syncBox');if(b){b.scrollIntoView({behavior:'smooth',block:'center'});const n=$('syName');if(n){if(n.value)$('syPin').focus({preventScroll:true});else n.focus({preventScroll:true});}}return;}
   if(g==='skip'){const t=$('pick');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});return;}
   if(g==='career'){mode='career';chosen=careerNext();}else if(g==='daily'){mode='daily';chosen=dailyK();}else if(g==='first'){mode='free';chosen=easiestK();}else return;
   ls('mode',mode);ls('day',chosen);newGame(chosen);$('startBtn').click();}
@@ -2132,6 +2139,7 @@ document.addEventListener('click',e=>{
   const bmo=e.target.closest('[data-bmode]');if(bmo){boardMode=bmo.dataset.bmode;document.querySelectorAll('[data-bmode]').forEach(x=>x.setAttribute('aria-pressed',x===bmo));loadBoard();return;}
   const btn=e.target.closest('button');const id=btn?btn.id:'';
   if(id==='ackBtn'){ackAll();return;}
+  {const st=e.target.closest('[data-sytab]');if(st){syncTab=st.dataset.sytab;syncNote='';const b=$('syncBox');if(b)b.outerHTML=syncBox();const n=$('syName');if(n)n.focus();return;}}
   if(id==='syncBtn'){syncLink();return;}if(id==='syncNow'){syncNow();return;}
   if(id==='syncOff'){syncSet(null);syncNote='This device has stopped syncing. Your career stays saved here and online.';refreshStart(true);return;}
   if(id==='cookieYes'){setConsent(true);return;}if(id==='cookieNo'){setConsent(false);return;}if(id==='cookieSettings'){$('cookie').hidden=false;return;}

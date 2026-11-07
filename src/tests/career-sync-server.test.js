@@ -39,7 +39,10 @@ ok(sync('x'.repeat(5)+'shit','1234',{}).error==='name','rude names refused');
 ok(A.post({type:'career',site:'evil.example',game:'cr',name:'Sue',pin:'1234',career:{}}).error==='site','other websites refused');
 r=sync('0123','1111',{});ok(r.ok&&sync('0123','1111',{}).ok,'number-like names still match');
 
+r=A.post({type:'career',site,game:'cr',name:'Nobody Here',pin:'1234',career:{stars:{quiet:3}},intent:'load'});
+ok(!r.ok&&r.error==='none'&&!A.sheets.Careers.rows.some(x=>x[0]==='Nobody Here'),'load with an unknown name saves nothing');
+r=A.post({type:'career',site,game:'cr',name:'Sparky Sue',pin:'1234',career:{},intent:'load'});ok(r.ok&&r.career.stars.quiet===3,'load with a known name and PIN works');
 // scores and feedback still work as before
 r=A.post({site,game:'cr',name:'Sparky Sue',day:'quiet',mode:'cr-free',result:'complete',survived:720,spend:0,faults:2,risk:0,grade:'A',ens:10,incidents:0});
-ok(r.ok&&r.version===14&&r.rank===1,'scores still save (version 14)');
+ok(r.ok&&r.version===15&&r.rank===1,'scores still save (version 15)');
 console.log(fails?fails+' failed':'all passed');process.exit(fails?1:0);
