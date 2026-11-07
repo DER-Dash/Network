@@ -52,7 +52,7 @@ const HINT_OH=['Heard a loud bang from the pole at the end of the road, then the
 const HINT_UG=['There\'s a smell of burning from the pavement, and the power went at the same time.','Workmen were digging by the junction, there was a bang, and everything went off.','Smoke is coming out of a crack in the footpath outside.'];
 const HINT_PRIO={hosp:'Estates manager at Kings Hill Hospital: we\'ve lost the mains and we\'re running on our standby generators.',care:'Calling from the care home: the power\'s off and we have residents on oxygen concentrators.',psr:'I\'m on the Priority Services Register. My medical equipment has gone onto its battery.'};
 const EMERG=1.2,EMERG_MIN=30,SHORT=1.5,SHORT_MIN=5,PAR_MAX=30,OV_MIN=10,INCIDENT_PTS=500,AL_ON=.8,AL_OFF=.75;
-const RATE={1:CFG.rate,2:CFG.rate*2,4:CFG.rate*4};
+const RATE={0.5:CFG.rate/2,1:CFG.rate,2:CFG.rate*2},spdTxt=v=>(v===.5?'½':v)+'×';
 const ISO_A=25;// easy shifts: minutes per fault that customers can be left off and still get an A
 const isManual=k=>CREW_ON&&MANUAL.includes(k.split(':')[0]);
 const CAREER=GAME==='cr'?['quiet','grid','storm','heat','jan','ev','snow','xmas','gsp','mesh','endure']:['may','storm','jan'];
@@ -2153,7 +2153,7 @@ document.addEventListener('click',e=>{
   const rnd=e.target.closest('[data-random]');if(rnd){const ks=Object.keys(SCENARIOS).filter(k=>!SCENARIOS[k].hidden&&k!==chosen),k=ks[Math.floor(Math.random()*ks.length)]||chosen,b=document.querySelector(`[data-scn="${k}"]`);if(b){b.click();b.scrollIntoView({block:'nearest',behavior:'smooth'});}return;}
   const sc=e.target.closest('[data-scn]');if(sc){if(sc.disabled)return;chosen=sc.dataset.scn;ls('day',chosen);document.querySelectorAll('[data-scn]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.scn===chosen));newGame(chosen);txt('startBtn','Start shift at '+fmtT(START));txt('runTxt',runText());return;}
   const md=e.target.closest('[data-mode]');if(md){mode=md.dataset.mode;ls('mode',mode);const sy=$('sheet').scrollTop;if(mode==='career'&&!unlockedK(career(),chosen))chosen=CAREER[0];newGame(chosen);startSheet();$('sheet').scrollTop=sy;return;}
-  const sp=e.target.closest('[data-speed]');if(sp){speed=+sp.dataset.speed;document.querySelectorAll('[data-speed]').forEach(b=>b.setAttribute('aria-pressed',b===sp));txt('dSpeed',speed+'×');return;}
+  const sp=e.target.closest('[data-speed]');if(sp){speed=+sp.dataset.speed;document.querySelectorAll('[data-speed]').forEach(b=>b.setAttribute('aria-pressed',b===sp));txt('dSpeed',spdTxt(speed));return;}
   const tg=e.target.closest('[data-tog]');if(tg){const id=tg.dataset.tog;collapsed[id]=!collapsed[id];ls('col',JSON.stringify(collapsed));applyCollapsed();return;}
   const bb=e.target.closest('[data-board]');if(bb){boardDay=bb.dataset.board;document.querySelectorAll('[data-board]').forEach(x=>x.setAttribute('aria-pressed',x===bb));loadBoard();return;}
   const bmo=e.target.closest('[data-bmode]');if(bmo){boardMode=bmo.dataset.bmode;document.querySelectorAll('[data-bmode]').forEach(x=>x.setAttribute('aria-pressed',x===bmo));loadBoard();return;}
@@ -2176,7 +2176,7 @@ document.addEventListener('click',e=>{
   if(id==='dCtl'){if($('pInsp').classList.contains('open'))closeSheet();else{openSheet();render(true);}return;}
   if(id==='tipOk'){tipOk();return;}
   if(id==='tipSkip'){tipsOn=false;ls('tips','off');tipOk();return;}
-  if(id==='dSpeed'){speed=speed===1?2:speed===2?4:1;document.querySelectorAll('[data-speed]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.speed===speed));txt('dSpeed',speed+'×');return;}
+  if(id==='dSpeed'){speed=speed===1?2:speed===2?.5:1;document.querySelectorAll('[data-speed]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.speed===speed));txt('dSpeed',spdTxt(speed));return;}
   if(id==='dPlay'){$('playBtn').click();return;}
   if(id==='startBtn'){autoPause=$('ovPause').checked;$('autoPause').checked=autoPause;tipsOn=$('ovTips').checked;ls('tips',tipsOn?'on':'off');if(S.key!==chosen||S.t!==START||S.mode!==mode)newGame(chosen);if(S.mode==='career'&&HANDOVER[S.key]){handoverSheet();return;}begin();return;}
   if(id==='hoGo'){begin();return;}
