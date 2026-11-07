@@ -90,3 +90,22 @@ posting scores, but someone deliberately faking requests could still get past it
 Accepts scores for the new **Christmas Day** control room shift (`xmas`). Paste in
 the new `Code.gs`, save, then **Deploy → Manage deployments → Edit (pencil) →
 Version: New version → Deploy**.
+
+## Version 14 (career sync across devices)
+
+Players can save their career with a name and a 4-digit PIN and carry it on another
+phone or computer. Careers are kept on a new **Careers** tab, created automatically the
+first time someone saves one: one row per name, with the control room and generation
+careers in their own columns and a star total for each.
+
+- The PIN is never stored. The sheet only holds a scrambled version of it (a salted
+  SHA-256 hash), and the salt is kept in the script's properties, not the sheet.
+- Saving merges with what is already there: the best stars for each shift and every
+  achievement, so playing on two devices never loses anything.
+- Five wrong PINs for a name locks that name for 15 minutes.
+- **Forgotten PIN:** delete that player's row on the Careers tab. They can then save
+  again under the same name with a new PIN, and their own devices still have their career.
+
+Paste in the new `Code.gs`, save, then **Deploy → Manage deployments → Edit (pencil) →
+Version: New version → Deploy**. It is safe to deploy before the game update: scores and
+feedback work exactly as before.

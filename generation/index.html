@@ -1060,6 +1060,21 @@ html.kiosk.k-insp .coach{bottom:calc(28px + var(--ih,300px))}
 .legend i.heat{border-image:linear-gradient(90deg,var(--warn) 50%,var(--alarm) 50%) 1}
 @media (prefers-reduced-motion:reduce){.mimic-svg .cond.h3,.mimic-svg .tie-l.on.h3{animation:none}}
 .crew.home .crew-t{display:none}
+
+/* Career sync */
+.sync{margin:12px 0 0;padding:10px 12px;border:1px dashed var(--rule);border-radius:6px;background:var(--panel)}
+.sync.on{border-style:solid;border-color:var(--ok)}
+.sync p{margin:0 0 6px}
+.sync-h{font:700 13px var(--f-display);letter-spacing:.08em;text-transform:uppercase}
+.sync-k{color:var(--ok)}
+.sync-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin:6px 0}
+.sync-row label{display:grid;gap:3px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.sync-row input{font:15px var(--f-body);padding:7px 9px;border:1px solid var(--rule);border-radius:4px;background:var(--sunk);color:var(--ink);min-height:40px;box-sizing:border-box}
+#syName{width:12em;max-width:100%}#syPin{width:6.5em;letter-spacing:.2em}
+.sync-row .btn{min-height:40px}
+.sync-msg{font-size:13px;font-weight:600;min-height:0}
+.sync-msg:empty{display:none}
+.sync-end{margin-top:8px}
 </style>
 </head>
 <body>
@@ -1582,6 +1597,54 @@ function rude(n){const s=n.toLowerCase().replace(/[@4]/g,'a').replace(/3/g,'e').
   return s.split(/[^a-z]+/).some(t=>BAD_TOK.includes(t));}
 function getName(){try{return localStorage.getItem('fc-name')||'';}catch(e){return '';}}
 function saveName(n){try{localStorage.setItem('fc-name',n);}catch(e){}}
+/* ---------- Career sync: the same career on any device, under a name and a 4-digit PIN ----------
+   The scoreboard keeps each player's career against their name and a scrambled PIN, and merges what
+   every device sends (best stars per shift, every achievement). The link is shared by both games on
+   this site; each game syncs its own career. Pulled when the game opens, pushed after every shift. */
+const SYNC_KEY='fc-sync';
+function syncGet(){try{const v=JSON.parse(localStorage.getItem(SYNC_KEY)||'null');return v&&v.name&&/^\d{4}$/.test(v.pin)?v:null;}catch(e){return null;}}
+function syncSet(v){try{if(v)localStorage.setItem(SYNC_KEY,JSON.stringify(v));else localStorage.removeItem(SYNC_KEY);}catch(e){}}
+function mergeCareer(a,b){const o={stars:{...(a.stars||{})},ach:{...(a.ach||{})},best:{...(a.best||{})}};
+  Object.entries((b&&b.stars)||{}).forEach(([k,v])=>{v=Math.round(+v||0);if(v>=1&&v<=3&&v>(o.stars[k]||0))o.stars[k]=v;});
+  Object.keys((b&&b.ach)||{}).forEach(k=>{if(b.ach[k])o.ach[k]=1;});return o;}
+const SYNC_ERR={name:'Please choose a different name: 2 to 20 letters or numbers, nothing rude.',pin_format:'The PIN must be 4 digits.',
+  pin:'That name is already saved with a different PIN. If it\'s yours, check the PIN. If not, pick another name.',locked:'Too many wrong PINs for that name. Try again in 15 minutes.',
+  site:'Career saving only works on the game\'s own website.',net:'Couldn\'t reach the scoreboard. Check your connection and try again.',
+  old:'The scoreboard hasn\'t been updated for saving careers yet. Try again later.'};
+let syncBusy=false,syncNote='';
+async function syncCareer(name,pin){if(syncBusy)return{ok:false,error:'busy'};syncBusy=true;
+  try{const r=await fetch(SCORE_URL,{method:'POST',body:JSON.stringify({type:'career',game:GAME,site:location.hostname,name,pin,career:career()})});const j=await r.json();
+    if(!j||!j.ok){const e=(j&&j.error)||'net';return{ok:false,error:SYNC_ERR[e]?e:'old',triesLeft:j&&j.triesLeft};}
+    const before=JSON.stringify(career()),m=mergeCareer(career(),j.career);saveCareer(m);syncSet({name:j.name,pin,at:Date.now()});
+    return{ok:true,created:!!j.created,changed:JSON.stringify(m)!==before,name:j.name};}
+  catch(e){return{ok:false,error:'net'};}finally{syncBusy=false;}}
+// a background sync with the saved link: on opening the game and after each shift
+async function syncQuiet(){for(let i=0;syncBusy&&i<100;i++)await new Promise(r=>setTimeout(r,200));const L=syncGet();if(!L)return null;const r=await syncCareer(L.name,L.pin);
+  if(r.ok)syncNote='';
+  else if(r.error==='pin'||r.error==='name'){syncSet(null);syncNote=`Your career stopped syncing: the saved PIN no longer matches the name ${L.name}. Save it online again below.`;}
+  else if(r.error!=='busy')syncNote=r.error==='net'?'Not synced just now: couldn\'t reach the scoreboard. It will try again after your next shift.':SYNC_ERR[r.error]||'';
+  return r;}
+function syncWhen(at){if(!at)return'';const t=new Date(at);return t.toDateString()===new Date().toDateString()?t.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):t.toLocaleDateString('en-GB',{day:'numeric',month:'short'});}
+function syncBox(){const L=syncGet(),w=L?syncWhen(L.at):'',note=`<p class="sync-msg" id="syncMsg" role="status">${esc(syncNote)}</p>`;
+  if(L)return `<div class="sync on" id="syncBox"><p><b class="sync-k">Saved online</b> as <b>${esc(L.name)}</b>${w?` · last synced ${w}`:''}. It syncs after every shift. On another phone or computer, open Career and enter the same name and PIN.</p>
+    <div class="sync-row"><button type="button" class="btn" id="syncNow">Sync now</button><button type="button" class="btn" id="syncOff">Stop syncing on this device</button></div>${note}</div>`;
+  return `<div class="sync" id="syncBox"><p class="sync-h">Play your career on any device</p><p class="fine">Save it online with a name and a 4-digit PIN. On another phone or computer, enter the same name and PIN to carry on where you left off. Stars and achievements from every device are kept, and the same name and PIN work in both games.</p>
+    <div class="sync-row"><label>Name<input id="syName" maxlength="20" autocomplete="nickname" placeholder="e.g. Sparky Sue" value="${esc(getName())}"></label><label>PIN<input id="syPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="4 digits"></label><button type="button" class="btn primary" id="syncBtn">Save career online</button></div>
+    ${note}<p class="fine">Saved in the game's scoreboard: the name, the PIN scrambled so nobody can read it, and your stars and achievements. Forgotten your PIN? Send feedback and ask for the name to be freed up.</p></div>`;}
+// re-draw the start screen after a sync, if it's showing, without losing the player's place
+function refreshStart(force){const sh=$('sheet');if(!sh||$('overlay').hidden||!sh.querySelector('#pick'))return;
+  const ae=document.activeElement;if(!force&&ae&&sh.contains(ae)&&ae.tagName==='INPUT'){const b=$('syncBox');if(b)b.outerHTML=syncBox();return;}
+  const y=sh.scrollTop;startSheet();sh.scrollTop=y;}
+const syncSay=t=>{const m=$('syncMsg');if(m)m.textContent=t;};
+async function syncLink(){const n=(($('syName')||{}).value||'').replace(/\s+/g,' ').trim(),p=(($('syPin')||{}).value||'').trim();
+  if(n.length<2||rude(n)){syncSay(SYNC_ERR.name);return;}if(!/^\d{4}$/.test(p)){syncSay(SYNC_ERR.pin_format);return;}
+  const b=$('syncBtn');if(b)b.disabled=true;syncSay('Saving…');const r=await syncCareer(n,p);if(b)b.disabled=false;
+  if(!r.ok){if(r.error!=='busy')syncSay(r.error==='pin'&&r.triesLeft?`${SYNC_ERR.pin} ${r.triesLeft} ${r.triesLeft===1?'try':'tries'} left before a 15-minute wait.`:SYNC_ERR[r.error]||SYNC_ERR.net);return;}
+  if(!getName())saveName(r.name);
+  syncNote=r.created?`Saved. Your career is online as ${r.name}.`:r.changed?`Welcome back, ${r.name}. Your progress from your other devices is loaded here.`:`Synced as ${r.name}. Everything is up to date.`;
+  track('career_sync',{created:r.created?1:0});refreshStart(true);}
+async function syncNow(){syncSay('Syncing…');const r=await syncQuiet();if(!r)return;
+  if(r.ok)syncNote=r.changed?'Synced. New progress from another device is loaded here.':'Synced. Everything is up to date.';refreshStart(true);}
 let lastSubmit=null,boardDay='mesh',boardMode='daily',boardFrom='start';
 const GA=window.FC_GA||null;
 function loadGA(){if(!GA||window.__gaLoaded)return;window.__gaLoaded=true;window['ga-disable-'+GA]=false;window.dataLayer=window.dataLayer||[];window.gtag=function(){window.dataLayer.push(arguments);};
@@ -3004,10 +3067,10 @@ const FC_RULES=`
     <li>Transformer faults and planned work come back by themselves when they're finished. The breakers, ties and interconnectors on the diagram are run from the control room game.</li>
     <li>If every transformer trips, Blackout Canyon is lost and the shift ends.</li>`;
 function careerBox(){const c=career(),n=starsOf(c),nr=nextRank(n),got=ACH.filter(a=>c.ach[a.id]);
-  return `<div class="career"><div class="career-top"><div><span class="k">Rank</span><b>${esc(rankOf(n))}</b><span class="s">${n} of ${CAREER.length*3} stars${nr?` · ${nr[0]-n} more for ${esc(nr[1])}`:''}</span></div>
+  return `<div class="career" id="careerBox"><div class="career-top"><div><span class="k">Rank</span><b>${esc(rankOf(n))}</b><span class="s">${n} of ${CAREER.length*3} stars${nr?` · ${nr[0]-n} more for ${esc(nr[1])}`:''}</span></div>
     <div><span class="k">Achievements</span><b>${got.length} of ${ACH.length}</b></div></div>
     <div class="ach">${ACH.map(a=>`<span class="badge${c.ach[a.id]?' got':''}" title="${esc(a.d)}">${c.ach[a.id]?'🏅':'○'} ${esc(a.name)}</span>`).join('')}</div>
-    <p class="fine">Finish a shift to unlock the next one. Grade A earns 3 stars, B 2, C or D 1. Career shifts use random faults and count on the free-play scoreboard.</p></div>`;}
+    <p class="fine">Finish a shift to unlock the next one. Grade A earns 3 stars, B 2, C or D 1. Career shifts use random faults and count on the free-play scoreboard.</p>${syncBox()}</div>`;}
 // Start screen: hero with an animated mini-diagram, three "how it works" cards and one clear main action
 const HOW=GAME==='cr'?[['tx','var(--hv)','Keep transformers under firm capacity','If one more transformer trips, the others still have to carry the load.'],
     ['tie','var(--c-wind)','Switch load between substations','Ties, interconnectors and backfeeds move demand to where there is room.'],
@@ -3126,6 +3189,7 @@ function endShift(){
    award('mbb',S.parOk>0);award('crews',S.crewJobs>=8);award('vf',S.vfPeak>=20);award('heat',done&&S.key==='heat'&&(g==='A'||g==='B'));award('gsp',done&&S.key==='gsp'&&S.gspTrips===0);award('dry',done&&S.key==='xmas'&&!!S.flood&&S.flood.arrived&&S.flood.live===false);award('endure',done&&S.key==='endure'&&(g==='A'||g==='B'));award('cheap',done&&GAME==='fc'&&sc.spend<2000);
    let up=false;if(S.mode==='career'&&st>(c.stars[S.key]||0)){c.stars[S.key]=st;up=true;}
    award('textbook',CAREER.every(k=>(c.stars[k]||0)>=3));saveCareer(c);
+   S.syncRes=null;if(syncGet()&&!S.silent)syncQuiet().then(r=>{if(!r||!S||!S.ended)return;S.syncRes=r;const e=$('endSync');if(e)e.textContent=endSyncTxt();});
    const after=starsOf(c),newUnl=CAREER.filter(k=>unlockedK(c,k)&&!prevUnl.includes(k));
    S.careerRes={st,up,newA,newUnl,rankUp:rankOf(after)!==rankOf(before)?rankOf(after):null,rank:rankOf(after),stars:after,next:CAREER[CAREER.indexOf(S.key)+1]};}S.submitted=null;S.unlocked=true;S.shareMsg='';
   const base={scenario:S.key,mode:S.mode,score:sc.total,incidents:S.incidents,minutes_at_risk:S.insecureMin};
@@ -3230,12 +3294,14 @@ function showEnd(){
       <p class="cstars">${starStr(CR.st)} <span>${CR.up?'New best for this shift':'Stars for this shift'}</span></p>`:''}
       ${CR.newUnl.length?`<p>Unlocked: <b>${CR.newUnl.map(k=>esc(SCENARIOS[k].title)).join(', ')}</b></p>`:''}
       ${CR.newA.length?`<div class="ach">${CR.newA.map(a=>`<span class="badge got" title="${esc(a.d)}">🏅 ${esc(a.name)}</span>`).join('')}</div>`:''}
+      ${syncGet()||S.syncRes?`<p class="fine sync-end" id="endSync" role="status">${esc(endSyncTxt())}</p>`:''}
       ${S.mode!=='career'?'':CR.next?(unlockedK(career(),CR.next)?`<button type="button" class="btn primary big" data-next="${CR.next}">Start next day: ${esc(SCENARIOS[CR.next].title)} →</button>`:`<p class="fine">Finish this shift to unlock ${esc(SCENARIOS[CR.next].title)}. Press Try again below.</p>`):`<p><b>That's every career shift done.</b> Replay any of them to earn more stars.</p>`}</div>`:'';
   $('sheet').innerHTML=`${BAND}<p class="eyebrow">${esc(S.sc.title)}, ${esc(S.sc.when)} · ${S.mode==='daily'?"Today's challenge, "+fmtDate(S.date):S.mode==='career'?'Career · '+esc(CR?CR.rank:''):'Free play'}</p>${head}${cbox}${drawDebrief()}${drawReplay()}${score}${sub}${costs}${btns}`;
   $('overlay').hidden=false;
 }
 
 function unlockEnd(){S.unlocked=true;['againBtn','sheetBoardBtn','replayBtn'].forEach(i=>{const b=$(i);if(b)b.disabled=false;});const n=$('lockNote');if(n)n.hidden=true;}
+const endSyncTxt=()=>{const r=S.syncRes;return !r?'Saving your career online…':r.ok?`Career saved online as ${r.name}.`:syncNote||SYNC_ERR.net;};
 function setMsg(t,cls){const m=$('submitMsg');if(m){m.textContent=t;m.className='fine '+(cls||'');}}
 const MPRE=GAME==='cr'?'cr-':'',modeKey=(md,date)=>md==='daily'?MPRE+'daily-'+date:MPRE+'free';
 async function submitScore(){
@@ -3316,6 +3382,8 @@ document.addEventListener('click',e=>{
   const bmo=e.target.closest('[data-bmode]');if(bmo){boardMode=bmo.dataset.bmode;document.querySelectorAll('[data-bmode]').forEach(x=>x.setAttribute('aria-pressed',x===bmo));loadBoard();return;}
   const btn=e.target.closest('button');const id=btn?btn.id:'';
   if(id==='ackBtn'){ackAll();return;}
+  if(id==='syncBtn'){syncLink();return;}if(id==='syncNow'){syncNow();return;}
+  if(id==='syncOff'){syncSet(null);syncNote='This device has stopped syncing. Your career stays saved here and online.';refreshStart(true);return;}
   if(id==='cookieYes'){setConsent(true);return;}if(id==='cookieNo'){setConsent(false);return;}if(id==='cookieSettings'){$('cookie').hidden=false;return;}
   if(id==='shareBtn'){shareScore();return;}
   if(id==='submitScore'){submitScore();return;}
@@ -3344,6 +3412,7 @@ document.addEventListener('click',e=>{
 $('autoPause').addEventListener('change',e=>autoPause=e.target.checked);
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&e.target&&e.target.id==='pName'){e.preventDefault();submitScore();return;}
+  if(e.key==='Enter'&&e.target&&(e.target.id==='syName'||e.target.id==='syPin')){e.preventDefault();syncLink();return;}
   if(e.key==='Escape'&&S&&S.sel){S.sel=null;lastInsp='';closeSheet();render(true);return;}
   const g=e.target.closest&&e.target.closest('[data-adj],[data-sel]');
   if(g&&g.tagName!=='BUTTON'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();g.dispatchEvent(new MouseEvent('click',{bubbles:true}));return;}
@@ -3362,6 +3431,7 @@ setSound(SND.on);applyCollapsed();{const b=$('musicBtn');if(b){b.setAttribute('a
 txt('kTitle',GAME==='cr'?'Firm Capacity · Control room':'Firm Capacity · Generation');
 if(GAME==='cr'&&/(^|[?&#])demo\b/.test(location.search+location.hash))setTimeout(()=>tutStart(true,true),300);else splash();
 newGame(chosen);startSheet();initConsent();requestAnimationFrame(frame);
+if(syncGet())syncQuiet().then(r=>{if(r)refreshStart(false);});
 })();
 </script>
 <!-- app install -->

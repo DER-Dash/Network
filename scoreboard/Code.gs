@@ -1,5 +1,8 @@
 /**
  * Firm Capacity scoreboard and feedback (Watts Up), version 7.
+ * Version 14: career sync. POST {type:'career', game, site, name, pin, career} saves a
+ *   player's career on a 'Careers' tab under their name and a 4-digit PIN, merged with
+ *   what is already saved there, and returns the merged career. See careerSync_.
  * Version 13: accepts the Christmas Day ('xmas') control room shift.
  * Version 12: accepts the EV evening ('ev') control room shift, and only accepts
  *   scores sent from the games at der-dash.github.io (the 'site' field).
@@ -30,7 +33,7 @@
  * formula as the game, so the sheet never trusts a score sent by the browser.
  * Rows saved before version 2 have no mode and count as free play.
  */
-const VERSION = 13;
+const VERSION = 14;
 // Scores are only accepted from the games on this site. Apps Script can't see the request's
 // origin, so the games send their hostname; copies of the game hosted elsewhere send theirs.
 const HOME_SITE = 'der-dash.github.io';
@@ -124,6 +127,98 @@ function doGet(e) {
   return json_({ ok: true, version: VERSION, scores: best_(rows, day, mode).slice(0, 50) });
 }
 
+/* ---------- Career sync (version 14) ----------
+ * One row per player name. The PIN is never stored: only a salted SHA-256 of it, so nobody
+ * reading the sheet can see it. Each game's career is a JSON column. Saving merges with
+ * what is already there (best stars per shift, every achievement earned), so playing on
+ * two devices never loses anything. Forgotten PIN: delete the player's row, and they can
+ * save again under the same name with a new PIN.
+ */
+const CAREER_SHEET_NAME = 'Careers';
+const CAREER_HEADERS = ['Name', 'PIN (scrambled)', 'Updated', 'Control room career', 'Generation career', 'Control room stars', 'Generation stars'];
+const PIN_TRIES = 5, PIN_LOCK_SECONDS = 900;
+
+function careerSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(CAREER_SHEET_NAME);
+  if (!sh) {
+    sh = ss.insertSheet(CAREER_SHEET_NAME);
+    sh.getRange('A:A').setNumberFormat('@'); // names stay text, so "0123" isn't turned into 123
+    sh.appendRow(CAREER_HEADERS);
+    sh.setFrozenRows(1);
+    sh.getRange(1, 1, 1, CAREER_HEADERS.length).setFontWeight('bold');
+  }
+  return sh;
+}
+
+function pinSalt_() {
+  const props = PropertiesService.getScriptProperties();
+  let salt = props.getProperty('PIN_SALT');
+  if (!salt) { salt = Utilities.getUuid(); props.setProperty('PIN_SALT', salt); }
+  return salt;
+}
+
+function pinHash_(nameKey, pin) {
+  const raw = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, pinSalt_() + '|' + nameKey + '|' + pin, Utilities.Charset.UTF_8);
+  // the 'h' keeps Sheets from ever reading the hash as a number
+  return 'h' + raw.map(b => ('0' + (b & 255).toString(16)).slice(-2)).join('');
+}
+
+// Keep only what a career can hold: stars 1-3 for this game's shifts, short achievement ids.
+function cleanCareer_(c, game) {
+  const days = game === 'cr' ? CR_DAYS : DAYS, out = { stars: {}, ach: {}, best: {} };
+  if (!c || typeof c !== 'object') return out;
+  const stars = c.stars && typeof c.stars === 'object' ? c.stars : {};
+  days.forEach(k => { const v = Math.round(Number(stars[k]) || 0); if (v >= 1 && v <= 3) out.stars[k] = v; });
+  const ach = c.ach && typeof c.ach === 'object' ? c.ach : {};
+  Object.keys(ach).filter(k => /^[a-z]{1,16}$/.test(k) && ach[k]).slice(0, 40).forEach(k => { out.ach[k] = 1; });
+  return out;
+}
+
+function mergeCareer_(a, b) {
+  const out = { stars: {}, ach: {}, best: {} };
+  [a, b].forEach(c => {
+    Object.keys(c.stars).forEach(k => { out.stars[k] = Math.max(out.stars[k] || 0, c.stars[k]); });
+    Object.keys(c.ach).forEach(k => { out.ach[k] = 1; });
+  });
+  return out;
+}
+
+const starTotal_ = c => Object.keys(c.stars).reduce((a, k) => a + c.stars[k], 0);
+
+function careerSync_(d) {
+  const name = String(d.name || '').replace(/[^\p{L}\p{N} '_.-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 20);
+  if (name.length < 2 || rude_(name)) return json_({ ok: false, error: 'name' });
+  const pin = String(d.pin || '');
+  if (!/^\d{4}$/.test(pin)) return json_({ ok: false, error: 'pin_format' });
+  const game = d.game === 'cr' ? 'cr' : 'fc', col = game === 'cr' ? 4 : 5;
+  const key = name.toLowerCase(), cache = CacheService.getScriptCache(), failKey = 'pinFail:' + key;
+  if (Number(cache.get(failKey) || 0) >= PIN_TRIES) return json_({ ok: false, error: 'locked' });
+  const sh = careerSheet_(), last = sh.getLastRow();
+  const names = last >= 2 ? sh.getRange(2, 1, last - 1, 1).getValues().map(r => String(r[0]).toLowerCase()) : [];
+  const i = names.indexOf(key), hash = pinHash_(key, pin), mine = cleanCareer_(d.career, game);
+  if (i < 0) {
+    const row = [name, hash, new Date(), '', '', '', ''];
+    row[col - 1] = JSON.stringify(mine); row[col + 1] = starTotal_(mine);
+    sh.appendRow(row);
+    return json_({ ok: true, version: VERSION, created: true, name: name, career: mine });
+  }
+  const r = i + 2, vals = sh.getRange(r, 1, 1, CAREER_HEADERS.length).getValues()[0];
+  if (String(vals[1]) !== hash) {
+    const n = Number(cache.get(failKey) || 0) + 1;
+    cache.put(failKey, String(n), PIN_LOCK_SECONDS);
+    return json_({ ok: false, error: n >= PIN_TRIES ? 'locked' : 'pin', triesLeft: Math.max(0, PIN_TRIES - n) });
+  }
+  cache.remove(failKey);
+  let saved = {};
+  try { saved = JSON.parse(String(vals[col - 1] || '{}')); } catch (err) { saved = {}; }
+  const merged = mergeCareer_(cleanCareer_(saved, game), mine);
+  sh.getRange(r, 3).setValue(new Date());
+  sh.getRange(r, col).setValue(JSON.stringify(merged));
+  sh.getRange(r, col + 2).setValue(starTotal_(merged));
+  return json_({ ok: true, version: VERSION, created: false, name: String(vals[0]), career: merged });
+}
+
 function feedbackTo_() {
   return Session.getEffectiveUser().getEmail();
 }
@@ -169,6 +264,7 @@ function doPost(e) {
     const d = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     if (d.type === 'feedback') return feedback_(d);
     if (String(d.site || '').toLowerCase() !== HOME_SITE) return json_({ ok: false, error: 'site' });
+    if (d.type === 'career') return careerSync_(d);
     // Letters, numbers, spaces and a little punctuation only. This also stops
     // names starting with "=" being treated as spreadsheet formulas.
     const name = String(d.name || '').replace(/[^\p{L}\p{N} '_.-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 20);

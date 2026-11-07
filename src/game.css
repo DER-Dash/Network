@@ -584,3 +584,18 @@ html.kiosk.k-insp .coach{bottom:calc(28px + var(--ih,300px))}
 .legend i.heat{border-image:linear-gradient(90deg,var(--warn) 50%,var(--alarm) 50%) 1}
 @media (prefers-reduced-motion:reduce){.mimic-svg .cond.h3,.mimic-svg .tie-l.on.h3{animation:none}}
 .crew.home .crew-t{display:none}
+
+/* Career sync */
+.sync{margin:12px 0 0;padding:10px 12px;border:1px dashed var(--rule);border-radius:6px;background:var(--panel)}
+.sync.on{border-style:solid;border-color:var(--ok)}
+.sync p{margin:0 0 6px}
+.sync-h{font:700 13px var(--f-display);letter-spacing:.08em;text-transform:uppercase}
+.sync-k{color:var(--ok)}
+.sync-row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin:6px 0}
+.sync-row label{display:grid;gap:3px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.sync-row input{font:15px var(--f-body);padding:7px 9px;border:1px solid var(--rule);border-radius:4px;background:var(--sunk);color:var(--ink);min-height:40px;box-sizing:border-box}
+#syName{width:12em;max-width:100%}#syPin{width:6.5em;letter-spacing:.2em}
+.sync-row .btn{min-height:40px}
+.sync-msg{font-size:13px;font-weight:600;min-height:0}
+.sync-msg:empty{display:none}
+.sync-end{margin-top:8px}
