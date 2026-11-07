@@ -1122,6 +1122,19 @@ button.al-count{border:0;font:inherit;cursor:pointer}
   .qp.side.side-l{right:auto;left:max(8px,env(safe-area-inset-left,0px))!important}
   .qp.side{position:fixed;left:auto!important;top:calc(var(--barh,56px) + 6px)!important;right:max(8px,env(safe-area-inset-right,0px));width:min(380px,46vw);max-height:calc(100vh - var(--barh,56px) - 82px - env(safe-area-inset-bottom,0px));overflow-y:auto}
 }
+
+/* ---------- Phones: zoom buttons above the diagram, and the "which one?" picker ---------- */
+.zchips{display:none}
+.qp.tpick{width:250px}
+.tpick-l{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.tpick-l .btn{justify-content:flex-start;text-align:left;min-height:44px;font-size:14px}
+html.kiosk .zchips,html.kiosk .tpick{display:none!important}
+@media (max-width:700px), (max-height:500px) and (orientation:landscape){
+  .zchips{display:flex;gap:6px;overflow-x:auto;padding:0 0 8px;margin-top:-2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .zchips::-webkit-scrollbar{display:none}
+  .zchip{flex:none;border:1px solid var(--rule);background:var(--sunk);color:var(--ink);border-radius:999px;padding:0 13px;min-height:36px;font:600 13px var(--f-body);cursor:pointer;white-space:nowrap}
+  .zchip:active{background:var(--zap);border-color:var(--zap);color:var(--zap-ink)}
+}
 </style>
 </head>
 <body>
@@ -1172,7 +1185,8 @@ button.al-count{border:0;font:inherit;cursor:pointer}
       <div class="legend"><span><i style="border-color:var(--hv)"></i>132 kV</span><span><i style="border-color:var(--mv)"></i>33 kV</span><span><i style="border-color:var(--c-kn)"></i>To Ampy Place</span><span><i style="border-color:var(--c-fm)"></i>To Watts This</span><span id="lgLK" hidden><i style="border-color:var(--c-lk);border-top-style:dashed"></i>11 kV link</span><span id="lgVF"><i style="border-color:var(--c-vf);border-top-style:dashed"></i>Volt Face 11 kV backfeed</span><span><i style="border-color:var(--mv);border-top-style:dashed"></i>Interconnector</span><span><i class="heat"></i>Over 80% · over rating</span><span>■ closed · □ open</span><span id="lgMan">○ manual: needs a field crew</span><span>Select anything to control it</span></div>
       <button class="zoom-btn" type="button" id="zoomBtn" aria-pressed="true">Fit</button>
     </div>
-    <div class="mscroll" id="mscroll"><div id="wx" class="wx" aria-hidden="true"><i class="wx-a"></i><i class="wx-b"></i><i class="wx-c"></i></div><div id="qp" class="qp" role="dialog" aria-label="Switch control" hidden></div><svg id="mimic" class="mimic-svg" viewBox="0 0 1200 610" role="img" aria-label="Network diagram of Blackout Canyon, its four substations and two neighbouring networks"></svg></div>
+    <div class="zchips" id="zChips" role="group" aria-label="Zoom to part of the network"></div>
+    <div class="mscroll" id="mscroll"><div id="wx" class="wx" aria-hidden="true"><i class="wx-a"></i><i class="wx-b"></i><i class="wx-c"></i></div><div id="qp" class="qp" role="dialog" aria-label="Switch control" hidden></div><div id="pick" class="qp tpick" role="dialog" aria-label="Which switch?" hidden></div><svg id="mimic" class="mimic-svg" viewBox="0 0 1200 610" role="img" aria-label="Network diagram of Blackout Canyon, its four substations and two neighbouring networks"></svg></div>
   </section>
   <section class="panel p-ahead" id="pAhead" aria-label="Look-ahead">
     <div class="ph"><h2>Look-ahead</h2>
@@ -2498,6 +2512,7 @@ function buildMimic(){
     s+=`<g id="flood" class="flood" hidden><title>${lbl}</title><rect class="fl-box" x="${x}" y="356" width="112" height="96" rx="4"/><rect id="flood_w" class="fl-w" x="${x+1}" y="451" width="110" height="0"/>
       <line class="fl-sg" x1="${x}" x2="${x+112}" y1="384" y2="384"/><text class="fl-k" x="${x+6}" y="370">RIVER OHM</text><text class="fl-k" x="${x+106}" y="398" text-anchor="end">switchgear</text>
       <text id="flood_t" class="fl-t" x="${x+56}" y="468" text-anchor="middle"></text><rect class="hit" data-sel="pt:${S.flood.p}" x="${x}" y="356" width="112" height="118"/></g>`;}
+  buildChips();hidePick();
   const el=$('mimic');el.setAttribute('viewBox',PIDS.includes('kc')?(LVD?'0 0 1200 764':'0 0 1200 698'):'0 0 1200 668');el.innerHTML=s;
 }
 function txt(id,v){const e=$(id);if(e&&e.textContent!==v)e.textContent=v;}
@@ -2825,6 +2840,41 @@ function jumpTo(k){if(!PHONE||!k||!SELBOX[k]){select(k||'none');return;}
     lastQP='';renderQP();const q=$('qp');if(q&&!q.hidden&&!side){const qr=q.getBoundingClientRect();
       if(qr.top<top+6)window.scrollBy(0,qr.top-top-6);else if(qr.bottom>innerHeight-bot-6)window.scrollBy(0,Math.min(qr.bottom-(innerHeight-bot-6),qr.top-top-6));}
     const sb=$('selbox');if(sb)anim(sb,[{strokeWidth:9,opacity:.2},{strokeWidth:3,opacity:1}],{duration:500,iterations:2});});}
+// Phones: centre a point of the diagram (in its own units) in the visible part of the screen, zooming in first
+function zoomTo(sx,sy){if(!zoomed){zoomed=true;applyZoom();}hidePick();
+  requestAnimationFrame(()=>{const ms=$('mscroll'),svg=$('mimic'),r=svg.getBoundingClientRect(),vb=(svg.getAttribute('viewBox')||'0 0 1200 668').split(' ').map(Number),
+      sc=Math.min(r.width/vb[2],r.height/vb[3]),cx=(r.width-vb[2]*sc)/2+sx*sc,cy=(r.height-vb[3]*sc)/2+sy*sc;
+    ms.scrollLeft=Math.max(0,cx-ms.clientWidth/2);ms.scrollTop=Math.max(0,cy-ms.clientHeight/2);
+    const bar=document.querySelector('.bar'),top=bar&&getComputedStyle(bar).position==='sticky'?bar.offsetHeight:0,dk=document.querySelector('.dock'),bot=dk&&dk.offsetParent?dk.offsetHeight:0,
+      y=svg.getBoundingClientRect().top+window.scrollY+cy;
+    window.scrollTo({top:Math.max(0,y-top-(innerHeight-top-bot)/2),behavior:RMQ.matches?'auto':'smooth'});});}
+// Zoom buttons above the diagram: the whole network, Blackout Canyon, and each substation
+function zoneOf(z){if(z==='bc')return[TXX[1],120];const b=[SELBOX['prim:'+z],SELBOX['as:load_'+z]].filter(Boolean);if(!b.length)return null;
+  const x0=Math.min(...b.map(v=>v[0])),y0=Math.min(...b.map(v=>v[1])),x1=Math.max(...b.map(v=>v[0]+v[2])),y1=Math.max(...b.map(v=>v[1]+v[3]));return[(x0+x1)/2,(y0+y1)/2];}
+function buildChips(){const el=$('zChips');if(!el)return;
+  el.innerHTML=`<button type="button" class="zchip" data-zone="all">Whole network</button><button type="button" class="zchip" data-zone="bc">Blackout Canyon</button>`+PIDS.map(p=>`<button type="button" class="zchip" data-zone="${p}">${esc(PR[p].name)}</button>`).join('');}
+// Phones: a tap that lands near more than one small switch asks which one was meant, rather than guessing
+const PICK_R=10;
+function hidePick(){const pk=$('pick');if(pk&&!pk.hidden){pk.hidden=true;pk.innerHTML='';}}
+function tapPick(e){if(!PHONE||!S||S.ended||!e.detail)return false;const svg=$('mimic');if(!svg||!svg.contains(e.target))return false;
+  const m=svg.getScreenCTM();if(!m||!m.a)return false;const pt=new DOMPoint(e.clientX,e.clientY).matrixTransform(m.inverse()),rad=PICK_R/m.a;
+  const live=new Set([...svg.querySelectorAll('.hit[data-sel]:not([hidden])')].map(h=>h.dataset.sel));
+  const c=Object.keys(SELBOX).filter(k=>isSw(k)&&live.has(k)).map(k=>{const b=SELBOX[k],dx=Math.max(b[0]-pt.x,0,pt.x-b[0]-b[2]),dy=Math.max(b[1]-pt.y,0,pt.y-b[1]-b[3]);return{k,d:Math.hypot(dx,dy)};})
+    .filter(o=>o.d<=rad).sort((a,b)=>a.d-b.d);
+  const direct=e.target.closest('[data-sel]');
+  if(c.length===1&&!direct){hidePick();select(c[0].k,true);return true;}// a near miss on a lone switch
+  if(c.length<2){hidePick();return false;}
+  if(!zoomed){zoomTo(pt.x,pt.y);return true;}// zoomed out: a tap among small switches zooms in on that spot first
+  const pk=$('pick'),ms=$('mscroll'),mr=ms.getBoundingClientRect();S.qp=false;renderQP();
+  pk.innerHTML=`<div class="qp-h"><b>Which one?</b><button type="button" class="qp-x" data-pick-x aria-label="Close">×</button></div><div class="tpick-l">`+
+    c.slice(0,5).map(o=>`<button type="button" class="btn" data-pick="${o.k}">${esc(ucfirst(devName(o.k)))}</button>`).join('')+'</div>';
+  pk.hidden=false;const W=pk.offsetWidth,H=pk.offsetHeight;let l=e.clientX-mr.left+ms.scrollLeft-W/2,tp=e.clientY-mr.top+ms.scrollTop+18;
+  if(e.clientY+18+H>Math.min(innerHeight-70,mr.bottom))tp=e.clientY-mr.top+ms.scrollTop-H-18;
+  tp=Math.min(tp,ms.scrollTop+ms.clientHeight-H-4);
+  l=Math.max(ms.scrollLeft+4,Math.min(l,ms.scrollLeft+ms.clientWidth-W-4));pk.style.left=Math.round(l)+'px';pk.style.top=Math.round(Math.max(ms.scrollTop+4,tp))+'px';
+  // ring each candidate so the list and the diagram line up
+  c.slice(0,5).forEach(o=>{const el=svg.querySelector(`.hit[data-sel="${o.k}"]`);if(el)anim(el,[{fill:'rgba(255,210,63,.55)'},{fill:'rgba(255,210,63,0)'}],{duration:900});});
+  return true;}
 function openSheet(){$('pInsp').classList.add('open');}
 function closeSheet(){$('pInsp').classList.remove('open');}
 
@@ -3463,6 +3513,10 @@ document.addEventListener('click',e=>{
   const op=e.target.closest('[data-op]');if(op){if(op.disabled)return;const[t,i,a]=op.dataset.op.split(':');if(op.closest('#qp')&&S){S.qp=false;}issueOp(t+':'+i,a);return;}
   const st=e.target.closest('[data-f]');if(st){adjust(st.dataset.f,st.dataset.id,+st.dataset.d);return;}
   const pl=e.target.closest('[data-poll]');if(pl&&S){if(!pl.disabled)pollRtu(pl.dataset.poll);return;}
+  {const pb=e.target.closest('[data-pick]');if(pb&&S){const k=pb.dataset.pick;hidePick();select(k,true);return;}if(e.target.closest('[data-pick-x]')){hidePick();return;}}
+  {const zc=e.target.closest('[data-zone]');if(zc&&S){const z=zc.dataset.zone;if(z==='all'){hidePick();zoomed=false;applyZoom();const pm=$('pMimic'),bar=document.querySelector('.bar'),top=bar&&getComputedStyle(bar).position==='sticky'?bar.offsetHeight:0;if(pm)window.scrollTo({top:pm.getBoundingClientRect().top+window.scrollY-top-6,behavior:RMQ.matches?'auto':'smooth'});}else{const c=zoneOf(z);if(c)zoomTo(c[0],c[1]);}return;}}
+  if(e.target.closest('#mimic')&&tapPick(e))return;
+  if(!e.target.closest('#pick'))hidePick();
   {const al=e.target.closest('.al-list [data-sel]');if(al&&S&&PHONE){jumpTo(al.dataset.sel);return;}}
   const sl=e.target.closest('[data-sel]');if(sl&&S){select(sl.dataset.sel,!!sl.closest('#mimic'));return;}
   if(S&&S.sel&&e.target.closest&&e.target.closest('#mimic')){select('none');return;}

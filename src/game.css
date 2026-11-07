@@ -647,3 +647,16 @@ button.al-count{border:0;font:inherit;cursor:pointer}
   .qp.side.side-l{right:auto;left:max(8px,env(safe-area-inset-left,0px))!important}
   .qp.side{position:fixed;left:auto!important;top:calc(var(--barh,56px) + 6px)!important;right:max(8px,env(safe-area-inset-right,0px));width:min(380px,46vw);max-height:calc(100vh - var(--barh,56px) - 82px - env(safe-area-inset-bottom,0px));overflow-y:auto}
 }
+
+/* ---------- Phones: zoom buttons above the diagram, and the "which one?" picker ---------- */
+.zchips{display:none}
+.qp.tpick{width:250px}
+.tpick-l{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.tpick-l .btn{justify-content:flex-start;text-align:left;min-height:44px;font-size:14px}
+html.kiosk .zchips,html.kiosk .tpick{display:none!important}
+@media (max-width:700px), (max-height:500px) and (orientation:landscape){
+  .zchips{display:flex;gap:6px;overflow-x:auto;padding:0 0 8px;margin-top:-2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .zchips::-webkit-scrollbar{display:none}
+  .zchip{flex:none;border:1px solid var(--rule);background:var(--sunk);color:var(--ink);border-radius:999px;padding:0 13px;min-height:36px;font:600 13px var(--f-body);cursor:pointer;white-space:nowrap}
+  .zchip:active{background:var(--zap);border-color:var(--zap);color:var(--zap-ink)}
+}
