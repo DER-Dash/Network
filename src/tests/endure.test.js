@@ -7,7 +7,7 @@ async function open(md){const d=mk(),w=d.window,doc=w.document;await wait(30);do
 (async()=>{
  {const {doc,G}=await open('free');doc.querySelector('[data-scn="endure"]').click();
   ok(doc.getElementById('startBtn').textContent==='Start shift at 06:00','start button shows 06:00');
-  ok(/06:00–24:00, about 6 minutes/.test(doc.getElementById('runTxt').textContent),'run text: '+doc.getElementById('runTxt').textContent);
+  ok(/06:00–24:00, about 12 minutes/.test(doc.getElementById('runTxt').textContent),'run text: '+doc.getElementById('runTxt').textContent);
   doc.getElementById('ovTips').checked=false;doc.getElementById('ovPause').checked=false;doc.getElementById('startBtn').click();{const h=doc.getElementById('hoGo');if(h&&!doc.getElementById('hoOverlay').hidden)h.click();}
   const S=G.S;ok(S.key==='endure'&&S.t===360,'shift starts at 06:00');
   ok(S.risk.filter(r=>r.label==='Severe gale').length===3,'three severe gale bands');

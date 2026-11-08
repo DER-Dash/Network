@@ -1,7 +1,7 @@
 /* Firm Capacity service worker: lets both games open offline.
    Pages are fetched fresh from GitHub when online (so pushed changes arrive
    straight away) and fall back to the saved copy when offline or slow. */
-const CACHE = 'firm-capacity-v10';
+const CACHE = 'firm-capacity-v11';
 const CORE = ['./', './generation/', './control-room/', './generation/manifest.webmanifest', './control-room/manifest.webmanifest',
   './icons/gen-192.png', './icons/gen-512.png', './icons/cr-192.png', './icons/cr-512.png'];
 

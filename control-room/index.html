@@ -1136,6 +1136,12 @@ html.kiosk .zchips,html.kiosk .tpick{display:none!important}
   .zchip{flex:none;border:1px solid var(--rule);background:var(--sunk);color:var(--ink);border-radius:999px;padding:0 13px;min-height:36px;font:600 13px var(--f-body);cursor:pointer;white-space:nowrap}
   .zchip:active{background:var(--zap);border-color:var(--zap);color:var(--zap-ink)}
 }
+
+/* Phones: Open and Close side by side in the switch pop-up */
+.op-pair-row{display:flex;gap:6px;flex:1 1 100%}
+.qp .op-pair-row .op-btn{flex:1 1 0;min-height:46px}
+.op-btn.op-pair{background:var(--panel);border:2px solid var(--ink);color:var(--ink)}
+.qp-s.noop-msg .qp-st{color:var(--warn)}
 </style>
 </head>
 <body>
@@ -1319,11 +1325,11 @@ html.kiosk .zchips,html.kiosk .tpick{display:none!important}
 const $=id=>document.getElementById(id);
 const GAME='cr'; // replaced with 'fc' when the generation game is built
 const CR_URL='https://der-dash.github.io/Network/control-room/',FC_URL='https://der-dash.github.io/Network/';
-const CFG=GAME==='fc'?{start:300,end:1380,rate:4.5,pre:'fcg-',salt:'fcg1',def:'may',tag:'Generation',docTitle:'Firm Capacity',site:FC_URL,
+const CFG=GAME==='fc'?{start:300,end:1380,rate:2.25,pre:'fcg-',salt:'fcg1',def:'may',tag:'Generation',docTitle:'Firm Capacity',site:FC_URL,
     band:'Generation · keeping Blackout Canyon inside firm capacity. Mostly.',eyebrow:'Generation · Blackout Canyon 33 kV',h2:'Keep Blackout Canyon inside firm capacity',
     board:'Generation',share:'Firm Capacity',other:{url:CR_URL,hdr:'Control room game →',foot:'Play the control room game',
     box:'<b>Prefer switching?</b> Try the control room game: switch, transfer and restore supply across Blackout Canyon\'s substations through faults and planned work.',cta:'Play the control room game →'}}
-  :{start:480,end:1200,rate:3,pre:'fc4-',salt:'fc5',def:'mesh',tag:'Control room',docTitle:'Firm Capacity Control Room',site:CR_URL,
+  :{start:480,end:1200,rate:1.5,pre:'fc4-',salt:'fc5',def:'mesh',tag:'Control room',docTitle:'Firm Capacity Control Room',site:CR_URL,
     band:'Control room · keeping Blackout Canyon switched on. Mostly.',eyebrow:'Control room · Blackout Canyon 33 kV',h2:'Run the Blackout Canyon network',
     board:'Control room',share:'Firm Capacity: Control Room',other:{url:FC_URL,hdr:'Generation game →',foot:'Play the generation game',
     box:'<b>Prefer generation?</b> Try the generation game: balance solar, wind, batteries and flexibility to keep the transformers inside their rating.',cta:'Play the generation game →'}};
@@ -2810,7 +2816,13 @@ function qpHtml(k){const[t,id]=k.split(':');let closed,st,cls='';
   const act=closed?'open':'close',title=t==='tx'?`T${+id+1} breaker`:ucfirst(devName(k))+(t==='bc'?' at Blackout Canyon':t==='lf'||t==='nop'||t==='mid'?' · '+PR[id.slice(0,2)].name:'');
   return `<div class="qp-h"><b>${esc(title)}</b><button type="button" class="qp-x" id="qpClose" aria-label="Close this pop-up">×</button></div>
     <p class="qp-s ${cls}"><span class="qp-st">${closed?'Closed':'Open'}</span> · ${esc(st)}</p>${isManual(k)?qpCrew(k):''}
-    <div class="qp-row">${opBtn(k,act,act==='close'?'Close':'Open')}${isManual(k)&&!crewAt(k)&&!crewFor(k)?`<button type="button" class="btn" data-crew="${k}">Send crew</button>`:''}${LV_ON&&(t==='lf'||t==='mid')&&S.lff[id.slice(0,2)][+id.slice(2)]&&!mgAt(id)?opBtn('mg:'+id,'close','Generator'):''}<button type="button" class="btn" id="qpMore">Details</button></div>`;}
+    <div class="qp-row">${PHONE?opPair(k,closed):opBtn(k,act,act==='close'?'Close':'Open')}${isManual(k)&&!crewAt(k)&&!crewFor(k)?`<button type="button" class="btn" data-crew="${k}">Send crew</button>`:''}${LV_ON&&(t==='lf'||t==='mid')&&S.lff[id.slice(0,2)][+id.slice(2)]&&!mgAt(id)?(PHONE?opBtn('mg:'+id,'close','Generator').replace('btn primary op-btn','btn op-btn'):opBtn('mg:'+id,'close','Generator')):''}<button type="button" class="btn" id="qpMore">Details</button></div>`;}
+// Phones: both actions, always Open then Close, so the player picks one rather than tapping the only button offered.
+// Both look the same and both can be pressed, as on a real control screen: pressing the one that matches the
+// current state just reports that nothing changed.
+function opPair(k,closed){const one=a=>closed===(a==='close')?`<button type="button" class="btn op-btn op-pair" data-noop="${a==='close'?'closed':'open'}" data-k="op-${k}-${a}">${a==='close'?'Close':'Open'}</button>`
+    :opBtn(k,a,a==='close'?'Close':'Open').replace('class="btn primary op-btn"','class="btn op-btn op-pair"');
+  return `<div class="op-pair-row">${one('open')}${one('close')}</div>`;}
 function qpCrew(k){const j=crewFor(k),h=crewAt(k);return `<p class="qp-crew">${j?`Crew ${j.n} ${j.to?'walking there, arrives '+fmtT(j.arr):'on site'}${j.job.act?', will '+j.job.act+' it by '+fmtT(j.job.at):''}.`:h?`Crew ${h.n} is standing by here: operating takes ${CREW_OP} min.`:'Manual switch: a field crew has to walk here first.'}</p>`;}
 function renderQP(){const q=$('qp');if(!q)return;const k=S&&!S.ended&&S.qp&&S.sel;
   if(!k||!isSw(k)||!SELBOX[k]){if(!q.hidden){q.hidden=true;lastQP='';}return;}
@@ -3132,7 +3144,8 @@ function flashEl(e){if(!e)return;e.classList.remove('tut-press');void e.getBound
 function tutPress(st){if(st.sel&&S.sel!==st.sel){select(st.sel);return;}
   const e=document.querySelector(st.press);if(!e)return;flashEl(e);e.dispatchEvent(new MouseEvent('click',{bubbles:true}));}
 // Tutorial clock: slower while someone is reading or doing a step, full speed while a crew walks or a breaker operates
-function tutRate(){const T=S.tut;if(!T)return 1;const st=TUT[T.i];const busy=st&&st.t==='act'&&(S.op||crewFor(st.k));return (T.kiosk?.6:1)*(busy?1:.4);}
+function tutRate(){const T=S.tut;if(!T)return 1;const st=TUT[T.i];const busy=st&&st.t==='act'&&(S.op||crewFor(st.k));return 2*(T.kiosk?.6:1)*(busy?1:.4);}// x2 keeps the tutorial at its pace from before the base speed was halved
+
 function tutTick(now){const T=S&&S.tut;if(!T||S.ended)return;const st=TUT[T.i];if(!st)return;
   if(st.t==='act'&&st.press&&T.pressing&&!st.done()&&now-(T.lastGo||0)>PACE().press){T.lastGo=now;tutPress(st);}
   // Bring the control into view once it's showing in the Control panel
@@ -3511,6 +3524,7 @@ function begin(){ls('played','1');$('overlay').hidden=true;hideHO();S.running=tr
 document.addEventListener('click',e=>{
   if(e.target.closest('#kIntro')){endIntro();return;}
   const adj=e.target.closest('[data-adj]');if(adj){nudge(adj.dataset.adj,+adj.dataset.d);return;}
+  {const nb=e.target.closest('[data-noop]');if(nb){const s=nb.closest('.qp')&&nb.closest('.qp').querySelector('.qp-s');if(s){s.classList.add('noop-msg');const st=s.querySelector('.qp-st');if(st)st.textContent=`Already ${nb.dataset.noop}: no change`;}play('click');return;}}
   const op=e.target.closest('[data-op]');if(op){if(op.disabled)return;const[t,i,a]=op.dataset.op.split(':');if(op.closest('#qp')&&S){S.qp=false;}issueOp(t+':'+i,a);return;}
   const st=e.target.closest('[data-f]');if(st){adjust(st.dataset.f,st.dataset.id,+st.dataset.d);return;}
   const pl=e.target.closest('[data-poll]');if(pl&&S){if(!pl.disabled)pollRtu(pl.dataset.poll);return;}
