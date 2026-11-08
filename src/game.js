@@ -87,6 +87,12 @@ const nextRank=n=>RANKS.find(([t])=>t>n);
 // so existing careers keep what they had unlocked.
 const CAREER_ADDED=['ev','xmas'];
 const unlockedK=(c,k)=>{let i=CAREER.indexOf(k);if(i<=0)return true;if(!CAREER_ADDED.includes(k))while(i>1&&CAREER_ADDED.includes(CAREER[i-1]))i--;return CAREER.slice(i-1).some(j=>(c.stars[j]||0)>=1);};
+// Starting the career again: stars, rank and achievements are kept (they are the best ever, and online sync keeps the
+// best from every device), but the career runs through the shifts in order again from the chosen one. c.run is the
+// restarted run: at = the shift it is on now, from = where it started, stars = stars earned in this run.
+const careerKeys=()=>CAREER.filter(k=>SCENARIOS[k]);
+const careerDone=c=>careerKeys().every(k=>c.stars[k]>=1);
+function restartCareer(k){const c=career();c.run={at:k,from:k,stars:{}};saveCareer(c);}
 const starStr=n=>'★'.repeat(n)+'☆'.repeat(3-n);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const fmtT=m=>{m=Math.round(m);m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');};
@@ -365,7 +371,7 @@ function saveName(n){try{localStorage.setItem('fc-name',n);}catch(e){}}
 const SYNC_KEY='fc-sync';
 function syncGet(){try{const v=JSON.parse(localStorage.getItem(SYNC_KEY)||'null');return v&&v.name&&/^\d{4}$/.test(v.pin)?v:null;}catch(e){return null;}}
 function syncSet(v){try{if(v)localStorage.setItem(SYNC_KEY,JSON.stringify(v));else localStorage.removeItem(SYNC_KEY);}catch(e){}}
-function mergeCareer(a,b){const o={stars:{...(a.stars||{})},ach:{...(a.ach||{})},best:{...(a.best||{})}};
+function mergeCareer(a,b){const o={stars:{...(a.stars||{})},ach:{...(a.ach||{})},best:{...(a.best||{})}};if(a.run)o.run=a.run;
   Object.entries((b&&b.stars)||{}).forEach(([k,v])=>{v=Math.round(+v||0);if(v>=1&&v<=3&&v>(o.stars[k]||0))o.stars[k]=v;});
   Object.keys((b&&b.ach)||{}).forEach(k=>{if(b.ach[k])o.ach[k]=1;});return o;}
 const SYNC_ERR={name:'Please choose a different name: 2 to 20 letters or numbers, nothing rude.',pin_format:'The PIN must be 4 digits.',
@@ -1913,7 +1919,13 @@ function careerBox(){const c=career(),n=starsOf(c),nr=nextRank(n),got=ACH.filter
   return `<div class="career" id="careerBox"><div class="career-top"><div><span class="k">Rank</span><b>${esc(rankOf(n))}</b><span class="s">${n} of ${CAREER.length*3} stars${nr?` · ${nr[0]-n} more for ${esc(nr[1])}`:''}</span></div>
     <div><span class="k">Achievements</span><b>${got.length} of ${ACH.length}</b></div></div>
     <div class="ach">${ACH.map(a=>`<span class="badge${c.ach[a.id]?' got':''}" title="${esc(a.d)}">${c.ach[a.id]?'🏅':'○'} ${esc(a.name)}</span>`).join('')}</div>
-    <p class="fine">Finish a shift to unlock the next one. Grade A earns 3 stars, B 2, C or D 1. Career shifts use random faults and count on the free-play scoreboard.</p>${syncBox()}</div>`;}
+    <p class="fine">Finish a shift to unlock the next one. Grade A earns 3 stars, B 2, C or D 1. Career shifts use random faults and count on the free-play scoreboard.</p>${restartBox(c)}${syncBox()}</div>`;}
+function restartBox(c){const ks=careerKeys(),un=ks.filter(k=>unlockedK(c,k));if(!starsOf(c))return '';
+  const R=c.run,rs=R?Object.values(R.stars).reduce((a,v)=>a+v,0):0;
+  return `<div class="restart" id="restartBox"><p class="sync-h">Start your career again</p>
+    ${R?`<p class="fine">Restarted from shift ${ks.indexOf(R.from)+1}: next up is shift ${ks.indexOf(R.at)+1}, ${esc(SCENARIOS[R.at].title)}. ${rs} ${rs===1?'star':'stars'} so far this time.</p>`
+      :`<p class="fine">Go back through the shifts in order from any point. Your stars, rank and achievements are kept: you can only improve them.</p>`}
+    <div class="sync-row"><label>Start from<select id="restartFrom">${un.map(k=>`<option value="${k}"${k===(R?R.at:ks[0])?' selected':''}>Shift ${ks.indexOf(k)+1}: ${esc(SCENARIOS[k].title)}</option>`).join('')}</select></label><button type="button" class="btn primary" id="restartBtn">Start again here</button></div></div>`;}
 // Start screen: hero with an animated mini-diagram, three "how it works" cards and one clear main action
 const HOW=GAME==='cr'?[['tx','var(--hv)','Keep transformers under firm capacity','If one more transformer trips, the others still have to carry the load.'],
     ['tie','var(--c-wind)','Switch load between substations','Ties, interconnectors and backfeeds move demand to where there is room.'],
@@ -1923,7 +1935,7 @@ const HOW=GAME==='cr'?[['tx','var(--hv)','Keep transformers under firm capacity'
     ['batt','var(--c-batt)','Arm flexibility before the fault','Book the battery, CHP and demand response to switch in by themselves.']];
 const played=()=>ls('played')==='1'||starsOf(career())>0;
 const easiestK=()=>Object.keys(SCENARIOS).filter(k=>!SCENARIOS[k].hidden).sort((a,b)=>SCENARIOS[a].diff-SCENARIOS[b].diff)[0];
-const careerNext=()=>{const c=career(),ks=CAREER.filter(k=>SCENARIOS[k]);return ks.find(k=>unlockedK(c,k)&&!(c.stars[k]>=1))||ks[ks.length-1];};
+const careerNext=()=>{const c=career(),ks=CAREER.filter(k=>SCENARIOS[k]);if(c.run&&ks.includes(c.run.at))return c.run.at;return ks.find(k=>unlockedK(c,k)&&!(c.stars[k]>=1))||ks[ks.length-1];};
 const dailyK=()=>SCENARIOS[chosen]&&!SCENARIOS[chosen].hidden?chosen:CFG.def;
 function heroArt(){const cr=GAME==='cr',X=[80,160,240],F=[60,125,195,260];
   return `<svg class="hero-art" viewBox="0 0 320 210" role="img" aria-label="Animated network: power flowing through three transformers, then a fault trips one circuit${cr?' and a field crew walks out':' while the wind farm turns'}">
@@ -1942,14 +1954,17 @@ function mainAction(){const cr=GAME==='cr';
       :`<button type="button" class="btn primary big hero-go" data-go="first"><small>New here? Start with the easiest day</small>Play ${esc(SCENARIOS[e].title)}</button>`}</div>
     <div class="cta-sec"><button type="button" class="btn sec-go" data-go="skip"><small>Played before?</small>Choose your own shift ↓</button>${loadBtn()}</div>
     ${cr?`<p class="cta-alt">For a stand or screen: <button type="button" class="linkish" data-tut="kiosk" title="Runs the demo on its own, over and over, and keeps the screen awake. For a display stand.">display mode</button></p>`:''}`;}
-  const c=career(),nk=careerNext(),done=CAREER.filter(k=>SCENARIOS[k]).every(k=>c.stars[k]>=1),dk=dailyK();
-  return `<div class="cta-main"><button type="button" class="btn primary big hero-go" data-go="career"><small>${done?'Career complete · play again':starsOf(c)?'Continue your career':'Start your career'}</small>Shift ${CAREER.indexOf(nk)+1}: ${esc(SCENARIOS[nk].title)}</button>
+  const c=career(),nk=careerNext(),done=careerDone(c)&&!c.run,dk=dailyK(),k0=careerKeys()[0];
+  return `<div class="cta-main">${done?`<button type="button" class="btn primary big hero-go" data-restart="${k0}" data-go-now><small>Career complete · start again</small>Shift 1: ${esc(SCENARIOS[k0].title)}</button>`
+      :`<button type="button" class="btn primary big hero-go" data-go="career"><small>${c.run?'Continue your restarted career':starsOf(c)?'Continue your career':'Start your career'}</small>Shift ${CAREER.indexOf(nk)+1}: ${esc(SCENARIOS[nk].title)}</button>`}
     <button type="button" class="btn big hero-go" data-go="daily"><small>Today's challenge · ${esc(fmtDate(todayUK()))}<span class="daily-top"></span></small>${esc(SCENARIOS[dk].title)}</button></div>
+    ${starsOf(c)?`<p class="cta-alt"><button type="button" class="linkish" data-go="restart">Start your career again from any shift</button></p>`:''}
     <div class="cta-sec"><button type="button" class="btn sec-go" data-go="skip"><small>Something else?</small>Choose your own shift ↓</button>${loadBtn()}${cr?`<button type="button" class="btn sec-go" data-tut="play"><small>Need a refresher?</small>Play the tutorial</button>`:''}</div>
     ${cr?`<p class="cta-alt">Or <button type="button" class="linkish" data-tut="demo">watch the demo</button> · For a stand or screen: <button type="button" class="linkish" data-tut="kiosk" title="Runs the demo on its own, over and over, and keeps the screen awake. For a display stand.">display mode</button></p>`:''}`;}
 function heroGo(g){
   if(g==='load'){mode='career';chosen=careerNext();syncTab='load';syncNote='';ls('mode',mode);ls('day',chosen);newGame(chosen);startSheet();
     const b=$('syncBox');if(b){b.scrollIntoView({behavior:'smooth',block:'center'});const n=$('syName');if(n){if(n.value)$('syPin').focus({preventScroll:true});else n.focus({preventScroll:true});}}return;}
+  if(g==='restart'){mode='career';ls('mode',mode);chosen=careerNext();newGame(chosen);startSheet();const b=$('restartBox');if(b){b.scrollIntoView({behavior:'smooth',block:'center'});const f=$('restartFrom');if(f)f.focus({preventScroll:true});}return;}
   if(g==='skip'){const t=$('pick');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});return;}
   if(g==='career'){mode='career';chosen=careerNext();}else if(g==='daily'){mode='daily';chosen=dailyK();}else if(g==='first'){mode='free';chosen=easiestK();}else return;
   ls('mode',mode);ls('day',chosen);newGame(chosen);$('startBtn').click();}
@@ -2035,10 +2050,12 @@ function endShift(){
    award('first',done);award('clean',done&&S.incidents===0);award('solid',done&&S.insecureMin===0);award('quick',done&&S.cust.ci===0&&S.cust.si>0);award('nobody',done&&S.cust.ci===0&&S.cust.si===0);
    award('mbb',S.parOk>0);award('crews',S.crewJobs>=8);award('vf',S.vfPeak>=20);award('heat',done&&S.key==='heat'&&(g==='A'||g==='B'));award('gsp',done&&S.key==='gsp'&&S.gspTrips===0);award('dry',done&&S.key==='xmas'&&!!S.flood&&S.flood.arrived&&S.flood.live===false);award('endure',done&&S.key==='endure'&&(g==='A'||g==='B'));award('cheap',done&&GAME==='fc'&&sc.spend<2000);
    let up=false;if(S.mode==='career'&&st>(c.stars[S.key]||0)){c.stars[S.key]=st;up=true;}
+   let runEnd=false;if(S.mode==='career'&&c.run&&st>=1){c.run.stars[S.key]=Math.max(c.run.stars[S.key]||0,st);
+     if(S.key===c.run.at){const ks=careerKeys(),j=ks.indexOf(S.key)+1;if(j<ks.length)c.run.at=ks[j];else{runEnd=true;delete c.run;}}}
    award('textbook',CAREER.every(k=>(c.stars[k]||0)>=3));saveCareer(c);
    S.syncRes=null;if(syncGet()&&!S.silent)syncQuiet().then(r=>{if(!r||!S||!S.ended)return;S.syncRes=r;const e=$('endSync');if(e)e.textContent=endSyncTxt();});
    const after=starsOf(c),newUnl=CAREER.filter(k=>unlockedK(c,k)&&!prevUnl.includes(k));
-   S.careerRes={st,up,newA,newUnl,rankUp:rankOf(after)!==rankOf(before)?rankOf(after):null,rank:rankOf(after),stars:after,next:CAREER[CAREER.indexOf(S.key)+1]};}S.submitted=null;S.unlocked=true;S.shareMsg='';
+   S.careerRes={st,up,newA,newUnl,runEnd,rankUp:rankOf(after)!==rankOf(before)?rankOf(after):null,rank:rankOf(after),stars:after,next:CAREER[CAREER.indexOf(S.key)+1]};}S.submitted=null;S.unlocked=true;S.shareMsg='';
   const base={scenario:S.key,mode:S.mode,score:sc.total,incidents:S.incidents,minutes_at_risk:S.insecureMin};
   if(L)track('site_lost',{...base,lost_at:fmtT(L.m)});else track('shift_complete',{...base,grade:g});
   showEnd();
@@ -2142,7 +2159,7 @@ function showEnd(){
       ${CR.newUnl.length?`<p>Unlocked: <b>${CR.newUnl.map(k=>esc(SCENARIOS[k].title)).join(', ')}</b></p>`:''}
       ${CR.newA.length?`<div class="ach">${CR.newA.map(a=>`<span class="badge got" title="${esc(a.d)}">🏅 ${esc(a.name)}</span>`).join('')}</div>`:''}
       ${syncGet()||S.syncRes?`<p class="fine sync-end" id="endSync" role="status">${esc(endSyncTxt())}</p>`:''}
-      ${S.mode!=='career'?'':CR.next?(unlockedK(career(),CR.next)?`<button type="button" class="btn primary big" data-next="${CR.next}">Start next day: ${esc(SCENARIOS[CR.next].title)} →</button>`:`<p class="fine">Finish this shift to unlock ${esc(SCENARIOS[CR.next].title)}. Press Try again below.</p>`):`<p><b>That's every career shift done.</b> Replay any of them to earn more stars.</p>`}</div>`:'';
+      ${S.mode!=='career'?'':CR.next?(unlockedK(career(),CR.next)?`<button type="button" class="btn primary big" data-next="${CR.next}">Start next day: ${esc(SCENARIOS[CR.next].title)} →</button>`:`<p class="fine">Finish this shift to unlock ${esc(SCENARIOS[CR.next].title)}. Press Try again below.</p>`):`<p><b>That's every career shift done${CR.runEnd?' again':''}.</b> Replay any of them to earn more stars, or <button type="button" class="linkish" data-restart="${careerKeys()[0]}">start your career again from shift 1</button>.</p>`}</div>`:'';
   $('sheet').innerHTML=`${BAND}<p class="eyebrow">${esc(S.sc.title)}, ${esc(S.sc.when)} · ${S.mode==='daily'?"Today's challenge, "+fmtDate(S.date):S.mode==='career'?'Career · '+esc(CR?CR.rank:''):'Free play'}</p>${head}${cbox}${drawDebrief()}${drawReplay()}${score}${sub}${costs}${btns}`;
   $('overlay').hidden=false;
 }
@@ -2215,6 +2232,8 @@ document.addEventListener('click',e=>{
   const op=e.target.closest('[data-op]');if(op){if(op.disabled)return;const[t,i,a]=op.dataset.op.split(':');if(op.closest('#qp')&&S){S.qp=false;}issueOp(t+':'+i,a);return;}
   const st=e.target.closest('[data-f]');if(st){adjust(st.dataset.f,st.dataset.id,+st.dataset.d);return;}
   const pl=e.target.closest('[data-poll]');if(pl&&S){if(!pl.disabled)pollRtu(pl.dataset.poll);return;}
+  {const rb=e.target.closest('[data-restart]')||(e.target.id==='restartBtn'?e.target:null);if(rb){const k=rb.dataset.restart||($('restartFrom')||{}).value;if(!k||!SCENARIOS[k])return;
+    restartCareer(k);mode='career';chosen=k;ls('mode',mode);ls('day',chosen);newGame(chosen);startSheet();if(rb.hasAttribute('data-go-now'))$('startBtn').click();else{const b=$('careerBox');if(b)b.scrollIntoView({behavior:'smooth',block:'start'});}return;}}
   {const pb=e.target.closest('[data-pick]');if(pb&&S){const k=pb.dataset.pick;hidePick();select(k,true);return;}if(e.target.closest('[data-pick-x]')){hidePick();return;}}
   {const zc=e.target.closest('[data-zone]');if(zc&&S){const z=zc.dataset.zone;if(z==='all'){hidePick();zoomed=false;applyZoom();const pm=$('pMimic'),bar=document.querySelector('.bar'),top=bar&&getComputedStyle(bar).position==='sticky'?bar.offsetHeight:0;if(pm)window.scrollTo({top:pm.getBoundingClientRect().top+window.scrollY-top-6,behavior:RMQ.matches?'auto':'smooth'});}else{const c=zoneOf(z);if(c)zoomTo(c[0],c[1]);}return;}}
   if(e.target.closest('#mimic')&&tapPick(e))return;
