@@ -375,7 +375,7 @@ function syncGet(){try{const v=JSON.parse(localStorage.getItem(SYNC_KEY)||'null'
 function syncSet(v){try{if(v)localStorage.setItem(SYNC_KEY,JSON.stringify(v));else localStorage.removeItem(SYNC_KEY);}catch(e){}}
 function mergeCareer(a,b){const o={stars:{...(a.stars||{})},ach:{...(a.ach||{})},best:{...(a.best||{})}};
   // a restarted career: the newest one (by time t) wins, so it carries on from the same shift on every device
-  const ra=a.run&&a.run.t?a.run:null,rb=b&&b.run&&b.run.t?b.run:null,r=ra&&rb?(rb.t>ra.t?rb:ra):ra||rb;if(r)o.run=r;
+  const ra=a.run&&(a.run.t||a.run.at)?{...a.run,t:a.run.t||Date.now()}:null,rb=b&&b.run&&b.run.t?b.run:null,r=ra&&rb?(rb.t>ra.t?rb:ra):ra||rb;if(r)o.run=r;
   Object.entries((b&&b.stars)||{}).forEach(([k,v])=>{v=Math.round(+v||0);if(v>=1&&v<=3&&v>(o.stars[k]||0))o.stars[k]=v;});
   Object.keys((b&&b.ach)||{}).forEach(k=>{if(b.ach[k])o.ach[k]=1;});return o;}
 const SYNC_ERR={name:'Please choose a different name: 2 to 20 letters or numbers, nothing rude.',pin_format:'The PIN must be 4 digits.',
@@ -2310,6 +2310,7 @@ setSound(SND.on);applyCollapsed();{const b=$('musicBtn');if(b){b.setAttribute('a
 txt('kTitle',GAME==='cr'?'Losing Control · Control room':'Losing Control · Generation');
 if(GAME==='cr'&&/(^|[?&#])demo\b/.test(location.search+location.hash))setTimeout(()=>tutStart(true,true),300);else splash();
 newGame(chosen);startSheet();initConsent();requestAnimationFrame(frame);
+{const c=career();if(c.run&&!c.run.t){c.run.t=Date.now();saveCareer(c);}}// a restart made before runs were time-stamped
 if(syncGet())syncQuiet().then(r=>{if(r)refreshStart(false);});
 window.__fc={get S(){return S;},run(n){for(let i=0;i<n&&S&&!S.ended;i++)step();render(true);},op(k,a){issueOp(k,a);},comps:(m,f)=>comps(m,f),tutGo:i=>tutGo(i),tutAct:()=>tutAct(),select};
 })();
