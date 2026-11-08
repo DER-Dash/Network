@@ -1,5 +1,7 @@
 /**
  * Losing Control scoreboard and feedback (Watts Up), version 7.
+ * Version 16: career sync also keeps a restarted career ('run': the shift it is on, where it
+ *   restarted, its stars, and a time t). The newest run wins, and an ended run is kept as {end:true,t}.
  * Version 15: career sync can be asked only to load ({intent:'load'}): an unknown name
  *   then returns error 'none' instead of saving a new career under it.
  * Version 14: career sync. POST {type:'career', game, site, name, pin, career} saves a
@@ -35,7 +37,7 @@
  * formula as the game, so the sheet never trusts a score sent by the browser.
  * Rows saved before version 2 have no mode and count as free play.
  */
-const VERSION = 15;
+const VERSION = 16;
 // Scores are only accepted from the games on this site. Apps Script can't see the request's
 // origin, so the games send their hostname; copies of the game hosted elsewhere send theirs.
 const HOME_SITE = 'der-dash.github.io';
@@ -174,6 +176,15 @@ function cleanCareer_(c, game) {
   days.forEach(k => { const v = Math.round(Number(stars[k]) || 0); if (v >= 1 && v <= 3) out.stars[k] = v; });
   const ach = c.ach && typeof c.ach === 'object' ? c.ach : {};
   Object.keys(ach).filter(k => /^[a-z]{1,16}$/.test(k) && ach[k]).slice(0, 40).forEach(k => { out.ach[k] = 1; });
+  const run = c.run && typeof c.run === 'object' ? c.run : null, t = run ? Math.round(Number(run.t) || 0) : 0;
+  if (run && t > 0) {
+    if (run.end) out.run = { end: true, t: t };
+    else if (days.indexOf(run.at) >= 0 && days.indexOf(run.from) >= 0) {
+      const rs = {}, s = run.stars && typeof run.stars === 'object' ? run.stars : {};
+      days.forEach(k => { const v = Math.round(Number(s[k]) || 0); if (v >= 1 && v <= 3) rs[k] = v; });
+      out.run = { at: run.at, from: run.from, stars: rs, t: t };
+    }
+  }
   return out;
 }
 
@@ -182,6 +193,7 @@ function mergeCareer_(a, b) {
   [a, b].forEach(c => {
     Object.keys(c.stars).forEach(k => { out.stars[k] = Math.max(out.stars[k] || 0, c.stars[k]); });
     Object.keys(c.ach).forEach(k => { out.ach[k] = 1; });
+    if (c.run && (!out.run || c.run.t > out.run.t)) out.run = c.run;  // the newest restarted career wins
   });
   return out;
 }

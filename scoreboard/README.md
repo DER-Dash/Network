@@ -115,3 +115,13 @@ feedback work exactly as before.
 The game's new **Load a saved career** form asks the scoreboard only to load. If no
 career is saved under that name, it now says so instead of saving a new one under a
 misspelt name. Paste in the new `Code.gs`, save, then deploy a **New version** as before.
+
+## Updating to version 16 (restarted careers sync between devices)
+
+Version 16 also saves a restarted career (the shift it's on, where it restarted and the
+stars earned since), so restarting on one device carries on from the same shift on another.
+The newest restart wins. Replace the code with the new `Code.gs`, save, then **Deploy →
+Manage deployments → pencil → Version: New version → Deploy** (same URL).
+
+Until this is done, everything else still works, but a restarted career stays on the
+device where it was restarted.

@@ -22,7 +22,7 @@ const finish=(G,S)=>{S.sched.length=0;let t=0;while(!S.ended&&t++<2000)G.run(5);
   doc.getElementById('replayBtn')&&0;w.__fc.S.mode='career';
   // play the last shift: run ends, career shows complete again
   {const nd=doc.querySelector('[data-next]');if(nd)nd.click();else{w.__fc.S.key;}}
-  await wait(5);if(w.__fc.S.key!=='endure'){}const G=w.__fc;finish(G,G.S);const c=car(w);ok(G.S.key==='endure'&&!c.run,'finishing the last shift ends the run');
+  await wait(5);if(w.__fc.S.key!=='endure'){}const G=w.__fc;finish(G,G.S);const c=car(w);ok(G.S.key==='endure'&&(!c.run||c.run.end),'finishing the last shift ends the run');
   ok(/start your career again/i.test(doc.getElementById('sheet').textContent+doc.body.textContent),'end screen offers to start again');}
  // a partial career with no stars has no restart box
  {const d=mk({'fc4-mode':'career'}),w=d.window,doc=w.document;await wait(40);doc.querySelector('[data-mode="career"]').click();ok(!doc.getElementById('restartBox'),'no restart option before any stars');}

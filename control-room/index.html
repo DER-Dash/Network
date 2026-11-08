@@ -1423,7 +1423,9 @@ const unlockedK=(c,k)=>{let i=CAREER.indexOf(k);if(i<=0)return true;if(!CAREER_A
 // restarted run: at = the shift it is on now, from = where it started, stars = stars earned in this run.
 const careerKeys=()=>CAREER.filter(k=>SCENARIOS[k]);
 const careerDone=c=>careerKeys().every(k=>c.stars[k]>=1);
-function restartCareer(k){const c=career();c.run={at:k,from:k,stars:{}};saveCareer(c);}
+function restartCareer(k){const c=career();c.run={at:k,from:k,stars:{},t:Date.now()};saveCareer(c);if(syncGet())syncQuiet();}
+// an ended restart is kept as {end:true,t} so the end reaches the other devices too
+const runOn=c=>!!(c.run&&!c.run.end&&c.run.at);
 const starStr=n=>'★'.repeat(n)+'☆'.repeat(3-n);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const fmtT=m=>{m=Math.round(m);m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');};
@@ -1702,7 +1704,9 @@ function saveName(n){try{localStorage.setItem('fc-name',n);}catch(e){}}
 const SYNC_KEY='fc-sync';
 function syncGet(){try{const v=JSON.parse(localStorage.getItem(SYNC_KEY)||'null');return v&&v.name&&/^\d{4}$/.test(v.pin)?v:null;}catch(e){return null;}}
 function syncSet(v){try{if(v)localStorage.setItem(SYNC_KEY,JSON.stringify(v));else localStorage.removeItem(SYNC_KEY);}catch(e){}}
-function mergeCareer(a,b){const o={stars:{...(a.stars||{})},ach:{...(a.ach||{})},best:{...(a.best||{})}};if(a.run)o.run=a.run;
+function mergeCareer(a,b){const o={stars:{...(a.stars||{})},ach:{...(a.ach||{})},best:{...(a.best||{})}};
+  // a restarted career: the newest one (by time t) wins, so it carries on from the same shift on every device
+  const ra=a.run&&a.run.t?a.run:null,rb=b&&b.run&&b.run.t?b.run:null,r=ra&&rb?(rb.t>ra.t?rb:ra):ra||rb;if(r)o.run=r;
   Object.entries((b&&b.stars)||{}).forEach(([k,v])=>{v=Math.round(+v||0);if(v>=1&&v<=3&&v>(o.stars[k]||0))o.stars[k]=v;});
   Object.keys((b&&b.ach)||{}).forEach(k=>{if(b.ach[k])o.ach[k]=1;});return o;}
 const SYNC_ERR={name:'Please choose a different name: 2 to 20 letters or numbers, nothing rude.',pin_format:'The PIN must be 4 digits.',
@@ -3252,7 +3256,7 @@ function careerBox(){const c=career(),n=starsOf(c),nr=nextRank(n),got=ACH.filter
     <div class="ach">${ACH.map(a=>`<span class="badge${c.ach[a.id]?' got':''}" title="${esc(a.d)}">${c.ach[a.id]?'🏅':'○'} ${esc(a.name)}</span>`).join('')}</div>
     <p class="fine">Finish a shift to unlock the next one. Grade A earns 3 stars, B 2, C or D 1. Career shifts use random faults and count on the free-play scoreboard.</p>${restartBox(c)}${syncBox()}</div>`;}
 function restartBox(c){const ks=careerKeys(),un=ks.filter(k=>unlockedK(c,k));if(!starsOf(c))return '';
-  const R=c.run,rs=R?Object.values(R.stars).reduce((a,v)=>a+v,0):0;
+  const R=runOn(c)?c.run:null,rs=R?Object.values(R.stars).reduce((a,v)=>a+v,0):0;
   return `<div class="restart" id="restartBox"><p class="sync-h">Start your career again</p>
     ${R?`<p class="fine">Restarted from shift ${ks.indexOf(R.from)+1}: next up is shift ${ks.indexOf(R.at)+1}, ${esc(SCENARIOS[R.at].title)}. ${rs} ${rs===1?'star':'stars'} so far this time.</p>`
       :`<p class="fine">Go back through the shifts in order from any point. Your stars, rank and achievements are kept: you can only improve them.</p>`}
@@ -3266,7 +3270,7 @@ const HOW=GAME==='cr'?[['tx','var(--hv)','Keep transformers under firm capacity'
     ['batt','var(--c-batt)','Arm flexibility before the fault','Book the battery, CHP and demand response to switch in by themselves.']];
 const played=()=>ls('played')==='1'||starsOf(career())>0;
 const easiestK=()=>Object.keys(SCENARIOS).filter(k=>!SCENARIOS[k].hidden).sort((a,b)=>SCENARIOS[a].diff-SCENARIOS[b].diff)[0];
-const careerNext=()=>{const c=career(),ks=CAREER.filter(k=>SCENARIOS[k]);if(c.run&&ks.includes(c.run.at))return c.run.at;return ks.find(k=>unlockedK(c,k)&&!(c.stars[k]>=1))||ks[ks.length-1];};
+const careerNext=()=>{const c=career(),ks=CAREER.filter(k=>SCENARIOS[k]);if(runOn(c)&&ks.includes(c.run.at))return c.run.at;return ks.find(k=>unlockedK(c,k)&&!(c.stars[k]>=1))||ks[ks.length-1];};
 const dailyK=()=>SCENARIOS[chosen]&&!SCENARIOS[chosen].hidden?chosen:CFG.def;
 function heroArt(){const cr=GAME==='cr',X=[80,160,240],F=[60,125,195,260];
   return `<svg class="hero-art" viewBox="0 0 320 210" role="img" aria-label="Animated network: power flowing through three transformers, then a fault trips one circuit${cr?' and a field crew walks out':' while the wind farm turns'}">
@@ -3285,9 +3289,9 @@ function mainAction(){const cr=GAME==='cr';
       :`<button type="button" class="btn primary big hero-go" data-go="first"><small>New here? Start with the easiest day</small>Play ${esc(SCENARIOS[e].title)}</button>`}</div>
     <div class="cta-sec"><button type="button" class="btn sec-go" data-go="skip"><small>Played before?</small>Choose your own shift ↓</button>${loadBtn()}</div>
     ${cr?`<p class="cta-alt">For a stand or screen: <button type="button" class="linkish" data-tut="kiosk" title="Runs the demo on its own, over and over, and keeps the screen awake. For a display stand.">display mode</button></p>`:''}`;}
-  const c=career(),nk=careerNext(),done=careerDone(c)&&!c.run,dk=dailyK(),k0=careerKeys()[0];
+  const c=career(),nk=careerNext(),done=careerDone(c)&&!runOn(c),dk=dailyK(),k0=careerKeys()[0];
   return `<div class="cta-main">${done?`<button type="button" class="btn primary big hero-go" data-restart="${k0}" data-go-now><small>Career complete · start again</small>Shift 1: ${esc(SCENARIOS[k0].title)}</button>`
-      :`<button type="button" class="btn primary big hero-go" data-go="career"><small>${c.run?'Continue your restarted career':starsOf(c)?'Continue your career':'Start your career'}</small>Shift ${CAREER.indexOf(nk)+1}: ${esc(SCENARIOS[nk].title)}</button>`}
+      :`<button type="button" class="btn primary big hero-go" data-go="career"><small>${runOn(c)?'Continue your restarted career':starsOf(c)?'Continue your career':'Start your career'}</small>Shift ${CAREER.indexOf(nk)+1}: ${esc(SCENARIOS[nk].title)}</button>`}
     <button type="button" class="btn big hero-go" data-go="daily"><small>Today's challenge · ${esc(fmtDate(todayUK()))}<span class="daily-top"></span></small>${esc(SCENARIOS[dk].title)}</button></div>
     ${starsOf(c)?`<p class="cta-alt"><button type="button" class="linkish" data-go="restart">Start your career again from any shift</button></p>`:''}
     <div class="cta-sec"><button type="button" class="btn sec-go" data-go="skip"><small>Something else?</small>Choose your own shift ↓</button>${loadBtn()}${cr?`<button type="button" class="btn sec-go" data-tut="play"><small>Need a refresher?</small>Play the tutorial</button>`:''}</div>
@@ -3381,8 +3385,8 @@ function endShift(){
    award('first',done);award('clean',done&&S.incidents===0);award('solid',done&&S.insecureMin===0);award('quick',done&&S.cust.ci===0&&S.cust.si>0);award('nobody',done&&S.cust.ci===0&&S.cust.si===0);
    award('mbb',S.parOk>0);award('crews',S.crewJobs>=8);award('vf',S.vfPeak>=20);award('heat',done&&S.key==='heat'&&(g==='A'||g==='B'));award('gsp',done&&S.key==='gsp'&&S.gspTrips===0);award('dry',done&&S.key==='xmas'&&!!S.flood&&S.flood.arrived&&S.flood.live===false);award('endure',done&&S.key==='endure'&&(g==='A'||g==='B'));award('cheap',done&&GAME==='fc'&&sc.spend<2000);
    let up=false;if(S.mode==='career'&&st>(c.stars[S.key]||0)){c.stars[S.key]=st;up=true;}
-   let runEnd=false;if(S.mode==='career'&&c.run&&st>=1){c.run.stars[S.key]=Math.max(c.run.stars[S.key]||0,st);
-     if(S.key===c.run.at){const ks=careerKeys(),j=ks.indexOf(S.key)+1;if(j<ks.length)c.run.at=ks[j];else{runEnd=true;delete c.run;}}}
+   let runEnd=false;if(S.mode==='career'&&runOn(c)&&st>=1){c.run.stars[S.key]=Math.max(c.run.stars[S.key]||0,st);c.run.t=Date.now();
+     if(S.key===c.run.at){const ks=careerKeys(),j=ks.indexOf(S.key)+1;if(j<ks.length)c.run.at=ks[j];else{runEnd=true;c.run={end:true,t:Date.now()};}}}
    award('textbook',CAREER.every(k=>(c.stars[k]||0)>=3));saveCareer(c);
    S.syncRes=null;if(syncGet()&&!S.silent)syncQuiet().then(r=>{if(!r||!S||!S.ended)return;S.syncRes=r;const e=$('endSync');if(e)e.textContent=endSyncTxt();});
    const after=starsOf(c),newUnl=CAREER.filter(k=>unlockedK(c,k)&&!prevUnl.includes(k));
