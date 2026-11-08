@@ -666,3 +666,10 @@ html.kiosk .zchips,html.kiosk .tpick{display:none!important}
 .qp .op-pair-row .op-btn{flex:1 1 0;min-height:46px}
 .op-btn.op-pair{background:var(--panel);border:2px solid var(--ink);color:var(--ink)}
 .qp-s.noop-msg .qp-st{color:var(--warn)}
+
+/* Start screen: control room or generation shifts */
+.gmodes{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 14px}
+.gmode{flex:1 1 170px;display:flex;flex-direction:column;gap:2px;padding:9px 12px;border:2px solid var(--rule);border-radius:8px;background:var(--sunk);color:var(--ink);text-decoration:none}
+.gmode b{font:700 15px var(--f-body)}.gmode span{font-size:12.5px;color:var(--muted)}
+.gmode[aria-current="page"]{border-color:var(--accent);background:var(--panel);box-shadow:inset 4px 0 0 var(--accent)}
+.gmode:not([aria-current="page"]):hover{border-color:var(--muted)}

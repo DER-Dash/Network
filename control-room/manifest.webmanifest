@@ -1,8 +1,8 @@
 {
   "id": "/Network/control-room/",
-  "name": "Firm Capacity: Control Room",
-  "short_name": "Control Room",
-  "description": "Switch, transfer and restore supply across Blackout Canyon's substations.",
+  "name": "Losing Control",
+  "short_name": "Losing Control",
+  "description": "Run Blackout Canyon's network: switch, transfer and restore supply, or balance generation and flexibility.",
   "start_url": "/Network/control-room/?source=pwa",
   "scope": "/Network/control-room/",
   "display": "standalone",

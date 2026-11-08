@@ -1,7 +1,7 @@
 {
   "id": "/Network/generation/",
-  "name": "Firm Capacity",
-  "short_name": "Firm Capacity",
+  "name": "Losing Control · Generation",
+  "short_name": "Losing Control",
   "description": "Keep Blackout Canyon's transformers inside firm capacity using generation and flexibility.",
   "start_url": "/Network/generation/?source=pwa",
   "scope": "/Network/generation/",

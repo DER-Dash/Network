@@ -1,12 +1,12 @@
-# Firm Capacity: source
+# Losing Control: source
 
-Both games (generation and control room) are built from the files in this folder.
-**Edit these, not the built pages** — `index.html`, `generation/index.html` and
-`control-room/index.html` are overwritten by every build.
+The game (control room and generation shifts, on one page) is built from the files in this folder.
+**Edit these, not the built pages** — `control-room/index.html` and the redirect pages
+`index.html` and `generation/index.html` are overwritten by every build.
 
 | File | What it is |
 |---|---|
-| `game.js` | All game code: network, load flow, faults, switching, crews, scoring, career, tutorial, music. `GAME` is `'cr'` (control room) or `'fc'` (generation); the build makes one page of each. |
+| `game.js` | All game code: network, load flow, faults, switching, crews, scoring, career, tutorial, music. `GAME` is `'cr'` (control room shifts) or `'fc'` (generation shifts), picked when the page loads: `?mode=gen` gives the generation shifts. |
 | `body.html` | Page layout: header, panels, dock, feedback form. |
 | `game.css` | Styles added on top of the base styles. |
 | `base-head.html` | Base `<head>`: fonts, colour tokens (light and dark) and core styles. |
@@ -20,7 +20,7 @@ Both games (generation and control room) are built from the files in this folder
 python3 src/build.py
 ```
 
-This writes the three GitHub Pages files and standalone copies in `build/`
+This writes the GitHub Pages files and standalone copies in `build/`
 (ignored by git) that keep the `window.__fc` test hook.
 
 ## Domain lock

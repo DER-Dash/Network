@@ -1,19 +1,24 @@
-/*! Firm Capacity / Firm Capacity: Control Room
+/*! Losing Control (control room and generation shifts)
  * © 2026 Steve Backhouse. All rights reserved.
  * Not open source: copying, re-hosting or reuse of this code or content without
  * written permission is prohibited. See https://github.com/DER-Dash/Network/blob/main/LICENSE */
 (function(){
 const $=id=>document.getElementById(id);
-const GAME='cr'; // replaced with 'fc' when the generation game is built
-const CR_URL='https://der-dash.github.io/Network/control-room/',FC_URL='https://der-dash.github.io/Network/';
-const CFG=GAME==='fc'?{start:300,end:1380,rate:2.25,pre:'fcg-',salt:'fcg1',def:'may',tag:'Generation',docTitle:'Firm Capacity',site:FC_URL,
+// One page, two kinds of shift: control room (switching) and generation (balancing generation and flexibility).
+// ?mode=gen opens the generation shifts. FORCE_GAME is set by build.py for the standalone test copies.
+const FORCE_GAME='';
+const GAME=FORCE_GAME||(/[?&]mode=gen(&|$)/.test(location.search)?'fc':'cr');
+const CR_URL='https://der-dash.github.io/Network/control-room/',FC_URL=CR_URL+'?mode=gen';
+// switching between control room and generation shifts stays on this page (same address, works offline too)
+const modeHref=g=>location.pathname+(g==='fc'?'?mode=gen':'');
+const CFG=GAME==='fc'?{start:300,end:1380,rate:2.25,pre:'fcg-',salt:'fcg1',def:'may',tag:'Generation',docTitle:'Losing Control · Generation',site:FC_URL,
     band:'Generation · keeping Blackout Canyon inside firm capacity. Mostly.',eyebrow:'Generation · Blackout Canyon 33 kV',h2:'Keep Blackout Canyon inside firm capacity',
-    board:'Generation',share:'Firm Capacity',other:{url:CR_URL,hdr:'Control room game →',foot:'Play the control room game',
-    box:'<b>Prefer switching?</b> Try the control room game: switch, transfer and restore supply across Blackout Canyon\'s substations through faults and planned work.',cta:'Play the control room game →'}}
-  :{start:480,end:1200,rate:1.5,pre:'fc4-',salt:'fc5',def:'mesh',tag:'Control room',docTitle:'Firm Capacity Control Room',site:CR_URL,
+    board:'Generation',share:'Losing Control',other:{url:CR_URL,hdr:'Control room shifts →',foot:'Play the control room shifts',
+    box:'<b>Prefer switching?</b> Try the control room shifts: switch, transfer and restore supply across Blackout Canyon\'s substations through faults and planned work.',cta:'Control room shifts →'}}
+  :{start:480,end:1200,rate:1.5,pre:'fc4-',salt:'fc5',def:'mesh',tag:'Control room',docTitle:'Losing Control',site:CR_URL,
     band:'Control room · keeping Blackout Canyon switched on. Mostly.',eyebrow:'Control room · Blackout Canyon 33 kV',h2:'Run the Blackout Canyon network',
-    board:'Control room',share:'Firm Capacity: Control Room',other:{url:FC_URL,hdr:'Generation game →',foot:'Play the generation game',
-    box:'<b>Prefer generation?</b> Try the generation game: balance solar, wind, batteries and flexibility to keep the transformers inside their rating.',cta:'Play the generation game →'}};
+    board:'Control room',share:'Losing Control',other:{url:FC_URL,hdr:'Generation shifts →',foot:'Play the generation shifts',
+    box:'<b>Prefer generation?</b> Try the generation shifts: balance solar, wind, batteries and flexibility to keep the transformers inside their rating.',cta:'Generation shifts →'}};
 // Domain lock: the published pages only run on der-dash.github.io. build.py turns SITE_LOCK on for the
 // GitHub Pages copies; the standalone copies in build/ (tests, previews) stay unlocked.
 const HOME_HOST='der-dash.github.io',SITE_LOCK=false;
@@ -1954,7 +1959,8 @@ function startSheet(){
   if(mode==='career'&&!unlockedK(cc,chosen)){chosen=CAREER.find(k=>unlockedK(cc,k)&&!(cc.stars[k]>=1))||CAREER[0];}
   const sc=keys.map(k=>[k,SCENARIOS[k]]).map(([k,v])=>`<button type="button" class="scn${mode==='career'&&!unlockedK(cc,k)?' locked':''}" data-scn="${k}"${mode==='career'&&!unlockedK(cc,k)?' disabled':''} style="--sc:${v.color}" aria-pressed="${k===chosen}"><span class="scn-top">${ico(sceneOf(k),v.color)}<span class="f">${mode==='career'?`Shift ${CAREER.indexOf(k)+1} · `:''}${v.focus}</span></span><b>${v.title}${mode==='career'?` <span class="stars">${unlockedK(cc,k)?starStr(cc.stars[k]||0):'🔒'}</span>`:''}</b>${diffHtml(v.diff,v.color)}<span class="d">${v.when}</span><span class="best">${ls('best-'+k)?'Your best: <b>'+nf(+ls('best-'+k))+'</b>':'Not played yet'}</span><p>${v.blurb}</p></button>`).join('');
   $('sheet').innerHTML=`${BAND}<div class="hero"><div class="hero-t">
-    <h2 class="hero-h">Firm Capacity<span>${GAME==='cr'?'Control room':'Generation'}</span></h2>
+    <h2 class="hero-h">Losing Control<span>${GAME==='cr'?'Control room':'Generation'}</span></h2>
+    <div class="gmodes" role="group" aria-label="Kind of shift"><a class="gmode" href="${modeHref('cr')}" target="_top" aria-current="${GAME==='cr'?'page':'false'}"><b>Control room</b><span>Switching, faults and field crews</span></a><a class="gmode" href="${modeHref('fc')}" target="_top" aria-current="${GAME==='fc'?'page':'false'}"><b>Generation</b><span>Generation, batteries and flexibility</span></a></div>
     <p class="pitch">${GAME==='cr'?"You're on shift in the control room. Keep the lights on.":"You're the DSO on shift. Keep Blackout Canyon inside firm capacity."}</p>
     ${mainAction()}</div>${heroArt()}</div>
   <div class="how">${HOW.map(([ic,c,t,d])=>`<div class="how-c">${ico(ic,c)}<div><b>${t}</b><span class="t">${d}</span></div></div>`).join('')}</div>
@@ -1990,7 +1996,7 @@ function startSheet(){
   <h3>Choose a day</h3><div class="scns">${sc}${mode==='free'?`<button type="button" class="scn" data-random style="--sc:var(--accent)"><span class="f">Free play</span><b>Random shift</b><span class="d">Any day</span><p>Picks one of the shifts above at random.</p></button>`:''}</div>
   <div class="go"><div class="opts"><label class="chk"><input type="checkbox" id="ovPause" ${autoPause?'checked':''}> Pause on faults and overloads</label><label class="chk"><input type="checkbox" id="ovTips" ${tipsOn?'checked':''}> Show tips</label></div>
   <span style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" data-feedback>Feedback</button><button id="sheetBoardBtn" type="button" class="btn">Scoreboard</button><button id="startBtn" type="button" class="btn primary big">Start shift at ${fmtT(START)}</button></span></div>
-  <div class="other-game"><p>${CFG.other.box}</p><a class="btn" href="${CFG.other.url}" target="_top">${CFG.other.cta}</a></div>
+  <div class="other-game"><p>${CFG.other.box}</p><a class="btn" href="${modeHref(GAME==='cr'?'fc':'cr')}" target="_top">${CFG.other.cta}</a></div>
   <p class="fine"><span id="runTxt">${runText()}</span> Time slows to half speed while anything is overloaded. MW and MVA are treated as equal. No faults in the first 20 minutes, so you can set up.</p></div>`;
   $('overlay').hidden=false;fillDailyTop();
 }
@@ -2274,11 +2280,11 @@ MQ.addEventListener('change',()=>{PHONE=MQ.matches;applyZoom();if(!PHONE)closeSh
 
 if(!SCENARIOS[chosen])chosen=CFG.def;
 document.title=CFG.docTitle;document.querySelectorAll('.bar .mode-tag').forEach(e=>e.textContent=CFG.tag);
-{const h=$('hdrOther');if(h){h.href=CFG.other.url;h.textContent=CFG.other.hdr;}const f=$('otherGame');if(f){f.href=CFG.other.url;f.textContent=CFG.other.foot;}}
+{const o=modeHref(GAME==='cr'?'fc':'cr'),h=$('hdrOther');if(h){h.href=o;h.textContent=CFG.other.hdr;}const f=$('otherGame');if(f){f.href=o;f.textContent=CFG.other.foot;}}
 if(!CALLS_ON){const l=$('pCalls');if(l)l.remove();}if(!VF_ON){const l=$('lgVF');if(l)l.remove();}if(!CREW_ON){const l=$('lgMan');if(l)l.remove();}
 txt('clock',fmtT(START));txt('dClock',fmtT(START));
 setSound(SND.on);applyCollapsed();{const b=$('musicBtn');if(b){b.setAttribute('aria-pressed',String(MUS.on));b.classList.toggle('on',MUS.on);}}
-txt('kTitle',GAME==='cr'?'Firm Capacity · Control room':'Firm Capacity · Generation');
+txt('kTitle',GAME==='cr'?'Losing Control · Control room':'Losing Control · Generation');
 if(GAME==='cr'&&/(^|[?&#])demo\b/.test(location.search+location.hash))setTimeout(()=>tutStart(true,true),300);else splash();
 newGame(chosen);startSheet();initConsent();requestAnimationFrame(frame);
 if(syncGet())syncQuiet().then(r=>{if(r)refreshStart(false);});

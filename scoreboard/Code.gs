@@ -1,5 +1,5 @@
 /**
- * Firm Capacity scoreboard and feedback (Watts Up), version 7.
+ * Losing Control scoreboard and feedback (Watts Up), version 7.
  * Version 15: career sync can be asked only to load ({intent:'load'}): an unknown name
  *   then returns error 'none' instead of saving a new career under it.
  * Version 14: career sync. POST {type:'career', game, site, name, pin, career} saves a
@@ -249,15 +249,15 @@ function feedback_(d) {
   sh.appendRow([new Date(), game, safe(name), safe(contact), safe(message), safe(context)]);
   const body = message + '\n\n---\nGame: ' + game + '\nFrom: ' + (name || 'not given') +
     '\nReply to: ' + (contact || 'not given') + '\nContext: ' + (context || '-') + '\nSheet: ' + ss.getUrl();
-  const opts = { name: 'Firm Capacity feedback' };
+  const opts = { name: 'Losing Control feedback' };
   if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact)) opts.replyTo = contact;
-  MailApp.sendEmail(feedbackTo_(), 'Firm Capacity feedback: ' + game + (name ? ' from ' + name : ''), body, opts);
+  MailApp.sendEmail(feedbackTo_(), 'Losing Control feedback: ' + game + (name ? ' from ' + name : ''), body, opts);
   return json_({ ok: true, version: VERSION });
 }
 
 /** Run this once from the Apps Script editor to allow email and check it arrives. */
 function sendTestFeedbackEmail() {
-  MailApp.sendEmail(feedbackTo_(), 'Firm Capacity feedback: test', 'Feedback emails from the games will arrive like this.');
+  MailApp.sendEmail(feedbackTo_(), 'Losing Control feedback: test', 'Feedback emails from the games will arrive like this.');
 }
 
 function doPost(e) {

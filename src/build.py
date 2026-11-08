@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
-"""Build both Firm Capacity games from this folder.
+"""Build Losing Control from this folder.
 
     python3 src/build.py
 
 Writes, relative to the repository root:
-  control-room/index.html   control room game (GitHub Pages)
-  generation/index.html     generation game, installable app address
-  index.html                generation game at the main address (no app manifest)
+  control-room/index.html   the game (GitHub Pages): control room shifts, and the
+                            generation shifts at control-room/?mode=gen
+  index.html                redirect: the main address opens the game
+  generation/index.html     redirect: old generation links and installed apps open
+                            the generation shifts
   build/control-room.html   standalone copies with the test hook window.__fc,
   build/generation.html     used by the tests in src/tests and for previews
 
 Edit game.js, body.html and game.css, never the built pages: the build
-overwrites them. The control room and generation games share all the code;
-GAME ('cr' or 'fc') switches between them.
+overwrites them. One page runs both kinds of shift; GAME ('cr' or 'fc') is
+chosen when the page loads, from ?mode=gen.
 """
 import os,re
 HERE=os.path.dirname(os.path.abspath(__file__));ROOT=os.path.dirname(HERE)
@@ -20,22 +22,21 @@ rd=lambda f:open(os.path.join(HERE,f),encoding='utf-8').read()
 def wr(rel,txt):
     p=os.path.join(ROOT,rel);os.makedirs(os.path.dirname(p),exist_ok=True);open(p,'w',encoding='utf-8').write(txt);print('built',rel,len(txt))
 base=rd('base-head.html');body=rd('body.html');js=rd('game.js');css=rd('game.css');pwa=rd('pwa.html')
-assert js.count("const GAME='cr';")==1
+assert js.count("const FORCE_GAME='';")==1
 
-def standalone(game):
-    title='Firm Capacity Control Room' if game=='cr' else 'Firm Capacity'
-    head=base.replace('<title>Firm Capacity</title>',f'<title>{title}</title>',1)
-    b=body if game=='cr' else body.replace('<span class="mode-tag">Control room</span>','<span class="mode-tag">Generation</span>').replace(
-        'href="https://der-dash.github.io/Network/" target="_top">Generation game →</a>','href="https://der-dash.github.io/Network/control-room/" target="_top">Control room game →</a>').replace(
-        "var GAME='cr';","var GAME='fc';").replace('<b id="clock">08:00</b>','<b id="clock">05:00</b>').replace('<b id="dClock">08:00</b>','<b id="dClock">05:00</b>')
-    j=js.replace("const GAME='cr';",f"const GAME='{game}';")
+def standalone(game=None):
+    """The page. game=None picks the kind of shift from the address (the published page);
+    'cr' or 'fc' fixes it (the test copies)."""
+    head=base
+    b=body
+    j=js if game is None else js.replace("const FORCE_GAME='';",f"const FORCE_GAME='{game}';")
     if 'charset' not in head[:300]: head='<meta charset="utf-8">\n'+head
     return head+css+'</style>\n\n'+b+'\n<script>\n'+j+'</script>\n'
 
 META={
- 'cr':dict(desc="Watts Up control-room game: switch, transfer and restore supply across Blackout Canyon's substations through faults, planned work and peak demand.",
-   url='https://der-dash.github.io/Network/control-room/',title='Firm Capacity: Control Room',
-   alt='Firm Capacity Control Room by Watts Up: a network diagram with interconnectors to Ampy Place and Watts This',
+ 'cr':dict(desc="Losing Control, a Watts Up control-room game: switch, transfer and restore supply across Blackout Canyon's substations through faults, planned work and peak demand, or balance generation and flexibility to keep its transformers inside firm capacity.",
+   url='https://der-dash.github.io/Network/control-room/',title='Losing Control',
+   alt='Losing Control by Watts Up: a network diagram with interconnectors to Ampy Place and Watts This',
    manifest='/Network/control-room/manifest.webmanifest',apple='/Network/icons/cr-apple-180.png'),
  'fc':dict(desc="Watts Up control-room game: keep Blackout Canyon's transformers inside firm capacity through faults, storms and swings in generation.",
    url='https://der-dash.github.io/Network/',title='Firm Capacity: keep Blackout Canyon switched on',
@@ -95,11 +96,25 @@ img{{max-width:100%}}
     return out
 
 for game,name in [('cr','control-room'),('fc','generation')]:
-    s=standalone(game);wr(f'build/{name}.html',s)
-    out=page(game,s)
-    if game=='cr':wr('control-room/index.html',out)
-    else:
-        out=out.replace('/Network/manifest.webmanifest','/Network/generation/manifest.webmanifest');wr('generation/index.html',out)
-        # The main address stays the generation game for existing links but isn't itself an app
-        # (its scope would contain the control room's), so its install button goes to /generation/.
-        root=re.sub(r'<link rel="manifest"[^>]*>\n','',out,count=1);assert 'rel="manifest"' not in root;wr('index.html',root)
+    wr(f'build/{name}.html',standalone(game))
+wr('control-room/index.html',page('cr',standalone()))
+
+def redirect(target,title):
+    return f'''<!doctype html>
+<!-- © 2026 Steve Backhouse. All rights reserved. Not open source: see https://github.com/DER-Dash/Network/blob/main/LICENSE -->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title}</title>
+<link rel="canonical" href="https://der-dash.github.io/Network/control-room/">
+<meta http-equiv="refresh" content="0; url={target}">
+<script>location.replace({target!r}+(location.hash||''));</script>
+<style>body{{font:16px/1.5 system-ui,sans-serif;background:#0B1F3A;color:#fff;display:grid;place-items:center;min-height:100vh;margin:0;padding:16px;box-sizing:border-box;text-align:center}}a{{color:#FFD23F}}</style>
+</head>
+<body><p>Losing Control has moved. <a href="{target}">Open the game →</a></p></body>
+</html>
+'''
+# The generation game used to live at the main address and at /generation/. Both now open the one game.
+wr('index.html',redirect('/Network/control-room/','Losing Control'))
+wr('generation/index.html',redirect('/Network/control-room/?mode=gen','Losing Control · Generation'))
