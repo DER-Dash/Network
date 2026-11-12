@@ -2935,10 +2935,24 @@ function renderQP(){const q=$('qp');if(!q)return;const k=S&&!S.ended&&S.qp&&S.se
   const h=qpHtml(k);if(h!==lastQP){const ae=document.activeElement,fid=ae&&q.contains(ae)?ae.id:'',fk=ae&&q.contains(ae)&&ae.dataset?ae.dataset.k:'';q.innerHTML=h;lastQP=h;const f=fid?$(fid):fk?[...q.querySelectorAll('[data-k]')].find(x=>x.dataset.k===fk):null;if(f)f.focus();}
   q.hidden=false;q.classList.toggle('side',!!S.qpSide&&SIDEQ.matches);q.classList.toggle('side-l',!!S.qpSide&&!!S.qpLeft&&SIDEQ.matches);
   const ms=$('mscroll'),r=$('mimic').getBoundingClientRect(),mr=ms.getBoundingClientRect();if(!r.width)return;const vb=($('mimic').getAttribute('viewBox')||'0 0 1200 668').split(' ').map(Number),sc=Math.min(r.width/vb[2],r.height/vb[3]),padX=(r.width-vb[2]*sc)/2,padY=(r.height-vb[3]*sc)/2,bx=SELBOX[k],W=q.offsetWidth,H=q.offsetHeight,ox=r.left-mr.left+ms.scrollLeft+padX,oy=r.top-mr.top+ms.scrollTop+padY,cw=vb[2]*sc,ch=vb[3]*sc;
-  let l=ox+(bx[0]+bx[2]/2)*sc-W/2,tp=oy+(bx[1]+bx[3])*sc+6;
-  if(tp+H>oy+ch)tp=oy+bx[1]*sc-H-6;
-  l=Math.max(ox+4,Math.min(l,ox+cw-W-4));tp=Math.max(oy+2,tp);
+  // Keep clear of what the box is about: for anything on an 11 kV feeder, the whole feeder (breaker to buildings),
+  // otherwise the device itself. Try beside it first for feeders (they run up and down), below/above for the rest.
+  // Feeders: first try to leave the whole substation's feeders in view, then just this feeder.
+  const dcy=oy+(bx[1]+bx[3]/2)*sc,dcx=ox+(bx[0]+bx[2]/2)*sc;
+  const vl=Math.max(ox,ms.scrollLeft)+4,vr=Math.min(ox+cw,ms.scrollLeft+ms.clientWidth)-4,vt=oy+2,vbm=oy+ch-2,cy=v=>Math.max(vt,Math.min(v,vbm-H)),cx=v=>Math.max(vl,Math.min(v,vr-W));
+  const px=K=>({l:ox+K[0]*sc,r:ox+(K[0]+K[2])*sc,t:oy+K[1]*sc,b:oy+(K[1]+K[3])*sc});
+  const side=(K,leftFirst)=>{const P=px(K),a=[P.r+8,cy(dcy-H/2)],b=[P.l-8-W,cy(dcy-H/2)];return leftFirst?[b,a]:[a,b];},ud=K=>{const P=px(K);return[[cx(dcx-W/2),P.b+6],[cx(dcx-W/2),P.t-6-H]];};
+  const fits=([l,t])=>l>=vl-.5&&l+W<=vr+.5&&t>=vt-.5&&t+H<=vbm+.5;
+  const F=qpClear(k),G=F&&qpClear(k,true),fi=F?+k.split(':')[1].slice(2):1;
+  const cands=F?[...side(G,fi===0),...side(F,fi===0),...ud(F)]:[...ud(bx),...side(bx,false)],pick=cands.find(fits);
+  let l,tp;if(pick)[l,tp]=pick;else{l=cx(dcx-W/2);tp=oy+(bx[1]+bx[3])*sc+6;if(tp+H>oy+ch)tp=oy+bx[1]*sc-H-6;tp=Math.max(oy+2,tp);}
   q.style.left=Math.round(l)+'px';q.style.top=Math.round(tp)+'px';}
+// The area a switch pop-up should leave visible, in diagram units: the whole 11 kV feeder for its breaker,
+// mid-point switch, backfeed or generator
+function qpClear(k,all){const[t,id]=k.split(':');if(!['lf','mid','nop','mg'].includes(t))return null;const p=id.slice(0,2),ids=all?(LF[p]||[]).map((v,i)=>p+i):[id];
+  const els=ids.flatMap(f=>['lfb_','lfl_','lfm_','midb_','lft_','nopb_','nopl_','mgg_'].map(x=>$(x+f))).concat(all?[$('ptg_'+p)]:[]).filter(e=>e&&e.getBBox&&!e.hasAttribute('hidden'));if(!els.length)return null;
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;try{els.forEach(e=>{const b=e.getBBox();x0=Math.min(x0,b.x);y0=Math.min(y0,b.y);x1=Math.max(x1,b.x+b.width);y1=Math.max(y1,b.y+b.height);});}catch(e){return null;}
+  return[x0-3,y0-3,x1-x0+6,y1-y0+6];}
 // Phones during a shift: the header shrinks to one sticky row of numbers; this opens and closes the rest of it
 function setBar(open){document.documentElement.classList.toggle('bar-open',open);setAttr($('barMore'),'aria-expanded',String(open));}
 // Tapping an alarm on a phone zooms the diagram onto the device, scrolls it into view and opens its controls
