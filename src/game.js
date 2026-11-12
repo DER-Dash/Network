@@ -956,9 +956,17 @@ function alSubs(a){if(a.id==='gsp')return['gsp'];const[t,i='']=(a.sel||'').split
 function flashNames(){const on=new Set();Object.values(S.alarms).forEach(a=>{if(!a.ack)alSubs(a).forEach(k=>on.add(k));});
   document.querySelectorAll('#mimic .snm').forEach(e=>e.classList.toggle('flash',on.has(e.id.slice(4))));}
 const anyOver=()=>S&&Object.values(S.alarms).some(a=>a.lvl==='over');
-let lastAl='';
+let lastAl='',alOpen=null;
+// The option under an alarm that has been tapped: go to the breaker or switch it is about
+function alGo(a){if(alOpen!==a.id)return '';const k=a.sel;
+  return `<div class="al-acts">${k&&SELBOX[k]?`<button type="button" class="btn primary" data-goto="${k}" data-k="alg-${a.id}">Go to ${esc(a.name)} →</button>`:'<span class="fine">Not on the diagram.</span>'}</div>`;}
+// Go to a device from an alarm: bring the diagram into view, ring the device and open its controls
+function gotoDev(k){if(!k||!SELBOX[k])return;alOpen=null;lastAl='';if(PHONE){jumpTo(k);return;}
+  select(k,isSw(k));const pm=$('pMimic');if(pm){const r=pm.getBoundingClientRect(),bar=document.querySelector('.bar'),top=bar&&getComputedStyle(bar).position==='sticky'?bar.offsetHeight:0;
+    if(r.top<top||r.bottom>innerHeight)window.scrollTo({top:r.top+window.scrollY-top-8,behavior:RMQ.matches?'auto':'smooth'});}
+  requestAnimationFrame(()=>{const sb=$('selbox');if(sb)anim(sb,[{strokeWidth:10,opacity:.15},{strokeWidth:3,opacity:1}],{duration:550,iterations:3});});}
 function renderAlarms(){const red=a=>a.lvl==='over'||a.ev==='trip',list=Object.values(S.alarms).sort((a,b)=>red(b)-red(a)||!!b.ev-!!a.ev||b.since-a.since||b.L-a.L),un=list.filter(a=>!a.ack).length;
-  const h=list.length?`<ul class="al-list">${list.map(a=>a.ev?`<li class="al ${a.ev==='trip'?'over':'high'} unack"><button type="button" data-sel="${a.sel}" data-k="al-${a.id}"><span class="al-l">${a.ev==='trip'?'Trip':'Auto-reclose'}</span><span class="al-n">${esc(a.name)}</span><span class="al-v"></span><span class="al-t">at ${fmtT(a.since)}${a.note?' · '+esc(a.note):''}</span></button></li>`:`<li class="al ${a.lvl}${a.ack?'':' unack'}"><button type="button" data-sel="${a.sel}" data-k="al-${a.id}"><span class="al-l">${a.lvl==='over'?'Overload':'High load'}</span><span class="al-n">${esc(a.name)}</span><span class="al-v">${Math.round(a.L*100)}%</span><span class="al-t">since ${fmtT(a.since)}${a.trip!=null?' · trips in '+a.trip+' min':a.lvl==='over'&&a.id.startsWith('nb:')?' · ties trip in '+OV_MIN+' min if it stays over':''}</span></button></li>`).join('')}</ul>`
+  const h=list.length?`<ul class="al-list">${list.map(a=>a.ev?`<li class="al ${a.ev==='trip'?'over':'high'} unack"><button type="button" data-al="${a.id}" data-alsel="${a.sel||''}" data-k="al-${a.id}" aria-expanded="${alOpen===a.id}"><span class="al-l">${a.ev==='trip'?'Trip':'Auto-reclose'}</span><span class="al-n">${esc(a.name)}</span><span class="al-v"></span><span class="al-t">at ${fmtT(a.since)}${a.note?' · '+esc(a.note):''}</span></button>${alGo(a)}</li>`:`<li class="al ${a.lvl}${a.ack?'':' unack'}"><button type="button" data-al="${a.id}" data-alsel="${a.sel||''}" data-k="al-${a.id}" aria-expanded="${alOpen===a.id}"><span class="al-l">${a.lvl==='over'?'Overload':'High load'}</span><span class="al-n">${esc(a.name)}</span><span class="al-v">${Math.round(a.L*100)}%</span><span class="al-t">since ${fmtT(a.since)}${a.trip!=null?' · trips in '+a.trip+' min':a.lvl==='over'&&a.id.startsWith('nb:')?' · ties trip in '+OV_MIN+' min if it stays over':''}</span></button>${alGo(a)}</li>`).join('')}</ul>`
     :'<p class="empty">No alarms. Anything above 80% of its rating, and every breaker trip or auto-reclose, shows here.</p>';
   const k=h+'|'+un;if(k!==lastAl){lastAl=k;$('alBody').innerHTML=h;alSeen=slideNew($('alBody'),alSeen);}
   txt('alCount',list.length?String(list.length):'');setAttr($('alCount'),'class','al-count'+(list.some(red)?' over':list.length?' high':''));
@@ -2279,7 +2287,8 @@ document.addEventListener('click',e=>{
   {const zc=e.target.closest('[data-zone]');if(zc&&S){const z=zc.dataset.zone;if(z==='all'){hidePick();zoomed=false;applyZoom();const pm=$('pMimic'),bar=document.querySelector('.bar'),top=bar&&getComputedStyle(bar).position==='sticky'?bar.offsetHeight:0;if(pm)window.scrollTo({top:pm.getBoundingClientRect().top+window.scrollY-top-6,behavior:RMQ.matches?'auto':'smooth'});}else{const c=zoneOf(z);if(c)zoomTo(c[0],c[1]);}return;}}
   if(e.target.closest('#mimic')&&tapPick(e))return;
   if(!e.target.closest('#pick'))hidePick();
-  {const al=e.target.closest('.al-list [data-sel]');if(al&&S&&PHONE){jumpTo(al.dataset.sel);return;}}
+  {const g=e.target.closest('[data-goto]');if(g&&S){gotoDev(g.dataset.goto);return;}}
+  {const al=e.target.closest('.al-list [data-al]');if(al&&S){alOpen=alOpen===al.dataset.al?null:al.dataset.al;lastAl='';renderAlarms();const b=document.querySelector(`[data-goto]`);if(b)b.focus({preventScroll:true});return;}}
   const sl=e.target.closest('[data-sel]');if(sl&&S){select(sl.dataset.sel,!!sl.closest('#mimic'));return;}
   if(S&&S.sel&&e.target.closest&&e.target.closest('#mimic')){select('none');return;}
   const hg=e.target.closest('[data-go]');if(hg){heroGo(hg.dataset.go);return;}
@@ -2310,7 +2319,7 @@ document.addEventListener('click',e=>{
   if(id==='qpMore'){S.qp=false;lastInsp='';if(PHONE)openSheet();else $('pInsp').scrollIntoView({block:'nearest',behavior:'smooth'});render(true);return;}
   if(id==='inspClose'){S.sel=null;lastInsp='';closeSheet();render(true);return;}
   if(id==='barMore'){setBar(!document.documentElement.classList.contains('bar-open'));return;}
-  if(id==='dAl'&&S){const b=[...document.querySelectorAll('.al-list [data-sel]')].find(x=>SELBOX[x.dataset.sel]);if(b)jumpTo(b.dataset.sel);else{const pa=$('pAlarm');if(pa)window.scrollTo({top:pa.getBoundingClientRect().top+window.scrollY-70,behavior:'smooth'});}return;}
+  if(id==='dAl'&&S){const b=[...document.querySelectorAll('.al-list [data-alsel]')].find(x=>SELBOX[x.dataset.alsel]);if(b)jumpTo(b.dataset.alsel);else{const pa=$('pAlarm');if(pa)window.scrollTo({top:pa.getBoundingClientRect().top+window.scrollY-70,behavior:'smooth'});}return;}
   if(id==='dCtl'){if($('pInsp').classList.contains('open'))closeSheet();else{openSheet();render(true);}return;}
   if(id==='tipOk'){tipOk();return;}
   if(id==='tipSkip'){tipsOn=false;ls('tips','off');tipOk();return;}
