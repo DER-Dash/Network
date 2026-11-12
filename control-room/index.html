@@ -1175,6 +1175,41 @@ html.kiosk .zchips,html.kiosk .tpick{display:none!important}
 .mimic-svg .crew-b *{stroke-opacity:1}
 .crew-tag circle{fill:var(--ink);stroke:var(--panel);stroke-width:1}
 .mimic-svg .crew-tag .crew-t,.crew-tag .crew-t{font-size:5.6px;fill:var(--panel);font-weight:700}
+
+/* ---------- Power flow: round dots running along every loaded line ---------- */
+.mimic-svg .flow{stroke-dasharray:0 16;stroke-width:3.6;stroke-linecap:round;opacity:.95}
+.mimic-svg .flow.fl-lv{stroke-width:2.6}
+.mimic-svg .tie-l~.flow,.mimic-svg #itg_hm .flow,.mimic-svg [id^="itf_"]{stroke-width:3}
+
+/* ---------- Faults: a spark where something trips, a bolt on the faulted half ---------- */
+.spark{pointer-events:none}
+.spark .sp-c{fill:#fff3b0;stroke:var(--alarm);stroke-width:2;animation:spC .8s ease-out forwards;transform-box:fill-box;transform-origin:center}
+.spark .sp-r{stroke:#ffb020;stroke-width:2.4;stroke-linecap:round;fill:none;animation:spR .8s ease-out forwards}
+@keyframes spC{0%{transform:scale(.3);opacity:1}40%{opacity:1}100%{transform:scale(2.2);opacity:0}}
+@keyframes spR{0%{opacity:0;stroke-dasharray:0 30}15%{opacity:1}100%{opacity:0;stroke-dasharray:12 30;stroke-dashoffset:-14}}
+.lfx .bolt{fill:var(--alarm);stroke:var(--panel);stroke-width:1.4;paint-order:stroke;stroke-linejoin:round;animation:boltP 1.4s ease-in-out infinite}
+@keyframes boltP{50%{opacity:.45}}
+.lfq circle{fill:var(--warn);stroke:var(--panel);stroke-width:1.2}
+.mimic-svg .lfq text{font:800 7px var(--f-body);fill:#fff;stroke:none}
+@media (prefers-reduced-motion:reduce){.lfx .bolt{animation:none}}
+
+/* ---------- Street-level demand: lit windows go dark when the far half is off ---------- */
+.bld .bb{stroke:var(--panel);stroke-width:.8}
+.bld .br{stroke:var(--sc,var(--ink));stroke-width:1.6;stroke-linecap:round}
+.bld .bw{fill:#ffd23f;transition:fill .4s ease}
+.bld .bd{fill:var(--panel);opacity:.8}
+.asym .sym.bld.off{opacity:.55}
+.sym.bld.off .bw,.sym.bld.flt .bw{fill:#2a2e3c}
+.sym.bld.off .bb{fill:var(--muted)}
+
+/* ---------- Softer panels ---------- */
+.panel{border-radius:12px;border-color:color-mix(in srgb,var(--rule) 75%,transparent);box-shadow:0 1px 2px rgba(20,16,50,.05),0 8px 22px -12px rgba(20,16,50,.22)}
+.ph h2::before{border-radius:3px}
+.btn{border-radius:8px}
+.mscroll{border-radius:8px}
+@media (min-width:701px){.desk{gap:18px}.panel{padding:16px 18px}}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .panel{box-shadow:0 1px 2px rgba(0,0,0,.3),0 10px 26px -12px rgba(0,0,0,.55)}}
+:root[data-theme="dark"] .panel{box-shadow:0 1px 2px rgba(0,0,0,.3),0 10px 26px -12px rgba(0,0,0,.55)}
 </style>
 </head>
 <body>
@@ -1700,6 +1735,16 @@ const ICONS={solar:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12
 const SCENE={xmas:'flood',ev:'plug',quiet:'sun',grid:'pylon',storm:'storm',heat:'heat',jan:'snow',snow:'snow',gsp:'pylon',mesh:'pylon',endure:'storm',may:'sun',tut:'snow'};
 const WX={xmas:'rain',ev:'snow',grid:'cloud',gsp:'cloud',mesh:'snow'};
 const sceneOf=k=>SCENE[k]||'pylon',wxOf=k=>WX[k]||{pylon:'cloud'}[sceneOf(k)]||sceneOf(k);
+// Street-level demand at the end of each 11 kV feeder: houses, or shops and offices for town centres, stations and
+// business parks. Windows are lit while the far half of the feeder has supply and go dark when it doesn't.
+const BIZ=/Centre|High Street|Station|Park|Row/;
+function bld(cx,t,p,i){const nm=(LFN[p]||[])[i]||'',w=(x,y,a,b)=>`<rect class="bw" x="${x}" y="${y}" width="${a}" height="${b}" rx=".5"/>`;
+  return `<g id="lft_${p}${i}" class="sym bld"><title>${esc(nm)}</title>`+(BIZ.test(nm)
+    ?`<path class="bb" d="M${cx-8} ${t+2} H${cx+8} V${t+15} H${cx-8} Z"/><path class="br" d="M${cx-8.6} ${t+2} H${cx+8.6}"/>`+[0,1].map(r=>[0,1,2].map(c=>w(cx-6.2+c*4.6,t+4.2+r*5,3.2,3)).join('')).join('')
+    :`<path class="bb" d="M${cx-8} ${t+7} L${cx} ${t} L${cx+8} ${t+7} V${t+15} H${cx-8} Z"/>`+w(cx-5.3,t+8.6,3.4,3.2)+w(cx+1.9,t+8.6,3.4,3.2)+`<rect class="bd" x="${cx-1.3}" y="${t+11}" width="2.6" height="4"/>`)+'</g>';}
+// lightning bolt marking the faulted half of an 11 kV feeder
+const boltAt=(id,cx,cy)=>`<g id="${id}" class="lfx" hidden><title>Fault in this half of the feeder</title><path class="bolt" d="M${cx+2} ${cy-7} l-6.5 7.8 h4.2 l-2.9 6.5 l7.8 -8.8 h-4.2 l2.9 -5.5 z"/></g>`;
+const showIf=(e,on)=>{if(!e)return;if(on){if(e.hasAttribute('hidden'))e.removeAttribute('hidden');}else if(!e.hasAttribute('hidden'))e.setAttribute('hidden','');};
 // Field crew: an engineer in a white hard hat and hi-vis vest, drawn round the feet at (0, 4). Legs and arms swing when walking.
 const CREW_FIG='<path class="cf-leg cf-l" d="M-1.5 -3.5 L-2 4"/><path class="cf-leg cf-r" d="M1.5 -3.5 L2 4"/>'+
   '<path class="cf-arm cf-al" d="M-3.6 -9.6 L-5 -4.2"/><path class="cf-arm cf-ar" d="M3.6 -9.6 L5 -4.2"/>'+
@@ -2449,7 +2494,11 @@ function hideBanner(){$('banner').hidden=true;}
 
 /* ---------- Effects ---------- */
 function fx(id){if(S.silent)return;const p=$('pMimic');p.classList.remove('flashing');void p.offsetWidth;p.classList.add('flashing');
-  const g=$(id);if(g&&g!==p){g.classList.remove('tripflash');setTimeout(()=>{g.classList.add('tripflash');setTimeout(()=>g.classList.remove('tripflash'),1800);},10);}}
+  const g=$(id);if(g&&g!==p&&!RMQ.matches&&g.getBBox)try{const b=g.getBBox(),cx=b.x+b.width/2,cy=b.y+b.height/2,m=$('mimic'),ns='http://www.w3.org/2000/svg',sp=document.createElementNS(ns,'g');
+    sp.setAttribute('class','spark');sp.setAttribute('transform',`translate(${cx.toFixed(1)} ${cy.toFixed(1)})`);
+    sp.innerHTML='<circle class="sp-c" r="9"/>'+[0,45,90,135,180,225,270,315].map((a,j)=>`<path class="sp-r" d="M0 -${j%2?8:10} V-${j%2?15:20}" transform="rotate(${a+(j%2?10:0)})"/>`).join('');
+    m.appendChild(sp);setTimeout(()=>sp.remove(),900);}catch(e){}
+  if(g&&g!==p){g.classList.remove('tripflash');setTimeout(()=>{g.classList.add('tripflash');setTimeout(()=>g.classList.remove('tripflash'),1800);},10);}}
 
 /* ---------- Diagram ---------- */
 const SELBOX={};
@@ -2502,32 +2551,33 @@ function buildMimic(){
       <line id="pb_${p}" class="bus mv" x1="${P.x1}" y1="${py}" x2="${P.x2}" y2="${py}"/>
       <text id="pn_${p}" class="p-net" x="${P.x2}" y="${py-9}" text-anchor="end"></text>`;
     // control room: name and supply beside the 33/11 kV transformer; generation game: on the busbar, where the generators leave room
-    {const L=GAME==='cr'&&ASSETS.find(a=>a.id==='load_'+p),nx=L?L.x+17:P.lx||P.x1,ny=L?py+44:py-22;
+    {const L=GAME==='cr'&&(ng||!ASSETS.some(a=>a.prim===p&&a.type!=='load'))&&ASSETS.find(a=>a.id==='load_'+p),// beside the transformer unless generators sit there
+      nx=L?L.x+17:P.lx||P.x1,ny=L?py+44:py-22;
       s+=`<text id="snm_${p}" class="p-name snm" x="${nx}" y="${ny}">${P.name.toUpperCase()}</text><text id="ps_${p}" class="p-stat" x="${nx}" y="${ny+14}">From BC</text>`;
       if(L)s+=`<rect class="hit" data-sel="prim:${p}" x="${nx-2}" y="${ny-16}" width="${P.name.length*10+8}" height="34"/>`;}
     if(P.fd)s+=`<rect class="hit" data-sel="in:${p}" x="${x-22}" y="${PY-62}" width="44" height="42"/>`;
     SELBOX['prim:'+p]=[P.x1-6,py-40,P.x2-P.x1+12,52];
-    if(P.nb)s+=`<g id="tieg_${p}"><path id="tl_${p}" class="tie-l ${P.nb}" d="${sw.path}"/>
+    if(P.nb)s+=`<g id="tieg_${p}"><path id="tl_${p}" class="tie-l ${P.nb}" d="${sw.path}"/><path id="tf_${p}" class="flow idle" d="${sw.path}"/>
       <rect id="tsw_${p}" class="brk sw open man" x="${sw.x-9}" y="${sw.y-9}" width="18" height="18" rx="${CREW_ON?9:0}"/>
       <text id="tt_${p}" class="tie-t" x="${sw.lx}" y="${sw.ly}" text-anchor="${sw.anc}">open</text>${arw('tia_'+p,TIEARW[p][0],TIEARW[p][1])}
       <rect class="hit" data-sel="tie:${p}" x="${sw.x-24}" y="${sw.y-22}" width="48" height="52"/></g>`;
     if(P.nb)SELBOX['tie:'+p]=[sw.x-17,sw.y-17,34,34];
   });
   ITIDS.forEach(k=>{const t=ITS[k],x1=PR[t.a].x2,x2=PR[t.b].x1;
-    if(t.v){s+=`<g id="itg_${k}"><path id="itl_${k}" class="tie-l it" d="M${t.x} ${pY(t.a)} V${pY(t.b)}"/>
+    if(t.v){s+=`<g id="itg_${k}"><path id="itl_${k}" class="tie-l it" d="M${t.x} ${pY(t.a)} V${pY(t.b)}"/><path id="itf_${k}" class="flow idle" d="M${t.x} ${pY(t.a)} V${pY(t.b)}"/>
       <rect id="itsw_${k}" class="brk sw open man" x="${t.x-9}" y="${t.sy-9}" width="18" height="18" rx="${CREW_ON?9:0}"/>
       <text id="itt_${k}" class="tie-t" x="${t.left?t.x-14:t.x+14}" y="${t.sy+4}" text-anchor="${t.left?'end':'start'}">open</text>${arw('ita_'+k,t.x,t.sy-38)}
       <rect class="hit" data-sel="it:${k}" x="${t.left?t.x-40:t.x-22}" y="${t.sy-22}" width="${t.left?80:102}" height="${t.left?56:44}"/></g>`;
       SELBOX['it:'+k]=[t.x-17,t.sy-17,34,34];return;}
-    s+=`<g id="itg_${k}"><path id="itl_${k}" class="tie-l it" d="M${x1} ${PY} H${x2}"/>
+    s+=`<g id="itg_${k}"><path id="itl_${k}" class="tie-l it" d="M${x1} ${PY} H${x2}"/><path id="itf_${k}" class="flow idle" d="M${x1} ${PY} H${x2}"/>
       <rect id="itsw_${k}" class="brk sw open man" x="${t.x-9}" y="${PY-9}" width="18" height="18" rx="${CREW_ON?9:0}"/>
       <text id="itt_${k}" class="tie-t" x="${t.x}" y="${PY+26}" text-anchor="middle">open</text>${arw('ita_'+k,t.x,PY-15)}
       <rect class="hit" data-sel="it:${k}" x="${t.x-22}" y="${PY-22}" width="44" height="54"/></g>`;
     SELBOX['it:'+k]=[t.x-17,PY-17,34,34];});
   ASSETS.filter(a=>PIDS.includes(a.prim)&&(!ng||a.type==='load')).forEach(a=>{const x=a.x,bY=pY(a.prim),ay=bY+(a.type==='load'?TXD:0),y=ay+48+(a.type==='load'?LVD:0);let sym='';const col=a.col||'var(--muted)';
     if(a.type==='load'){const p=a.prim,by=ay+16;
-      sym=LDX.map((dx,i)=>LV_ON?`<line id="lfl_${p}${i}" class="cond mv" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${ay+44}"/><line id="lfm_${p}${i}" class="cond mv" x1="${x+dx}" y1="${ay+56}" x2="${x+dx}" y2="${y+4}"/><rect id="lfb_${p}${i}" class="brk sw" x="${x+dx-6}" y="${by+6}" width="12" height="12"/><rect id="midb_${p}${i}" class="brk sw man mid" x="${x+dx-6}" y="${ay+44}" width="12" height="12" rx="6"/><path id="lft_${p}${i}" class="sym" d="M${x+dx-7} ${y+4} L${x+dx+7} ${y+4} L${x+dx} ${y+17} Z"/>`
-        :`<line id="lfl_${p}${i}" class="cond mv" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${y+4}"/><rect id="lfb_${p}${i}" class="brk sw" x="${x+dx-6}" y="${by+8}" width="12" height="12"/><path id="lft_${p}${i}" class="sym" d="M${x+dx-7} ${y+4} L${x+dx+7} ${y+4} L${x+dx} ${y+17} Z"/>`).join('');
+      sym=LDX.map((dx,i)=>LV_ON?`<line id="lfl_${p}${i}" class="cond mv" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${ay+44}"/><line id="lfm_${p}${i}" class="cond mv" x1="${x+dx}" y1="${ay+56}" x2="${x+dx}" y2="${y+4}"/><line id="lff0_${p}${i}" class="flow fl-lv idle" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${ay+44}"/><line id="lff1_${p}${i}" class="flow fl-lv idle" x1="${x+dx}" y1="${ay+56}" x2="${x+dx}" y2="${y+4}"/><rect id="lfb_${p}${i}" class="brk sw" x="${x+dx-6}" y="${by+6}" width="12" height="12"/><rect id="midb_${p}${i}" class="brk sw man mid" x="${x+dx-6}" y="${ay+44}" width="12" height="12" rx="6"/>${bld(x+dx,y+3,p,i)}${boltAt('lfx0_'+p+i,x+dx,ay+39)}${boltAt('lfx1_'+p+i,x+dx,ay+63)}<g id="lfq_${p}${i}" class="lfq" hidden><title>Fault on this feeder: location not known yet</title><circle cx="${x+dx-9}" cy="${ay+50}" r="4.6"/><text x="${x+dx-9}" y="${ay+52.6}" text-anchor="middle">?</text></g>`
+        :`<line id="lfl_${p}${i}" class="cond mv" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${y+4}"/><line id="lff0_${p}${i}" class="flow fl-lv idle" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${y+4}"/><rect id="lfb_${p}${i}" class="brk sw" x="${x+dx-6}" y="${by+8}" width="12" height="12"/>${bld(x+dx,y+3,p,i)}`).join('');
       if(PRIO_ON)LDX.forEach((dx,i)=>{const P=prioOf(p,i);if(!P)return;const fx=x+dx+12,K=PRK[P.kind];sym+=`<g id="pri_${p}${i}" class="pri pri-${P.kind}"><title>${esc(P.name)}</title><circle cx="${fx}" cy="${y-3}" r="7"/><text x="${fx}" y="${y+0.3}" text-anchor="middle">${K.ch}</text></g>`;});
       if(LV_ON)LDX.forEach((dx,i)=>{const fx=x+dx;sym+=`<g id="mgg_${p}${i}" class="mg" hidden><path class="mg-l" d="M${fx} ${VF_ON&&VFI.includes(i)?y+40:y+17} V${y+45.5}"/><circle cx="${fx}" cy="${y+52}" r="6.5"/><text x="${fx}" y="${y+55}" text-anchor="middle">G</text></g>`;SELBOX['mg:'+p+i]=[fx-9,y+43,18,18];});
       s+=`<line id="alb_load_${p}" class="cond mv" x1="${x+LDX[0]-2}" y1="${by}" x2="${x+LDX[2]+2}" y2="${by}" style="stroke-width:3"/>`;
@@ -2628,12 +2678,12 @@ function renderMimic(){
     setAttr($('pb_'+p),'class','bus mv'+(sup==='off'?' dead':''));
     const ds=sup==='par'&&!S.tie[p].closed?(fdOn(p)?'bc':'kn'):sup;txt('ps_'+p,supLbl(ds));txt('pn_'+p,sup==='off'?'':`net ${Math.round(Math.abs(S.pn[p]))} MW ${S.pn[p]>=0?'▼':'▲'}`);setAttr($('ps_'+p),'class','p-stat'+(ds==='off'?' off':ds==='par'?' par':ds==='kn'||ds==='fm'?' nb '+ds:''));
     const tid='tie:'+p,tc=S.tie[p].closed;if(!PR[p].nb)return;
-    setAttr($('tl_'+p),'class','tie-l '+PR[p].nb+(tc?' on'+heat(S.edL[tid]||0):''));
+    setAttr($('tl_'+p),'class','tie-l '+PR[p].nb+(tc?' on'+heat(S.edL[tid]||0):''));setFlow($('tf_'+p),tc?(S.flows[tid]||0):0);
     setAttr($('tsw_'+p),'class','brk sw'+(tc?'':' open')+(opK===tid?' operating':''));
     setArw('tia_'+p,tc?(S.flows[tid]||0)*TIEARW[p][2]:0,'h');{const et=edgeTxt(tid,tc,tieLimit(p));if(p==='hw'||p==='js')sub2('tt_'+p,et.replace(' · ','\n'));else txt('tt_'+p,et);}setAttr($('tt_'+p),'class',edgeCls(tid,tc));
   });
   ITIDS.forEach(k=>{const id='it:'+k,c=S.it[k].closed,ft=S.it[k].fault;setArw('ita_'+k,c&&!ft?(S.flows[id]||0):0,ITS[k].v?'v':'h');
-    setAttr($('itl_'+k),'class','tie-l it'+(c&&!ft?' on'+heat(S.edL[id]||0):c?' on':''));setAttr($('itsw_'+k),'class','brk sw'+(c?'':' open')+(opK===id?' operating':''));
+    setAttr($('itl_'+k),'class','tie-l it'+(c&&!ft?' on'+heat(S.edL[id]||0):c?' on':''));setFlow($('itf_'+k),c&&!ft?(S.flows[id]||0):0);setAttr($('itsw_'+k),'class','brk sw'+(c?'':' open')+(opK===id?' operating':''));
     txt('itt_'+k,ft?(ft.ready?'REPAIRED':'FAULT'):edgeTxt(id,c,ITS[k].r));setAttr($('itt_'+k),'class',ft&&!ft.ready?'tie-t alarm':edgeCls(id,c));});
   ['kn','fm'].forEach(nb=>{const sp=Math.max(0,S.spare[nb]),u=Math.abs(S.inj[nb]||0),L=u/Math.max(1,sp);txt('nbs_'+nb,u>=.5?`Using ${Math.round(u)} of ${Math.round(sp)} MW`:`Spare ${Math.round(sp)} MW`);setAttr($('nbs_'+nb),'class','nb-s'+(u<.5?'':L>1?' alarm':L>=AL_ON?' warn':''));});
   const c=S.c,a=S.act,on=p=>S.sup[p]!=='off';
@@ -2648,7 +2698,10 @@ function renderMimic(){
         const u=mgAt(p+i),g=$('mgg_'+p+i);const gh=$('mgh_'+p+i);if(gh){if(u)gh.removeAttribute('hidden');else gh.setAttribute('hidden','');}if(g){if(u)g.removeAttribute('hidden');else g.setAttribute('hidden','');setAttr(g,'class','mg'+(u&&u.conn?' on':'')+(crewFor('mg:'+p+i)?' operating':''));}}
       else setAttr($('lfl_'+p+i),'class','cond mv'+(f0!==null?'':' dead'));
       {const P=prioOf(p,i);if(P)setAttr($('pri_'+p+i),'class','pri pri-'+P.kind+(secFeed(p,i,P.sec)===null?' off':''));}
-      setAttr($('lft_'+p+i),'class','sym'+(f1===null?(S.nop[p][i]?' vf':' off'):f1==='vf'?' vf':f1==='mg'?' mg':f1!==p?' lk':'')+(F&&(!F.found||F.sec===1)?' flt':''));
+      {const mwv=lfMW(p,i)*6,s0=f0===null?0:f0===p&&v?mwv*(f1===p?1:.5):-mwv*.5,s1=f1===null?0:f1===p?mwv*.5:-mwv*(f0===f1?1:.5);
+        if(LV_ON){setFlow($('lff0_'+p+i),s0);setFlow($('lff1_'+p+i),s1);showIf($('lfx0_'+p+i),!!(F&&F.found&&F.sec===0));showIf($('lfx1_'+p+i),!!(F&&F.found&&F.sec===1));showIf($('lfq_'+p+i),!!(F&&!F.found));}
+        else{const f=feedOf(p,i);setFlow($('lff0_'+p+i),f===null?0:f===p?mwv:-mwv);}}
+      setAttr($('lft_'+p+i),'class','sym bld'+(f1===null?(S.nop[p][i]?' vf':' off'):f1==='vf'?' vf':f1==='mg'?' mg':f1!==p?' lk':'')+(F&&(!F.found||F.sec===1)?' flt':''));
       if(VF_ON&&VFI.includes(i)){const nk='nop:'+p+i,nc=S.nop[p][i];setAttr($('nopb_'+p+i),'class','brk sw nop'+(nc?'':' open')+(opK===nk?' operating':''));setAttr($('nopl_'+p+i),'class','vf-l'+(nc?' on':''));}});});
   LKIDS.forEach(k=>{const id='lk:'+k,c2=!!S.lk[k],f=(S.lkLoad||{})[k]||0,par=(S.flows||{})[id];setAttr($('lksw_'+k),'class','brk sw man'+(c2?'':' open')+(opK===id||crewFor(id)?' operating':''));setAttr($('lkl_'+k),'class','lk-l'+(c2?' on':''));
     txt('lkt_'+k,!c2?`open · ${LINKS[k].r} MW`:par!=null?`parallel ${Math.round(Math.abs(par))}/${LINKS[k].r} MW`:f>.5?`${Math.round(f)}/${LINKS[k].r} MW`:'closed · no load');setAttr($('lkt_'+k),'class','tie-t'+(f>LINKS[k].r?' alarm':f>LINKS[k].r*AL_ON?' warn':''));});

@@ -699,3 +699,38 @@ html.kiosk .zchips,html.kiosk .tpick{display:none!important}
 .mimic-svg .crew-b *{stroke-opacity:1}
 .crew-tag circle{fill:var(--ink);stroke:var(--panel);stroke-width:1}
 .mimic-svg .crew-tag .crew-t,.crew-tag .crew-t{font-size:5.6px;fill:var(--panel);font-weight:700}
+
+/* ---------- Power flow: round dots running along every loaded line ---------- */
+.mimic-svg .flow{stroke-dasharray:0 16;stroke-width:3.6;stroke-linecap:round;opacity:.95}
+.mimic-svg .flow.fl-lv{stroke-width:2.6}
+.mimic-svg .tie-l~.flow,.mimic-svg #itg_hm .flow,.mimic-svg [id^="itf_"]{stroke-width:3}
+
+/* ---------- Faults: a spark where something trips, a bolt on the faulted half ---------- */
+.spark{pointer-events:none}
+.spark .sp-c{fill:#fff3b0;stroke:var(--alarm);stroke-width:2;animation:spC .8s ease-out forwards;transform-box:fill-box;transform-origin:center}
+.spark .sp-r{stroke:#ffb020;stroke-width:2.4;stroke-linecap:round;fill:none;animation:spR .8s ease-out forwards}
+@keyframes spC{0%{transform:scale(.3);opacity:1}40%{opacity:1}100%{transform:scale(2.2);opacity:0}}
+@keyframes spR{0%{opacity:0;stroke-dasharray:0 30}15%{opacity:1}100%{opacity:0;stroke-dasharray:12 30;stroke-dashoffset:-14}}
+.lfx .bolt{fill:var(--alarm);stroke:var(--panel);stroke-width:1.4;paint-order:stroke;stroke-linejoin:round;animation:boltP 1.4s ease-in-out infinite}
+@keyframes boltP{50%{opacity:.45}}
+.lfq circle{fill:var(--warn);stroke:var(--panel);stroke-width:1.2}
+.mimic-svg .lfq text{font:800 7px var(--f-body);fill:#fff;stroke:none}
+@media (prefers-reduced-motion:reduce){.lfx .bolt{animation:none}}
+
+/* ---------- Street-level demand: lit windows go dark when the far half is off ---------- */
+.bld .bb{stroke:var(--panel);stroke-width:.8}
+.bld .br{stroke:var(--sc,var(--ink));stroke-width:1.6;stroke-linecap:round}
+.bld .bw{fill:#ffd23f;transition:fill .4s ease}
+.bld .bd{fill:var(--panel);opacity:.8}
+.asym .sym.bld.off{opacity:.55}
+.sym.bld.off .bw,.sym.bld.flt .bw{fill:#2a2e3c}
+.sym.bld.off .bb{fill:var(--muted)}
+
+/* ---------- Softer panels ---------- */
+.panel{border-radius:12px;border-color:color-mix(in srgb,var(--rule) 75%,transparent);box-shadow:0 1px 2px rgba(20,16,50,.05),0 8px 22px -12px rgba(20,16,50,.22)}
+.ph h2::before{border-radius:3px}
+.btn{border-radius:8px}
+.mscroll{border-radius:8px}
+@media (min-width:701px){.desk{gap:18px}.panel{padding:16px 18px}}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .panel{box-shadow:0 1px 2px rgba(0,0,0,.3),0 10px 26px -12px rgba(0,0,0,.55)}}
+:root[data-theme="dark"] .panel{box-shadow:0 1px 2px rgba(0,0,0,.3),0 10px 26px -12px rgba(0,0,0,.55)}
