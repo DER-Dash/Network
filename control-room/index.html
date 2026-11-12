@@ -30,7 +30,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500;600&family=Caveat:wght@600&display=swap">
 <style>
 :root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 body{margin:0;font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -1215,6 +1215,32 @@ html.kiosk .zchips,html.kiosk .tpick{display:none!important}
 .al-acts{display:flex;gap:6px;padding:6px 0 2px 8px}
 .al-acts .btn{min-height:40px;text-align:left}
 .al>button[aria-expanded="true"]{box-shadow:inset 0 0 0 2px var(--accent)}
+
+/* ---------- Letters from Watts Up: final written warning and dismissal ---------- */
+.letter-wrap{position:fixed;inset:0;z-index:80;overflow-y:auto;background:rgba(8,10,24,.66);padding:max(16px,env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch}
+.letter-wrap[hidden]{display:none}
+.letter-in{max-width:640px;margin:0 auto}
+.lt-paper{background:#fffdf7;color:#1c1b22;border-radius:3px;box-shadow:0 24px 60px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.2);padding:0 44px 28px;font:15.5px/1.6 Georgia,"Times New Roman",serif;animation:ltIn .35s ease-out}
+@keyframes ltIn{from{opacity:0;transform:translateY(14px) rotate(-.4deg)}}
+.lt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin:0 -44px 22px;padding:22px 44px 18px;background:#0B1F3A;border-bottom:4px solid #FFD23F;color:#fff;border-radius:3px 3px 0 0}
+.lt-brand{display:flex;align-items:center;gap:12px}.lt-brand svg{width:46px;height:46px;flex:none}
+.lt-brand b{display:block;font:800 24px/1 var(--f-display,system-ui);letter-spacing:.01em}.lt-brand b span{color:#FFD23F}
+.lt-brand small{display:block;margin-top:4px;font:600 10.5px var(--f-display,system-ui);letter-spacing:.2em;text-transform:uppercase;color:#c9d3e6}
+.lt-head address{font:12px/1.45 var(--f-body,system-ui);font-style:normal;text-align:right;color:#c9d3e6}
+.lt-meta{display:flex;justify-content:space-between;gap:12px;font:13px var(--f-body,system-ui);color:#5b5866}
+.lt-conf{margin:14px 0 4px;font:700 11.5px var(--f-body,system-ui);letter-spacing:.16em;text-transform:uppercase;color:#a3241a}
+.lt-to{margin:0 0 18px;color:#3b3946}
+.lt-paper p{margin:0 0 12px}
+.lt-subj{font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.lt-list{margin:0 0 14px;padding-left:22px}.lt-list li{margin-bottom:5px}
+.lt-sig{margin:6px 0 0!important;font:600 34px/1.1 Caveat,"Segoe Script","Bradley Hand","Snell Roundhand",cursive;color:#1d3a8a;transform:rotate(-2deg);transform-origin:left}
+.lt-signame{color:#3b3946}
+.lt-foot{margin-top:22px;padding-top:10px;border-top:1px solid #e3ddd0;font:11.5px var(--f-body,system-ui);color:#7b7787;text-align:center}
+.lt-btns{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin:16px 0 8px}
+@media (max-width:560px){.lt-paper{padding:0 20px 22px;font-size:14.5px}.lt-head{margin:0 -20px 18px;padding:16px 20px 14px;flex-direction:column}.lt-head address{text-align:left}.lt-brand b{font-size:21px}}
+@media (prefers-reduced-motion:reduce){.lt-paper{animation:none}}
+.career-top .errs.final b{color:var(--alarm)}
+.career-top .errs .s .linkish{font-size:inherit}
 </style>
 </head>
 <body>
@@ -1780,7 +1806,14 @@ function saveName(n){try{localStorage.setItem('fc-name',n);}catch(e){}}
 const SYNC_KEY='fc-sync';
 function syncGet(){try{const v=JSON.parse(localStorage.getItem(SYNC_KEY)||'null');return v&&v.name&&/^\d{4}$/.test(v.pin)?v:null;}catch(e){return null;}}
 function syncSet(v){try{if(v)localStorage.setItem(SYNC_KEY,JSON.stringify(v));else localStorage.removeItem(SYNC_KEY);}catch(e){}}
-function mergeCareer(a,b){const o={stars:{...(a.stars||{})},ach:{...(a.ach||{})},best:{...(a.best||{})}};
+// Careers carry a generation number: being sacked starts generation+1 from nothing, and a newer generation
+// replaces an older one entirely on every device. Within a generation, the best of everything is kept.
+function mergeCareer(a,b){const ga=+a.gen||0,gb=+(b&&b.gen)||0;
+  if(b&&gb>ga)return mergeCareer0({stars:{},ach:{},best:{},gen:gb,errs:0,errLog:[]},b);
+  if(gb<ga)return mergeCareer0(a,null);
+  return mergeCareer0(a,b);}
+function mergeCareer0(a,b){const o={stars:{...(a.stars||{})},ach:{...(a.ach||{})},best:{...(a.best||{})},gen:Math.max(+a.gen||0,+(b&&b.gen)||0),errs:Math.max(+a.errs||0,+(b&&b.errs)||0)};
+  {const la=a.errLog||[],lb=(b&&b.errLog)||[];o.errLog=(lb.length>la.length?lb:la).slice(-6);}
   // a restarted career: the newest one (by time t) wins, so it carries on from the same shift on every device
   const ra=a.run&&(a.run.t||a.run.at)?{...a.run,t:a.run.t||Date.now()}:null,rb=b&&b.run&&b.run.t?b.run:null,r=ra&&rb?(rb.t>ra.t?rb:ra):ra||rb;if(r)o.run=r;
   Object.entries((b&&b.stars)||{}).forEach(([k,v])=>{v=Math.round(+v||0);if(v>=1&&v<=3&&v>(o.stars[k]||0))o.stars[k]=v;});
@@ -2041,8 +2074,50 @@ function mark(m,type,label){if(!S.silent)S.marks.push({m,type,label});}
 // a breaker trip or auto-reclose, shown on the alarm list until it's acknowledged
 function alEv(m,kind,name,sel,note){if(S.silent)return;const id='ev'+(S.alEvN=(S.alEvN||0)+1);S.alarms[id]={id,ev:kind,lvl:kind,name,sel:sel||'',note:note||'',since:m,L:0,ack:false};}
 function queueAlert(text,lvl,pause){if(!S.silent)queued.push({text,lvl,pause,m:S.t});}
+// Switching incidents: one is allowed per shift, a second ends it. In a career they also add up across shifts:
+// the third brings a written warning, the fourth gets you sacked and the career starts again from nothing.
+const clip=(t,n)=>t.length<=n?t:t.slice(0,t.lastIndexOf(' ',n-1)).replace(/[,;:–-]+$/,'')+'…';
+const INC_SHIFT=2,CAREER_WARN=3,CAREER_SACK=4;
 function incident(m,msg,el,rr){S.incidents++;
-  lose(m,'inc'+S.incidents,rr||(/for more than/.test(msg)?'par':/mobile generator/.test(msg)?'inc_mg':/before (its|it was)|onto (the faulted|its fault)|still working/.test(msg)?'inc_early':'oop'),'Switching incident: '+msg.split(/\. /)[0].replace(/\.$/,''),INCIDENT_PTS);S.chain.push('a switching incident');mark(m,'incident','Incident');logE(m,'Switching incident: '+msg,'alarm');queueAlert('Switching incident: '+msg,'alarm',true);play('incident');fx(el);}
+  lose(m,'inc'+S.incidents,rr||(/for more than/.test(msg)?'par':/mobile generator/.test(msg)?'inc_mg':/before (its|it was)|onto (the faulted|its fault)|still working/.test(msg)?'inc_early':'oop'),'Switching incident: '+msg.split(/\. /)[0].replace(/\.$/,''),INCIDENT_PTS);S.chain.push('a switching incident');mark(m,'incident','Incident');logE(m,'Switching incident: '+msg,'alarm');queueAlert('Switching incident: '+msg+(S.tut||S.incidents>=INC_SHIFT?'':' One more switching incident this shift and you will be stood down.'),'alarm',true);play('incident');fx(el);
+  if(S.tut||S.silent)return;
+  let sacked=false;if(S.mode==='career'){const c=career();c.errs=(c.errs||0)+1;(c.errLog=c.errLog||[]).push({k:S.key,m,t:clip(msg.split(/\. /)[0].replace(/\.$/,''),190)});c.errLog=c.errLog.slice(-6);
+    if(c.errs>=CAREER_SACK){sacked=true;S.sacked={log:c.errLog.slice(),errs:c.errs};saveCareer({stars:{},ach:{},best:{},errs:0,errLog:[],gen:(c.gen||0)+1});if(syncGet())syncQuiet();}
+    else{saveCareer(c);if(syncGet())syncQuiet();if(c.errs===CAREER_WARN)S.letterDue={kind:'warn',log:c.errLog.slice(),errs:c.errs};}}
+  if(sacked||S.incidents>=INC_SHIFT)standDown(m,sacked);else if(S.letterDue){const L=S.letterDue;S.letterDue=null;S.paused=true;showLetter(L.kind,L);}}
+// Letters from Watts Up: a written warning after the third career switching error, dismissal after the fourth
+const LETTER_FROM={name:'Rhea Sistor',role:'Head of Network Operations'};
+function letterHtml(kind,D){const nm=getName()||'Control Engineer',date=fmtLong(todayUK()),log=(D&&D.log)||[],n=(D&&D.errs)||log.length;
+  const items=log.length?`<ol class="lt-list">${log.slice(-n).map(e=>`<li><b>${esc((SCENARIOS[e.k]||{}).title||'A shift')}, ${fmtT(e.m)}:</b> ${esc(e.t)}.</li>`).join('')}</ol>`:'';
+  const ref=(kind==='warn'?'HR/FWW/':'HR/DIS/')+String(Date.now()).slice(-5);
+  const body=kind==='warn'?`<p class="lt-subj">Final written warning: switching errors</p>
+    <p>I am writing to you about your conduct in the Blackout Canyon control room. Our records show that you have now made <b>three switching errors</b> during your career with us:</p>${items}
+    <p>Switching errors put our customers, our field staff and the network at risk, and they are taken very seriously. This letter is a <b>formal final written warning</b>, and it will stay on your record.</p>
+    <p><b>One more switching error at any point in your career will result in your dismissal.</b> If that happens, your career record, including your stars, rank and achievements, will be cleared and you will have to start again from Shift 1.</p>
+    <p>Before every operation, please read the switching pop-up carefully: check what the switch will parallel or close onto, whether the repair is finished, and which route to open first. If you are unsure, stop and think. Nobody has ever been disciplined for taking an extra minute.</p>`
+   :`<p class="lt-subj">Notice of dismissal</p>
+    <p>Further to my final written warning, I am sorry to tell you that you have made a <b>fourth switching error</b>:</p>${items}
+    <p>As you were warned, this means your employment as a control engineer at Blackout Canyon is <b>terminated with immediate effect</b>. Your career record, including your stars, rank and achievements, has been cleared.</p>
+    <p>You are welcome to reapply. Your new career starts from Shift 1 with a clean record.</p>`;
+  return `<div class="lt-paper" role="document"><header class="lt-head"><div class="lt-brand">${LOGO}<div><b>Watts <span>Up</span></b><small>Electricity Distribution</small></div></div>
+    <address>Watts Up House<br>1 Circuit Way<br>Blackout Canyon BC1 33K<br>control@wattsup.example</address></header>
+    <div class="lt-meta"><span>Our ref: ${ref}</span><span>${esc(date)}</span></div><p class="lt-conf">Private and confidential</p>
+    <p class="lt-to">${esc(nm)}<br>Control Engineer<br>Blackout Canyon Control Room</p>
+    <p>Dear ${esc(nm)},</p>${body}
+    <p>Yours sincerely,</p><p class="lt-sig">${LETTER_FROM.name}</p><p class="lt-signame">${LETTER_FROM.name}<br>${LETTER_FROM.role}</p>
+    <footer class="lt-foot">Watts Up Electricity Distribution Ltd · Keeping the lights on. Mostly.</footer></div>`;}
+function fmtLong(d){const[y,mo,da]=d.split('-').map(Number);return new Date(Date.UTC(y,mo-1,da)).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});}
+let letterNow=null;
+function showLetter(kind,D){letterNow={kind,D};let el=$('letter');if(!el){el=document.createElement('div');el.id='letter';el.className='letter-wrap';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');document.body.appendChild(el);}
+  el.setAttribute('aria-label',kind==='warn'?'Final written warning':'Notice of dismissal');
+  el.innerHTML=`<div class="letter-in">${letterHtml(kind,D)}<div class="lt-btns">${kind==='warn'?'<button type="button" class="btn primary big" data-letter-ok>I understand</button>'
+    :'<button type="button" class="btn" data-letter-ok>See the shift results</button><button type="button" class="btn primary big" data-letter-restart>Start my new career</button>'}</div></div>`;
+  el.hidden=false;el.scrollTop=0;play(kind==='warn'?'warn':'lost');const b=el.querySelector('[data-letter-ok]');if(b)b.focus({preventScroll:true});}
+function closeLetter(){const el=$('letter');if(el)el.hidden=true;const k=letterNow&&letterNow.kind;letterNow=null;if(k==='warn'&&S&&!S.ended&&S.running){S.paused=false;render(true);}}
+function standDown(m,sacked){if(S.ended)return;queued=[];hideBanner();
+  S.lost={m,kind:sacked?'sacked':'inc',why:sacked?'your fourth switching error of your career':'a second switching incident this shift'};
+  mark(m,'lost',sacked?'Sacked':'Stood down');lose(m,'lost','inc2',sacked?'Dismissed after a fourth switching error':'Stood down after a second switching incident',(END-m)*10+5000);
+  logE(m,sacked?'Control has relieved you of duty: that was your fourth switching error, so you have been dismissed.':'Control has stood you down for the rest of the shift after a second switching incident.','alarm');play('lost');endShift();}
 function openEdge(id){const[t,k]=id.split(':');if(t==='bs')S.bs[k].closed=false;else if(t==='bc')S.fd[k].brk=false;else if(t==='in')S.fd[k].inc=false;else if(t==='tie')S.tie[k].closed=false;else if(t==='it')S.it[k].closed=false;else if(t==='lk')S.lk[k]=false;}
 const isClosed=id=>{const[t,k]=id.split(':');return t==='bs'?S.bs[k].closed:t==='bc'?S.fd[k].brk:t==='in'?S.fd[k].inc:t==='tie'?S.tie[k].closed:t==='lk'?!!S.lk[k]:S.it[k].closed;};
 const fdOn=p=>{const f=S.fd[p];return !!PR[p].fd&&f.brk&&f.inc&&!f.fault;};
@@ -3358,9 +3433,10 @@ const FC_RULES=`
     <li>If every transformer trips, Blackout Canyon is lost and the shift ends.</li>`;
 function careerBox(){const c=career(),n=starsOf(c),nr=nextRank(n),got=ACH.filter(a=>c.ach[a.id]);
   return `<div class="career" id="careerBox"><div class="career-top"><div><span class="k">Rank</span><b>${esc(rankOf(n))}</b><span class="s">${n} of ${CAREER.length*3} stars${nr?` · ${nr[0]-n} more for ${esc(nr[1])}`:''}</span></div>
-    <div><span class="k">Achievements</span><b>${got.length} of ${ACH.length}</b></div></div>
+    <div><span class="k">Achievements</span><b>${got.length} of ${ACH.length}</b></div>
+    <div class="errs${(c.errs||0)>=CAREER_WARN?' final':''}"><span class="k">Switching errors</span><b>${c.errs||0} of ${CAREER_SACK}</b><span class="s">${(c.errs||0)>=CAREER_WARN?'Final warning: one more and you\'re sacked · <button type="button" class="linkish" data-letter="warn">read the letter</button>':`${CAREER_SACK} in your career and you're sacked`}</span></div></div>
     <div class="ach">${ACH.map(a=>`<span class="badge${c.ach[a.id]?' got':''}" title="${esc(a.d)}">${c.ach[a.id]?'🏅':'○'} ${esc(a.name)}</span>`).join('')}</div>
-    <p class="fine">Finish a shift to unlock the next one. Grade A earns 3 stars, B 2, C or D 1. Career shifts use random faults and count on the free-play scoreboard.</p>${restartBox(c)}${syncBox()}</div>`;}
+    <p class="fine">One switching incident is allowed per shift: a second ends it. In your career, a third brings a final written warning, and a fourth gets you sacked and your career starts again from nothing. Finish a shift to unlock the next one. Grade A earns 3 stars, B 2, C or D 1. Career shifts use random faults and count on the free-play scoreboard.</p>${restartBox(c)}${syncBox()}</div>`;}
 function restartBox(c){const ks=careerKeys(),un=ks.filter(k=>unlockedK(c,k));if(!starsOf(c))return '';
   const R=runOn(c)?c.run:null,rs=R?Object.values(R.stars).reduce((a,v)=>a+v,0):0;
   return `<div class="restart" id="restartBox"><p class="sync-h">Start your career again</p>
@@ -3486,7 +3562,7 @@ function endShift(){
   }
   S.final={...sc,grade:L?'Lost':g,gl,gd,result:L?'lost':'complete'};
   if(sc.total>(+ls('best-'+S.key)||0))ls('best-'+S.key,String(sc.total));
-  {const c=career(),before=starsOf(c),done=!L,st=L?0:{A:3,B:2,C:1,D:1}[g]||0,newA=[];const prevUnl=CAREER.filter(k=>unlockedK(c,k));
+  if(S.sacked)S.careerRes=null;else{const c=career(),before=starsOf(c),done=!L,st=L?0:{A:3,B:2,C:1,D:1}[g]||0,newA=[];const prevUnl=CAREER.filter(k=>unlockedK(c,k));
    const award=(id,ok)=>{if(ok&&!c.ach[id]&&ACH.some(a=>a.id===id)){c.ach[id]=1;newA.push(ACH.find(a=>a.id===id));}};
    award('first',done);award('clean',done&&S.incidents===0);award('solid',done&&S.insecureMin===0);award('quick',done&&S.cust.ci===0&&S.cust.si>0);award('nobody',done&&S.cust.ci===0&&S.cust.si===0);
    award('mbb',S.parOk>0);award('crews',S.crewJobs>=8);award('vf',S.vfPeak>=20);award('heat',done&&S.key==='heat'&&(g==='A'||g==='B'));award('gsp',done&&S.key==='gsp'&&S.gspTrips===0);award('dry',done&&S.key==='xmas'&&!!S.flood&&S.flood.arrived&&S.flood.live===false);award('endure',done&&S.key==='endure'&&(g==='A'||g==='B'));award('cheap',done&&GAME==='fc'&&sc.spend<2000);
@@ -3551,6 +3627,7 @@ const DB_TIPS={
   lvcall:'Customers were calling before the trip alarm came through. When callers are off but their feeder breaker still shows closed, poll the RTU at that substation.',
   flood:'Before the water arrives, move every feeder at the flooded substation onto another supply, then open its feeder breakers and its transformer breaker so the switchboard is dead.',
   flood_close:'Leave the flooded switchgear dead until the "dried and tested" message. Closing anything onto it trips it and adds 30 minutes.',
+  inc2:'Two switching incidents end the shift. Check each operation in the pop-up first: what it will parallel, what it closes onto, and whether the repair is finished.',
   lost:'Every substation was off at once. Keep a healthy route ready for each substation, and get transformers under their emergency rating before protection trips them.'};
 const UNAVOID={repair:1,ar:1,prio_rep:1};// faulted sections and auto-recloses: nothing the player could have done
 const tipOf=r=>{const b=r.split('_')[0],t=S.sc.tips||{};return t[r]||t[b]||DB_TIPS[r]||DB_TIPS[b]||'';};
@@ -3589,7 +3666,10 @@ function showEnd(){
   <p class="lock-note" id="lockNote" ${S.unlocked?'hidden':''}>Enter your name and submit your score to carry on.</p>
   <p class="fine">${S.mode==='daily'?"Today's challenge keeps the same faults if you try again.":S.mode==='career'?'Career shifts change the faults every game.':'Free play changes the faults every game.'}</p>
   <p class="fine">Spotted a bug or got an idea? <button type="button" class="linkish" data-feedback>Send feedback</button></p>`;
-  const head=L?`<h2>Blackout Canyon lost at ${fmtT(L.m)}</h2>
+  const head=L&&L.kind?`<h2>${L.kind==='sacked'?'Dismissed':'Stood down'} at ${fmtT(L.m)}</h2>
+    <div class="grade"><span class="lt alarm">✕</span><p style="margin:0;max-width:52ch">${L.kind==='sacked'?'That was the fourth switching error of your career, so you have been sacked. Your career starts again from Shift 1.':'A second switching incident ends the shift. Only one is allowed.'}</p></div>
+    <p style="margin:0 0 14px">${L.kind==='sacked'?`<button type="button" class="linkish" data-letter="sacked">Read your letter</button>`:'Before each operation, read the switch pop-up: check what the switch will parallel or close onto, and open the old route first when the supplies are different.'}</p>`
+   :L?`<h2>Blackout Canyon lost at ${fmtT(L.m)}</h2>
     <div class="grade"><span class="lt alarm">✕</span><p style="margin:0;max-width:52ch">After ${esc(L.why)}, all ${PIDS.length===5?'five':'four'} substations were off supply at once.</p></div>
     <p style="margin:0 0 14px">You held on for ${Math.floor((L.m-START)/60)} h ${(L.m-START)%60} min. Keep Blackout Canyon inside firm capacity${GAME==='fc'?', and arm flexibility so it switches in when a transformer trips':', and use the ties and interconnectors to keep substations on when things trip'}.</p>`
    :`<h2>Shift complete</h2><div class="grade"><span class="lt ${F.gl}">${F.grade}</span><p style="margin:0;max-width:44ch">${F.gd}</p></div>`;
@@ -3602,7 +3682,7 @@ function showEnd(){
       ${syncGet()||S.syncRes?`<p class="fine sync-end" id="endSync" role="status">${esc(endSyncTxt())}</p>`:''}
       ${S.mode!=='career'?'':CR.next?(unlockedK(career(),CR.next)?`<button type="button" class="btn primary big" data-next="${CR.next}">Start next day: ${esc(SCENARIOS[CR.next].title)} →</button>`:`<p class="fine">Finish this shift to unlock ${esc(SCENARIOS[CR.next].title)}. Press Try again below.</p>`):`<p><b>That's every career shift done${CR.runEnd?' again':''}.</b> Replay any of them to earn more stars, or <button type="button" class="linkish" data-restart="${careerKeys()[0]}">start your career again from shift 1</button>.</p>`}</div>`:'';
   $('sheet').innerHTML=`${BAND}<p class="eyebrow">${esc(S.sc.title)}, ${esc(S.sc.when)} · ${S.mode==='daily'?"Today's challenge, "+fmtDate(S.date):S.mode==='career'?'Career · '+esc(CR?CR.rank:''):'Free play'}</p>${head}${cbox}${drawDebrief()}${drawReplay()}${score}${sub}${costs}${btns}`;
-  $('overlay').hidden=false;
+  $('overlay').hidden=false;if(S.sacked&&!S.sackShown){S.sackShown=1;showLetter('sacked',S.sacked);}else if(S.letterDue){const D=S.letterDue;S.letterDue=null;showLetter(D.kind,D);}
 }
 
 function unlockEnd(){S.unlocked=true;['againBtn','sheetBoardBtn','replayBtn'].forEach(i=>{const b=$(i);if(b)b.disabled=false;});const n=$('lockNote');if(n)n.hidden=true;}
@@ -3679,6 +3759,9 @@ document.addEventListener('click',e=>{
   {const zc=e.target.closest('[data-zone]');if(zc&&S){const z=zc.dataset.zone;if(z==='all'){hidePick();zoomed=false;applyZoom();const pm=$('pMimic'),bar=document.querySelector('.bar'),top=bar&&getComputedStyle(bar).position==='sticky'?bar.offsetHeight:0;if(pm)window.scrollTo({top:pm.getBoundingClientRect().top+window.scrollY-top-6,behavior:RMQ.matches?'auto':'smooth'});}else{const c=zoneOf(z);if(c)zoomTo(c[0],c[1]);}return;}}
   if(e.target.closest('#mimic')&&tapPick(e))return;
   if(!e.target.closest('#pick'))hidePick();
+  if(e.target.closest('[data-letter-ok]')){closeLetter();return;}
+  if(e.target.closest('[data-letter-restart]')){closeLetter();mode='career';ls('mode',mode);chosen=careerKeys()[0];ls('day',chosen);newGame(chosen);startSheet();return;}
+  {const lb=e.target.closest('[data-letter]');if(lb){const c=career();showLetter(lb.dataset.letter,lb.dataset.letter==='sacked'?(S&&S.sacked):{log:c.errLog||[],errs:c.errs||0});return;}}
   {const g=e.target.closest('[data-goto]');if(g&&S){gotoDev(g.dataset.goto);return;}}
   {const al=e.target.closest('.al-list [data-al]');if(al&&S){alOpen=alOpen===al.dataset.al?null:al.dataset.al;lastAl='';renderAlarms();const b=document.querySelector(`[data-goto]`);if(b)b.focus({preventScroll:true});return;}}
   const sl=e.target.closest('[data-sel]');if(sl&&S){select(sl.dataset.sel,!!sl.closest('#mimic'));return;}

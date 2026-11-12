@@ -68,7 +68,8 @@ const click=(doc,el)=>el.dispatchEvent(new doc.defaultView.MouseEvent('click',{b
   ok(S.flood.live===true&&S.incidents===1,'flood reached live switchgear: incident');
   ok(!S.pt.rv.closed&&S.lf.rv.every(v=>!v)&&S.pt.rv.fault&&S.pt.rv.fault.flood,'transformer and feeder breakers tripped');
   ok(S.loss.some(e=>e.r==='flood'),'debrief has the flood');
-  G.op('pt:rv','close');G.run(2);ok(S.incidents===2&&!S.pt.rv.closed,'closing onto the flooded switchgear is an incident');
+  S.incidents=0;// (a second incident would end the shift: that rule has its own test)
+  G.op('pt:rv','close');G.run(2);ok(S.incidents===1&&!S.pt.rv.closed,'closing onto the flooded switchgear is an incident');
   until(G,()=>S.pt.rv.fault.ready,800);ok(S.log.some(l=>/dried and tested/.test(l.text)),'switchgear back after drying out');
   G.op('pt:rv','close');G.run(2);ok(S.pt.rv.closed&&S.pt.rv.fault===null,'transformer back in');
  }

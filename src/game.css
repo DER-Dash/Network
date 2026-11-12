@@ -739,3 +739,29 @@ html.kiosk .zchips,html.kiosk .tpick{display:none!important}
 .al-acts{display:flex;gap:6px;padding:6px 0 2px 8px}
 .al-acts .btn{min-height:40px;text-align:left}
 .al>button[aria-expanded="true"]{box-shadow:inset 0 0 0 2px var(--accent)}
+
+/* ---------- Letters from Watts Up: final written warning and dismissal ---------- */
+.letter-wrap{position:fixed;inset:0;z-index:80;overflow-y:auto;background:rgba(8,10,24,.66);padding:max(16px,env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch}
+.letter-wrap[hidden]{display:none}
+.letter-in{max-width:640px;margin:0 auto}
+.lt-paper{background:#fffdf7;color:#1c1b22;border-radius:3px;box-shadow:0 24px 60px rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.2);padding:0 44px 28px;font:15.5px/1.6 Georgia,"Times New Roman",serif;animation:ltIn .35s ease-out}
+@keyframes ltIn{from{opacity:0;transform:translateY(14px) rotate(-.4deg)}}
+.lt-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin:0 -44px 22px;padding:22px 44px 18px;background:#0B1F3A;border-bottom:4px solid #FFD23F;color:#fff;border-radius:3px 3px 0 0}
+.lt-brand{display:flex;align-items:center;gap:12px}.lt-brand svg{width:46px;height:46px;flex:none}
+.lt-brand b{display:block;font:800 24px/1 var(--f-display,system-ui);letter-spacing:.01em}.lt-brand b span{color:#FFD23F}
+.lt-brand small{display:block;margin-top:4px;font:600 10.5px var(--f-display,system-ui);letter-spacing:.2em;text-transform:uppercase;color:#c9d3e6}
+.lt-head address{font:12px/1.45 var(--f-body,system-ui);font-style:normal;text-align:right;color:#c9d3e6}
+.lt-meta{display:flex;justify-content:space-between;gap:12px;font:13px var(--f-body,system-ui);color:#5b5866}
+.lt-conf{margin:14px 0 4px;font:700 11.5px var(--f-body,system-ui);letter-spacing:.16em;text-transform:uppercase;color:#a3241a}
+.lt-to{margin:0 0 18px;color:#3b3946}
+.lt-paper p{margin:0 0 12px}
+.lt-subj{font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.lt-list{margin:0 0 14px;padding-left:22px}.lt-list li{margin-bottom:5px}
+.lt-sig{margin:6px 0 0!important;font:600 34px/1.1 Caveat,"Segoe Script","Bradley Hand","Snell Roundhand",cursive;color:#1d3a8a;transform:rotate(-2deg);transform-origin:left}
+.lt-signame{color:#3b3946}
+.lt-foot{margin-top:22px;padding-top:10px;border-top:1px solid #e3ddd0;font:11.5px var(--f-body,system-ui);color:#7b7787;text-align:center}
+.lt-btns{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin:16px 0 8px}
+@media (max-width:560px){.lt-paper{padding:0 20px 22px;font-size:14.5px}.lt-head{margin:0 -20px 18px;padding:16px 20px 14px;flex-direction:column}.lt-head address{text-align:left}.lt-brand b{font-size:21px}}
+@media (prefers-reduced-motion:reduce){.lt-paper{animation:none}}
+.career-top .errs.final b{color:var(--alarm)}
+.career-top .errs .s .linkish{font-size:inherit}

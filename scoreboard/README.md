@@ -125,3 +125,13 @@ Manage deployments → pencil → Version: New version → Deploy** (same URL).
 
 Until this is done, everything else still works, but a restarted career stays on the
 device where it was restarted.
+
+## Updating to version 17 (switching errors and getting sacked)
+
+Version 17 also saves each career's switching errors and a generation number. Getting sacked
+(a fourth switching error) starts a new generation from nothing, and the newer generation
+replaces the old career on every device. Replace the code with the new `Code.gs`, save, then
+**Deploy → Manage deployments → pencil → Version: New version → Deploy** (same URL).
+
+Until this is done, being sacked clears the career on the device where it happened, but a
+career loaded on another device keeps its old stars.

@@ -1,5 +1,7 @@
 /**
  * Losing Control scoreboard and feedback (Watts Up), version 7.
+ * Version 17: careers also keep switching errors ('errs', 'errLog') and a generation number ('gen').
+ *   Being sacked starts a new generation from nothing, and a newer generation replaces an older one.
  * Version 16: career sync also keeps a restarted career ('run': the shift it is on, where it
  *   restarted, its stars, and a time t). The newest run wins, and an ended run is kept as {end:true,t}.
  * Version 15: career sync can be asked only to load ({intent:'load'}): an unknown name
@@ -37,7 +39,7 @@
  * formula as the game, so the sheet never trusts a score sent by the browser.
  * Rows saved before version 2 have no mode and count as free play.
  */
-const VERSION = 16;
+const VERSION = 17;
 // Scores are only accepted from the games on this site. Apps Script can't see the request's
 // origin, so the games send their hostname; copies of the game hosted elsewhere send theirs.
 const HOME_SITE = 'der-dash.github.io';
@@ -176,6 +178,10 @@ function cleanCareer_(c, game) {
   days.forEach(k => { const v = Math.round(Number(stars[k]) || 0); if (v >= 1 && v <= 3) out.stars[k] = v; });
   const ach = c.ach && typeof c.ach === 'object' ? c.ach : {};
   Object.keys(ach).filter(k => /^[a-z]{1,16}$/.test(k) && ach[k]).slice(0, 40).forEach(k => { out.ach[k] = 1; });
+  out.gen = Math.max(0, Math.min(1e6, Math.round(Number(c.gen) || 0)));
+  out.errs = Math.max(0, Math.min(99, Math.round(Number(c.errs) || 0)));
+  out.errLog = (Array.isArray(c.errLog) ? c.errLog : []).slice(-6).filter(e => e && days.indexOf(e.k) >= 0)
+    .map(e => ({ k: e.k, m: Math.round(Number(e.m) || 0), t: String(e.t || '').replace(/[<>]/g, '').slice(0, 200) }));
   const run = c.run && typeof c.run === 'object' ? c.run : null, t = run ? Math.round(Number(run.t) || 0) : 0;
   if (run && t > 0) {
     if (run.end) out.run = { end: true, t: t };
@@ -189,7 +195,10 @@ function cleanCareer_(c, game) {
 }
 
 function mergeCareer_(a, b) {
-  const out = { stars: {}, ach: {}, best: {} };
+  // a newer career generation (after being sacked) replaces the older one completely
+  if ((a.gen || 0) !== (b.gen || 0)) return (a.gen || 0) > (b.gen || 0) ? a : b;
+  const out = { stars: {}, ach: {}, best: {}, gen: a.gen || 0, errs: Math.max(a.errs || 0, b.errs || 0),
+    errLog: ((b.errLog || []).length > (a.errLog || []).length ? b.errLog : a.errLog) || [] };
   [a, b].forEach(c => {
     Object.keys(c.stars).forEach(k => { out.stars[k] = Math.max(out.stars[k] || 0, c.stars[k]); });
     Object.keys(c.ach).forEach(k => { out.ach[k] = 1; });
