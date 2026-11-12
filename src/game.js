@@ -348,6 +348,11 @@ const ICONS={solar:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12
 const SCENE={xmas:'flood',ev:'plug',quiet:'sun',grid:'pylon',storm:'storm',heat:'heat',jan:'snow',snow:'snow',gsp:'pylon',mesh:'pylon',endure:'storm',may:'sun',tut:'snow'};
 const WX={xmas:'rain',ev:'snow',grid:'cloud',gsp:'cloud',mesh:'snow'};
 const sceneOf=k=>SCENE[k]||'pylon',wxOf=k=>WX[k]||{pylon:'cloud'}[sceneOf(k)]||sceneOf(k);
+// Field crew: an engineer in a white hard hat and hi-vis vest, drawn round the feet at (0, 4). Legs and arms swing when walking.
+const CREW_FIG='<path class="cf-leg cf-l" d="M-1.5 -3.5 L-2 4"/><path class="cf-leg cf-r" d="M1.5 -3.5 L2 4"/>'+
+  '<path class="cf-arm cf-al" d="M-3.6 -9.6 L-5 -4.2"/><path class="cf-arm cf-ar" d="M3.6 -9.6 L5 -4.2"/>'+
+  '<rect class="cf-vest" x="-4" y="-11" width="8" height="8.4" rx="2.4"/><path class="cf-band" d="M-3.9 -6.6 H3.9"/><path class="cf-zip" d="M0 -10.6 V-3"/>'+
+  '<circle class="cf-face" cx="0" cy="-13.9" r="2.7"/><path class="cf-hat" d="M-3.1 -14.7 A3.1 3.3 0 0 1 3.1 -14.7 Z"/><path class="cf-brim" d="M-4.2 -14.6 H4.2"/>';
 const LOGO='<svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg>';
 const BAND=`<div class="sheet-brand wu"><div class="wu-lock"><svg viewBox="0 0 100 100" role="img" aria-label="Watts Up"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg><div><b>Watts <span>Up</span></b><small>Electricity Distribution</small></div></div><p class="tag">${CFG.band}</p></div>`;
 const SPK_ON='<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
@@ -1206,8 +1211,8 @@ function buildMimic(){
   if(S.sc.gsp)s+=`<text id="gspT" class="gsp-t" x="812" y="44"></text>`;
   if(CREW_ON)SELBOX.depot=[1080,22,114,74];
   s+=`<rect id="coachRing" class="coach-ring" x="0" y="0" width="0" height="0" rx="10" visibility="hidden"/>`;
-  if(CREW_ON){s+=`<g class="depot"><text class="nb-name crew-n" x="1188" y="34" text-anchor="end">CREW DEPOT</text><text class="nb-r" x="1188" y="48" text-anchor="end">${S.crews.length===1?"1 field crew":S.crews.length+" field crews"}</text><path class="depot-i" d="M1094 76 l11 -10 l11 10 v11 h-22z"/></g><g id="crews">`+
-    [1,2,3].map(n=>`<g id="crew${n}" class="crew"><g class="crew-b"><circle cx="0" cy="-15" r="3.6"/><path d="M0 -11 V-3 M0 -9 l-5 4 M0 -9 l5 4 M0 -3 l-4 7 M0 -3 l4 7"/></g><text class="crew-t" x="7" y="-12">${n}</text></g>`).join('')+'</g>';}
+  if(CREW_ON){s+=`<g class="depot"><text class="nb-name crew-n" x="1188" y="34" text-anchor="end">CREW DEPOT</text><text class="nb-r" x="1188" y="48" text-anchor="end">${S.crews.length===1?"1 field crew":S.crews.length+" field crews"}</text><g class="depot-i"><path class="dp-b" d="M1090 75 L1105 64 L1120 75 V89 H1090 Z"/><rect class="dp-d" x="1097" y="77" width="16" height="12" rx="1"/><path class="dp-l" d="M1097 80.5 h16 M1097 84 h16 M1097 87.5 h16"/></g></g><g id="crews">`+
+    [1,2,3].map(n=>`<g id="crew${n}" class="crew"><g class="crew-b">${CREW_FIG}</g><g class="crew-tag"><circle cx="6.2" cy="-16.4" r="3.9"/><text class="crew-t" x="6.2" y="-14.3" text-anchor="middle">${n}</text></g></g>`).join('')+'</g>';}
   s+=`<rect id="selbox" class="selbox" x="0" y="0" width="0" height="0" rx="6" visibility="hidden"/>`;
   if(GAME==='fc')s=s.replace(/<rect class="hit" data-sel="(?:bc|in|tie|it|bs|lf|nop|lk|nb|pt):[^"]*"[^>]*\/>/g,'');
   {const lg=$('lgLK');if(lg)lg.hidden=!LKIDS.length;}
@@ -1948,7 +1953,7 @@ function heroArt(){const cr=GAME==='cr',X=[80,160,240],F=[60,125,195,260];
   <path class="ha-bolt" d="M262 82 l-9 13 h6 l-3 10 l10 -14 h-6 z"/>
   <path class="ha-bus" d="M30 110 H290"/><text class="ha-t" x="30" y="104">33 kV</text>
   ${F.map(x=>`<path class="ha-fd" d="M${x} 110 V146"/><path class="ha-flow" d="M${x} 110 V146"/><path class="ha-sub" d="M${x-16} 146 H${x+16}"/>${[-9,0,9].map(d=>`<path class="ha-ld" d="M${x+d-4} 152 h8 l-4 7 z"/>`).join('')}`).join('')}
-  ${cr?`<g class="ha-crew"><g class="ha-bob"><circle cx="0" cy="-15" r="3.6"/><path d="M0 -11 V-3 M0 -9 l-5 4 M0 -9 l5 4 M0 -3 l-4 7 M0 -3 l4 7"/></g></g><path class="ha-path" d="M14 196 H306"/>`
+  ${cr?`<g class="ha-crew"><g class="ha-bob crew-b">${CREW_FIG}</g></g><path class="ha-path" d="M14 196 H306"/>`
     :`<g class="ha-wt" transform="translate(296 168)"><path class="ha-tower" d="M0 0 V34"/><g class="ha-blades"><path d="M0 0 V-14 M0 0 L12 7 M0 0 L-12 7"/></g></g><g class="ha-sun" transform="translate(24 176)"><circle r="7"/><path d="M0 -12v3M0 9v3M-12 0h3M9 0h3M-8.5 -8.5l2 2M6.5 6.5l2 2M-8.5 8.5l2 -2M6.5 -6.5l2 -2"/></g>`}
 </svg>`;}
 const loadBtn=()=>syncGet()?'':`<button type="button" class="btn sec-go" data-go="load"><small>Played on another device?</small>Load your career</button>`;

@@ -193,14 +193,11 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 
 /* Field crews */
 .crew{transition:none}
-.crew-b{fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round}
-.crew-b circle{fill:var(--zap);stroke:var(--ink);stroke-width:1.5}
-.crew.busy .crew-b circle{fill:#ff8a3d}
 .crew-t{font:700 10px var(--f-mono);fill:var(--ink)}
 .crew.walk .crew-b{animation:crewbob .5s ease-in-out infinite alternate}
 @keyframes crewbob{from{transform:translateY(0)}to{transform:translateY(-2.5px)}}
 @media (prefers-reduced-motion: reduce){.crew.walk .crew-b{animation:none}}
-.depot-i{fill:none;stroke:var(--muted);stroke-width:1.8}
+.depot-i .dp-b{fill:var(--sunk);stroke:var(--muted);stroke-width:1.6;stroke-linejoin:round}.depot-i .dp-d{fill:var(--panel);stroke:var(--muted);stroke-width:1.2}.depot-i .dp-l{fill:none;stroke:var(--muted);stroke-width:.8;opacity:.7}
 .nb-name.crew-n{fill:var(--ink)}
 .qp-crew{margin:-2px 0 8px;font-size:12.5px;color:var(--muted)}
 .gsp-t{font:700 11px var(--f-mono);fill:var(--muted)}
@@ -392,7 +389,7 @@ html.kiosk.k-insp .coach{bottom:calc(28px + var(--ih,300px))}
 .ha-f .ha-w1,.ha-f .ha-w2{animation:haDim 8s infinite}
 .ha-bolt{fill:var(--alarm);opacity:0;animation:haBolt 8s infinite}
 .ha-crew{animation:haWalk 8s linear infinite}
-.ha-bob{fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round;animation:crewbob .5s ease-in-out infinite alternate}
+.ha-bob{animation:crewbob .5s ease-in-out infinite alternate}
 .ha-bob circle{fill:var(--zap);stroke-width:1.5}
 .ha-path{stroke:var(--rule);stroke-width:2;stroke-dasharray:2 5}
 .ha-tower{stroke:var(--c-wind);stroke-width:3}
@@ -590,7 +587,7 @@ html.kiosk.k-insp .coach{bottom:calc(28px + var(--ih,300px))}
 @keyframes heatP{50%{stroke-opacity:.45}}
 .legend i.heat{border-image:linear-gradient(90deg,var(--warn) 50%,var(--alarm) 50%) 1}
 @media (prefers-reduced-motion:reduce){.mimic-svg .cond.h3,.mimic-svg .tie-l.on.h3{animation:none}}
-.crew.home .crew-t{display:none}
+.crew.home .crew-tag{display:none}
 
 /* Career sync */
 .sync{margin:12px 0 0;padding:10px 12px;border:1px dashed var(--rule);border-radius:6px;background:var(--panel)}
@@ -678,3 +675,27 @@ html.kiosk .zchips,html.kiosk .tpick{display:none!important}
 .restart{margin-top:12px;padding-top:10px;border-top:1px solid var(--rule)}
 .restart select{display:block;width:100%;margin-top:3px;min-height:40px;padding:6px 8px;border:1px solid var(--rule);border-radius:4px;background:var(--panel);color:var(--ink);font:inherit}
 .restart .sync-row label{flex:1 1 220px}
+
+/* Field crews: engineer in a hard hat and hi-vis vest */
+.crew-b{stroke-linecap:round;stroke-linejoin:round}
+.crew-b .cf-leg{fill:none;stroke:#1d2a44;stroke-width:2.5}
+.crew-b .cf-arm{fill:none;stroke:#e9b520;stroke-width:2.1}
+.crew-b .cf-vest{fill:#ffd23f;stroke:#7a5b00;stroke-width:.7}
+.crew-b .cf-band{fill:none;stroke:#e9eef5;stroke-width:1.3}
+.crew-b .cf-zip{fill:none;stroke:#7a5b00;stroke-width:.5;opacity:.7}
+.crew-b .cf-face{fill:#f0c39b;stroke:#7a4e2d;stroke-width:.6}
+.crew-b .cf-hat{fill:#fff;stroke:#5a6478;stroke-width:.7}
+.crew-b .cf-brim{fill:none;stroke:#5a6478;stroke-width:1.2}
+/* busy operating a switch: orange vest */
+.crew.busy .crew-b .cf-vest{fill:#ff8a3d;stroke:#8a3a00}.crew.busy .crew-b .cf-arm{stroke:#e8702a}.crew.busy .crew-b .cf-zip{stroke:#8a3a00}
+.crew-b .cf-leg,.crew-b .cf-arm{transform-box:view-box}
+.crew-b .cf-l,.crew-b .cf-r{transform-origin:0 -3.5px}.crew-b .cf-al,.crew-b .cf-ar{transform-origin:0 -9.6px}
+.crew.walk .cf-l,.ha-bob .cf-l{animation:cfSwing .5s ease-in-out infinite alternate}
+.crew.walk .cf-r,.ha-bob .cf-r{animation:cfSwing .5s ease-in-out infinite alternate-reverse}
+.crew.walk .cf-al,.ha-bob .cf-al{animation:cfSwing .5s ease-in-out infinite alternate-reverse}
+.crew.walk .cf-ar,.ha-bob .cf-ar{animation:cfSwing .5s ease-in-out infinite alternate}
+@keyframes cfSwing{from{transform:rotate(-16deg)}to{transform:rotate(16deg)}}
+@media (prefers-reduced-motion: reduce){.crew.walk .crew-b *,.ha-bob *{animation:none!important}}
+.mimic-svg .crew-b *{stroke-opacity:1}
+.crew-tag circle{fill:var(--ink);stroke:var(--panel);stroke-width:1}
+.mimic-svg .crew-tag .crew-t,.crew-tag .crew-t{font-size:5.6px;fill:var(--panel);font-weight:700}
