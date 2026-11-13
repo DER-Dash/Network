@@ -37,11 +37,11 @@ META={
  'cr':dict(desc="Losing Control, a Watts Up control-room game: switch, transfer and restore supply across Blackout Canyon's substations through faults, planned work and peak demand, or balance generation and flexibility to keep its transformers inside firm capacity.",
    url='https://der-dash.github.io/Network/control-room/',title='Losing Control',
    alt='Losing Control by Watts Up: a network diagram with interconnectors to Ampy Place and Watts This',
-   manifest='/Network/control-room/manifest.webmanifest',apple='/Network/icons/cr-apple-180.png'),
+   manifest='manifest.webmanifest',apple='../icons/cr-apple-180.png'),
  'fc':dict(desc="Watts Up control-room game: keep Blackout Canyon's transformers inside firm capacity through faults, storms and swings in generation.",
    url='https://der-dash.github.io/Network/',title='Firm Capacity: keep Blackout Canyon switched on',
    alt='Firm Capacity by Watts Up: three transformers, one faulted, the others at 112%',
-   manifest='/Network/manifest.webmanifest',apple='/Network/icons/gen-apple-180.png')}
+   manifest='manifest.webmanifest',apple='../icons/gen-apple-180.png')}
 
 def page(game,s):
     m=META[game];desc,url=m['desc'],m['url']
@@ -116,5 +116,5 @@ def redirect(target,title):
 </html>
 '''
 # The generation game used to live at the main address and at /generation/. Both now open the one game.
-wr('index.html',redirect('/Network/control-room/','Losing Control'))
-wr('generation/index.html',redirect('/Network/control-room/?mode=gen','Losing Control · Generation'))
+wr('index.html',redirect('control-room/','Losing Control'))
+wr('generation/index.html',redirect('../control-room/?mode=gen','Losing Control · Generation'))

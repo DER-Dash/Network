@@ -142,3 +142,11 @@ Version 18 accepts scores and career stars for the two new control room shifts, 
 after ('morning') and Black start ('black'). Replace the code with the new `Code.gs`, save,
 then **Deploy → Manage deployments → pencil → Version: New version → Deploy** (same URL).
 Until then, the shifts play normally but their scores and stars don't save online.
+
+## Version 19 (new domain)
+
+Also accepts scores and career saves from the game at **www.wattsupelectricity.co.uk**
+as well as `der-dash.github.io`. Deploy this before the custom domain goes live,
+or scores and career saves will fail on the new address. Paste in the new
+`Code.gs`, save, then **Deploy → Manage deployments → Edit (pencil) → Version:
+New version → Deploy**.

@@ -1,7 +1,7 @@
 /* Losing Control service worker: lets both games open offline.
    Pages are fetched fresh from GitHub when online (so pushed changes arrive
    straight away) and fall back to the saved copy when offline or slow. */
-const CACHE = 'firm-capacity-v22';
+const CACHE = 'firm-capacity-v23';
 const CORE = ['./', './generation/', './control-room/', './generation/manifest.webmanifest', './control-room/manifest.webmanifest',
   './icons/gen-192.png', './icons/gen-512.png', './icons/cr-192.png', './icons/cr-512.png'];
 
@@ -24,7 +24,7 @@ function fromNetwork(req, timeoutMs) {
 self.addEventListener('fetch', e => {
   const req = e.request, url = new URL(req.url);
   // Only this site's own files. The scoreboard, feedback and analytics always go to the network.
-  if (req.method !== 'GET' || url.origin !== location.origin || !url.pathname.startsWith('/Network/')) return;
+  if (req.method !== 'GET' || url.origin !== location.origin || !url.href.startsWith(self.registration.scope)) return;
   const key = url.pathname.endsWith('/') || url.pathname.endsWith('.html') || req.mode === 'navigate'
     ? new Request(url.origin + url.pathname) : req; // ignore ?source=pwa and similar
   e.respondWith(

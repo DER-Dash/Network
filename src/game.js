@@ -19,10 +19,10 @@ const CFG=GAME==='fc'?{start:300,end:1380,rate:2.25,pre:'fcg-',salt:'fcg1',def:'
     band:'Control room · keeping Blackout Canyon switched on. Mostly.',eyebrow:'Control room · Blackout Canyon 33 kV',h2:'Run the Blackout Canyon network',
     board:'Control room',share:'Losing Control',other:{url:FC_URL,hdr:'Generation shifts →',foot:'Play the generation shifts',
     box:'<b>Prefer generation?</b> Try the generation shifts: balance solar, wind, batteries and flexibility to keep the transformers inside their rating.',cta:'Generation shifts →'}};
-// Domain lock: the published pages only run on der-dash.github.io. build.py turns SITE_LOCK on for the
+// Domain lock: the published pages only run on der-dash.github.io and wattsupelectricity.co.uk. build.py turns SITE_LOCK on for the
 // GitHub Pages copies; the standalone copies in build/ (tests, previews) stay unlocked.
 const HOME_HOST='der-dash.github.io',SITE_LOCK=false;
-if(SITE_LOCK&&!/^(der-dash\.github\.io|localhost|127\.0\.0\.1)$/i.test(location.hostname)){siteLock();return;}
+if(SITE_LOCK&&!/^(der-dash\.github\.io|(www\.)?wattsupelectricity\.co\.uk|localhost|127\.0\.0\.1)$/i.test(location.hostname)){siteLock();return;}
 function siteLock(){try{document.title=CFG.docTitle;document.body.className='';document.body.innerHTML=`<main class="sitelock" style="max-width:34rem;margin:12vh auto;padding:0 16px;text-align:center">
   <svg viewBox="0 0 100 100" width="72" height="72" aria-hidden="true"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg>
   <h1 style="margin:16px 0 8px">${CFG.share}</h1><p>This is a copy of the game running on another website. Scores and feedback only work on the original.</p>

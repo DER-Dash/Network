@@ -50,6 +50,8 @@ async function start(scn,md,store){const d=mk(html,'https://e.test/',store),w=d.
   ok(doc.querySelector('a[href="https://der-dash.github.io/Network/control-room/"]'),'links to the original');}
  {const d=mk(pub,'https://der-dash.github.io/Network/control-room/');await wait(50);const doc=d.window.document;
   ok(doc.getElementById('startBtn')&&!doc.querySelector('.sitelock'),'runs normally on der-dash.github.io');}
+ for(const u of ['https://www.wattsupelectricity.co.uk/control-room/','https://wattsupelectricity.co.uk/control-room/']){const d=mk(pub,u);await wait(50);const doc=d.window.document;
+  ok(doc.getElementById('startBtn')&&!doc.querySelector('.sitelock'),'runs normally on '+new URL(u).hostname);}
  ok(/site:location\.hostname/.test(pub),'scores are sent with the site name');
  ok(!errs.length,'no script errors '+errs.slice(0,3).join(' | '));
  if(fails)console.log(fails+' failed');process.exit(fails?1:0);})();

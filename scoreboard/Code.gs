@@ -1,5 +1,6 @@
 /**
  * Losing Control scoreboard and feedback (Watts Up), version 7.
+ * Version 19: also accepts scores and careers from www.wattsupelectricity.co.uk (the new domain).
  * Version 18: accepts The morning after ('morning') and Black start ('black') control room shifts.
  * Version 17: careers also keep switching errors ('errs', 'errLog') and a generation number ('gen').
  *   Being sacked starts a new generation from nothing, and a newer generation replaces an older one.
@@ -40,10 +41,10 @@
  * formula as the game, so the sheet never trusts a score sent by the browser.
  * Rows saved before version 2 have no mode and count as free play.
  */
-const VERSION = 18;
-// Scores are only accepted from the games on this site. Apps Script can't see the request's
+const VERSION = 19;
+// Scores are only accepted from the games on these sites. Apps Script can't see the request's
 // origin, so the games send their hostname; copies of the game hosted elsewhere send theirs.
-const HOME_SITE = 'der-dash.github.io';
+const HOME_SITES = ['der-dash.github.io', 'www.wattsupelectricity.co.uk', 'wattsupelectricity.co.uk'];
 const FEEDBACK_SHEET_NAME = 'Feedback';
 const FEEDBACK_HEADERS = ['Received', 'Game', 'Name', 'Reply to', 'Feedback', 'Context'];
 const SHEET_NAME = 'Scores';
@@ -288,7 +289,7 @@ function doPost(e) {
   try {
     const d = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     if (d.type === 'feedback') return feedback_(d);
-    if (String(d.site || '').toLowerCase() !== HOME_SITE) return json_({ ok: false, error: 'site' });
+    if (HOME_SITES.indexOf(String(d.site || '').toLowerCase()) < 0) return json_({ ok: false, error: 'site' });
     if (d.type === 'career') return careerSync_(d);
     // Letters, numbers, spaces and a little punctuation only. This also stops
     // names starting with "=" being treated as spreadsheet formulas.

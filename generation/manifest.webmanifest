@@ -1,10 +1,10 @@
 {
-  "id": "/Network/generation/",
+  "id": "./",
   "name": "Losing Control · Generation",
   "short_name": "Losing Control",
   "description": "Keep Blackout Canyon's transformers inside firm capacity using generation and flexibility.",
-  "start_url": "/Network/generation/?source=pwa",
-  "scope": "/Network/generation/",
+  "start_url": "./?source=pwa",
+  "scope": "./",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#0B1F3A",

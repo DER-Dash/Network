@@ -25,10 +25,12 @@ This writes the GitHub Pages files and standalone copies in `build/`
 
 ## Domain lock
 
-The published pages only run on `der-dash.github.io` (and `localhost` for testing).
+The published pages only run on `der-dash.github.io` and `www.wattsupelectricity.co.uk`
+(and `localhost` for testing).
 Anywhere else they show a "play the original" screen. `build.py` switches this on
 (`SITE_LOCK`) for the GitHub Pages files only, so the copies in `build/` open anywhere,
-including straight from disk. Scores carry the site name and the scoreboard rejects
+including straight from disk. Links inside the published pages are relative, so the
+same files work at `der-dash.github.io/Network/` and at the root of the custom domain. Scores carry the site name and the scoreboard rejects
 other sites (see `scoreboard/README.md`, version 12).
 
 ## Adding a shift

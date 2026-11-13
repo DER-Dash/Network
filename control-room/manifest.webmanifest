@@ -1,10 +1,10 @@
 {
-  "id": "/Network/control-room/",
+  "id": "./",
   "name": "Losing Control",
   "short_name": "Losing Control",
   "description": "Run Blackout Canyon's network: switch, transfer and restore supply, or balance generation and flexibility.",
-  "start_url": "/Network/control-room/?source=pwa",
-  "scope": "/Network/control-room/",
+  "start_url": "./?source=pwa",
+  "scope": "./",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#0B1F3A",
