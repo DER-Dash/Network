@@ -1486,7 +1486,7 @@ const EMERG=1.2,EMERG_MIN=30,SHORT=1.5,SHORT_MIN=5,PAR_MAX=30,OV_MIN=10,INCIDENT
 const RATE={0.5:CFG.rate/2,1:CFG.rate,2:CFG.rate*2},spdTxt=v=>(v===.5?'½':v)+'×';
 const ISO_A=25;// easy shifts: minutes per fault that customers can be left off and still get an A
 const isManual=k=>CREW_ON&&MANUAL.includes(k.split(':')[0]);
-const CAREER=GAME==='cr'?['quiet','grid','storm','heat','jan','ev','snow','xmas','gsp','mesh','endure']:['may','storm','jan'];
+const CAREER=GAME==='cr'?['quiet','grid','storm','heat','jan','ev','snow','xmas','morning','gsp','mesh','endure','black']:['may','storm','jan'];
 const RANKS=GAME==='cr'?[[0,'Trainee control engineer'],[3,'Assistant control engineer'],[6,'Control engineer'],[10,'Senior control engineer'],[14,'Control room manager'],[18,'Head of network operations']]
   :[[0,'Trainee flexibility analyst'],[2,'Flexibility analyst'],[4,'Flexibility engineer'],[6,'Senior flexibility engineer'],[9,'DSO manager']];
 const ACH=[
@@ -1511,7 +1511,7 @@ const rankOf=n=>{let r=RANKS[0][1];RANKS.forEach(([t,nm])=>{if(n>=t)r=nm;});retu
 const nextRank=n=>RANKS.find(([t])=>t>n);
 // Shifts added to the career later. A shift after one of these still unlocks from the shift before it,
 // so existing careers keep what they had unlocked.
-const CAREER_ADDED=['ev','xmas'];
+const CAREER_ADDED=['ev','xmas','morning'];
 const unlockedK=(c,k)=>{let i=CAREER.indexOf(k);if(i<=0)return true;if(!CAREER_ADDED.includes(k))while(i>1&&CAREER_ADDED.includes(CAREER[i-1]))i--;return CAREER.slice(i-1).some(j=>(c.stars[j]||0)>=1);};
 // Starting the career again: stars, rank and achievements are kept (they are the best ever, and online sync keeps the
 // best from every device), but the career runs through the shifts in order again from the chosen one. c.run is the
@@ -1602,6 +1602,17 @@ const SCENARIOS={
       lvfind:'With one crew, every trip counts. Use the callers\' reports to tell which half is faulted, and send the crew straight to the mid-point switch.'},
     build(r){const at=765+Math.round(r()*50);return{events:[],cutout:null,risk:[{start:480,end:1200,mult:1.5,label:'Heavy rain'}],
       flood:{p:'rv',warn:570,at,end:at+210+Math.round(r()*40)}};}},
+  morning:{color:'var(--c-batt)',diff:2,title:'The morning after',when:'Thursday 4 February',focus:'Restore normal running',soc0:0,nbShape:'demand',noGen:true,links:true,faults:2,
+    nb:{kn:{base:70,dip:34},fm:{base:68,dip:34}},
+    blurb:'The night shift had a rough time and has left the network in a mess: Hertz House on Ampy Place, Joule Street on Watts This, two feeders on Volt Face, a mobile generator still running and the busbar split. Every repair is finished. Put it all back to normal before the evening peak, when the neighbours run out of room, without a switching incident.',
+    demand:[[0,86],[4,76],[6,82],[7.5,112],[9,122],[11,116],[13,114],[15,120],[16.5,142],[17.5,158],[18.5,154],[20,138],[21.5,118],[23,98],[24,90]],
+    solar:{peak:0,start:7.8,end:16.6,cloud:0},wind:{mean:0,var:0},
+    causes:['Cable joint failure','Insulator flashover','Tree contact on the overhead line','Digger strike on the underground cable'],
+    tips:{risk:'Abnormal running eats the neighbours\' spare capacity, and it shrinks at teatime. Put substations back on Blackout Canyon in the morning, while there is room to do it calmly.'},
+    // what the night shift left behind
+    init(S){S.tie.hw.closed=true;S.fd.hw.brk=false;S.tie.js.closed=true;S.fd.js.brk=false;S.fd.js.inc=false;
+      S.lf.ml[2]=false;S.nop.ml[2]=true;S.lf.rv[1]=false;S.nop.rv[1]=true;S.mid.ml[0]=false;Object.assign(S.mgu[0],{site:'ml0',conn:true,lv:false});S.bs['23'].closed=false;},
+    build(r){return{events:[],cutout:null,risk:[{start:1020,end:1200,mult:1.5,label:'Sleet'}]};}},
   gsp:{color:'var(--alarm)',diff:3,title:'Grid emergency',when:'Wednesday 13 January',focus:'Cut demand at the GSP',soc0:0,nbShape:'demand',noGen:true,
     gsp:{warn:900,start:930,deadline:955,end:1110,limit:100},
     blurb:'At 15:30 Steve Towers loses a supergrid transformer. National Grid will instruct you to hold Blackout Canyon and Ampy Place to 100 MW at the grid supply point until 18:30. Ampy Place is on the same grid supply, so moving load there does not help.',
@@ -1622,7 +1633,17 @@ const SCENARIOS={
     solar:{peak:60,start:7,end:16.6,cloud:.45},wind:{mean:50,var:14},faults:7,
     causes:['Wind-borne debris on the overhead line','Tree contact on the overhead line','Conductor clash in high wind','Lightning strike on the overhead line','Fallen tree on the overhead line'],
     build(r){const a=420+Math.round(r()*60),b=780+Math.round(r()*90),c=1140+Math.round(r()*60),s=900+Math.round(r()*120);
-      return{events:[],cutout:{start:s,end:s+90},risk:[{start:360,end:1440,mult:1.5,label:'Strong wind'},{start:a,end:a+180,mult:3,label:'Severe gale'},{start:b,end:b+180,mult:3,label:'Severe gale'},{start:c,end:c+180,mult:3,label:'Severe gale'}]};}}
+      return{events:[],cutout:{start:s,end:s+90},risk:[{start:360,end:1440,mult:1.5,label:'Strong wind'},{start:a,end:a+180,mult:3,label:'Severe gale'},{start:b,end:b+180,mult:3,label:'Severe gale'},{start:c,end:c+180,mult:3,label:'Severe gale'}]};}},
+  black:{color:'var(--alarm)',diff:3,title:'Black start',when:'Sunday 7 February',focus:'Restore from nothing',start:360,end:1080,soc0:0,nbShape:'demand',noGen:true,faults:1,clp:true,clpPre:20,ensK:.2,black:[375,410,465],
+    nb:{kn:{base:50,dip:18},fm:{base:66,dip:22}},
+    blurb:'At 05:50 busbar protection at Steve Towers tripped the 132 kV section feeding all three Blackout Canyon transformers, and everything went dark. National Grid will give the transformers back one at a time. When customers have been off a while, cold load pickup makes every feeder draw much more than normal as it comes back. Restore in stages so the transformers you have can carry it.',
+    demand:[[0,82],[4,72],[6,76],[7.5,92],[9,108],[11,116],[13,112],[15,108],[16.5,128],[17.5,142],[18.5,138],[20,124],[21.5,108],[23,92],[24,84]],
+    solar:{peak:0,start:7.8,end:16.6,cloud:0},wind:{mean:0,var:0},
+    causes:['Cable joint failure','Insulator flashover','Tree contact on the overhead line','Cable joint failure after re-energising'],
+    tips:{risk:'Cold load pickup is biggest just after a feeder comes back and settles over about an hour. Bring substations back one at a time, and use Watts This and Volt Face while the transformers are still out.',
+      lost:'Restore in stages: one substation at a time, letting cold load settle before the next.'},
+    init(S){S.sc.black.forEach((u,i)=>{S.tx[i].out={kind:'black',until:u,ready:false,label:'Steve Towers busbar fault'};});PIDS.forEach(p=>{if(S.fd[p])S.fd[p].brk=false;});},
+    build(r){return{events:[],cutout:null,risk:[{start:360,end:600,mult:1.5,label:'Freezing fog'}]};}}
 };
 
 const SCENARIOS_FC={
@@ -1661,6 +1682,8 @@ const HANDOVER=GAME==='cr'?{
   xmas:{from:'Pat, night shift',text:'Merry Christmas. Quiet night and demand will stay low, but there\'s only one crew on call today, so think before you send them anywhere. The River Ohm has been rising since midnight. The 11 kV switchgear at Ohm No is in the basement, so watch for a flood warning and have a plan for Ohm Street, Resistor Row and Circuit Park.'},
   gsp:{from:'Jo, night shift',text:'National Grid rang about a supergrid transformer at Steve Towers that has been gassing. Nothing official yet, but if it fails they\'ll want demand cut fast. Know how much Watts This and Volt Face can take before the afternoon.'},
   mesh:{from:'Pat, night shift',text:'Kilowatt Close is live, fed through Shocking Place with a backup route from Ohm No. The Shocking Place feeder comes out at 09:00 for planned work, so sort out both of them first thing. Close South has Priority Services Register customers: don\'t leave them off.'},
+  morning:{from:'Sam, night shift',text:'Sorry, rough night. Here\'s what I\'ve left you. Hertz House is on Ampy Place through its tie, with its Blackout Canyon feeder breaker open. Joule Street is on Watts This, its feeder open at both ends. Mill Lane (Shocking Place) and Resistor Row (Ohm No) are on Volt Face backfeeds. Mobile generator 1 is still running at the far end of Marsh Road with the mid-point switch open: disconnect it before you close that switch. And the T2–T3 bus section is open. Every repair is finished. Get it back to normal before teatime, when the neighbours run out of room.'},
+  black:{from:'Jo, night shift',text:'At 05:50 busbar protection at Steve Towers tripped the 132 kV section feeding all three of our transformers, so Blackout Canyon is dark. National Grid expect to give us back T1 about 06:15, T2 about 06:50 and T3 about 07:45. I\'ve opened all four 33 kV feeder breakers so nothing comes back at once. Customers have been off since ten to six, so expect cold load pickup: each feeder draws much more than normal when it comes back, and settles over about an hour. Ampy Place can spare a little, and Watts This and Volt Face are fine. Restore in stages.'},
   endure:{from:'Pat, night shift',text:'Three trips since midnight, all repaired and back to normal running, and it\'s getting worse, not better. Three crews have to cover the whole storm, so plan their trips. Use the quiet spells to put the network back to normal.'}}
 :{
   may:{from:'Sam, night shift',text:'Clear skies, so the solar farm will be flat out by mid-morning while demand stays low. T2 comes out for maintenance at 10:00 and is out through the solar peak until 15:00. Thunderstorms may build in the afternoon.'},
@@ -1747,10 +1770,12 @@ function secFeed(p,i,s,sup){if(!S.lf[p])return null;const mid=midOn(p,i);let r;
   return r===null&&s===1&&mgLv(p,i)?'mg':r;}
 function feedOf(p,i,sup){const a=secFeed(p,i,0,sup);return a!==null?a:secFeed(p,i,1,sup);}
 const secOff=(p,i)=>[0,1].filter(s=>secFeed(p,i,s)===null);
-function dem(c,p){let f=0;PIDS.forEach(q=>LF[q].forEach((v,i)=>SECF.forEach((h,s)=>{if(secFeed(q,i,s)===p)f+=S.share[q]*v*h;})));return c.demand*f;}
+// Cold load pickup (Black start): a feeder that has been off for a while draws extra when it comes back, settling over about an hour
+const clpK=(p,i)=>(S&&S.clp&&S.clp[p+i])||1;
+function dem(c,p){let f=0;PIDS.forEach(q=>LF[q].forEach((v,i)=>SECF.forEach((h,s)=>{if(secFeed(q,i,s)===p)f+=S.share[q]*v*h*clpK(q,i);})));return c.demand*f;}
 const lfP=id=>[id.slice(0,2),+id.slice(2)];
 const srcMW=(p,i,src)=>SECF.reduce((a,h,s)=>a+(secFeed(p,i,s)===src?h:0),0)*lfMW(p,i);
-const vfFrac=p=>VFI.reduce((a,i)=>a+SECF.reduce((b,h,s)=>b+(secFeed(p,i,s)==='vf'?LF[p][i]*h:0),0),0),lfMW=(p,i)=>S.c?S.c.demand*S.share[p]*LF[p][i]:0;
+const vfFrac=p=>VFI.reduce((a,i)=>a+SECF.reduce((b,h,s)=>b+(secFeed(p,i,s)==='vf'?LF[p][i]*h*clpK(p,i):0),0),0),lfMW=(p,i)=>S.c?S.c.demand*S.share[p]*LF[p][i]*clpK(p,i):0;
 const ASB=Object.fromEntries(ASSETS.map(a=>[a.id,a]));
 const ICONS={solar:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
   wind:'<path d="M12 11v11M12 11V2.5M12 11l8.2 4.8M12 11l-8.2 4.8M9 22h6"/>',
@@ -1771,8 +1796,8 @@ const ICONS={solar:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12
   flood:'<path d="M4 11l8-6 8 6M6 10v4M18 10v4"/><path d="M2.5 17c2-1.5 3.8 1.5 5.8 0s3.8-1.5 5.8 0 3.8 1.5 5.8 0M2.5 21c2-1.5 3.8 1.5 5.8 0s3.8-1.5 5.8 0 3.8 1.5 5.8 0"/>',
   pylon:'<path d="M12 2 7.5 22M12 2l4.5 20M4 7h16M6 12h12M9.6 7l4.8 5M14.4 7l-4.8 5M8.6 17h6.8M8.6 17l6.8 5M15.4 17l-6.8 5"/>'};
 // Each day's scene: the icon on its card and the weather drawn behind the diagram
-const SCENE={xmas:'flood',ev:'plug',quiet:'sun',grid:'pylon',storm:'storm',heat:'heat',jan:'snow',snow:'snow',gsp:'pylon',mesh:'pylon',endure:'storm',may:'sun',tut:'snow'};
-const WX={xmas:'rain',ev:'snow',grid:'cloud',gsp:'cloud',mesh:'snow'};
+const SCENE={morning:'sun',black:'pylon',xmas:'flood',ev:'plug',quiet:'sun',grid:'pylon',storm:'storm',heat:'heat',jan:'snow',snow:'snow',gsp:'pylon',mesh:'pylon',endure:'storm',may:'sun',tut:'snow'};
+const WX={morning:'cloud',black:'cloud',xmas:'rain',ev:'snow',grid:'cloud',gsp:'cloud',mesh:'snow'};
 const sceneOf=k=>SCENE[k]||'pylon',wxOf=k=>WX[k]||{pylon:'cloud'}[sceneOf(k)]||sceneOf(k);
 // Street-level demand at the end of each 11 kV feeder: houses, or shops and offices for town centres, stations and
 // business parks. Windows are lit while the far half of the feeder has supply and go dark when it doesn't.
@@ -2024,6 +2049,7 @@ function newGame(key){
     hist:[],full:[],marks:[],log:[],chain:[],running:false,paused:true,ended:false,silent:true,lost:null,emergOn:false,autoOn:false,tipShown:{}};
   SERVICES.forEach(s=>{S.manual[s.id]=0;S.armed[s.id]=0;S.act[s.id]=0;S.autoP[s.id]=0;S.manP[s.id]=0;S.called[s.id]=false;S.fail[s.id]=0;S.allow[s.id]=s.allow||0;});
   const c0=comps(S.t,false),L0=Math.abs(PIDS.reduce((a,p)=>a+netP(c0,p,zeroD()),0))/3/R;S.tx.forEach(t=>t.temp=20+100*L0*L0);
+  if(sc.init)sc.init(S);
   buildMimic();
   for(let i=0;i<60;i++)step();
   S.silent=false;S.alarms={};S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.peakL=0;S.ens=0;S.cust={ci:0,cml:0,si:0,off:{},pri:0,pmin:{}};S.loss=[];S.lossOpen={};S.cp={};S.crewJobs=0;S.trial=0;S.isoMin=0;S.recloses=0;S.parOk=0;S.calls=[];S.callQ=[];S.callN=0;S.tele={};S.polls=[];S.callRing=-99;S.vfPeak=0;S.gspOver=0;S.gspTrips=0;S.log=[];S.full=[];S.marks=[];S.chain=[];queued=[];
@@ -2242,7 +2268,7 @@ function step(){
   const m=S.t;
   S.tx.forEach((t,i)=>{if(t.out&&!t.out.ready&&m>=t.out.until){t.out.ready=true;
     if(GAME==='fc'){t.out=null;t.em=0;t.sh=0;mark(m,'xfer',`T${i+1} restored`);const msg=`T${i+1} is back in service.`;logE(m,msg,'ok');queueAlert(msg,'ok',false);play('ok');return;}
-    const msg=t.out.kind==='planned'?`T${i+1} maintenance is finished. Close the T${i+1} breaker to put it back in service.`:t.out.kind==='trip'?`T${i+1} has been inspected after its trip. Close the T${i+1} breaker to put it back in service.`:`T${i+1} has been repaired. Close the T${i+1} breaker to put it back in service.`;
+    const msg=t.out.kind==='black'?`National Grid has re-energised the Steve Towers supply to T${i+1}. Close the T${i+1} breaker to put it back in service, but check what it will pick up: everything on closed feeders comes back at once, with cold load.`:t.out.kind==='planned'?`T${i+1} maintenance is finished. Close the T${i+1} breaker to put it back in service.`:t.out.kind==='trip'?`T${i+1} has been inspected after its trip. Close the T${i+1} breaker to put it back in service.`:`T${i+1} has been repaired. Close the T${i+1} breaker to put it back in service.`;
     logE(m,msg,'ok');queueAlert(msg,'ok',false);play('ok');}});
   PIDS.forEach(p=>{const f=S.pt[p].fault;if(f&&!f.ready&&m>=f.until){f.ready=true;const msg=f.flood?`The ${PR[p].name} 11 kV switchgear has been dried and tested. Close the transformer breaker, then the feeder breakers, to put the ${PR[p].name} feeders back on their own substation.`:`The ${PR[p].name} 33/11 kV transformer has been repaired. Close its 33 kV breaker to put the 11 kV feeders back on.`+(LF[p].some((v,i)=>!S.lf[p][i]&&feedOf(p,i)!==null)?' Feeders you moved elsewhere stay there until you move them back.':'');logE(m,msg,'ok');queueAlert(msg,'ok',false);play('ok');}});
   ITIDS.forEach(k=>{const f=S.it[k];if(f.fault&&!f.fault.ready&&m>=f.fault.until){f.fault.ready=true;const msg=`The ${devName('it:'+k)} has been repaired. It can be closed again.`;logE(m,msg,'ok');queueAlert(msg,'ok',false);play('ok');}});
@@ -2362,16 +2388,19 @@ function step(){
         else S.gspOver=0;}
       if(m===G.end){logE(m,'National Grid has lifted the Steve Towers limit. Normal running can resume.','ok');queueAlert('National Grid has lifted the Steve Towers limit.','ok',false);play('ok');}}}
   let allOff=true;
+  if(S.sc.clp){const K=S.clp||(S.clp={});Object.keys(K).forEach(f=>{K[f]=1+(K[f]-1)*Math.exp(-1/40);if(K[f]<1.01)delete K[f];});}
   {const C=S.cust;PIDS.forEach(p=>LF[p].forEach((f,i)=>SECF.forEach((h,sx)=>{const k=p+i+'s'+sx,fed=secFeed(p,i,sx,sup)!==null,n=Math.round(CUST_TOTAL*S.share[p]*f*h);
     const P=prioOf(p,i),pr=P&&P.sec===sx?P:null;
-    if(!fed){const o=C.off[k]=(C.off[k]||0)+1,w=(C.why||(C.why={}))[k]=offWhy(p,i,sx,sup);let d=0;if(o===1)callsFor(m,p,i,sx,n);if(o===SHORT_INT){C.ci+=n;C.cml+=SHORT_INT*n;d=n/100+SHORT_INT*n/500;}else if(o>SHORT_INT){C.cml+=n;d=n/500;}lose(m,w.k,w.r,w.l,d);
-      if(pr&&!S.silent){const x=PRK[pr.kind].pts;C.pri+=x;C.pmin[p+i]=(C.pmin[p+i]||0)+1;lose(m,'prio:'+p+i,w.r==='repair'?'prio_rep':'prio',`${pr.name} off supply (${lfName(p,i)}, ${PR[p].name})`,x);
+    if(!fed){const o=C.off[k]=(C.off[k]||0)+1,w=(C.why||(C.why={}))[k]=offWhy(p,i,sx,sup);let d=0;const eK=S.sc.ensK||1;if(o===1)callsFor(m,p,i,sx,n);if(o===SHORT_INT){C.ci+=n;C.cml+=SHORT_INT*n;d=n/100+SHORT_INT*n/500;}else if(o>SHORT_INT){C.cml+=n;d=n/500;}lose(m,w.k,w.r,w.l,d*eK);
+      if(pr&&!S.silent){const x=PRK[pr.kind].pts*eK;C.pri+=x;C.pmin[p+i]=(C.pmin[p+i]||0)+1;lose(m,'prio:'+p+i,w.r==='repair'?'prio_rep':'prio',`${pr.name} off supply (${lfName(p,i)}, ${PR[p].name})`,x);
         if(o===1){const s=`${pr.name} is off supply on the ${lfName(p,i)} at ${PR[p].name}. ${PRK[pr.kind].label==='Hospital'?'The hospital':pr.kind==='care'?'The care home':'These customers'} cost${pr.kind==='psr'?'':'s'} ${x} extra points a minute until restored.`;logE(m,s,'alarm');queueAlert(s,'alarm',false);}}}
-    else if(C.off[k]){if(C.off[k]<SHORT_INT){C.si+=n;const w=C.why&&C.why[k];if(w)lose(m,w.k,w.r,w.l,n/500);}
+    else if(C.off[k]){if(S.sc.clp&&!S.silent){const K=S.clp||(S.clp={}),x=1+.65*Math.min(1,(C.off[k]+(S.sc.clpPre||0))/120);if(x>(K[p+i]||1)+.05){K[p+i]=x;if(sx===0||!S.lf[p][i])logE(m,`Cold load pickup: ${LFN[p][i]} (${PR[p].name}) is drawing about ${Math.round((x-1)*100)}% more than normal after being off. It settles over the next hour.`,'warn');}}
+      if(C.off[k]<SHORT_INT){C.si+=n;const w=C.why&&C.why[k];if(w)lose(m,w.k,w.r,w.l,n/500);}
       if(pr&&!S.silent)logE(m,`${pr.name} back on supply after ${C.off[k]} min.`,'ok');C.off[k]=0;}})));
-   S.ens=C.ci/100+C.cml/500+C.si/500;S.vfPeak=Math.max(S.vfPeak,S.vfLoad||0);}
+   S.ens=(C.ci/100+C.cml/500+C.si/500)*(S.sc.ensK||1);S.vfPeak=Math.max(S.vfPeak,S.vfLoad||0);}
   PIDS.forEach(p=>{if(sup[p]==='off'){if(p==='ml')S.cost.gen+=c.solar*SV.solar.use/60;if(p==='rv')S.cost.gen+=c.wind*SV.wind.use/60;}else allOff=false;});
-  if(allOff&&!S.silent){loseSite(m);return;}
+  if(S.sc.black&&!S.blackUp&&PIDS.every(p=>sup[p]!=='off')&&S.tx.every(t=>!t.out)){S.blackUp=true;mark(m,'xfer','All restored');logE(m,'Every substation is back on supply and all three transformers are in service: Blackout Canyon is restored. From now on, losing every substation at once loses it.','ok');}
+  if(allOff&&!S.silent&&!(S.sc.black&&!S.blackUp)){loseSite(m);return;}
   if(!S.silent&&S.tx.every(t=>!t.out)&&PIDS.every(p=>sup[p]!=='off'))S.chain=[];
   const live=S.tx.filter(t=>!t.out),maxL=live.length?Math.max(...live.map(t=>t.L)):0;S.peakL=Math.max(S.peakL,maxL);
   const emerg=maxL>1;if(emerg)S.overloadMin++;
@@ -2385,7 +2414,8 @@ function step(){
   if(autoTot>.5&&!S.autoOn)mark(m,'flex','Flex in');S.autoOn=autoTot>.5;
   S.soc=clamp(S.soc+(S.act.bchg*.92-S.act.bdis)/60,0,SOC_MAX);
   {const cp=S.cp||(S.cp={});Object.entries(SPEND_L).forEach(([k,l])=>{lose(m,'sp:'+k,'sp_'+k,l,(S.cost[k]-(cp[k]||0))/10);cp[k]=S.cost[k];});}
-  S.sec=security(av);if(S.sec.insecure&&!S.silent){S.insecureMin++;lose(m,'risk','risk',`${ucfirst(secName(S.sec.secs||[]))} at risk: not secure for the next loss`,20);}
+  const bsWait=S.sc.black&&S.tx.some(t=>t.out&&t.out.kind==='black'&&!t.out.ready);
+  S.sec=security(av);if(S.sec.insecure&&!S.silent&&!bsWait){S.insecureMin++;lose(m,'risk','risk',`${ucfirst(secName(S.sec.secs||[]))} at risk: not secure for the next loss`,20);}
   S.hist.push({m,net,n});if(S.hist.length>70)S.hist.shift();
   if(!S.silent)S.full.push({m,net,n,ins:S.sec.insecure,off:PIDS.filter(p=>sup[p]==='off').length});
   S.t++;
@@ -2753,7 +2783,7 @@ function renderMimic(){
     const b=$('bolt'+i);if(t.out&&!t.out.ready&&(t.out.kind==='fault'||t.out.kind==='trip'))b.removeAttribute('hidden');else b.setAttribute('hidden','');
     const hc=t.out?'':heat(t.L),w=t.out?'':(3.5+2.5*Math.min(t.L,1.5)).toFixed(1);
     [['ca','hv'],['cb','mv']].forEach(([p,v])=>{const e=$(p+i);setAttr(e,'class','cond '+v+hc);if(e&&e.style.strokeWidth!==(w?w+'px':''))e.style.strokeWidth=w?w+'px':'';});
-    txt('load'+i,t.out?(t.out.ready?'READY':t.out.kind==='planned'?'PLANNED':t.out.kind==='trip'?'TRIPPED':t.out.kind==='open'?'OPEN':'FAULTED'):Math.round(t.L*100)+'%');
+    txt('load'+i,t.out?(t.out.ready?'READY':t.out.kind==='planned'?'PLANNED':t.out.kind==='trip'?'TRIPPED':t.out.kind==='open'?'OPEN':t.out.kind==='black'?'NO SUPPLY':'FAULTED'):Math.round(t.L*100)+'%');
     txt('flow'+i,t.out?(t.out.ready?'Close it':'Back '+fmtT(t.out.until)):`${Math.round(Math.abs(t.flow))} MW ${arrow(t.flow)}`);
     const f=clamp((t.temp-20)/(TRIP_T-20),0,1);const tf=$('tf'+i);setAttr(tf,'width',(62*f).toFixed(1));
     setAttr(tf,'class','tfill'+(t.temp>=TRIP_T-8?' alarm':t.temp>=TRIP_T-25?' warn':''));

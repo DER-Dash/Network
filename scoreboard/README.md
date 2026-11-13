@@ -135,3 +135,10 @@ replaces the old career on every device. Replace the code with the new `Code.gs`
 
 Until this is done, being sacked clears the career on the device where it happened, but a
 career loaded on another device keeps its old stars.
+
+## Updating to version 18 (The morning after and Black start)
+
+Version 18 accepts scores and career stars for the two new control room shifts, The morning
+after ('morning') and Black start ('black'). Replace the code with the new `Code.gs`, save,
+then **Deploy → Manage deployments → pencil → Version: New version → Deploy** (same URL).
+Until then, the shifts play normally but their scores and stars don't save online.

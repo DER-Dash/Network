@@ -18,7 +18,7 @@ function play(G,S,smart){
   G.run(1);}
 (async()=>{
  {const {doc,S}=await start('quiet');const keys=[...doc.querySelectorAll('[data-scn]')].map(b=>b.dataset.scn);
-  ok(keys[0]==='quiet'&&keys[keys.length-1]==='endure','days listed easiest first: '+keys.join(','));
+  ok(keys[0]==='quiet'&&keys[keys.length-1]==='black','days listed easiest first: '+keys.join(','));
   ok(S.key==='quiet'&&S.sc.noGen&&S.sc.easy,'quiet shift: easy faults, no generation');
   ok(!S.sched.some(f=>/^(tx|ic):/.test(f.k)),'no transformer or interconnector faults');
   ok(S.sched.filter(f=>f.k.startsWith('fd:')).every(f=>f.dur<=70),'33 kV feeder repairs within 70 min');}
