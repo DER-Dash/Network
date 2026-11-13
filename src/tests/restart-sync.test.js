@@ -9,7 +9,7 @@ function device(store){return new JSDOM(CR,{url:'https://e.test/',runScripts:'da
   Object.entries(store||{}).forEach(([k,v])=>w.localStorage.setItem(k,v));}});}
 const $=(d,id)=>d.window.document.getElementById(id),click=(d,el)=>el.dispatchEvent(new d.window.MouseEvent('click',{bubbles:true}));
 const car=d=>JSON.parse(d.window.localStorage.getItem('fc4-career')||'{}');
-const ALL=['quiet','grid','storm','heat','jan','ev','snow','xmas','morning','gsp','mesh','endure','black'],full={stars:Object.fromEntries(ALL.map(k=>[k,2])),ach:{first:1},best:{}};
+const ALL=['quiet','grid','storm','heat','jan','ev','snow','xmas','morning','gsp','mesh','comms','endure','black'],full={stars:Object.fromEntries(ALL.map(k=>[k,2])),ach:{first:1},best:{}};
 const careerMode=async d=>{await wait(40);click(d,d.window.document.querySelector('[data-mode="career"]'));await wait(20);};
 const link=async(d,tab)=>{click(d,d.window.document.querySelector(`[data-sytab="${tab}"]`));await wait(5);$(d,'syName').value='Steve B';$(d,'syPin').value='1234';click(d,$(d,'syncBtn'));await wait(120);};
 (async()=>{

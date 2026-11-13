@@ -773,3 +773,11 @@ html.kiosk .zchips,html.kiosk .tpick{display:none!important}
 .next-bar .k{font:600 11px var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .next-bar b{font:700 18px var(--f-body)}.next-bar .s{font-size:12.5px;color:var(--muted)}
 .next-bar .btn{flex:1 1 220px}
+
+/* Comms down: a substation control can't see */
+.cmx{pointer-events:none}
+.cmx-b{fill:url(#cmxHatch);stroke:var(--warn);stroke-width:2;stroke-dasharray:6 4}
+.cmx.crew .cmx-b{fill:none;stroke:var(--ok)}
+.cmx-tag{fill:var(--warn)}.cmx.crew .cmx-tag{fill:var(--ok)}
+.mimic-svg .cmx-t{font:800 9px var(--f-display);letter-spacing:.08em;fill:#fff;stroke:none}
+.cmx-h1{fill:var(--panel);fill-opacity:.82}.cmx-h2{stroke:var(--warn);stroke-width:2;stroke-opacity:.35}

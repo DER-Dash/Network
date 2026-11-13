@@ -1,7 +1,7 @@
 // Career: start again from shift 1 once complete, or from any unlocked shift. Stars are kept; the run moves on in order.
 const {JSDOM}=require('jsdom');const fs=require('fs');const html=fs.readFileSync(require('path').join(__dirname,'..','..','build','control-room.html'),'utf8');
 let errs=[],fails=0;const wait=ms=>new Promise(r=>setTimeout(r,ms));const ok=(c,m)=>{console.log((c?'ok ':'FAIL ')+m);if(!c)fails++;};
-const ALL=['quiet','grid','storm','heat','jan','ev','snow','xmas','morning','gsp','mesh','endure','black'];
+const ALL=['quiet','grid','storm','heat','jan','ev','snow','xmas','morning','gsp','mesh','comms','endure','black'];
 function mk(store){return new JSDOM(html,{url:'https://e.test/',runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){w.matchMedia=()=>({matches:false,addEventListener(){}});w.Element.prototype.scrollIntoView=function(){};w.onerror=(m,s,l,c)=>errs.push(m+' @'+l+':'+c);
   Object.entries(store||{}).forEach(([k,v])=>w.localStorage.setItem(k,v));}});}
 const car=w=>JSON.parse(w.localStorage.getItem('fc4-career'));
@@ -16,9 +16,9 @@ const finish=(G,S)=>{S.sched.length=0;let t=0;while(!S.ended&&t++<2000)G.run(5);
  // restart from any point via the career box
  {const d=mk({'fc4-career':JSON.stringify(full),'fc4-mode':'career'}),w=d.window,doc=w.document;await wait(40);
   doc.querySelector('[data-mode="career"]').click();await wait(5);const sel=doc.getElementById('restartFrom');ok(sel&&sel.options.length===ALL.length,'restart chooser lists every unlocked shift');
-  sel.value='endure';doc.getElementById('restartBtn').click();await wait(5);ok(car(w).run.at==='endure','restarted from shift 12');
-  const mb=doc.querySelector('.hero-go[data-go="career"]');ok(mb&&/Shift 12/.test(mb.textContent),'main button continues from shift 12: '+(mb&&mb.textContent));
-  mb.click();await wait(5);finish(w.__fc,w.__fc.S);ok(car(w).run.at==='black','then shift 13');
+  sel.value='endure';doc.getElementById('restartBtn').click();await wait(5);ok(car(w).run.at==='endure','restarted from shift 13');
+  const mb=doc.querySelector('.hero-go[data-go="career"]');ok(mb&&/Shift 13/.test(mb.textContent),'main button continues from shift 13: '+(mb&&mb.textContent));
+  mb.click();await wait(5);finish(w.__fc,w.__fc.S);ok(car(w).run.at==='black','then shift 14');
   doc.getElementById('replayBtn')&&0;w.__fc.S.mode='career';
   // play the last shift: run ends, career shows complete again
   const G=w.__fc;for(let n=0;n<3&&G.S.key!=='black';n++){const nd=doc.querySelector('[data-next]');if(!nd)break;nd.click();await wait(5);const hg=doc.getElementById('hoGo');if(hg&&!doc.getElementById('hoOverlay').hidden)hg.click();finish(G,G.S);}const c=car(w);ok(G.S.key==='black'&&(!c.run||c.run.end),'finishing the last shift (Black start) ends the run: '+G.S.key);

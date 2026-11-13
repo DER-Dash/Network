@@ -1,5 +1,6 @@
 /**
  * Losing Control scoreboard and feedback (Watts Up), version 7.
+ * Version 20: accepts the Comms down ('comms') control room shift.
  * Version 19: also accepts scores and careers from www.wattsupelectricity.co.uk (the new domain).
  * Version 18: accepts The morning after ('morning') and Black start ('black') control room shifts.
  * Version 17: careers also keep switching errors ('errs', 'errLog') and a generation number ('gen').
@@ -41,7 +42,7 @@
  * formula as the game, so the sheet never trusts a score sent by the browser.
  * Rows saved before version 2 have no mode and count as free play.
  */
-const VERSION = 19;
+const VERSION = 20;
 // Scores are only accepted from the games on these sites. Apps Script can't see the request's
 // origin, so the games send their hostname; copies of the game hosted elsewhere send theirs.
 const HOME_SITES = ['der-dash.github.io', 'www.wattsupelectricity.co.uk', 'wattsupelectricity.co.uk'];
@@ -51,7 +52,7 @@ const SHEET_NAME = 'Scores';
 const CR_SHEET_NAME = 'Control room scores';
 const sheetFor_ = game => game === 'cr' ? CR_SHEET_NAME : SHEET_NAME;
 const DAYS = ['may', 'jan', 'storm'];
-const CR_DAYS = ['quiet', 'jan', 'storm', 'grid', 'mesh', 'heat', 'gsp', 'snow', 'endure', 'ev', 'xmas', 'morning', 'black'];
+const CR_DAYS = ['quiet', 'jan', 'storm', 'grid', 'mesh', 'heat', 'gsp', 'snow', 'endure', 'ev', 'xmas', 'morning', 'black', 'comms'];
 const SHIFT_MINUTES = 1080; // generation game: 05:00 to 23:00
 const CR_SHIFT_MINUTES = 720; // control room game: 08:00 to 20:00
 const CR_SHIFT_BY_DAY = { endure: 1080 }; // control room shifts of a different length
