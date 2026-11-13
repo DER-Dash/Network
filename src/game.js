@@ -2254,7 +2254,7 @@ function showEnd(){
    :L?`<h2>Blackout Canyon lost at ${fmtT(L.m)}</h2>
     <div class="grade"><span class="lt alarm">✕</span><p style="margin:0;max-width:52ch">After ${esc(L.why)}, all ${PIDS.length===5?'five':'four'} substations were off supply at once.</p></div>
     <p style="margin:0 0 14px">You held on for ${Math.floor((L.m-START)/60)} h ${(L.m-START)%60} min. Keep Blackout Canyon inside firm capacity${GAME==='fc'?', and arm flexibility so it switches in when a transformer trips':', and use the ties and interconnectors to keep substations on when things trip'}.</p>`
-   :`<h2>Shift complete</h2><div class="grade"><span class="lt ${F.gl}">${F.grade}</span><p style="margin:0;max-width:44ch">${F.gd}</p></div>`;
+   :`<h2>Shift complete</h2><div class="grade"><span class="lt ${F.gl}">${F.grade}</span><p style="margin:0;max-width:44ch">${F.gd}</p></div>${nextBar()}`;
   const CR=S.careerRes,nr=CR&&nextRank(CR.stars),pr=CR?RANKS.filter(([t])=>t<=CR.stars).pop()[0]:0,pct=CR?(nr?Math.round((CR.stars-pr)/(nr[0]-pr)*100):100):0;
   const cbox=CR&&(S.mode==='career'||CR.newA.length)?`<div class="career end">${S.mode==='career'?`<div class="rankcard${CR.rankUp?' up':''}"><span class="k">${CR.rankUp?'Promoted! You are now':'Your rank'}</span><b>${esc(CR.rank)}</b>
         <div class="rankbar"><i style="width:${pct}%"></i></div><span class="s">${CR.stars} of ${CAREER.length*3} career stars${nr?` · ${nr[0]-CR.stars} more for ${esc(nr[1])}`:' · top rank reached'}</span></div>
@@ -2262,11 +2262,14 @@ function showEnd(){
       ${CR.newUnl.length?`<p>Unlocked: <b>${CR.newUnl.map(k=>esc(SCENARIOS[k].title)).join(', ')}</b></p>`:''}
       ${CR.newA.length?`<div class="ach">${CR.newA.map(a=>`<span class="badge got" title="${esc(a.d)}">🏅 ${esc(a.name)}</span>`).join('')}</div>`:''}
       ${syncGet()||S.syncRes?`<p class="fine sync-end" id="endSync" role="status">${esc(endSyncTxt())}</p>`:''}
-      ${S.mode!=='career'?'':CR.next?(unlockedK(career(),CR.next)?`<button type="button" class="btn primary big" data-next="${CR.next}">Start next day: ${esc(SCENARIOS[CR.next].title)} →</button>`:`<p class="fine">Finish this shift to unlock ${esc(SCENARIOS[CR.next].title)}. Press Try again below.</p>`):`<p><b>That's every career shift done${CR.runEnd?' again':''}.</b> Replay any of them to earn more stars, or <button type="button" class="linkish" data-restart="${careerKeys()[0]}">start your career again from shift 1</button>.</p>`}</div>`:'';
+      ${S.mode!=='career'?'':CR.next?(unlockedK(career(),CR.next)?'':`<p class="fine">Finish this shift to unlock ${esc(SCENARIOS[CR.next].title)}. Press Try again below.</p>`):`<p><b>That's every career shift done${CR.runEnd?' again':''}.</b> Replay any of them to earn more stars, or <button type="button" class="linkish" data-restart="${careerKeys()[0]}">start your career again from shift 1</button>.</p>`}</div>`:'';
   $('sheet').innerHTML=`${BAND}<p class="eyebrow">${esc(S.sc.title)}, ${esc(S.sc.when)} · ${S.mode==='daily'?"Today's challenge, "+fmtDate(S.date):S.mode==='career'?'Career · '+esc(CR?CR.rank:''):'Free play'}</p>${head}${cbox}${drawDebrief()}${drawReplay()}${score}${sub}${costs}${btns}`;
   $('overlay').hidden=false;if(S.sacked&&!S.sackShown){S.sackShown=1;showLetter('sacked',S.sacked);}else if(S.letterDue){const D=S.letterDue;S.letterDue=null;showLetter(D.kind,D);}
 }
 
+// Career: right under the grade, carry straight on to the next day
+function nextBar(){const CR=S.careerRes;if(S.mode!=='career'||!CR||!CR.next||!SCENARIOS[CR.next]||!unlockedK(career(),CR.next))return '';const v=SCENARIOS[CR.next],i=careerKeys().indexOf(CR.next)+1;
+  return `<div class="next-bar" style="--sc:${v.color}">${ico(sceneOf(CR.next),v.color)}<div><span class="k">Next in your career · Shift ${i}</span><b>${esc(v.title)}</b><span class="s">${esc(v.when)} · ${esc(v.focus)}</span></div><button type="button" class="btn primary big" data-next="${CR.next}">Continue to next day →</button></div>`;}
 function unlockEnd(){S.unlocked=true;['againBtn','sheetBoardBtn','replayBtn'].forEach(i=>{const b=$(i);if(b)b.disabled=false;});const n=$('lockNote');if(n)n.hidden=true;}
 const endSyncTxt=()=>{const r=S.syncRes;return !r?'Saving your career online…':r.ok?`Career saved online as ${r.name}.`:syncNote||SYNC_ERR.net;};
 function setMsg(t,cls){const m=$('submitMsg');if(m){m.textContent=t;m.className='fine '+(cls||'');}}
