@@ -35,11 +35,11 @@ def standalone(game=None):
 
 META={
  'cr':dict(desc="Losing Control, a Watts Up control-room game: switch, transfer and restore supply across Blackout Canyon's substations through faults, planned work and peak demand, or balance generation and flexibility to keep its transformers inside firm capacity.",
-   url='https://der-dash.github.io/Network/control-room/',title='Losing Control',
+   url='https://www.wattsupelectricity.co.uk/control-room/',title='Losing Control',
    alt='Losing Control by Watts Up: a network diagram with interconnectors to Ampy Place and Watts This',
    manifest='manifest.webmanifest',apple='../icons/cr-apple-180.png'),
  'fc':dict(desc="Watts Up control-room game: keep Blackout Canyon's transformers inside firm capacity through faults, storms and swings in generation.",
-   url='https://der-dash.github.io/Network/',title='Firm Capacity: keep Blackout Canyon switched on',
+   url='https://www.wattsupelectricity.co.uk/',title='Firm Capacity: keep Blackout Canyon switched on',
    alt='Firm Capacity by Watts Up: three transformers, one faulted, the others at 112%',
    manifest='manifest.webmanifest',apple='../icons/gen-apple-180.png')}
 
@@ -107,7 +107,7 @@ def redirect(target,title):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title>
-<link rel="canonical" href="https://der-dash.github.io/Network/control-room/">
+<link rel="canonical" href="https://www.wattsupelectricity.co.uk/control-room/">
 <meta http-equiv="refresh" content="0; url={target}">
 <script>location.replace({target!r}+(location.hash||''));</script>
 <style>body{{font:16px/1.5 system-ui,sans-serif;background:#0B1F3A;color:#fff;display:grid;place-items:center;min-height:100vh;margin:0;padding:16px;box-sizing:border-box;text-align:center}}a{{color:#FFD23F}}</style>

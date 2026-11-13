@@ -46,8 +46,8 @@ async function start(scn,md,store){const d=mk(html,'https://e.test/',store),w=d.
   const db=doc.querySelector('.debrief');ok(db&&(S.insecureMin===0||/under-reads the EV surge/.test(db.textContent)),'EV evening at-risk tip mentions the surge ('+S.insecureMin+' min at risk)');}
  // domain lock on the published page
  {const d=mk(pub,'https://copycat.example/games/');await wait(50);const doc=d.window.document;
-  ok(doc.querySelector('.sitelock')&&/Play the original at der-dash.github.io/.test(doc.body.textContent)&&!doc.getElementById('startBtn'),'another site gets the "play the original" screen');
-  ok(doc.querySelector('a[href="https://der-dash.github.io/Network/control-room/"]'),'links to the original');}
+  ok(doc.querySelector('.sitelock')&&/Play the original at www.wattsupelectricity.co.uk/.test(doc.body.textContent)&&!doc.getElementById('startBtn'),'another site gets the "play the original" screen');
+  ok(doc.querySelector('a[href="https://www.wattsupelectricity.co.uk/control-room/"]'),'links to the original');}
  {const d=mk(pub,'https://der-dash.github.io/Network/control-room/');await wait(50);const doc=d.window.document;
   ok(doc.getElementById('startBtn')&&!doc.querySelector('.sitelock'),'runs normally on der-dash.github.io');}
  for(const u of ['https://www.wattsupelectricity.co.uk/control-room/','https://wattsupelectricity.co.uk/control-room/']){const d=mk(pub,u);await wait(50);const doc=d.window.document;

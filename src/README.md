@@ -25,7 +25,8 @@ This writes the GitHub Pages files and standalone copies in `build/`
 
 ## Domain lock
 
-The published pages only run on `der-dash.github.io` and `www.wattsupelectricity.co.uk`
+The published pages live at `www.wattsupelectricity.co.uk` (the `CNAME` file) and only run
+there and on `der-dash.github.io`
 (and `localhost` for testing).
 Anywhere else they show a "play the original" screen. `build.py` switches this on
 (`SITE_LOCK`) for the GitHub Pages files only, so the copies in `build/` open anywhere,

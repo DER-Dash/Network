@@ -8,7 +8,7 @@ const $=id=>document.getElementById(id);
 // ?mode=gen opens the generation shifts. FORCE_GAME is set by build.py for the standalone test copies.
 const FORCE_GAME='';
 const GAME=FORCE_GAME||(/[?&]mode=gen(&|$)/.test(location.search)?'fc':'cr');
-const CR_URL='https://der-dash.github.io/Network/control-room/',FC_URL=CR_URL+'?mode=gen';
+const CR_URL='https://www.wattsupelectricity.co.uk/control-room/',FC_URL=CR_URL+'?mode=gen';
 // switching between control room and generation shifts stays on this page (same address, works offline too)
 const modeHref=g=>location.pathname+(g==='fc'?'?mode=gen':'');
 const CFG=GAME==='fc'?{start:300,end:1380,rate:2.25,pre:'fcg-',salt:'fcg1',def:'may',tag:'Generation',docTitle:'Losing Control · Generation',site:FC_URL,
@@ -21,7 +21,7 @@ const CFG=GAME==='fc'?{start:300,end:1380,rate:2.25,pre:'fcg-',salt:'fcg1',def:'
     box:'<b>Prefer generation?</b> Try the generation shifts: balance solar, wind, batteries and flexibility to keep the transformers inside their rating.',cta:'Generation shifts →'}};
 // Domain lock: the published pages only run on der-dash.github.io and wattsupelectricity.co.uk. build.py turns SITE_LOCK on for the
 // GitHub Pages copies; the standalone copies in build/ (tests, previews) stay unlocked.
-const HOME_HOST='der-dash.github.io',SITE_LOCK=false;
+const HOME_HOST='www.wattsupelectricity.co.uk',SITE_LOCK=false;
 if(SITE_LOCK&&!/^(der-dash\.github\.io|(www\.)?wattsupelectricity\.co\.uk|localhost|127\.0\.0\.1)$/i.test(location.hostname)){siteLock();return;}
 function siteLock(){try{document.title=CFG.docTitle;document.body.className='';document.body.innerHTML=`<main class="sitelock" style="max-width:34rem;margin:12vh auto;padding:0 16px;text-align:center">
   <svg viewBox="0 0 100 100" width="72" height="72" aria-hidden="true"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg>
