@@ -57,7 +57,7 @@ const HINT_OH=['Heard a loud bang from the pole at the end of the road, then the
 const HINT_UG=['There\'s a smell of burning from the pavement, and the power went at the same time.','Workmen were digging by the junction, there was a bang, and everything went off.','Smoke is coming out of a crack in the footpath outside.'];
 const HINT_PRIO={hosp:'Estates manager at Kings Hill Hospital: we\'ve lost the mains and we\'re running on our standby generators.',care:'Calling from the care home: the power\'s off and we have residents on oxygen concentrators.',psr:'I\'m on the Priority Services Register. My medical equipment has gone onto its battery.'};
 const EMERG=1.2,EMERG_MIN=30,SHORT=1.5,SHORT_MIN=5,PAR_MAX=30,OV_MIN=10,INCIDENT_PTS=500,AL_ON=.8,AL_OFF=.75;
-const RATE={0.5:CFG.rate/2,1:CFG.rate,2:CFG.rate*2},spdTxt=v=>(v===.5?'½':v)+'×';
+const RATE={0.5:CFG.rate/2,1:CFG.rate,2:CFG.rate*2,3:CFG.rate*3},spdTxt=v=>(v===.5?'½':v)+'×';
 const ISO_A=25;// easy shifts: minutes per fault that customers can be left off and still get an A
 const isManual=k=>CREW_ON&&(MANUAL.includes(k.split(':')[0])||commsOut(siteOf(k)));
 // Comms down: the substation a device is at (33 kV feeder breakers 'bc' are at Blackout Canyon, so they stay remote)
@@ -1909,6 +1909,8 @@ function renderLog(){if(!logDirty)return;logDirty=false;
 const spendOf=c=>c.arm+c.use+c.short+c.curt+c.gen;
 const SPEND_L={arm:'Availability fees for armed flex',use:'Armed flex switching in',short:'Flex called at short notice',curt:'Curtailing generation',gen:'Compensation for generators off supply'};
 function render(force){
+  {let n=0;PIDS.forEach(p=>LF[p].forEach((v,i)=>[0,1].forEach(s=>{if(secFeed(p,i,s)===null)n+=custOf(p,i,s);})));
+   txt('kOff',nf(n));const b=$('kOffBox');if(b)b.classList.toggle('bad',n>0);}
   {const r=document.documentElement,on=!!(S.running&&!S.ended);if(r.classList.contains('in-shift')!==on){r.classList.toggle('in-shift',on);if(!on)setBar(false);}}
   txt('clock',fmtT(S.t));txt('kSpend',gbp(spendOf(S.cost)));txt('kInc',String(S.incidents));$('kInc').classList.toggle('bad',S.incidents>0);
   {const n=S.sec?S.sec.n:S.n,abs=S.sec?S.sec.abs:Math.abs(S.net||0),live=S.tx.filter(t=>!t.out),maxL=live.length?Math.max(...live.map(t=>t.L)):0;let fv,fs,fc,dt;
@@ -2455,7 +2457,7 @@ document.addEventListener('click',e=>{
   if(id==='dCtl'){if($('pInsp').classList.contains('open'))closeSheet();else{openSheet();render(true);}return;}
   if(id==='tipOk'){tipOk();return;}
   if(id==='tipSkip'){tipsOn=false;ls('tips','off');tipOk();return;}
-  if(id==='dSpeed'){speed=speed===1?2:speed===2?.5:1;document.querySelectorAll('[data-speed]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.speed===speed));txt('dSpeed',spdTxt(speed));return;}
+  if(id==='dSpeed'){speed=speed===1?2:speed===2?3:speed===3?.5:1;document.querySelectorAll('[data-speed]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.speed===speed));txt('dSpeed',spdTxt(speed));return;}
   if(id==='dPlay'){$('playBtn').click();return;}
   if(id==='startBtn'){autoPause=$('ovPause').checked;$('autoPause').checked=autoPause;tipsOn=$('ovTips').checked;ls('tips',tipsOn?'on':'off');if(S.key!==chosen||S.t!==START||S.mode!==mode)newGame(chosen);if(S.mode==='career'&&HANDOVER[S.key]){handoverSheet();return;}begin();return;}
   if(id==='hoGo'){begin();return;}

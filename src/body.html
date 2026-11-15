@@ -12,6 +12,7 @@
         <button type="button" data-speed="0.5" aria-pressed="false" aria-label="Half speed">½×</button>
         <button type="button" data-speed="1" aria-pressed="true">1×</button>
         <button type="button" data-speed="2" aria-pressed="false">2×</button>
+        <button type="button" data-speed="3" aria-pressed="false">3×</button>
       </div>
       <label class="chk"><input type="checkbox" id="autoPause" checked> Pause on faults and overloads</label>
       <button id="muteBtn" class="btn icon-btn" type="button" aria-label="Sound on" aria-pressed="true"></button>
@@ -25,6 +26,7 @@
     </div>
     <div class="kpis">
       <div class="kpi kpi-firm" id="kFirmBox"><span class="k">Firm capacity</span><span class="v" id="kFirm">0 / 120 MW</span><span class="s" id="kFirmSub">120 MW headroom</span></div>
+      <div class="kpi kpi-off" id="kOffBox"><span class="k">Customers off</span><span class="v" id="kOff">0</span></div>
       <div class="kpi"><span class="k">Spend</span><span class="v" id="kSpend">£0</span></div>
       <div class="kpi"><span class="k">Incidents</span><span class="v" id="kInc">0</span></div>
       <div class="kpi"><span class="k">At risk</span><span class="v" id="kIns">0 min</span></div>

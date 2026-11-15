@@ -781,3 +781,14 @@ html.kiosk .zchips,html.kiosk .tpick{display:none!important}
 .cmx-tag{fill:var(--warn)}.cmx.crew .cmx-tag{fill:var(--ok)}
 .mimic-svg .cmx-t{font:800 9px var(--f-display);letter-spacing:.08em;fill:#fff;stroke:none}
 .cmx-h1{fill:var(--panel);fill-opacity:.82}.cmx-h2{stroke:var(--warn);stroke-width:2;stroke-opacity:.35}
+
+/* Customers off supply, beside firm capacity */
+.kpi-off{padding:3px 10px!important;border-left:4px solid var(--ok-on-brand)!important;background:var(--brand-2);border-radius:3px}
+.kpi-off.bad{border-left-color:var(--alarm)!important;background:var(--alarm-bg)}
+.kpi-off.bad .k{color:var(--muted)}.kpi-off.bad .v{color:var(--alarm)}
+@media (max-width:700px), (max-height:500px) and (orientation:landscape){
+  html.in-shift:not(.kiosk) .bar .kpi .k{white-space:nowrap}
+  html.in-shift:not(.kiosk) .bar .kpi .v{white-space:nowrap}
+  html.in-shift:not(.kiosk) .kpi-off{padding:3px 8px!important}
+}
+@media (max-width:460px){html.in-shift:not(.kiosk) .bar .kpi:has(#kIns){display:none}html.in-shift:not(.kiosk) .bar .kpis{gap:7px}html.in-shift:not(.kiosk) .kpi:not(.kpi-firm):not(.kpi-off){padding-left:7px}}
