@@ -792,3 +792,59 @@ html.kiosk .zchips,html.kiosk .tpick{display:none!important}
   html.in-shift:not(.kiosk) .kpi-off{padding:3px 8px!important}
 }
 @media (max-width:460px){html.in-shift:not(.kiosk) .bar .kpi:has(#kIns){display:none}html.in-shift:not(.kiosk) .bar .kpis{gap:7px}html.in-shift:not(.kiosk) .kpi:not(.kpi-firm):not(.kpi-off){padding-left:7px}}
+
+/* ---------- Day and night on the diagram ---------- */
+.p-mimic .mscroll::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;border-radius:8px;transition:background 1.5s linear;
+  background:linear-gradient(180deg,rgba(255,150,80,calc(var(--dusk,0)*.16)),transparent 55%),linear-gradient(180deg,rgba(10,16,52,calc(var(--night,0)*.30)),rgba(24,30,80,calc(var(--night,0)*.16)))}
+.bld .bw{fill:#bcd2e6}
+.mimic-svg.night .bld:not(.off):not(.flt) .bw{fill:#ffd23f;filter:drop-shadow(0 0 1.6px rgba(255,190,40,.9))}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .bld .bw{fill:#5d7891}}
+:root[data-theme="dark"] .bld .bw{fill:#5d7891}
+
+/* ---------- Illustrated generators ---------- */
+.gi .gi-f{fill:color-mix(in srgb,var(--sc) 18%,var(--panel));stroke:var(--sc);stroke-width:1.6;stroke-linejoin:round}
+.gi .gi-g,.gi .gi-w{fill:none;stroke:var(--sc);stroke-width:1;opacity:.75}
+.gi .gi-l,.gi .gi-a{fill:none;stroke:var(--sc);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.gi .gi-sun{fill:#ffc23f;stroke:#e09a00;stroke-width:.8}
+.gi .gi-t{fill:color-mix(in srgb,var(--sc) 30%,var(--panel));stroke:var(--sc);stroke-width:1}
+.gi .gi-bl{fill:var(--sc)}.gi .gi-hub{fill:var(--panel);stroke:var(--sc);stroke-width:1.4}
+.gi .gi-term{fill:var(--sc)}.gi .gi-lvl{fill:var(--sc);opacity:.45;transition:width .6s ease}.gi .gi-bolt{fill:var(--panel);stroke:var(--sc);stroke-width:.8}
+.gi .gi-smoke{fill:var(--muted);opacity:0}
+.gi.chp.on .gi-smoke{animation:smoke 2.4s ease-out infinite}.gi.chp.on .gi-smoke.s2{animation-delay:1.2s}
+@keyframes smoke{0%{opacity:.55;transform:translateY(0) scale(.7)}100%{opacity:0;transform:translateY(-7px) scale(1.5)}}
+.gi .gi-smoke{transform-box:fill-box;transform-origin:center}
+@media (prefers-reduced-motion:reduce){.gi.chp.on .gi-smoke{animation:none;opacity:.4}}
+
+/* ---------- Crew vans ---------- */
+.crew-van{display:none}.crew.drive .crew-van{display:inline}.crew.drive .crew-b{display:none}
+.crew-van .vn-b{fill:#fff;stroke:#3b4660;stroke-width:.8;stroke-linejoin:round}
+.crew-van .vn-s{stroke:#ffd23f;stroke-width:1.8}.crew-van .vn-w{fill:#9cc6e8;stroke:#3b4660;stroke-width:.5}
+.crew-van .vn-wh{fill:#1d2a44;stroke:#9aa3b5;stroke-width:.8}
+.crew.busy .crew-van .vn-s{stroke:#ff8a3d}
+.crew.walk .crew-van{animation:vanBob .35s ease-in-out infinite alternate}
+@keyframes vanBob{to{transform:translateY(-.6px)}}
+@media (prefers-reduced-motion:reduce){.crew.walk .crew-van{animation:none}}
+
+/* ---------- Transformer heat ---------- */
+.txheat{pointer-events:none;transition:opacity .6s}
+.txheat.hot{animation:txHot 1.2s ease-in-out infinite}
+@keyframes txHot{50%{opacity:.55}}
+@media (prefers-reduced-motion:reduce){.txheat.hot{animation:none}}
+
+/* ---------- Achievement badges ---------- */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 4px}
+.bdg{width:24px;height:24px;flex:none}
+.bdg-r{fill:none;stroke:var(--rule);stroke-width:2}.bdg-c{fill:var(--sunk)}
+.bdg-i{fill:none;stroke:var(--muted);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.badge.got .bdg-r{stroke:#c98a00}.badge.got .bdg-c{fill:#ffd23f}.badge.got .bdg-i{stroke:#3a2a00}
+.badge:not(.got){opacity:.7}
+.ach-new .badge{animation:bdgIn .6s cubic-bezier(.2,1.5,.4,1) both}
+.ach-new .badge:nth-child(2){animation-delay:.12s}.ach-new .badge:nth-child(3){animation-delay:.24s}.ach-new .badge:nth-child(4){animation-delay:.36s}
+@keyframes bdgIn{from{opacity:0;transform:scale(.4)}}
+
+/* ---------- End of shift: grade reveal and key moments ---------- */
+.grade .lt{animation:gradeIn .75s cubic-bezier(.2,1.45,.4,1) .15s both}
+@keyframes gradeIn{0%{opacity:0;transform:scale(2.4) rotate(-14deg)}60%{opacity:1}100%{transform:none}}
+.rp-k{font:600 9px var(--f-body);fill:var(--ink);paint-order:stroke;stroke:var(--panel);stroke-width:3px;stroke-linejoin:round}
+.rp-kl{stroke:var(--muted);stroke-width:.8;stroke-dasharray:2 2;opacity:.6}
+@media (prefers-reduced-motion:reduce){.grade .lt,.ach-new .badge{animation:none}}

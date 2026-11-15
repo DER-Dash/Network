@@ -1268,6 +1268,62 @@ html.kiosk .zchips,html.kiosk .tpick{display:none!important}
   html.in-shift:not(.kiosk) .kpi-off{padding:3px 8px!important}
 }
 @media (max-width:460px){html.in-shift:not(.kiosk) .bar .kpi:has(#kIns){display:none}html.in-shift:not(.kiosk) .bar .kpis{gap:7px}html.in-shift:not(.kiosk) .kpi:not(.kpi-firm):not(.kpi-off){padding-left:7px}}
+
+/* ---------- Day and night on the diagram ---------- */
+.p-mimic .mscroll::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;border-radius:8px;transition:background 1.5s linear;
+  background:linear-gradient(180deg,rgba(255,150,80,calc(var(--dusk,0)*.16)),transparent 55%),linear-gradient(180deg,rgba(10,16,52,calc(var(--night,0)*.30)),rgba(24,30,80,calc(var(--night,0)*.16)))}
+.bld .bw{fill:#bcd2e6}
+.mimic-svg.night .bld:not(.off):not(.flt) .bw{fill:#ffd23f;filter:drop-shadow(0 0 1.6px rgba(255,190,40,.9))}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .bld .bw{fill:#5d7891}}
+:root[data-theme="dark"] .bld .bw{fill:#5d7891}
+
+/* ---------- Illustrated generators ---------- */
+.gi .gi-f{fill:color-mix(in srgb,var(--sc) 18%,var(--panel));stroke:var(--sc);stroke-width:1.6;stroke-linejoin:round}
+.gi .gi-g,.gi .gi-w{fill:none;stroke:var(--sc);stroke-width:1;opacity:.75}
+.gi .gi-l,.gi .gi-a{fill:none;stroke:var(--sc);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.gi .gi-sun{fill:#ffc23f;stroke:#e09a00;stroke-width:.8}
+.gi .gi-t{fill:color-mix(in srgb,var(--sc) 30%,var(--panel));stroke:var(--sc);stroke-width:1}
+.gi .gi-bl{fill:var(--sc)}.gi .gi-hub{fill:var(--panel);stroke:var(--sc);stroke-width:1.4}
+.gi .gi-term{fill:var(--sc)}.gi .gi-lvl{fill:var(--sc);opacity:.45;transition:width .6s ease}.gi .gi-bolt{fill:var(--panel);stroke:var(--sc);stroke-width:.8}
+.gi .gi-smoke{fill:var(--muted);opacity:0}
+.gi.chp.on .gi-smoke{animation:smoke 2.4s ease-out infinite}.gi.chp.on .gi-smoke.s2{animation-delay:1.2s}
+@keyframes smoke{0%{opacity:.55;transform:translateY(0) scale(.7)}100%{opacity:0;transform:translateY(-7px) scale(1.5)}}
+.gi .gi-smoke{transform-box:fill-box;transform-origin:center}
+@media (prefers-reduced-motion:reduce){.gi.chp.on .gi-smoke{animation:none;opacity:.4}}
+
+/* ---------- Crew vans ---------- */
+.crew-van{display:none}.crew.drive .crew-van{display:inline}.crew.drive .crew-b{display:none}
+.crew-van .vn-b{fill:#fff;stroke:#3b4660;stroke-width:.8;stroke-linejoin:round}
+.crew-van .vn-s{stroke:#ffd23f;stroke-width:1.8}.crew-van .vn-w{fill:#9cc6e8;stroke:#3b4660;stroke-width:.5}
+.crew-van .vn-wh{fill:#1d2a44;stroke:#9aa3b5;stroke-width:.8}
+.crew.busy .crew-van .vn-s{stroke:#ff8a3d}
+.crew.walk .crew-van{animation:vanBob .35s ease-in-out infinite alternate}
+@keyframes vanBob{to{transform:translateY(-.6px)}}
+@media (prefers-reduced-motion:reduce){.crew.walk .crew-van{animation:none}}
+
+/* ---------- Transformer heat ---------- */
+.txheat{pointer-events:none;transition:opacity .6s}
+.txheat.hot{animation:txHot 1.2s ease-in-out infinite}
+@keyframes txHot{50%{opacity:.55}}
+@media (prefers-reduced-motion:reduce){.txheat.hot{animation:none}}
+
+/* ---------- Achievement badges ---------- */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 4px}
+.bdg{width:24px;height:24px;flex:none}
+.bdg-r{fill:none;stroke:var(--rule);stroke-width:2}.bdg-c{fill:var(--sunk)}
+.bdg-i{fill:none;stroke:var(--muted);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.badge.got .bdg-r{stroke:#c98a00}.badge.got .bdg-c{fill:#ffd23f}.badge.got .bdg-i{stroke:#3a2a00}
+.badge:not(.got){opacity:.7}
+.ach-new .badge{animation:bdgIn .6s cubic-bezier(.2,1.5,.4,1) both}
+.ach-new .badge:nth-child(2){animation-delay:.12s}.ach-new .badge:nth-child(3){animation-delay:.24s}.ach-new .badge:nth-child(4){animation-delay:.36s}
+@keyframes bdgIn{from{opacity:0;transform:scale(.4)}}
+
+/* ---------- End of shift: grade reveal and key moments ---------- */
+.grade .lt{animation:gradeIn .75s cubic-bezier(.2,1.45,.4,1) .15s both}
+@keyframes gradeIn{0%{opacity:0;transform:scale(2.4) rotate(-14deg)}60%{opacity:1}100%{transform:none}}
+.rp-k{font:600 9px var(--f-body);fill:var(--ink);paint-order:stroke;stroke:var(--panel);stroke-width:3px;stroke-linejoin:round}
+.rp-kl{stroke:var(--muted);stroke-width:.8;stroke-dasharray:2 2;opacity:.6}
+@media (prefers-reduced-motion:reduce){.grade .lt,.ach-new .badge{animation:none}}
 </style>
 </head>
 <body>
@@ -1529,6 +1585,17 @@ const ACH=[
   {id:'gsp',name:'Grid guardian',d:'Finish the Grid emergency without National Grid disconnecting a transformer.',cr:1},
   {id:'cheap',name:'Bargain hunter',d:'Finish a generation shift spending under £2,000.',fc:1},
   {id:'textbook',name:'Textbook',d:'Grade A on every career shift.'}].filter(a=>GAME==='cr'?!a.fc:!a.cr);
+// Achievement badges: a round medal with an icon for each (24-unit icons)
+const BADGE={first:'<path d="M12 4 14.4 9l5.4.6-4 3.8 1.1 5.4L12 16.2 7.1 18.8l1.1-5.4-4-3.8L9.6 9z"/>',
+  clean:'<path d="M5 12.5 10 17.5 19.5 7"/>',solid:'<path d="M12 3.5 19 6.5V12c0 4.2-3 7.4-7 8.5-4-1.1-7-4.3-7-8.5V6.5z"/>',
+  quick:'<circle cx="12" cy="13" r="7"/><path d="M12 13V9M10 3.5h4M17.5 7l1.5-1.5"/>',nobody:'<path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"/><path d="M4 20 20 4"/>',
+  mbb:'<path d="M4 9h11l-3-3M20 15H9l3 3"/>',crews:'<path d="M6 13a6 6 0 0 1 12 0v1H6z"/><path d="M4 15h16M12 7V5"/>',
+  vf:'<path d="M13 3 6 13h5l-1 8 7-10h-5z"/>',heat:'<path d="M12 4v10.5a3 3 0 1 0 3 0"/><path d="M12 4a1.5 1.5 0 0 1 3 0v10.5"/><path d="M18 7h2M18 10h2"/>',
+  endure:'<path d="M7 16a4 4 0 0 1 .3-8A5.5 5.5 0 0 1 18 9.5a3.3 3.3 0 0 1 0 6.5H7z"/><path d="M9 19l-1 2M13 19l-1 2M17 19l-1 2"/>',
+  dry:'<path d="M12 3.5c3.5 4.5 6 7.6 6 10.5a6 6 0 0 1-12 0c0-2.9 2.5-6 6-10.5z"/><path d="M5 5l14 14"/>',
+  gsp:'<path d="M12 2 7.5 22M12 2l4.5 20M5 7h14M6.5 12h11"/>',cheap:'<path d="M15 6.5a4 4 0 0 0-7 2.5v9M6 13h7M6 18.5h11"/>',
+  textbook:'<path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z"/>'};
+const badge=(a,got)=>`<span class="badge${got?' got':''}" title="${esc(a.d)}"><svg class="bdg" viewBox="0 0 32 32" aria-hidden="true"><circle class="bdg-r" cx="16" cy="16" r="14.5"/><circle class="bdg-c" cx="16" cy="16" r="11.5"/><g transform="translate(4 4)" class="bdg-i">${BADGE[a.id]||BADGE.first}</g></svg>${esc(a.name)}</span>`;
 function career(){try{return JSON.parse(ls('career')||'null')||{stars:{},ach:{},best:{}};}catch(e){return{stars:{},ach:{},best:{}};}}
 function saveCareer(c){ls('career',JSON.stringify(c));}
 const starsOf=c=>CAREER.reduce((a,k)=>a+(c.stars[k]||0),0);
@@ -1848,6 +1915,8 @@ function bld(cx,t,p,i){const nm=(LFN[p]||[])[i]||'',w=(x,y,a,b)=>`<rect class="b
 // lightning bolt marking the faulted half of an 11 kV feeder
 const boltAt=(id,cx,cy)=>`<g id="${id}" class="lfx" hidden><title>Fault in this half of the feeder</title><path class="bolt" d="M${cx+2} ${cy-7} l-6.5 7.8 h4.2 l-2.9 6.5 l7.8 -8.8 h-4.2 l2.9 -5.5 z"/></g>`;
 const showIf=(e,on)=>{if(!e)return;if(on){if(e.hasAttribute('hidden'))e.removeAttribute('hidden');}else if(!e.hasAttribute('hidden'))e.setAttribute('hidden','');};
+// Field crew's van while travelling: white with a Watts Up yellow stripe, cab to the right, wheels at y=4
+const VAN_FIG='<path class="vn-b" d="M-12 2.5 V-6 Q-12 -8.5 -9.5 -8.5 H3.5 L8 -3.2 H10.4 Q12 -3.2 12 -1.6 V2.5 Z"/><path class="vn-s" d="M-12 -1.2 H12"/><path class="vn-w" d="M4.2 -7.2 L7 -3.8 H4.2 Z"/><circle class="vn-wh" cx="-6.5" cy="3" r="2.4"/><circle class="vn-wh" cx="6.5" cy="3" r="2.4"/>';
 // Field crew: an engineer in a white hard hat and hi-vis vest, drawn round the feet at (0, 4). Legs and arms swing when walking.
 const CREW_FIG='<path class="cf-leg cf-l" d="M-1.5 -3.5 L-2 4"/><path class="cf-leg cf-r" d="M1.5 -3.5 L2 4"/>'+
   '<path class="cf-arm cf-al" d="M-3.6 -9.6 L-5 -4.2"/><path class="cf-arm cf-ar" d="M3.6 -9.6 L5 -4.2"/>'+
@@ -2704,7 +2773,8 @@ function buildMimic(){
     <line class="bus nbus fm" x1="1160" y1="276" x2="1160" y2="648"/>`;
   SELBOX['nb:kn']=[10,220,110,402];SELBOX['nb:fm']=[1072,220,126,432];
   TXX.forEach((x,i)=>{
-    s+=`<g id="cct${i}" class="cct">
+    s+=`<g id="cct${i}" class="cct"><defs><radialGradient id="txHG${i}"><stop id="txHS${i}a" offset="0" stop-color="#4aa3ff" stop-opacity=".5"/><stop id="txHS${i}b" offset="1" stop-color="#4aa3ff" stop-opacity="0"/></radialGradient></defs>
+    <circle id="txh${i}" class="txheat" cx="${x}" cy="103" r="36" fill="url(#txHG${i})"/>
     <line id="ca${i}" class="cond hv" x1="${x}" y1="40" x2="${x}" y2="76"/><line id="fa${i}" class="flow" x1="${x}" y1="44" x2="${x}" y2="76"/>
     <rect class="brk" id="hb${i}" x="${x-6}" y="50" width="12" height="12"/>
     <circle class="wdg hv" cx="${x}" cy="92" r="16"/><circle class="wdg mv" cx="${x}" cy="114" r="16"/>
@@ -2767,11 +2837,13 @@ function buildMimic(){
       if(LV_ON)LDX.forEach((dx,i)=>{const fx=x+dx;sym+=`<g id="mgg_${p}${i}" class="mg" hidden><path class="mg-l" d="M${fx} ${VF_ON&&VFI.includes(i)?y+40:y+17} V${y+45.5}"/><circle cx="${fx}" cy="${y+52}" r="6.5"/><text x="${fx}" y="${y+55}" text-anchor="middle">G</text></g>`;SELBOX['mg:'+p+i]=[fx-9,y+43,18,18];});
       s+=`<line id="alb_load_${p}" class="cond mv" x1="${x+LDX[0]-2}" y1="${by}" x2="${x+LDX[2]+2}" y2="${by}" style="stroke-width:3"/>`;
       if(VF_ON)VFI.forEach(i=>{const fx=x+LDX[i];sym+=`<path id="nopl_${p}${i}" class="vf-l" d="M${fx} ${y+17} V${y+24} M${fx} ${y+34} V${y+40}"/><rect id="nopb_${p}${i}" class="brk sw nop open" x="${fx-5}" y="${y+24}" width="10" height="10" rx="5"/>`;});}
-    if(a.type==='dsr')sym=`<path class="sym-o" d="M${x-11} ${y} L${x+11} ${y} L${x} ${y+20} Z"/>`;
-    if(a.type==='solar')sym=`<rect class="sym-o" x="${x-15}" y="${y}" width="30" height="24"/><path class="sym-l" d="M${x-15} ${y+24} L${x+15} ${y}"/><path class="sym-l" d="M${x+3} ${y+18} h8 M${x+3} ${y+21} h8"/>`;
-    if(a.type==='wind')sym=`<circle class="sym-o" cx="${x}" cy="${y+14}" r="14"/><g id="blades" class="blades"><path class="sym-l" d="M${x} ${y+14} V${y+4} M${x} ${y+14} L${x+8.7} ${y+19} M${x} ${y+14} L${x-8.7} ${y+19}"/></g>`;
-    if(a.type==='batt')sym=`<path class="sym-l" d="M${x-15} ${y} h30 M${x-8} ${y+6} h16 M${x-15} ${y+12} h30 M${x-8} ${y+18} h16" style="stroke-width:2.5"/>`;
-    if(a.type==='chp')sym=`<circle class="sym-o" cx="${x}" cy="${y+14}" r="14"/><text x="${x}" y="${y+19}" text-anchor="middle" style="font:700 13px var(--f-display)">G~</text>`;
+    // illustrated generators: drawn in the asset's colour (--sc), about 30 wide and 28 tall from y
+    if(a.type==='dsr')sym=`<g class="gi"><path class="gi-f" d="M${x-14} ${y+27} V${y+13} L${x-7} ${y+8} V${y+13} L${x} ${y+8} V${y+13} H${x+14} V${y+27} Z"/><path class="gi-w" d="M${x-10} ${y+17} h3 M${x-3} ${y+17} h3"/><path class="gi-a" d="M${x+7} ${y+14} V${y+24} M${x+3.5} ${y+20.5} L${x+7} ${y+24} L${x+10.5} ${y+20.5}"/></g>`;
+    if(a.type==='solar')sym=`<g class="gi"><circle class="gi-sun" cx="${x-12}" cy="${y+1}" r="3.6"/><path class="gi-f" d="M${x-15} ${y+21} L${x-8} ${y+5} H${x+15} L${x+8} ${y+21} Z"/><path class="gi-g" d="M${x-0.3} ${y+5} L${x-7.3} ${y+21} M${x+7.3} ${y+5} L${x+0.3} ${y+21} M${x-11.5} ${y+13} H${x+11.5}"/><path class="gi-l" d="M${x-4} ${y+21} V${y+27} M${x+4} ${y+21} V${y+27}"/></g>`;
+    if(a.type==='wind'){const hy=y+10,bl=r=>`<path class="gi-bl" transform="rotate(${r} ${x} ${hy})" d="M${x} ${hy} C${x+2.2} ${hy-4} ${x+1.4} ${hy-10} ${x} ${hy-13} C${x-1} ${hy-9} ${x-1.6} ${hy-4} ${x} ${hy} Z"/>`;
+      sym=`<g class="gi"><path class="gi-t" d="M${x-2.3} ${y+28} L${x-.8} ${hy} H${x+.8} L${x+2.3} ${y+28} Z"/><g id="blades" class="blades"><circle cx="${x}" cy="${hy}" r="13.5" fill="none" stroke="none"/>${bl(0)+bl(120)+bl(240)}</g><circle class="gi-hub" cx="${x}" cy="${hy}" r="2"/></g>`;}
+    if(a.type==='batt')sym=`<g class="gi"><rect class="gi-f gi-o" x="${x-14}" y="${y+5}" width="26" height="18" rx="3"/><rect class="gi-term" x="${x+12}" y="${y+10}" width="3" height="8" rx="1"/><rect id="battLvl" class="gi-lvl" x="${x-12}" y="${y+7}" width="22" height="14" rx="1.5"/><path class="gi-bolt" d="M${x} ${y+8} l-3.5 6.5 h3 l-1.5 5 l4.5 -7 h-3 l1.5 -4.5 z"/></g>`;
+    if(a.type==='chp')sym=`<g id="gi_chp" class="gi chp"><circle class="gi-smoke" cx="${x+10}" cy="${y-1}" r="2.6"/><circle class="gi-smoke s2" cx="${x+12}" cy="${y-5}" r="2"/><path class="gi-f" d="M${x-14} ${y+28} V${y+14} L${x-6} ${y+9} V${y+14} L${x+2} ${y+9} V${y+14} H${x+8} V${y+2} H${x+12} V${y+28} Z"/><path class="gi-w" d="M${x-10} ${y+19} h3 M${x-3} ${y+19} h3 M${x-10} ${y+23} h3 M${x-3} ${y+23} h3"/></g>`;
     s+=a.type==='load'?`<g id="ptg_${a.prim}" class="ptg"><title>${esc(PR[a.prim].name)} 33/11 kV transformer and its automatic 33 kV breaker</title><line id="al_${a.id}" class="cond mv" x1="${x}" y1="${bY}" x2="${x}" y2="${bY+33}"/><line id="alt_${a.id}" class="cond mv" x1="${x}" y1="${bY+63}" x2="${x}" y2="${ay+16}"/>
       <rect id="ptb_${a.prim}" class="brk sw" x="${x-7}" y="${bY+12}" width="14" height="14"/><circle class="wdg mv" cx="${x}" cy="${bY+42}" r="9"/><circle class="wdg mv" cx="${x}" cy="${bY+54}" r="9"/>
       <g id="ptf_${a.prim}" hidden><path class="bolt" d="M${x-14} ${bY+32} l-6 10 h5 l-4 10 l9 -13 h-5 l4 -7 z"/></g><text id="ptt_${a.prim}" class="fd-t" x="${x+14}" y="${bY+24}"></text>
@@ -2803,7 +2875,7 @@ function buildMimic(){
       <rect class="cmx-tag" x="${l+6}" y="${t+6}" width="${w-12}" height="16" rx="8"/><text id="cmxt_${p}" class="cmx-t" x="${l+w/2}" y="${t+17.5}" text-anchor="middle">NO COMMS</text></g>`;});
   s+=`<rect id="coachRing" class="coach-ring" x="0" y="0" width="0" height="0" rx="10" visibility="hidden"/>`;
   if(CREW_ON){s+=`<g class="depot"><text class="nb-name crew-n" x="1188" y="34" text-anchor="end">CREW DEPOT</text><text class="nb-r" x="1188" y="48" text-anchor="end">${S.crews.length===1?"1 field crew":S.crews.length+" field crews"}</text><g class="depot-i"><path class="dp-b" d="M1090 75 L1105 64 L1120 75 V89 H1090 Z"/><rect class="dp-d" x="1097" y="77" width="16" height="12" rx="1"/><path class="dp-l" d="M1097 80.5 h16 M1097 84 h16 M1097 87.5 h16"/></g></g><g id="crews">`+
-    [1,2,3].map(n=>`<g id="crew${n}" class="crew"><g class="crew-b">${CREW_FIG}</g><g class="crew-tag"><circle cx="6.2" cy="-16.4" r="3.9"/><text class="crew-t" x="6.2" y="-14.3" text-anchor="middle">${n}</text></g></g>`).join('')+'</g>';}
+    [1,2,3].map(n=>`<g id="crew${n}" class="crew"><g class="crew-b">${CREW_FIG}</g><g class="crew-van"><g id="van${n}">${VAN_FIG}</g></g><g class="crew-tag"><circle cx="6.2" cy="-16.4" r="3.9"/><text class="crew-t" x="6.2" y="-14.3" text-anchor="middle">${n}</text></g></g>`).join('')+'</g>';}
   s+=`<rect id="selbox" class="selbox" x="0" y="0" width="0" height="0" rx="6" visibility="hidden"/>`;
   if(GAME==='fc')s=s.replace(/<rect class="hit" data-sel="(?:bc|in|tie|it|bs|lf|nop|lk|nb|pt):[^"]*"[^>]*\/>/g,'');
   {const lg=$('lgLK');if(lg)lg.hidden=!LKIDS.length;}
@@ -2846,6 +2918,8 @@ function renderMimic(){
     const b=$('bolt'+i);if(t.out&&!t.out.ready&&(t.out.kind==='fault'||t.out.kind==='trip'))b.removeAttribute('hidden');else b.setAttribute('hidden','');
     const hc=t.out?'':heat(t.L),w=t.out?'':(3.5+2.5*Math.min(t.L,1.5)).toFixed(1);
     [['ca','hv'],['cb','mv']].forEach(([p,v])=>{const e=$(p+i);setAttr(e,'class','cond '+v+hc);if(e&&e.style.strokeWidth!==(w?w+'px':''))e.style.strokeWidth=w?w+'px':'';});
+    {const h=$('txh'+i);if(h){const T=t.temp||20,c=T<55?'#4aa3ff':T<85?mixC('#4aa3ff','#ffb020',(T-55)/30):T<110?mixC('#ffb020','#ff5a1f',(T-85)/25):'#ff2d2d',o=t.out?0:.22+.5*clamp((T-35)/85,0,1);
+      const a=$('txHS'+i+'a'),b=$('txHS'+i+'b');if(a){setAttr(a,'stop-color',c);setAttr(a,'stop-opacity',o.toFixed(2));}if(b)setAttr(b,'stop-color',c);setAttr(h,'class','txheat'+(!t.out&&T>=110?' hot':''));}}
     txt('load'+i,t.out?(t.out.ready?'READY':t.out.kind==='planned'?'PLANNED':t.out.kind==='trip'?'TRIPPED':t.out.kind==='open'?'OPEN':t.out.kind==='black'?'NO SUPPLY':'FAULTED'):Math.round(t.L*100)+'%');
     txt('flow'+i,t.out?(t.out.ready?'Close it':'Back '+fmtT(t.out.until)):`${Math.round(Math.abs(t.flow))} MW ${arrow(t.flow)}`);
     const f=clamp((t.temp-20)/(TRIP_T-20),0,1);const tf=$('tf'+i);setAttr(tf,'width',(62*f).toFixed(1));
@@ -2901,8 +2975,9 @@ function renderMimic(){
       sub2('as_'+id,!on(p)?'':a[id]>.5?`−${Math.round(a[id])}\ncurtailed`:S.fail[id]>S.t?'not\nresponding':id==='wind'&&cut?'high-wind\nstop':S.armed[id]>0?`auto −${S.armed[id]}`:out>.5?'full\noutput':'');
       setAttr($('as_'+id),'class','a-sub'+(a[id]>.5||S.fail[id]>S.t||(id==='wind'&&cut)?'':' muted'));return out;};
     const wnd=gen('wind',c.wind,'rv');gen('solar',c.solar,'ml');
-    const bl=$('blades');if(bl)bl.classList.toggle('still',wnd<1);
+    const bl=$('blades');if(bl)bl.classList.toggle('still',wnd<1);{const ch=$('gi_chp');if(ch)ch.classList.toggle('on',(S.act.chp||0)>.5&&S.sup.rv!=='off');}
     const bat=on('hw')?a.bdis-a.bchg:0;
+    {const bl=$('battLvl');if(bl)setAttr(bl,'width',String(Math.max(0,Math.round(22*clamp(S.soc/100,0,1)*10)/10)));}
     txt('av_batt',!on('hw')?'Off':Math.abs(bat)<.5?'Idle':mw(Math.abs(bat)));setFlow($('afl_batt'),-bat);setAttr($('al_batt'),'class','cond mv'+(on('hw')?'':' dead'));
     sub2('as_batt',`${Math.round(S.soc/SOC_MAX*100)}%`+(S.armed.bdis||S.armed.bchg?' · armed':'')+(Math.abs(bat)<.5||!on('hw')?'':bat>0?'\ndischarging':'\ncharging'));setAttr($('as_batt'),'class','a-sub'+(bat<-.5?'':' muted'));
     ['chp','dsr'].forEach(id=>{const p=SV[id].prim,v=on(p)?a[id]:0;txt('av_'+id,!on(p)?'Off':v>.5?(id==='dsr'?'−':'+')+mw(v):'Standby');
@@ -2911,7 +2986,7 @@ function renderMimic(){
     ASSETS.filter(x=>x.type!=='load').forEach(x=>{const off=!on(x.prim)||S.ended;['u','d'].forEach(k=>{const e=$(`adj_${x.id}_${k}`);if(e)e.classList.toggle('dis',off);});});
   }
   if(CREW_ON){const tNow=S.t+(S.running&&!S.paused&&!S.ended?acc:0);S.crews.forEach((c,i)=>{const g=$('crew'+c.n);if(!g)return;const p=crewPos(c,tNow),same=S.crews.filter((d,j)=>j<i&&!d.to&&!c.to&&Math.abs(d.x-c.x)<1&&Math.abs(d.y-c.y)<1).length,
-    off=c.to?(i-1)*7:(c.at==='depot'?(i-1)*16:14+same*12);setAttr(g,'transform',`translate(${(p.x+off).toFixed(1)} ${(p.y+(c.at==='depot'&&!c.to?16:-4)+(c.to?(i-1)*5:0)).toFixed(1)}) scale(1.25)`);g.classList.toggle('walk',!!c.to&&S.running&&!S.paused);g.classList.toggle('home',c.at==='depot'&&!c.to);g.classList.toggle('busy',!!c.job);});}
+    off=c.to?(i-1)*7:(c.at==='depot'?(i-1)*16:14+same*12);setAttr(g,'transform',`translate(${(p.x+off).toFixed(1)} ${(p.y+(c.at==='depot'&&!c.to?16:-4)+(c.to?(i-1)*5:0)).toFixed(1)}) scale(1.25)`);g.classList.toggle('walk',!!c.to&&S.running&&!S.paused);g.classList.toggle('drive',!!c.to);{const v=$('van'+c.n);if(v)setAttr(v,'transform',c.to&&c.to.x<c.from.x-1?'scale(-1 1)':'');}g.classList.toggle('home',c.at==='depot'&&!c.to);g.classList.toggle('busy',!!c.job);});}
   if(S.sc.gsp){const G=S.sc.gsp,on=S.t>=G.start&&S.t<G.end;txt('gspT',on?`LIMIT ${G.limit} MW · NOW ${Math.round(S.gspLoad)} MW`:S.t>=G.warn&&S.t<G.start?'SUPERGRID FAULT EXPECTED':'');setAttr($('gspT'),'class','gsp-t'+(on&&S.gspLoad>G.limit?' alarm':on?' ok':''));}
   const sb=$('selbox'),bx=S.sel&&SELBOX[S.sel];
   if(bx){setAttr(sb,'x',String(bx[0]));setAttr(sb,'y',String(bx[1]));setAttr(sb,'width',String(bx[2]));setAttr(sb,'height',String(bx[3]));setAttr(sb,'visibility','visible');}else setAttr(sb,'visibility','hidden');
@@ -3315,6 +3390,10 @@ function skyAt(m){const sc=S.sc,r=sc.solar.start,st=sc.solar.end,h=m/60;
   if(grey){top=mixC(top,'#7a8190',grey);bot=mixC(bot,'#aeb4bf',grey);}
   return{top,bot,day,f:(h-r)/(st-r),cloud:cl};}
 function renderSky(){const k=S.key+'|'+Math.floor(S.t/3);if(k===lastSky)return;lastSky=k;const s=skyAt(S.t);
+  {// the diagram follows the clock: dark before sunrise and after sunset, warm at dawn and dusk; windows light up at night
+    const h=S.t/60,r=S.sc.solar.start,st=S.sc.solar.end,n=h<r-.75||h>st+.75?1:h>r+.5&&h<st-.5?0:h<=r+.5?clamp((r+.5-h)/1.25,0,1):clamp((h-st+.5)/1.25,0,1),
+      d=Math.max(0,1-Math.abs(h-r)/1.1,1-Math.abs(h-st)/1.1),pm=$('pMimic');
+    if(pm){pm.style.setProperty('--night',n.toFixed(2));pm.style.setProperty('--dusk',d.toFixed(2));}const mi=$('mimic');if(mi)mi.classList.toggle('night',n>.45);}
   let body='';
   if(s.day){const x=8+102*s.f,y=40-30*Math.sin(Math.PI*s.f);body+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9" fill="#ffd54a" opacity=".35"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5.5" fill="#ffe27a"/>`;}
   else body+=`<circle cx="96" cy="13" r="6" fill="#ecebff"/><circle cx="99" cy="11" r="5.5" fill="${s.top}"/><circle cx="20" cy="10" r=".9" fill="#fff"/><circle cx="44" cy="18" r=".7" fill="#fff"/><circle cx="66" cy="8" r=".8" fill="#fff"/>`;
@@ -3538,7 +3617,7 @@ function careerBox(){const c=career(),n=starsOf(c),nr=nextRank(n),got=ACH.filter
   return `<div class="career" id="careerBox"><div class="career-top"><div><span class="k">Rank</span><b>${esc(rankOf(n))}</b><span class="s">${n} of ${CAREER.length*3} stars${nr?` · ${nr[0]-n} more for ${esc(nr[1])}`:''}</span></div>
     <div><span class="k">Achievements</span><b>${got.length} of ${ACH.length}</b></div>
     <div class="errs${(c.errs||0)>=CAREER_WARN?' final':''}"><span class="k">Switching errors</span><b>${c.errs||0} of ${CAREER_SACK}</b><span class="s">${(c.errs||0)>=CAREER_WARN?'Final warning: one more and you\'re sacked · <button type="button" class="linkish" data-letter="warn">read the letter</button>':`${CAREER_SACK} in your career and you're sacked`}</span></div></div>
-    <div class="ach">${ACH.map(a=>`<span class="badge${c.ach[a.id]?' got':''}" title="${esc(a.d)}">${c.ach[a.id]?'🏅':'○'} ${esc(a.name)}</span>`).join('')}</div>
+    <div class="ach">${ACH.map(a=>badge(a,!!c.ach[a.id])).join('')}</div>
     <p class="fine">One switching incident is allowed per shift: a second ends it. In your career, a third brings a final written warning, and a fourth gets you sacked and your career starts again from nothing. Finish a shift to unlock the next one. Grade A earns 3 stars, B 2, C or D 1. Career shifts use random faults and count on the free-play scoreboard.</p>${restartBox(c)}${syncBox()}</div>`;}
 function restartBox(c){const ks=careerKeys(),un=ks.filter(k=>unlockedK(c,k));if(!starsOf(c))return '';
   const R=runOn(c)?c.run:null,rs=R?Object.values(R.stars).reduce((a,v)=>a+v,0):0;
@@ -3698,6 +3777,10 @@ function drawReplay(){
     else if(k.type==='xfer')s+=`<rect class="rp-x" x="${(x-3).toFixed(1)}" y="${T-12}" width="6" height="6"><title>${esc(fmtT(k.m)+' '+k.label)}</title></rect>`;
     else if(k.type==='fail'||k.type==='incident')s+=`<path class="rp-fail" d="M${(x-4.5).toFixed(1)} ${H-B-6} l4.5 -8 l4.5 8z"><title>${esc(fmtT(k.m)+' '+k.label)}</title></path>`;
     else if(k.type==='lost'){const last=F[F.length-1],y=Yv(last.net);s+=`<path class="rp-lost" d="M${x-7} ${y-7}l14 14M${x+7} ${y-7}l-14 14"/>`;}});
+  {// label the key moments: losses, incidents and trips first, then the first faults; at most five, staggered so they don't collide
+    const pr=k=>({lost:0,incident:1,fail:2,trip:3,fault:4,xfer:5})[k.type],key=S.marks.filter(k=>pr(k)!=null&&k.label&&(k.type!=='xfer'||/restored|back|All/i.test(k.label))).sort((a,b)=>pr(a)-pr(b)||a.m-b.m).slice(0,5).sort((a,b)=>a.m-b.m);
+    const rows=[];key.forEach(k=>{const x=X(k.m),txt0=fmtT(k.m)+' '+k.label,w=txt0.length*4.6+6;let r=0;while(rows[r]!=null&&rows[r]>x-w/2-4)r++;rows[r]=x+w/2;const y=T+9+r*11,anc=x>W*.8?'end':x<L+40?'start':'middle';
+      s+=`<line class="rp-kl" x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${y+2}" y2="${H-B}"/><text class="rp-k" x="${x.toFixed(1)}" y="${y}" text-anchor="${anc}">${esc(txt0)}</text>`;});}
   const legend=`<span><i style="border-color:var(--mv)"></i>Blackout Canyon net flow</span><span><i style="border-color:var(--warn);border-top-style:dashed"></i>Firm capacity</span><span><i class="box" style="background:var(--alarm);opacity:.3"></i>At risk</span><span><i class="box" style="background:var(--alarm)"></i>Customers off</span><span style="color:var(--alarm)">⚡ Fault or trip</span>${NOGEN()?'':'<span style="color:var(--c-solar)">◆ Flex in</span>'}<span style="color:var(--c-wind)">■ Switching</span><span style="color:var(--c-gas)">▲ Incident${NOGEN()?'':' or no response'}</span>`;
   return `<div class="replay"><h3>Your shift</h3><div class="scroll"><svg class="rp" viewBox="0 0 ${W} ${H}" role="img" aria-label="Blackout Canyon net flow through the shift against capacity, with faults and switching marked">${s}</svg></div><div class="legend" style="margin-top:6px">${legend}</div>
     <p class="rp-sum">Peak loading ${Math.round(S.peakL*100)}% · ${S.faults} ${S.faults===1?'fault':'faults'} · ${S.incidents} ${S.incidents===1?'incident':'incidents'} · ${nf(S.cust.ci)} customers interrupted (${(S.cust.cml/CUST_TOTAL).toFixed(1)} min lost each) · ${S.insecureMin} min at risk</p></div>`;
@@ -3781,7 +3864,7 @@ function showEnd(){
         <div class="rankbar"><i style="width:${pct}%"></i></div><span class="s">${CR.stars} of ${CAREER.length*3} career stars${nr?` · ${nr[0]-CR.stars} more for ${esc(nr[1])}`:' · top rank reached'}</span></div>
       <p class="cstars">${starStr(CR.st)} <span>${CR.up?'New best for this shift':'Stars for this shift'}</span></p>`:''}
       ${CR.newUnl.length?`<p>Unlocked: <b>${CR.newUnl.map(k=>esc(SCENARIOS[k].title)).join(', ')}</b></p>`:''}
-      ${CR.newA.length?`<div class="ach">${CR.newA.map(a=>`<span class="badge got" title="${esc(a.d)}">🏅 ${esc(a.name)}</span>`).join('')}</div>`:''}
+      ${CR.newA.length?`<div class="ach ach-new">${CR.newA.map(a=>badge(a,true)).join('')}</div>`:''}
       ${syncGet()||S.syncRes?`<p class="fine sync-end" id="endSync" role="status">${esc(endSyncTxt())}</p>`:''}
       ${S.mode!=='career'?'':CR.next?(unlockedK(career(),CR.next)?'':`<p class="fine">Finish this shift to unlock ${esc(SCENARIOS[CR.next].title)}. Press Try again below.</p>`):`<p><b>That's every career shift done${CR.runEnd?' again':''}.</b> Replay any of them to earn more stars, or <button type="button" class="linkish" data-restart="${careerKeys()[0]}">start your career again from shift 1</button>.</p>`}</div>`:'';
   $('sheet').innerHTML=`${BAND}<p class="eyebrow">${esc(S.sc.title)}, ${esc(S.sc.when)} · ${S.mode==='daily'?"Today's challenge, "+fmtDate(S.date):S.mode==='career'?'Career · '+esc(CR?CR.rank:''):'Free play'}</p>${head}${cbox}${drawDebrief()}${drawReplay()}${score}${sub}${costs}${btns}`;
