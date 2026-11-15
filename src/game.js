@@ -726,7 +726,7 @@ function letterHtml(kind,D){const nm=getName()||'Control Engineer',date=fmtLong(
     <p>As you were warned, this means your employment as a control engineer at Blackout Canyon is <b>terminated with immediate effect</b>. Your career record, including your stars, rank and achievements, has been cleared.</p>
     <p>You are welcome to reapply. Your new career starts from Shift 1 with a clean record.</p>`;
   return `<div class="lt-paper" role="document"><header class="lt-head"><div class="lt-brand">${LOGO}<div><b>Watts <span>Up</span></b><small>Electricity Distribution</small></div></div>
-    <address>Watts Up House<br>1 Circuit Way<br>Blackout Canyon BC1 33K<br>control@wattsup.example</address></header>
+    <address>Watts Up House<br>1 Circuit Way<br>Blackout Canyon BC1 33K<br>control@wattsupelectricity.co.uk</address></header>
     <div class="lt-meta"><span>Our ref: ${ref}</span><span>${esc(date)}</span></div><p class="lt-conf">Private and confidential</p>
     <p class="lt-to">${esc(nm)}<br>Control Engineer<br>Blackout Canyon Control Room</p>
     <p>Dear ${esc(nm)},</p>${body}
