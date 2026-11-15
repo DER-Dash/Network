@@ -7,9 +7,9 @@ async function start(scn){const d=mk(),w=d.window,doc=w.document;await wait(30);
 (async()=>{
  {const {G,S}=await start('quiet');S.sched.length=0;G.run(3);const t0=S.t;
   S.sched.push({k:'lv:hw0',m:S.t,dur:40,sec:1,tr:false,cause:'Cable joint failure',done:false});G.run(2);
-  const f=S.lff.hw[0];ok(f&&f.found&&f.sec===1&&f.until-t0>=105,`second-half repair takes at least 105 min (${f&&f.until-t0})`);
+  const f=S.lff.hw[0];ok(f&&f.found&&f.sec===1&&f.until-t0>=120,`11 kV repair takes at least 120 min (${f&&f.until-t0})`);
   G.op('mid:hw0','open');let t=0;while(S.mid.hw[0]&&t++<40)G.run(1);G.op('lf:hw0','close');G.run(2);
-  G.op('mg:hw0','close');t=0;const u=()=>S.mgu.find(x=>x.site==='hw0');while(!(u()&&u().conn)&&t++<120)G.run(1);
+  S.mgPick='M';G.op('mg:hw0','close');t=0;const u=()=>S.mgu.find(x=>x.site==='hw0');while(!(u()&&u().conn)&&t++<120)G.run(1);
   ok(u()&&u().conn&&u().lv,`generator connected to the LV after ${t} min`);G.run(2);
   ok(S.lff.hw[0]&&S.lff.hw[0].sec===1,'fault still there while the generator runs');
   ok(u().conn&&S.trial===0,'generator did not trip on the 11 kV fault');
@@ -18,4 +18,12 @@ async function start(scn){const d=mk(),w=d.window,doc=w.document;await wait(30);
   while(S.lff.hw[0]&&!S.ended)G.run(1);ok(u().conn,'generator keeps supplying after the repair until disconnected');
   G.op('mg:hw0','open');t=0;while(u().conn&&t++<40)G.run(1);ok(!u().conn,'generator disconnected');
   G.op('mid:hw0','close');t=0;while(!S.mid.hw[0]&&t++<40)G.run(1);G.run(1);ok(S.mid.hw[0]&&S.incidents===0,'feeder back together with no incident');}
+ // generator sizes: collected from the yard and towed; too small trips, big enough holds; always quicker than the repair
+ for(const sz of ['S','L']){const {G,S}=await start('quiet');S.sched.length=0;let t=0;while(S.t<1050&&t++<700)G.run(1);// evening peak
+  S.sched.push({k:'lv:hw0',m:S.t,dur:30,sec:1,tr:false,cause:'Cable joint failure',done:false});G.run(2);const F=S.lff.hw[0],rep=F.until;
+  if(sz==='S'){const need=+(S.c.demand*S.share.hw*.4*.5).toFixed(1);ok(need>5,'evening peak: far half of Town Centre needs '+need+' MW, more than a small generator');}
+  S.mgPick=sz;const t0=S.t;G.op('mg:hw0','close');G.run(1);const c=S.crews.find(x=>x.job&&x.job.k==='mg:hw0');if(sz==='S')ok(c&&c.via&&c.via.x===1150,'crew goes via the yard to collect it');
+  t=0;while(!S.log.some(l=>/connected to the LV/.test(l.text))&&t++<150)G.run(1);const dt=S.t-t0;G.run(3);const u=S.mgu.find(x=>x.site==='hw0');
+  ok(dt<rep-t0,`${sz==='S'?'small':'large'} generator collected, towed and connected in ${dt} min, before the repair (${rep-t0} min)`);
+  ok(sz==='S'?!u.conn&&S.log.some(l=>/tripped on overload/.test(l.text)):u.conn,sz==='S'?'too small: it trips on overload':'large generator holds the load');}
  ok(!errs.length,'no script errors '+errs.join(' | '));process.exit(fails?1:0);})();

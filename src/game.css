@@ -853,3 +853,15 @@ html.kiosk .zchips,html.kiosk .tpick{display:none!important}
 .op-row>.op-pair-row{flex:1 1 100%}
 .op-pair-row .op-btn{flex:1 1 0;min-width:0}
 .op-btn.noop-now{color:var(--warn);border-color:var(--warn)}
+
+/* Generators: size choice and towing */
+.crew-van .vn-tr{display:none}.crew.tow .crew-van .vn-tr{display:inline}
+.crew-van .vn-bar{stroke:#3b4660;stroke-width:1.2}.crew-van .vn-tb{fill:#3b4660;stroke:#1d2a44;stroke-width:.6}.crew-van .vn-tg{fill:#ffd23f}
+.mg-pick{flex:1 1 100%;display:grid;gap:5px;margin-top:2px}.mg-pick>span{font-size:12.5px;color:var(--muted)}
+.mg-sz{display:flex;gap:6px;flex:1 1 auto}.mg-sz .op-btn{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;line-height:1.15;padding-block:6px}
+.mg-sz .op-btn small{font-size:10.5px;font-weight:500;color:var(--muted)}
+.mg-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 8px}.mg-f{flex:1 1 150px;display:grid;font-weight:600;font-size:13.5px}.mg-f small{font-weight:400;font-size:12px;color:var(--muted)}
+.mg-row>.op-btn{flex:0 1 auto}
+.mg-sz .op-btn{white-space:nowrap;font-size:14px}
+.mimic-svg .yard-t{font-size:11px}
+.mg-pick{min-width:0}.mg-sz{min-width:0}.mg-sz .op-btn{padding-inline:4px;font-size:13.5px}
