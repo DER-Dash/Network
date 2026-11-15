@@ -848,3 +848,8 @@ html.kiosk .zchips,html.kiosk .tpick{display:none!important}
 .rp-k{font:600 9px var(--f-body);fill:var(--ink);paint-order:stroke;stroke:var(--panel);stroke-width:3px;stroke-linejoin:round}
 .rp-kl{stroke:var(--muted);stroke-width:.8;stroke-dasharray:2 2;opacity:.6}
 @media (prefers-reduced-motion:reduce){.grade .lt,.ach-new .badge{animation:none}}
+
+/* Open and Close side by side everywhere (switch pop-up and Details panel) */
+.op-row>.op-pair-row{flex:1 1 100%}
+.op-pair-row .op-btn{flex:1 1 0;min-width:0}
+.op-btn.noop-now{color:var(--warn);border-color:var(--warn)}

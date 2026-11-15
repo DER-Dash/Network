@@ -1534,7 +1534,7 @@ function txHtml(i){const t=S.tx[i];let st='',cls='ok';
   return `${back}<div class="i-h">${ico('tx','var(--hv)')}<div><h3>Transformer T${i+1}</h3><div class="kind">132/33 kV · 60 MVA · Blackout Canyon</div></div></div>
     ${facts([['Loading',t.out?'–':Math.round(t.L*100)+'%'],['Flow',t.out?'–':`${mw(Math.abs(t.flow))} ${t.flow>=0?'import':'export'}`],['Hot-spot',Math.round(t.temp)+'°C'],['Breaker',t.out?'Open':'Closed']])}
     <p class="i-state ${cls}">${esc(st)}</p>
-    <div class="op-row">${t.out?opBtn('tx:'+i,'close',`Close T${i+1} breaker`):opBtn('tx:'+i,'open',`Open T${i+1} breaker`)}</div>
+    <div class="op-row">${opPair('tx:'+i,!t.out,`Open T${i+1} breaker`,`Close T${i+1} breaker`)}</div>
     <p class="i-note">Emergency rating: up to 120% for ${EMERG_MIN} minutes, 120–150% for ${SHORT_MIN} minutes. Closing equipment before it's ready trips it again.</p>`;}
 function bcHtml(p){const f=S.fd[p],nm=PR[p].name,id='bc:'+p,fl=S.flows[id]||0,I=S.islands.find(J=>J.secs.includes(FSEC[p])),al=!!(I&&I.alive),en=fdOn(p)&&al;let st,cls;
   if(f.fault&&!f.fault.ready){st=`Feeder ${f.fault.planned?'out for planned work':'faulted: '+f.fault.label.toLowerCase()}. ${f.fault.planned?'Work':'Repair'} until ${fmtT(f.fault.until)}. Keep both ends open until then.`;cls='alarm';}
@@ -1545,7 +1545,7 @@ function bcHtml(p){const f=S.fd[p],nm=PR[p].name,id='bc:'+p,fl=S.flows[id]||0,I=
   return `${back}<div class="i-h">${ico('brk','var(--mv)')}<div><h3>${nm} 33 kV feeder</h3><div class="kind">Breaker at Blackout Canyon, incomer at ${nm}</div></div></div>
     ${facts([['BC breaker',f.brk?'Closed':'Open'],[nm+' incomer',f.inc?'Closed':'Open'],['Feeder',f.fault?(f.fault.ready?'Ready':f.fault.planned?'Planned work':'Faulted'):'Healthy'],['Flow',en?`${mw(Math.abs(fl))} ${fl>=0?'to':'from'} ${nm}`:'–'],['Rating',mw(PR[p].fr)]])}
     <p class="i-state ${cls}">${esc(st)}</p>
-    <div class="op-row">${f.brk?opBtn(id,'open','Open BC breaker'):opBtn(id,'close','Close BC breaker')}${f.inc?opBtn('in:'+p,'open',`Open ${nm} incomer`):opBtn('in:'+p,'close',`Close ${nm} incomer`)}</div>
+    <div class="op-row">${opPair(id,f.brk,'Open BC breaker','Close BC breaker')}${opPair('in:'+p,f.inc,`Open ${nm} incomer`,`Close ${nm} incomer`)}</div>
     <p class="i-note">The feeder only carries power with both ends closed. With the incomer open, ${nm} can be fed from a tie or interconnector without back-feeding the feeder.</p>
     <div class="op-row">${PR[p].nb?`<button type="button" class="btn" data-sel="tie:${p}" data-k="go-tie">${esc(NBS[PR[p].nb].name)} tie</button>`:''}<button type="button" class="btn" data-sel="prim:${p}" data-k="go-prim">${esc(nm)} substation</button></div>`;}
 function ptHtml(p){const T=S.pt[p],nm=PR[p].name,id='pt:'+p,live=S.sup[p]!=='off',f=T.fault,ld=LF[p].reduce((a,v,i)=>a+srcMW(p,i,p),0);let st,cls;
@@ -1556,7 +1556,7 @@ function ptHtml(p){const T=S.pt[p],nm=PR[p].name,id='pt:'+p,live=S.sup[p]!=='off
   return `${back}<div class="i-h">${ico('tx','var(--mv)')}<div><h3>${esc(nm)} transformer</h3><div class="kind">33/11 kV · automatic 33 kV breaker</div></div></div>
     ${facts([['33 kV breaker',T.closed?'Closed':'Open'],['Transformer',f?(f.ready?'Repaired':'Faulted'):'Healthy'],['11 kV load',T.closed&&live?mw(ld):'–'],['33 kV bar',live?'Live':'Dead']])}
     <p class="i-state ${cls}">${esc(st)}</p>
-    ${GAME==='cr'?`<div class="op-row">${T.closed?opBtn(id,'open','Open the breaker'):opBtn(id,'close','Close the breaker')}</div>`:''}
+    ${GAME==='cr'?`<div class="op-row">${opPair(id,T.closed,'Open the breaker','Close the breaker')}</div>`:''}
     <p class="i-note">The ${nm} 33 kV bar feeds the transformer through its own breaker, and the transformer feeds the three 11 kV feeders. The breaker is automatic: protection trips it if the transformer develops a fault, and it can be switched remotely. While it's open the generation on the 33 kV bar is unaffected, but the 11 kV customers are off unless you feed them from the far ends of their feeders.</p>
     <div class="op-row"><button type="button" class="btn" data-sel="prim:${p}" data-k="go-prim">${esc(nm)} substation</button><button type="button" class="btn" data-sel="as:load_${p}" data-k="go-load">${esc(nm)} demand</button></div>`;}
 const RULE_KN=`<p class="i-rule kn"><b>Ampy Place is on the same grid supply as Blackout Canyon.</b> You can transfer without an interruption: close the new route first, then open the old one within ${PAR_MAX} minutes.</p>`;
@@ -1569,7 +1569,7 @@ function tieHtml(p){const id='tie:'+p,c=S.tie[p].closed,nb=PR[p].nb,nm=PR[p].nam
   return `${back}<div class="i-h">${ico('tie','var(--c-'+nb+')')}<div><h3>${nm} – ${NBS[nb].name} tie</h3><div class="kind">33 kV normally open point</div></div></div>
     ${facts([['Switch',c?'Closed':'Open'],['Flow',c?`${mw(Math.abs(fl))} ${fl>=0?'into '+nm:'into '+NBS[nb].name}`:'–'],['Tie rating',mw(PR[p].tie)],[NBS[nb].name+' spare',`${mw(Math.abs(S.inj[nb]||0))} used of ${mw(S.spare[nb])}`]])}
     <p class="i-state ${cls}">${esc(st)}</p>
-    <div class="op-row">${c?opBtn(id,'open',`Open ${NBS[nb].name} tie`):opBtn(id,'close',`Close ${NBS[nb].name} tie`)}</div>
+    <div class="op-row">${opPair(id,c,`Open ${NBS[nb].name} tie`,`Close ${NBS[nb].name} tie`)}</div>
     ${nb==='kn'?RULE_KN:RULE_FM}
     <p class="i-note">${nm} needs about ${mw(Math.abs(S.pn[p]))} right now (${S.pn[p]>=0?'import':'export'}). A tie that stays above its limit for ${OV_MIN} minutes trips.</p>
     <div class="op-row"><button type="button" class="btn" data-sel="bc:${p}" data-k="go-bc">${esc(nm)} breaker</button><button type="button" class="btn" data-sel="nb:${nb}" data-k="go-nb">${esc(NBS[nb].name)}</button></div>`;}
@@ -1577,7 +1577,7 @@ function bsHtml(k){const id='bs:'+k,c=S.bs[k].closed,fl=S.bsf[k]||0,[a,b]=k==='1
   return `${back}<div class="i-h">${ico('brk','var(--mv)')}<div><h3>${a}–${b} bus section breaker</h3><div class="kind">33 kV bus section at Blackout Canyon · normally closed</div></div></div>
     ${facts([['Breaker',c?'Closed':'Open'],['Flow',c&&Math.abs(fl)>.5?`${mw(Math.abs(fl))} towards the ${fl>0?b:a} section`:'–']])}
     <p class="i-state ${c?'ok':'warn'}">${c?'Closed. The transformers either side share the load.':'Open. Blackout Canyon is running split.'}</p>
-    <div class="op-row">${c?opBtn(id,'open','Open bus section'):opBtn(id,'close','Close bus section')}</div>
+    <div class="op-row">${opPair(id,c,'Open bus section','Close bus section')}</div>
     <p class="i-rule">With a bus section open, each part of the busbar is supplied only by its own transformers. The T1 section feeds Hertz House and Shocking Place, the T2 section has no feeders, and the T3 section feeds Ohm No and Joule Street. Losing the only transformer on a section takes its substations off supply.</p>`;}
 function itHtml(k){const t=ITS[k],id='it:'+k,c=S.it[k].closed,A=PR[t.a].name,B=PR[t.b].name,ov=S.ov[id]||0,fl=S.flows[id]||0;let st,cls='ok';
   const ft=S.it[k].fault;if(ft&&!ft.ready){st=`Faulted: ${ft.label.toLowerCase()}. Repair until ${fmtT(ft.until)}.`;cls='alarm';}else if(ft){st='Repaired. It can be closed again.';cls='warn';}
@@ -1585,13 +1585,13 @@ function itHtml(k){const t=ITS[k],id='it:'+k,c=S.it[k].closed,A=PR[t.a].name,B=P
   return `${back}<div class="i-h">${ico('tie','var(--mv)')}<div><h3>${A} – ${B} interconnector</h3><div class="kind">33 kV ${t.nc?'normally closed circuit':'normally open point'} between substations · ${t.r} MW</div></div></div>
     ${facts([['Switch',c?'Closed':'Open'],['Flow',c?`${mw(Math.abs(fl))} towards ${fl>=0?B:A}`:'–'],[A,esc(supTxt(t.a))],[B,esc(supTxt(t.b))]])}
     <p class="i-state ${cls}">${esc(st)}</p>
-    <div class="op-row">${c?opBtn(id,'open','Open interconnector'):opBtn(id,'close','Close interconnector')}</div>
+    <div class="op-row">${opPair(id,c,'Open interconnector','Close interconnector')}</div>
     <p class="i-rule">Closing it joins ${A} and ${B}. If both are fed from Blackout Canyon, that's fine and they share the load. If one is fed from a neighbour, the neighbour's rules apply.</p>
     <p class="i-note">Use it to feed a substation whose own feeder is out, or to share load between feeders. Its rating is ${t.r} MW.</p>`;}
 function lkHtml(k){const L=LINKS[k],a=L.a,b=L.b,id='lk:'+k,c=!!S.lk[k],f=(S.lkLoad||{})[k]||0,fa=S.lf[a[0]][a[1]],fb=S.lf[b[0]][b[1]];
   return `${back}<div class="i-h">${ico('tie','var(--c-lk)')}<div><h3>${esc(ucfirst(devName(id)))}</h3><div class="kind">11 kV normally open point between ${esc(LFN[a[0]][a[1]])} and ${esc(LFN[b[0]][b[1]])} · manual</div></div></div>
     ${facts([['Link',c?'Closed':'Open'],['Carrying',c?mw(f):'–'],['Rating',mw(L.r)],[`${LFN[a[0]][a[1]]} breaker`,fa?'Closed':'Open'],[`${LFN[b[0]][b[1]]} breaker`,fb?'Closed':'Open']])}
-    <div class="op-row">${c?opBtn(id,'open','Open the 11 kV link'):opBtn(id,'close','Close the 11 kV link')}</div>
+    <div class="op-row">${opPair(id,c,'Open the 11 kV link','Close the 11 kV link')}</div>
     <p class="i-rule">To move a feeder onto the other substation, open its breaker first, then close the link. If both substations are on the same grid supply (Blackout Canyon or Ampy Place) you can close the link first and then open the breaker, with no interruption. Never link to a substation fed from Watts This.</p>`;}
 function vfHtml(){const on=[];PIDS.forEach(p=>VFI.forEach(i=>{if(S.nop[p][i]&&!S.lf[p][i])on.push(`<li><button type="button" data-sel="nop:${p}${i}" data-k="vf-${p}${i}"><span class="nm">${esc(LFN[p][i])} (${PR[p].name})</span><span class="st">Fed from Volt Face</span><span class="v">${mw(lfMW(p,i))}</span></button></li>`);}));
   return `${back}<div class="i-h">${ico('nb','var(--c-vf)')}<div><h3>Volt Face 11 kV</h3><div class="kind">Neighbouring 11 kV network on a different grid supply</div></div></div>
@@ -1614,10 +1614,10 @@ function assetHtml(id){const a=ASB[id];
   if(a.type==='load'){const p=a.prim;return `${back}<div class="i-h">${ico('load','var(--muted)')}<div><h3>${PR[p].name} demand</h3><div class="kind">Homes and businesses</div></div></div>
     ${facts([['Demand now',S.sup[p]==='off'?'Off supply':mw(dem(S.c,p))],['Supply',esc(supTxt(p))]])}
     <h4 class="i-sub">11 kV feeders</h4><ul class="i-list">${S.lf[p].map((v,i)=>`<li><button type="button" data-sel="lf:${p}${i}" data-k="lf-${p}${i}"><span class="nm">${esc(LFN[p][i])}${prioOf(p,i)?` <span class="pri-tag pri-${prioOf(p,i).kind}" title="${esc(prioOf(p,i).name)}">${PRK[prioOf(p,i).kind].ch}</span>`:''}</span><span class="st${lvFaultTxt(p,i)?' off':v||S.nop[p][i]?'':' warn'}">${lvFaultTxt(p,i)?esc(ucfirst(lvFaultTxt(p,i))):(v?'From '+esc(PR[p].name):S.nop[p][i]?'From Volt Face':'Open · customers off')+(LV_ON&&!midOn(p,i)?' · split':'')+(LV_ON&&mgOn(p,i)?' · generator':'')}</span><span class="v">${mw(S.c.demand*S.share[p]*LF[p][i])}</span></button></li>`).join('')}</ul>
-    <div class="op-row">${S.lf[p].map((v,i)=>opBtn('lf:'+p+i,v?'open':'close',`${v?'Open':'Close'} ${LFN[p][i]}`)).join('')}</div>
-    ${VF_ON?`<div class="op-row">${VFI.map(i=>opBtn('nop:'+p+i,S.nop[p][i]?'open':'close',`${S.nop[p][i]?'Open':'Close'} ${LFN[p][i]} backfeed`)).join('')}</div><p class="i-note">Backfeeds move a feeder onto Volt Face, a neighbouring 11 kV network on a different grid supply. Open the feeder breaker first, then close the backfeed.</p>`:''}
-    ${LV_ON?`<h4 class="i-sub">Mid-point switches</h4><div class="op-row">${S.lf[p].map((v,i)=>opBtn('mid:'+p+i,midOn(p,i)?'open':'close',`${midOn(p,i)?'Open':'Close'} ${LFN[p][i]} mid-point`)).join('')}</div>
-    <h4 class="i-sub">Mobile generators · ${S.mgu.filter(u=>!u.conn&&!u.pend).length} of ${MG_N} free · ${MG_CAP} MW each</h4><div class="op-row">${S.lf[p].map((v,i)=>{const u=mgAt(p+i);return u&&(u.conn||u.pend)?opBtn('mg:'+p+i,'open',`Disconnect generator at ${LFN[p][i]}`):opBtn('mg:'+p+i,'close',`${u?'Reconnect':'Send'} generator to ${LFN[p][i]}`);}).join('')}</div>
+    <div class="op-row">${S.lf[p].map((v,i)=>opPair('lf:'+p+i,v,`Open ${LFN[p][i]}`,`Close ${LFN[p][i]}`)).join('')}</div>
+    ${VF_ON?`<div class="op-row">${VFI.map(i=>opPair('nop:'+p+i,S.nop[p][i],`Open ${LFN[p][i]} backfeed`,`Close ${LFN[p][i]} backfeed`)).join('')}</div><p class="i-note">Backfeeds move a feeder onto Volt Face, a neighbouring 11 kV network on a different grid supply. Open the feeder breaker first, then close the backfeed.</p>`:''}
+    ${LV_ON?`<h4 class="i-sub">Mid-point switches</h4><div class="op-row">${S.lf[p].map((v,i)=>opPair('mid:'+p+i,midOn(p,i),`Open ${LFN[p][i]} mid-point`,`Close ${LFN[p][i]} mid-point`)).join('')}</div>
+    <h4 class="i-sub">Mobile generators · ${S.mgu.filter(u=>!u.conn&&!u.pend).length} of ${MG_N} free · ${MG_CAP} MW each</h4><div class="op-row">${S.lf[p].map((v,i)=>{const u=mgAt(p+i);return u&&(u.conn||u.pend)?opBtn('mg:'+p+i,'open',`Disconnect generator at ${LFN[p][i]}`):opBtn('mg:'+p+i,'close',`${u?'Reconnect':'Send'} generator to ${LFN[p][i]}`);}).join('').replace(/btn primary op-btn/g,'btn op-btn')}</div>
     <p class="i-note">Fault finding: when a feeder locks out you don't know which half is faulted. Open its mid-point switch (manual, so a crew goes), then trial-close the breaker. If it holds, the fault is in the second half; if it trips, it's in the first. Repairs start once the fault is found. A mobile generator connects at the far end of a feeder after ${MG_CONN} minutes and carries up to ${MG_CAP} MW, so it can usually supply one dead half. With the fault found in the second half, it connects to the LV there instead and brings those customers back while the 11 kV fault is repaired.</p>`:''}
     ${PRIO_ON&&S.lf[p].some((v,i)=>prioOf(p,i))?`<h4 class="i-sub">Priority customers</h4><ul class="i-plain">${S.lf[p].map((v,i)=>{const P=prioOf(p,i);return P?`<li class="${secFeed(p,i,P.sec)===null?'off':''}"><span class="pri-tag pri-${P.kind}">${PRK[P.kind].ch}</span> ${esc(prioTxt(P))}${secFeed(p,i,P.sec)===null?' · <b>off supply now</b>':''}</li>`:'';}).join('')}</ul>`:''}
     <p class="i-note">Opening an 11 kV feeder takes its customers off supply to cut the load on the network. Every minute customers are off supply costs 1 point per MW, so use it as a last resort and close it again as soon as you can.</p>`;}
@@ -1683,12 +1683,12 @@ function qpHtml(k){const[t,id]=k.split(':');let closed,st,cls='';
   const act=closed?'open':'close',title=t==='tx'?`T${+id+1} breaker`:ucfirst(devName(k))+(t==='bc'?' at Blackout Canyon':t==='lf'||t==='nop'||t==='mid'?' · '+PR[id.slice(0,2)].name:'');
   return `<div class="qp-h"><b>${esc(title)}</b><button type="button" class="qp-x" id="qpClose" aria-label="Close this pop-up">×</button></div>
     <p class="qp-s ${cls}"><span class="qp-st">${closed?'Closed':'Open'}</span> · ${esc(st)}</p>${isManual(k)?qpCrew(k):''}
-    <div class="qp-row">${PHONE?opPair(k,closed):opBtn(k,act,act==='close'?'Close':'Open')}${isManual(k)&&!crewAt(k)&&!crewFor(k)?`<button type="button" class="btn" data-crew="${k}">Send crew</button>`:''}${LV_ON&&(t==='lf'||t==='mid')&&S.lff[id.slice(0,2)][+id.slice(2)]&&!mgAt(id)?(PHONE?opBtn('mg:'+id,'close','Generator').replace('btn primary op-btn','btn op-btn'):opBtn('mg:'+id,'close','Generator')):''}<button type="button" class="btn" id="qpMore">Details</button></div>`;}
+    <div class="qp-row">${opPair(k,closed)}${isManual(k)&&!crewAt(k)&&!crewFor(k)?`<button type="button" class="btn" data-crew="${k}">Send crew</button>`:''}${LV_ON&&(t==='lf'||t==='mid')&&S.lff[id.slice(0,2)][+id.slice(2)]&&!mgAt(id)?opBtn('mg:'+id,'close','Generator').replace('btn primary op-btn','btn op-btn'):''}<button type="button" class="btn" id="qpMore">Details</button></div>`;}
 // Phones: both actions, always Open then Close, so the player picks one rather than tapping the only button offered.
 // Both look the same and both can be pressed, as on a real control screen: pressing the one that matches the
 // current state just reports that nothing changed.
-function opPair(k,closed){const one=a=>closed===(a==='close')?`<button type="button" class="btn op-btn op-pair" data-noop="${a==='close'?'closed':'open'}" data-k="op-${k}-${a}">${a==='close'?'Close':'Open'}</button>`
-    :opBtn(k,a,a==='close'?'Close':'Open').replace('class="btn primary op-btn"','class="btn op-btn op-pair"');
+function opPair(k,closed,ol,cl){ol=ol||'Open';cl=cl||'Close';const one=a=>{const lb=a==='close'?cl:ol;return closed===(a==='close')?`<button type="button" class="btn op-btn op-pair" data-noop="${a==='close'?'closed':'open'}" data-k="op-${k}-${a}">${esc(lb)}</button>`
+    :opBtn(k,a,lb).replace('class="btn primary op-btn"','class="btn op-btn op-pair"');};
   return `<div class="op-pair-row">${one('open')}${one('close')}</div>`;}
 function qpCrew(k){const j=crewFor(k),h=crewAt(k);return `<p class="qp-crew">${j?`Crew ${j.n} ${j.to?'walking there, arrives '+fmtT(j.arr):'on site'}${j.job.act?', will '+j.job.act+' it by '+fmtT(j.job.at):''}.`:h?`Crew ${h.n} is standing by here: operating takes ${CREW_OP} min.`:'Manual switch: a field crew has to walk here first.'}</p>`;}
 function renderQP(){const q=$('qp');if(!q)return;const k=S&&!S.ended&&S.qp&&S.sel;
@@ -2435,7 +2435,7 @@ function begin(){ls('played','1');$('overlay').hidden=true;hideHO();S.running=tr
 document.addEventListener('click',e=>{
   if(e.target.closest('#kIntro')){endIntro();return;}
   const adj=e.target.closest('[data-adj]');if(adj){nudge(adj.dataset.adj,+adj.dataset.d);return;}
-  {const nb=e.target.closest('[data-noop]');if(nb){const s=nb.closest('.qp')&&nb.closest('.qp').querySelector('.qp-s');if(s){s.classList.add('noop-msg');const st=s.querySelector('.qp-st');if(st)st.textContent=`Already ${nb.dataset.noop}: no change`;}play('click');return;}}
+  {const nb=e.target.closest('[data-noop]');if(nb){const s=nb.closest('.qp')&&nb.closest('.qp').querySelector('.qp-s');if(s){s.classList.add('noop-msg');const st=s.querySelector('.qp-st');if(st)st.textContent=`Already ${nb.dataset.noop}: no change`;}else{const o=nb.textContent;nb.textContent=`Already ${nb.dataset.noop}`;nb.classList.add('noop-now');setTimeout(()=>{if(nb.isConnected){nb.textContent=o;nb.classList.remove('noop-now');}},1600);}play('click');return;}}
   const op=e.target.closest('[data-op]');if(op){if(op.disabled)return;const[t,i,a]=op.dataset.op.split(':');if(op.closest('#qp')&&S){S.qp=false;}issueOp(t+':'+i,a);return;}
   const st=e.target.closest('[data-f]');if(st){adjust(st.dataset.f,st.dataset.id,+st.dataset.d);return;}
   const pl=e.target.closest('[data-poll]');if(pl&&S){if(!pl.disabled)pollRtu(pl.dataset.poll);return;}
