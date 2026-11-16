@@ -1269,14 +1269,6 @@ html.kiosk .zchips,html.kiosk .tpick{display:none!important}
 }
 @media (max-width:460px){html.in-shift:not(.kiosk) .bar .kpi:has(#kIns){display:none}html.in-shift:not(.kiosk) .bar .kpis{gap:7px}html.in-shift:not(.kiosk) .kpi:not(.kpi-firm):not(.kpi-off){padding-left:7px}}
 
-/* ---------- Day and night on the diagram ---------- */
-.p-mimic .mscroll::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;border-radius:8px;transition:background 1.5s linear;
-  background:linear-gradient(180deg,rgba(255,150,80,calc(var(--dusk,0)*.16)),transparent 55%),linear-gradient(180deg,rgba(10,16,52,calc(var(--night,0)*.30)),rgba(24,30,80,calc(var(--night,0)*.16)))}
-.bld .bw{fill:#bcd2e6}
-.mimic-svg.night .bld:not(.off):not(.flt) .bw{fill:#ffd23f;filter:drop-shadow(0 0 1.6px rgba(255,190,40,.9))}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .bld .bw{fill:#5d7891}}
-:root[data-theme="dark"] .bld .bw{fill:#5d7891}
-
 /* ---------- Illustrated generators ---------- */
 .gi .gi-f{fill:color-mix(in srgb,var(--sc) 18%,var(--panel));stroke:var(--sc);stroke-width:1.6;stroke-linejoin:round}
 .gi .gi-g,.gi .gi-w{fill:none;stroke:var(--sc);stroke-width:1;opacity:.75}
@@ -1557,6 +1549,13 @@ const LV_ON=GAME==='cr',SECF=[.5,.5],PATROL=60,TRIAL_PTS=50,MG_CONN=25,MG_HITCH=
 const MG_FLEET=[{sz:'S',cap:5},{sz:'S',cap:5},{sz:'M',cap:10},{sz:'L',cap:15}],MG_N=MG_FLEET.length,MG_SZ={S:'Small',M:'Medium',L:'Large'};
 const yardTxt=()=>{const y=S.mgu.filter(u=>!u.site),c={};y.forEach(u=>c[u.sz]=(c[u.sz]||0)+1);return y.length?Object.keys(MG_SZ).filter(k=>c[k]).map(k=>`${c[k]}× ${MG_FLEET.find(f=>f.sz===k).cap} MW`).join(', '):'empty';};
 const halfNow=(p,i)=>(lfMW(p,i)*SECF[1]).toFixed(1),halfPeak=(p,i)=>Math.round((S.dmax||0)*S.share[p]*LF[p][i]*SECF[1]*(S.surgeK&&S.sc.surge?1.3:1));
+// Generator choice in an 11 kV feeder or mid-point pop-up: always offered, whatever has taken the far half off
+// (an 11 kV fault, a substation transformer fault, a substation off supply...)
+function qpGen(id){const p=id.slice(0,2),i=+id.slice(2),u=mgAt(id),live=secFeed(p,i,1)!==null&&!mgOn(p,i);
+  if(u)return `<div class="mg-pick"><span>${MG_SZ[u.sz]} ${u.cap} MW generator ${u.conn?'connected here':u.pend?'on its way here':'parked here'}:</span>${(u.conn||u.pend?opBtn('mg:'+id,'open','Disconnect it'):opBtn('mg:'+id,'close','Reconnect it')).replace('btn primary op-btn','btn op-btn')}</div>`;
+  // what it would carry: the far half, or the whole feeder if the mid-point switch is closed and the near half is dead too
+  const whole=midOn(p,i)&&secFeed(p,i,0)===null,now=whole?(+halfNow(p,i)*2).toFixed(1):halfNow(p,i),pk=whole?halfPeak(p,i)*2:halfPeak(p,i);
+  return `<div class="mg-pick"><span>${live?'Generator: the far half is on supply now, so it has to be dead before a generator can connect.':whole?`Generator: with the mid-point switch closed it would carry the whole feeder, ${now} MW now and about ${pk} at peak. Open the mid-point switch and it only needs to carry the far half (${halfNow(p,i)} MW).`:`Generator for the far half: ${now} MW now, about ${pk} at peak.`}</span>${mgSizes(id)}</div>`;}
 // three size buttons: free count shown; picking one sends a crew to collect it
 function mgSizes(id){return `<span class="mg-sz">${Object.keys(MG_SZ).map(sz=>{const cap=MG_FLEET.find(f=>f.sz===sz).cap,n=S.mgu.filter(u=>u.sz===sz&&!u.conn&&!u.pend).length,busy=!!(S.op||crewFor('mg:'+id));
   return `<button type="button" class="btn op-btn" data-mgsz="${sz}" data-mgfor="${id}"${n&&!busy&&!S.ended?'':' disabled'} title="${MG_SZ[sz]} generator, ${cap} MW: ${n} free">${cap} MW<small>${n?n+' free':'none free'}</small></button>`;}).join('')}</span>`;}
@@ -1897,7 +1896,8 @@ function farSrc(p,i,sup){if(VF_ON&&VFI.includes(i)&&S.nop[p][i])return'vf';
   const l=linkOf(p,i);if(l&&S.lk[l.k]&&S.lf[l.q]&&S.lf[l.q][l.j]&&midOn(l.q,l.j)&&subLv(l.q,sup))return l.q;
   if(mgOn(p,i)&&!mgLv(p,i))return'mg';return null;}
 function secFeed(p,i,s,sup){if(!S.lf[p])return null;const mid=midOn(p,i);let r;
-  if(S.lf[p][i]){const n=subLv(p,sup)?p:null;r=s===0||mid?n:farSrc(p,i,sup);}else r=s===1||mid?farSrc(p,i,sup):null;
+  // a closed feeder breaker onto a dead substation supplies nothing, so the far-end supplies (generator, backfeed, link) can pick the feeder up
+  const n=S.lf[p][i]&&subLv(p,sup)?p:null;if(n!==null)r=s===0||mid?n:farSrc(p,i,sup);else r=s===1||mid?farSrc(p,i,sup):null;
   return r===null&&s===1&&mgLv(p,i)?'mg':r;}
 function feedOf(p,i,sup){const a=secFeed(p,i,0,sup);return a!==null?a:secFeed(p,i,1,sup);}
 const secOff=(p,i)=>[0,1].filter(s=>secFeed(p,i,s)===null);
@@ -2323,7 +2323,9 @@ function stepLv(m){if(!LV_ON)return;
     const t0=f.hid?f.seen:f.start;if(!f.found&&t0!=null&&m>=t0+PATROL)locate(m,p,i,f.sec,'Line patrol has found the fault.');
     else if(f.found&&m>=f.until){S.lff[p][i]=null;const off=secOff(p,i).length;const s=`The ${lfName(p,i)} at ${PR[p].name} has been repaired.`+(off?` Close ${!S.lf[p][i]?'its breaker':''}${!S.lf[p][i]&&!midOn(p,i)?' and ':''}${!midOn(p,i)?'its mid-point switch':''}${S.lf[p][i]&&midOn(p,i)?'whatever fed it':''} to restore everyone.`:'');logE(m,s,'ok');queueAlert(s,'ok',false);play('ok');}}));
   // mobile generators: trip on overload
-  (S.mgu||[]).forEach(u=>{if(!u.conn)return;const[p,i]=lfP(u.site),ld=srcMW(p,i,'mg');
+  (S.mgu||[]).forEach(u=>{if(!u.conn)return;const[p,i]=lfP(u.site);
+    if(lvConflict(p,i)==='gen'){u.conn=false;S.trips++;mark(m,'trip','Generator trip');const s=`The mobile generator at ${LFN[p][i]} (${PR[p].name}) tripped: supply came back onto its section from ${PR[p].name}. Customers there are back on from the substation.`;logE(m,s,'warn');alEv(m,'trip',`Mobile generator at ${LFN[p][i]}`,'mg:'+u.site,'supply returned');queueAlert(s,'warn',false);play('trip');return;}
+    const ld=srcMW(p,i,'mg');
     if(ld>u.cap+.05){u.conn=false;S.trips++;mark(m,'trip','Generator trip');const s=`The mobile generator at ${LFN[p][i]} (${PR[p].name}) tripped on overload: the ${mgName(u)} was asked for ${ld.toFixed(1)} MW. Send a bigger one, or open the mid-point switch so it only carries the second half, then reconnect it.`;logE(m,s,'alarm');alEv(m,'trip',`Mobile generator at ${LFN[p][i]}`,'mg:'+u.site,'overload');queueAlert(s,'alarm',true);play('trip');fx('mgg_'+u.site);}});}
 // an operation that makes two different supplies meet on one 11 kV feeder through the mid-point switch or a generator
 function lvConflict(p,i){const near=S.lf[p][i]&&subLv(p),far=farSrc(p,i),g=mgOn(p,i),vf=VF_ON&&VFI.includes(i)&&S.nop[p][i],l=linkOf(p,i),lk=l&&S.lk[l.k]&&S.lf[l.q][l.j]&&midOn(l.q,l.j)&&subLv(l.q);
@@ -3219,7 +3221,7 @@ function qpHtml(k){const[t,id]=k.split(':');let closed,st,cls='';
   const act=closed?'open':'close',title=t==='tx'?`T${+id+1} breaker`:ucfirst(devName(k))+(t==='bc'?' at Blackout Canyon':t==='lf'||t==='nop'||t==='mid'?' · '+PR[id.slice(0,2)].name:'');
   return `<div class="qp-h"><b>${esc(title)}</b><button type="button" class="qp-x" id="qpClose" aria-label="Close this pop-up">×</button></div>
     <p class="qp-s ${cls}"><span class="qp-st">${closed?'Closed':'Open'}</span> · ${esc(st)}</p>${isManual(k)?qpCrew(k):''}
-    <div class="qp-row">${opPair(k,closed)}${isManual(k)&&!crewAt(k)&&!crewFor(k)?`<button type="button" class="btn" data-crew="${k}">Send crew</button>`:''}${LV_ON&&(t==='lf'||t==='mid')&&S.lff[id.slice(0,2)][+id.slice(2)]&&!mgAt(id)?`<div class="mg-pick"><span>Generator for the far half (${halfNow(id.slice(0,2),+id.slice(2))} MW now, about ${halfPeak(id.slice(0,2),+id.slice(2))} at peak):</span>${mgSizes(id)}</div>`:''}<button type="button" class="btn" id="qpMore">Details</button></div>`;}
+    <div class="qp-row">${opPair(k,closed)}${isManual(k)&&!crewAt(k)&&!crewFor(k)?`<button type="button" class="btn" data-crew="${k}">Send crew</button>`:''}${LV_ON&&(t==='lf'||t==='mid')?qpGen(id):''}<button type="button" class="btn" id="qpMore">Details</button></div>`;}
 // Phones: both actions, always Open then Close, so the player picks one rather than tapping the only button offered.
 // Both look the same and both can be pressed, as on a real control screen: pressing the one that matches the
 // current state just reports that nothing changed.
@@ -3423,10 +3425,6 @@ function skyAt(m){const sc=S.sc,r=sc.solar.start,st=sc.solar.end,h=m/60;
   if(grey){top=mixC(top,'#7a8190',grey);bot=mixC(bot,'#aeb4bf',grey);}
   return{top,bot,day,f:(h-r)/(st-r),cloud:cl};}
 function renderSky(){const k=S.key+'|'+Math.floor(S.t/3);if(k===lastSky)return;lastSky=k;const s=skyAt(S.t);
-  {// the diagram follows the clock: dark before sunrise and after sunset, warm at dawn and dusk; windows light up at night
-    const h=S.t/60,r=S.sc.solar.start,st=S.sc.solar.end,n=h<r-.75||h>st+.75?1:h>r+.5&&h<st-.5?0:h<=r+.5?clamp((r+.5-h)/1.25,0,1):clamp((h-st+.5)/1.25,0,1),
-      d=Math.max(0,1-Math.abs(h-r)/1.1,1-Math.abs(h-st)/1.1),pm=$('pMimic');
-    if(pm){pm.style.setProperty('--night',n.toFixed(2));pm.style.setProperty('--dusk',d.toFixed(2));}const mi=$('mimic');if(mi)mi.classList.toggle('night',n>.45);}
   let body='';
   if(s.day){const x=8+102*s.f,y=40-30*Math.sin(Math.PI*s.f);body+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9" fill="#ffd54a" opacity=".35"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5.5" fill="#ffe27a"/>`;}
   else body+=`<circle cx="96" cy="13" r="6" fill="#ecebff"/><circle cx="99" cy="11" r="5.5" fill="${s.top}"/><circle cx="20" cy="10" r=".9" fill="#fff"/><circle cx="44" cy="18" r=".7" fill="#fff"/><circle cx="66" cy="8" r=".8" fill="#fff"/>`;

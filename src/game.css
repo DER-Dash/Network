@@ -793,14 +793,6 @@ html.kiosk .zchips,html.kiosk .tpick{display:none!important}
 }
 @media (max-width:460px){html.in-shift:not(.kiosk) .bar .kpi:has(#kIns){display:none}html.in-shift:not(.kiosk) .bar .kpis{gap:7px}html.in-shift:not(.kiosk) .kpi:not(.kpi-firm):not(.kpi-off){padding-left:7px}}
 
-/* ---------- Day and night on the diagram ---------- */
-.p-mimic .mscroll::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;border-radius:8px;transition:background 1.5s linear;
-  background:linear-gradient(180deg,rgba(255,150,80,calc(var(--dusk,0)*.16)),transparent 55%),linear-gradient(180deg,rgba(10,16,52,calc(var(--night,0)*.30)),rgba(24,30,80,calc(var(--night,0)*.16)))}
-.bld .bw{fill:#bcd2e6}
-.mimic-svg.night .bld:not(.off):not(.flt) .bw{fill:#ffd23f;filter:drop-shadow(0 0 1.6px rgba(255,190,40,.9))}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .bld .bw{fill:#5d7891}}
-:root[data-theme="dark"] .bld .bw{fill:#5d7891}
-
 /* ---------- Illustrated generators ---------- */
 .gi .gi-f{fill:color-mix(in srgb,var(--sc) 18%,var(--panel));stroke:var(--sc);stroke-width:1.6;stroke-linejoin:round}
 .gi .gi-g,.gi .gi-w{fill:none;stroke:var(--sc);stroke-width:1;opacity:.75}

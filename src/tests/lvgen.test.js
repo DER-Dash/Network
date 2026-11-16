@@ -26,4 +26,10 @@ async function start(scn){const d=mk(),w=d.window,doc=w.document;await wait(30);
   t=0;while(!S.log.some(l=>/connected to the LV/.test(l.text))&&t++<150)G.run(1);const dt=S.t-t0;G.run(3);const u=S.mgu.find(x=>x.site==='hw0');
   ok(dt<rep-t0,`${sz==='S'?'small':'large'} generator collected, towed and connected in ${dt} min, before the repair (${rep-t0} min)`);
   ok(sz==='S'?!u.conn&&S.log.some(l=>/tripped on overload/.test(l.text)):u.conn,sz==='S'?'too small: it trips on overload':'large generator holds the load');}
+ // a substation transformer fault: generator offered on every feeder, picks up the whole feeder through a closed breaker
+ {const {G,S,doc}=await start('grid');S.sched.length=0;G.run(3);S.sched.push({k:'pt:rv',m:S.t,dur:200,cause:'Tap changer fault',done:false});G.run(2);
+  doc.querySelector('.hit[data-sel="lf:rv0"]').dispatchEvent(new doc.defaultView.MouseEvent('click',{bubbles:true}));await wait(5);
+  ok(doc.querySelectorAll('#qp [data-mgsz]').length===3,'transformer fault: Ohm Street pop-up offers a generator');
+  S.mgPick='L';G.op('mg:rv0','close');let t=0;const u=()=>S.mgu.find(x=>x.site==='rv0');while(!(u()&&!u().pend)&&t++<150)G.run(1);G.run(3);
+  ok(u().conn&&!S.cust.off.rv0s0&&!S.cust.off.rv0s1&&S.cust.off.rv2s0>0,'large generator restores the whole of Ohm Street only');}
  ok(!errs.length,'no script errors '+errs.join(' | '));process.exit(fails?1:0);})();
