@@ -32,4 +32,15 @@ async function start(scn){const d=mk(),w=d.window,doc=w.document;await wait(30);
   ok(doc.querySelectorAll('#qp [data-mgsz]').length===3,'transformer fault: Ohm Street pop-up offers a generator');
   S.mgPick='L';G.op('mg:rv0','close');let t=0;const u=()=>S.mgu.find(x=>x.site==='rv0');while(!(u()&&!u().pend)&&t++<150)G.run(1);G.run(3);
   ok(u().conn&&!S.cust.off.rv0s0&&!S.cust.off.rv0s1&&S.cust.off.rv2s0>0,'large generator restores the whole of Ohm Street only');}
+ // too small: it trips; swap it for a bigger one, and the small one goes back to the yard. Or just send one back.
+ {const {G,S,doc}=await start('quiet');S.sched.length=0;let t=0;while(S.t<1050&&t++<700)G.run(1);
+  S.sched.push({k:'lv:hw0',m:S.t,dur:30,sec:1,tr:false,cause:'Cable joint failure',done:false});G.run(2);
+  S.mgPick='S';G.op('mg:hw0','close');const small=()=>S.mgu.find(x=>x.sz==='S'&&x.site==='hw0');t=0;while(!S.log.some(l=>/tripped on overload/.test(l.text))&&t++<150)G.run(1);
+  ok(small()&&!small().conn,'small generator tripped and is parked at Town Centre');
+  doc.querySelector('.hit[data-sel="lf:hw0"]').dispatchEvent(new doc.defaultView.MouseEvent('click',{bubbles:true}));await wait(5);
+  const lbl=[...doc.querySelectorAll('#qp button')].map(b=>b.textContent);ok(lbl.some(x=>/Reconnect it/.test(x))&&lbl.some(x=>/Back to yard/.test(x))&&doc.querySelectorAll('#qp [data-mgsz]').length===3,'pop-up offers reconnect, back to yard, or a swap: '+lbl.join(' | '));
+  doc.querySelector('#qp [data-mgsz="L"]').click();t=0;const big=()=>S.mgu.find(x=>x.sz==='L'&&x.site==='hw0');while(!(big()&&big().conn)&&t++<150)G.run(1);G.run(3);
+  ok(big()&&big().conn&&!S.mgu.some(x=>x.sz==='S'&&x.site),'large generator swapped in and holds; the small one is back in the yard');
+  G.op('mg:hw0','open');t=0;while(big().conn&&t++<60)G.run(1);ok(!big().conn&&big().site==='hw0','disconnected, parked');
+  G.op('mg:hw0','open');t=0;while(S.mgu.some(x=>x.site==='hw0')&&t++<60)G.run(1);ok(!S.mgu.some(x=>x.site),'back to yard: every generator is in the yard again');}
  ok(!errs.length,'no script errors '+errs.join(' | '));process.exit(fails?1:0);})();

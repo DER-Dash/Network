@@ -36,16 +36,18 @@ const LV_ON=GAME==='cr',SECF=[.5,.5],PATROL=60,TRIAL_PTS=50,MG_CONN=25,MG_HITCH=
 // parked), hitches it up, tows it to the feeder and connects it. Too small for the load and it trips on overload.
 const MG_FLEET=[{sz:'S',cap:5},{sz:'S',cap:5},{sz:'M',cap:10},{sz:'L',cap:15}],MG_N=MG_FLEET.length,MG_SZ={S:'Small',M:'Medium',L:'Large'};
 const yardTxt=()=>{const y=S.mgu.filter(u=>!u.site),c={};y.forEach(u=>c[u.sz]=(c[u.sz]||0)+1);return y.length?Object.keys(MG_SZ).filter(k=>c[k]).map(k=>`${c[k]}× ${MG_FLEET.find(f=>f.sz===k).cap} MW`).join(', '):'empty';};
-const halfNow=(p,i)=>(lfMW(p,i)*SECF[1]).toFixed(1),halfPeak=(p,i)=>Math.round((S.dmax||0)*S.share[p]*LF[p][i]*SECF[1]*(S.surgeK&&S.sc.surge?1.3:1));
+const halfNow=(p,i)=>(lfMW(p,i)*SECF[1]).toFixed(1),halfPeak=(p,i)=>Math.max(Math.ceil(+halfNow(p,i)),Math.round((S.dmax||0)*S.share[p]*LF[p][i]*SECF[1]*(S.surgeK&&S.sc.surge?1.3:1)));
 // Generator choice in an 11 kV feeder or mid-point pop-up: always offered, whatever has taken the far half off
 // (an 11 kV fault, a substation transformer fault, a substation off supply...)
 function qpGen(id){const p=id.slice(0,2),i=+id.slice(2),u=mgAt(id),live=secFeed(p,i,1)!==null&&!mgOn(p,i);
-  if(u)return `<div class="mg-pick"><span>${MG_SZ[u.sz]} ${u.cap} MW generator ${u.conn?'connected here':u.pend?'on its way here':'parked here'}:</span>${(u.conn||u.pend?opBtn('mg:'+id,'open','Disconnect it'):opBtn('mg:'+id,'close','Reconnect it')).replace('btn primary op-btn','btn op-btn')}</div>`;
+  if(u&&(u.conn||u.pend))return `<div class="mg-pick"><span>${MG_SZ[u.sz]} ${u.cap} MW generator ${u.conn?'connected here':'on its way here'}:</span>${opBtn('mg:'+id,'open','Disconnect it').replace('btn primary op-btn','btn op-btn')}</div>`;
+  if(u)return `<div class="mg-pick"><span>${MG_SZ[u.sz]} ${u.cap} MW generator parked here, disconnected${u.ret?' (going back to the yard)':''}. Far half ${halfNow(p,i)} MW now, about ${halfPeak(p,i)} at peak.</span>
+    <span class="mg-sz">${opBtn('mg:'+id,'close','Reconnect it').replace('btn primary op-btn','btn op-btn')}${opBtn('mg:'+id,'open','Back to yard').replace('btn primary op-btn','btn op-btn')}</span><span>Or swap it for:</span>${mgSizes(id)}</div>`;
   // what it would carry: the far half, or the whole feeder if the mid-point switch is closed and the near half is dead too
   const whole=midOn(p,i)&&secFeed(p,i,0)===null,now=whole?(+halfNow(p,i)*2).toFixed(1):halfNow(p,i),pk=whole?halfPeak(p,i)*2:halfPeak(p,i);
   return `<div class="mg-pick"><span>${live?'Generator: the far half is on supply now, so it has to be dead before a generator can connect.':whole?`Generator: with the mid-point switch closed it would carry the whole feeder, ${now} MW now and about ${pk} at peak. Open the mid-point switch and it only needs to carry the far half (${halfNow(p,i)} MW).`:`Generator for the far half: ${now} MW now, about ${pk} at peak.`}</span>${mgSizes(id)}</div>`;}
 // three size buttons: free count shown; picking one sends a crew to collect it
-function mgSizes(id){return `<span class="mg-sz">${Object.keys(MG_SZ).map(sz=>{const cap=MG_FLEET.find(f=>f.sz===sz).cap,n=S.mgu.filter(u=>u.sz===sz&&!u.conn&&!u.pend).length,busy=!!(S.op||crewFor('mg:'+id));
+function mgSizes(id){return `<span class="mg-sz">${Object.keys(MG_SZ).map(sz=>{const here=mgAt(id),cap=MG_FLEET.find(f=>f.sz===sz).cap,n=S.mgu.filter(u=>u.sz===sz&&!u.conn&&!u.pend&&u!==here).length,busy=!!(S.op||crewFor('mg:'+id));
   return `<button type="button" class="btn op-btn" data-mgsz="${sz}" data-mgfor="${id}"${n&&!busy&&!S.ended?'':' disabled'} title="${MG_SZ[sz]} generator, ${cap} MW: ${n} free">${cap} MW<small>${n?n+' free':'none free'}</small></button>`;}).join('')}</span>`;}
 const mgName=u=>`${MG_SZ[u.sz].toLowerCase()} ${u.cap} MW generator`;
 // An 11 kV fault takes at least this long to repair once found: longer than the slowest possible collect, tow and
@@ -375,7 +377,7 @@ const ptOn=p=>!S.pt||!S.pt[p]||S.pt[p].closed,subLv=(p,sup)=>subOn(p,sup)&&ptOn(
 // Each 11 kV feeder has two halves split by a mid-point switch: half 0 is next to the substation breaker,
 // half 1 is the far end, where the Volt Face backfeed, the 11 kV link and a mobile generator connect.
 const midOn=(p,i)=>!S.mid||!S.mid[p]||S.mid[p][i]!==false;
-const mgAt=k=>(S.mgu||[]).find(u=>u.site===k);
+const mgAt=k=>(S.mgu||[]).find(u=>u.site===k&&!u.ret)||(S.mgu||[]).find(u=>u.site===k);
 const mgOn=(p,i)=>{const u=mgAt(p+i);return !!(u&&u.conn);};
 // a generator connected to the LV boards of the second half's substations: it feeds those customers directly,
 // clear of the 11 kV cable, so it works with the fault still there but cannot feed the first half
@@ -1135,7 +1137,7 @@ function opLabel(k,act){const[type,id]=k.split(':');
   if(type==='tie')return `${act==='close'?'Close':'Open'} ${NBS[PR[id].nb].name} tie to ${PR[id].name}`;
   if(type==='lk')return `${act==='close'?'Close':'Open'} the ${devName(k)}`;
   if(type==='mid')return `${act==='close'?'Close':'Open'} the ${devName(k)}`;
-  if(type==='mg')return act==='close'?`Connect a mobile generator to ${LFN[id.slice(0,2)][+id.slice(2)]}`:`Disconnect the ${devName(k)}`;
+  if(type==='mg'){const u=mgAt(id);return act==='close'?`Connect a mobile generator to ${LFN[id.slice(0,2)][+id.slice(2)]}`:u&&!u.conn&&!u.pend?`Take the generator at ${LFN[id.slice(0,2)][+id.slice(2)]} back to the yard`:`Disconnect the ${devName(k)}`;}
   return `${act==='close'?'Close':'Open'} ${PR[ITS[id].a].name} – ${PR[ITS[id].b].name} interconnector`;}
 const crewAt=k=>S.crews.find(c=>c.at===k&&!c.to);
 const crewFor=k=>S.crews.find(c=>c.job&&c.job.k===k);
@@ -1149,8 +1151,10 @@ function crewPos(c,tNow){if(!c.to)return{x:c.x,y:c.y};const f=clamp((tNow-c.dep)
 function dispatch(k,act){if(!S||S.ended||!CREW_ON)return;
   if(crewFor(k)){showBanner({m:S.t,text:`Crew ${crewFor(k).n} is already on its way to the ${devName(k)}.`,lvl:'warn'});return;}
   let mgu=null,opT=CREW_OP;if(k.startsWith('mg:')&&act==='close'){const id=k.slice(3);if(mgOn(...lfP(id)))return;
-    if(!mgAt(id)){const sz=S.mgPick||'S',free=S.mgu.filter(x=>x.sz===sz&&!x.conn&&!x.pend);mgu=free.find(x=>!x.site)||free[0];
-      if(!mgu){showBanner({m:S.t,text:`No ${MG_SZ[sz].toLowerCase()} generator is free: ${S.mgu.filter(x=>x.sz===sz).length>1?'they are':'it is'} connected or on the way somewhere else. Pick another size or disconnect one.`,lvl:'warn'},'The yard has two small (5 MW), one medium (10 MW) and one large (15 MW) generator.');return;}opT=MG_CONN;}}
+    const here=mgAt(id),swap=S.mgSwap&&here&&!here.conn&&!here.pend;S.mgSwap=false;
+    if(!here||swap){const sz=S.mgPick||'S',free=S.mgu.filter(x=>x.sz===sz&&!x.conn&&!x.pend&&x!==here);mgu=free.find(x=>!x.site)||free[0];
+      if(!mgu){showBanner({m:S.t,text:`No ${MG_SZ[sz].toLowerCase()} generator is free: ${S.mgu.filter(x=>x.sz===sz).length>1?'they are':'it is'} connected or on the way somewhere else. Pick another size or disconnect one.`,lvl:'warn'},'The yard has two small (5 MW), one medium (10 MW) and one large (15 MW) generator.');return;}opT=MG_CONN;
+      if(swap){here.ret=true;logE(S.t,`The ${mgName(here)} at ${LFN[id.slice(0,2)][+id.slice(2)]} will go back to the yard when its replacement is connected.`,'info');}}}
   let c=crewAt(k)&&!crewAt(k).job?crewAt(k):null;const tgt=devXY(k);
   if(!c){const idle=S.crews.filter(x=>!x.job);if(!idle.length){showBanner({m:S.t,text:S.crews.length===1?'Your only field crew is busy. Wait for it to finish its job.':`All ${['','one','two','three','four'][S.crews.length]||S.crews.length} field crews are busy. Wait for one to finish its job.`,lvl:'warn'},'Crews walk to manual switches, which takes time. Send one ahead to stand by where you will need it.');return;}
     c=idle.sort((a,b)=>{const pa=crewPos(a,S.t),pb=crewPos(b,S.t);return(Math.abs(pa.x-tgt.x)+Math.abs(pa.y-tgt.y))-(Math.abs(pb.x-tgt.x)+Math.abs(pb.y-tgt.y));})[0];}
@@ -1195,11 +1199,11 @@ function doOp0(op,m){const[type,id]=op.k.split(':');play('op');
     if(cf==='vf'||cf==='grid'){S.mid[p][i]=false;const td=cf==='vf'?'nop:'+id:'lk:'+linkOf(p,i).k;tripDev(td);alEv(m,'trip',ucfirst(devName(td)),td,'out of phase');incident(m,`Closing the ${nm} paralleled ${PR[p].name} with ${cf==='vf'?'Volt Face':'a substation'} on a different grid supply, so protection tripped the ${cf==='vf'?'backfeed':'11 kV link'}. Open one end of ${fn} first.`,'midb_'+id);return;}
     mark(m,'xfer',nm+' closed');logE(m,`${ucfirst(nm)} closed: ${fn} is one feeder again.`,'ok');return;}
   if(type==='mg'){const[p,i]=lfP(id),u=mgAt(id),fn=LFN[p][i];if(!u)return;
-    if(op.act==='open'){u.pend=false;if(!u.conn)return;u.conn=false;mark(m,'xfer','Generator off');logE(m,`The ${nm} was disconnected. It stays parked there until you send it somewhere else.`,'info');return;}
-    u.pend=false;if(u.conn)return;
+    if(op.act==='open'){u.pend=false;if(!u.conn){if(u.site){S.mgu.filter(x=>x.site===id).forEach(x=>{x.site=null;x.ret=false;x.lv=false;});logE(m,`The crew has towed the generator at ${fn} back to the yard.`,'info');}return;}u.conn=false;mark(m,'xfer','Generator off');logE(m,`The ${nm} was disconnected. It stays parked there until you send it somewhere else.`,'info');return;}
+    u.pend=false;if(u.conn)return;const back=()=>S.mgu.forEach(x=>{if(x!==u&&x.site===id&&x.ret){x.site=null;x.ret=false;x.conn=false;x.lv=false;logE(m,`The ${mgName(x)} it replaced has gone back to the yard.`,'info');}});
     if(secFeed(p,i,1)!==null){const s=`The crew could not connect the ${nm}: the far end of ${fn} is still live. Make that half dead first (open the mid-point switch or the backfeed), then connect it.`;logE(m,s,'warn');queueAlert(s,'warn',false);return;}
     {const F=S.lff[p][i];u.lv=!!(F&&F.found&&F.sec===1);}
-    u.conn=true;const ld=srcMW(p,i,'mg');mark(m,'xfer','Generator on');
+    u.conn=true;back();const ld=srcMW(p,i,'mg');mark(m,'xfer','Generator on');
     if(u.lv){logE(m,`Mobile generator ${u.n} connected to the LV at the second-half substations of ${fn}: about ${Math.round(ld)} MW of customers are back on (it's the ${mgName(u)}) while the 11 kV fault is repaired. Disconnect it before you put the feeder back together.`,ld>u.cap?'warn':'ok');return;}
     logE(m,`Mobile generator ${u.n} connected at the far end of ${fn}: supplying about ${Math.round(ld)} MW (it's the ${mgName(u)}).${ld>u.cap?' That is over its rating, so it will trip: send a bigger one, or open the mid-point switch first.':''}`,ld>u.cap?'warn':'ok');return;}
   if(type==='nop'){const[p,i]=lfP(id),v=S.nop[p][i];if((op.act==='close')===v)return;const mwv=Math.round(lfMW(p,i)),fn=LFN[p][i];
@@ -1643,7 +1647,7 @@ function assetHtml(id){const a=ASB[id];
     <div class="op-row">${S.lf[p].map((v,i)=>opPair('lf:'+p+i,v,`Open ${LFN[p][i]}`,`Close ${LFN[p][i]}`)).join('')}</div>
     ${VF_ON?`<div class="op-row">${VFI.map(i=>opPair('nop:'+p+i,S.nop[p][i],`Open ${LFN[p][i]} backfeed`,`Close ${LFN[p][i]} backfeed`)).join('')}</div><p class="i-note">Backfeeds move a feeder onto Volt Face, a neighbouring 11 kV network on a different grid supply. Open the feeder breaker first, then close the backfeed.</p>`:''}
     ${LV_ON?`<h4 class="i-sub">Mid-point switches</h4><div class="op-row">${S.lf[p].map((v,i)=>opPair('mid:'+p+i,midOn(p,i),`Open ${LFN[p][i]} mid-point`,`Close ${LFN[p][i]} mid-point`)).join('')}</div>
-    <h4 class="i-sub">Mobile generators · yard: ${yardTxt()}</h4>${S.lf[p].map((v,i)=>{const u=mgAt(p+i);return `<div class="mg-row"><span class="mg-f">${esc(LFN[p][i])}<small>far half ${halfNow(p,i)} MW now, about ${halfPeak(p,i)} MW at peak</small></span>`+(u&&(u.conn||u.pend)?opBtn('mg:'+p+i,'open',`Disconnect the ${MG_SZ[u.sz].toLowerCase()}`):u?opBtn('mg:'+p+i,'close',`Reconnect the ${MG_SZ[u.sz].toLowerCase()}`):mgSizes(p+i))+'</div>';}).join('').replace(/btn primary op-btn/g,'btn op-btn')}
+    <h4 class="i-sub">Mobile generators · yard: ${yardTxt()}</h4>${S.lf[p].map((v,i)=>{const u=mgAt(p+i);return `<div class="mg-row"><span class="mg-f">${esc(LFN[p][i])}<small>far half ${halfNow(p,i)} MW now, about ${halfPeak(p,i)} MW at peak</small></span>`+(u&&(u.conn||u.pend)?opBtn('mg:'+p+i,'open',`Disconnect the ${MG_SZ[u.sz].toLowerCase()}`):u?opBtn('mg:'+p+i,'close',`Reconnect the ${MG_SZ[u.sz].toLowerCase()}`)+opBtn('mg:'+p+i,'open','Back to yard')+`<span class="mg-or">or swap for</span>`+mgSizes(p+i):mgSizes(p+i))+'</div>';}).join('').replace(/btn primary op-btn/g,'btn op-btn')}
     <p class="i-note">Fault finding: when a feeder locks out you don't know which half is faulted. Open its mid-point switch (manual, so a crew goes), then trial-close the breaker. If it holds, the fault is in the second half; if it trips, it's in the first. Repairs start once the fault is found. A mobile generator is collected from the yard at the depot, towed to the far end of a feeder and connected (${MG_CONN} minutes once there). Choose 5, 10 or 15 MW to suit the load: too small and it trips. With the fault found in the second half, it connects to the LV there instead and brings those customers back while the 11 kV fault is repaired.</p>`:''}
     ${PRIO_ON&&S.lf[p].some((v,i)=>prioOf(p,i))?`<h4 class="i-sub">Priority customers</h4><ul class="i-plain">${S.lf[p].map((v,i)=>{const P=prioOf(p,i);return P?`<li class="${secFeed(p,i,P.sec)===null?'off':''}"><span class="pri-tag pri-${P.kind}">${PRK[P.kind].ch}</span> ${esc(prioTxt(P))}${secFeed(p,i,P.sec)===null?' · <b>off supply now</b>':''}</li>`:'';}).join('')}</ul>`:''}
     <p class="i-note">Opening an 11 kV feeder takes its customers off supply to cut the load on the network. Every minute customers are off supply costs 1 point per MW, so use it as a last resort and close it again as soon as you can.</p>`;}
@@ -2463,7 +2467,7 @@ document.addEventListener('click',e=>{
   const pl=e.target.closest('[data-poll]');if(pl&&S){if(!pl.disabled)pollRtu(pl.dataset.poll);return;}
   {const rb=e.target.closest('[data-restart]')||(e.target.id==='restartBtn'?e.target:null);if(rb){const k=rb.dataset.restart||($('restartFrom')||{}).value;if(!k||!SCENARIOS[k])return;
     restartCareer(k);mode='career';chosen=k;ls('mode',mode);ls('day',chosen);newGame(chosen);startSheet();if(rb.hasAttribute('data-go-now'))$('startBtn').click();else{const b=$('careerBox');if(b)b.scrollIntoView({behavior:'smooth',block:'start'});}return;}}
-  {const gz=e.target.closest('[data-mgsz]');if(gz&&S){if(gz.disabled)return;S.mgPick=gz.dataset.mgsz;issueOp('mg:'+gz.dataset.mgfor,'close');return;}}
+  {const gz=e.target.closest('[data-mgsz]');if(gz&&S){if(gz.disabled)return;const h=mgAt(gz.dataset.mgfor);S.mgPick=gz.dataset.mgsz;S.mgSwap=!!(h&&!h.conn&&!h.pend);issueOp('mg:'+gz.dataset.mgfor,'close');return;}}
   {const pb=e.target.closest('[data-pick]');if(pb&&S){const k=pb.dataset.pick;hidePick();select(k,true);return;}if(e.target.closest('[data-pick-x]')){hidePick();return;}}
   {const zc=e.target.closest('[data-zone]');if(zc&&S){const z=zc.dataset.zone;if(z==='all'){hidePick();zoomed=false;applyZoom();const pm=$('pMimic'),bar=document.querySelector('.bar'),top=bar&&getComputedStyle(bar).position==='sticky'?bar.offsetHeight:0;if(pm)window.scrollTo({top:pm.getBoundingClientRect().top+window.scrollY-top-6,behavior:RMQ.matches?'auto':'smooth'});}else{const c=zoneOf(z);if(c)zoomTo(c[0],c[1]);}return;}}
   if(e.target.closest('#mimic')&&tapPick(e))return;

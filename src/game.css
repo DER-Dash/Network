@@ -857,3 +857,4 @@ html.kiosk .zchips,html.kiosk .tpick{display:none!important}
 .mg-sz .op-btn{white-space:nowrap;font-size:14px}
 .mimic-svg .yard-t{font-size:11px}
 .mg-pick{min-width:0}.mg-sz{min-width:0}.mg-sz .op-btn{padding-inline:4px;font-size:13.5px}
+.mg-or{font-size:12px;color:var(--muted);align-self:center}
