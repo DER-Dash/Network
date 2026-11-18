@@ -29,7 +29,7 @@ async function start(scn){const d=mk(),w=d.window,doc=w.document;await wait(30);
  // a substation transformer fault: generator offered on every feeder, picks up the whole feeder through a closed breaker
  {const {G,S,doc}=await start('grid');S.sched.length=0;G.run(3);S.sched.push({k:'pt:rv',m:S.t,dur:200,cause:'Tap changer fault',done:false});G.run(2);
   doc.querySelector('.hit[data-sel="lf:rv0"]').dispatchEvent(new doc.defaultView.MouseEvent('click',{bubbles:true}));await wait(5);
-  ok(doc.querySelectorAll('#qp [data-mgsz]').length===3,'transformer fault: Ohm Street pop-up offers a generator');
+  ok(doc.querySelectorAll('#qp [data-mgfor="rv0"]').length===3,'transformer fault: Ohm Street pop-up offers a generator');
   S.mgPick='L';G.op('mg:rv0','close');let t=0;const u=()=>S.mgu.find(x=>x.site==='rv0');while(!(u()&&!u().pend)&&t++<150)G.run(1);G.run(3);
   ok(u().conn&&!S.cust.off.rv0s0&&!S.cust.off.rv0s1&&S.cust.off.rv2s0>0,'large generator restores the whole of Ohm Street only');}
  // too small: it trips; swap it for a bigger one, and the small one goes back to the yard. Or just send one back.
@@ -38,7 +38,7 @@ async function start(scn){const d=mk(),w=d.window,doc=w.document;await wait(30);
   S.mgPick='S';G.op('mg:hw0','close');const small=()=>S.mgu.find(x=>x.sz==='S'&&x.site==='hw0');t=0;while(!S.log.some(l=>/tripped on overload/.test(l.text))&&t++<150)G.run(1);
   ok(small()&&!small().conn,'small generator tripped and is parked at Town Centre');
   doc.querySelector('.hit[data-sel="lf:hw0"]').dispatchEvent(new doc.defaultView.MouseEvent('click',{bubbles:true}));await wait(5);
-  const lbl=[...doc.querySelectorAll('#qp button')].map(b=>b.textContent);ok(lbl.some(x=>/Reconnect it/.test(x))&&lbl.some(x=>/Back to yard/.test(x))&&doc.querySelectorAll('#qp [data-mgsz]').length===3,'pop-up offers reconnect, back to yard, or a swap: '+lbl.join(' | '));
+  const lbl=[...doc.querySelectorAll('#qp button')].map(b=>b.textContent);ok(lbl.some(x=>/Reconnect it/.test(x))&&lbl.some(x=>/Back to yard/.test(x))&&doc.querySelectorAll('#qp [data-mgfor="hw0"]').length===3,'pop-up offers reconnect, back to yard, or a swap: '+lbl.join(' | '));
   doc.querySelector('#qp [data-mgsz="L"]').click();t=0;const big=()=>S.mgu.find(x=>x.sz==='L'&&x.site==='hw0');while(!(big()&&big().conn)&&t++<150)G.run(1);G.run(3);
   ok(big()&&big().conn&&!S.mgu.some(x=>x.sz==='S'&&x.site),'large generator swapped in and holds; the small one is back in the yard');
   G.op('mg:hw0','open');t=0;while(big().conn&&t++<60)G.run(1);ok(!big().conn&&big().site==='hw0','disconnected, parked');
@@ -58,4 +58,12 @@ async function start(scn){const d=mk(),w=d.window,doc=w.document;await wait(30);
   ok(v()&&v().conn&&!S.cust.off.hw0s0&&!S.cust.off.hw0s1&&u().conn,'second generator at the far end: whole feeder back on');
   t=0;while(S.lff.hw[0]&&t++<300)G.run(1);const i0=S.incidents;G.op('lf:hw0','close');G.run(3);
   ok(S.incidents===i0+1&&!u().conn,'closing the breaker onto the first-half generator is a switching incident');}
+ // a substation transformer fault (no 11 kV fault): the first half can still have a generator on its LV
+ {const {G,S,doc}=await start('grid');S.sched.length=0;G.run(3);S.sched.push({k:'pt:hw',m:S.t,dur:300,cause:'Tap changer fault',done:false});G.run(2);
+  doc.querySelector('.hit[data-sel="lf:hw0"]').dispatchEvent(new doc.defaultView.MouseEvent('click',{bubbles:true}));await wait(5);
+  ok(doc.querySelectorAll('#qp [data-mgfor="hw0n"]').length===3,'transformer fault: Town Centre pop-up offers a first-half generator too');
+  G.op('mid:hw0','open');let t=0;while(S.mid.hw[0]&&t++<40)G.run(1);
+  S.mgPick='L';G.op('mg:hw0n','close');t=0;const u=()=>S.mgu.find(x=>x.site==='hw0n');while(!(u()&&u().conn)&&t++<150)G.run(1);
+  S.mgPick='M';G.op('mg:hw0','close');t=0;const v=()=>S.mgu.find(x=>x.site==='hw0');while(!(v()&&v().conn)&&t++<150)G.run(1);G.run(2);
+  ok(u().conn&&v().conn&&!S.cust.off.hw0s0&&!S.cust.off.hw0s1&&S.incidents===0,'one generator on each half: all of Town Centre back on with the transformer still out');}
  ok(!errs.length,'no script errors '+errs.join(' | '));process.exit(fails?1:0);})();
