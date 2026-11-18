@@ -1,7 +1,7 @@
 /* Losing Control service worker: lets both games open offline.
    Pages are fetched fresh from GitHub when online (so pushed changes arrive
    straight away) and fall back to the saved copy when offline or slow. */
-const CACHE = 'firm-capacity-v32';
+const CACHE = 'firm-capacity-v33';
 const CORE = ['./', './generation/', './control-room/', './generation/manifest.webmanifest', './control-room/manifest.webmanifest',
   './icons/gen-192.png', './icons/gen-512.png', './icons/cr-192.png', './icons/cr-512.png'];
 
@@ -28,7 +28,9 @@ self.addEventListener('fetch', e => {
   const key = url.pathname.endsWith('/') || url.pathname.endsWith('.html') || req.mode === 'navigate'
     ? new Request(url.origin + url.pathname) : req; // ignore ?source=pwa and similar
   e.respondWith(
-    fromNetwork(req, 4000).then(res => {
+    // Pages skip the browser's own HTTP cache so a new version shows on the next open.
+    fromNetwork(key === req ? req : new Request(url.href, { cache: 'no-cache', credentials: 'same-origin' }),
+      key === req ? 4000 : 8000).then(res => {
       if (res && res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(key, copy)); }
       return res;
     }).catch(() => caches.match(key).then(hit => hit || caches.match(req)).then(hit => hit ||
