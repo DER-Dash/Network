@@ -89,7 +89,7 @@ const isManual=k=>CREW_ON&&(MANUAL.includes(k.split(':')[0])||commsOut(siteOf(k)
 const siteOf=k=>{const[t,id]=(k||'').split(':');return['in','pt'].includes(t)?id:['lf','mid','nop','mg'].includes(t)?id.slice(0,2):null;};
 const commsOut=p=>!!(p&&S&&S.comms&&S.comms[p]);
 const crewOnSite=p=>!!(S&&S.crews&&S.crews.some(c=>!c.to&&c.at&&siteOf(c.at)===p));
-const CAREER=GAME==='cr'?['quiet','grid','storm','heat','jan','ev','snow','xmas','morning','gsp','mesh','comms','endure','black']:['may','storm','jan'];
+const CAREER=GAME==='cr'?['quiet','grid','storm','heat','jan','ev','snow','xmas','morning','gsp','mesh','comms','busbar','endure','black']:['may','storm','jan'];
 const RANKS=GAME==='cr'?[[0,'Trainee control engineer'],[3,'Assistant control engineer'],[6,'Control engineer'],[10,'Senior control engineer'],[14,'Control room manager'],[18,'Head of network operations']]
   :[[0,'Trainee flexibility analyst'],[2,'Flexibility analyst'],[4,'Flexibility engineer'],[6,'Senior flexibility engineer'],[9,'DSO manager']];
 const ACH=[
@@ -125,7 +125,7 @@ const rankOf=n=>{let r=RANKS[0][1];RANKS.forEach(([t,nm])=>{if(n>=t)r=nm;});retu
 const nextRank=n=>RANKS.find(([t])=>t>n);
 // Shifts added to the career later. A shift after one of these still unlocks from the shift before it,
 // so existing careers keep what they had unlocked.
-const CAREER_ADDED=['ev','xmas','morning','comms'];
+const CAREER_ADDED=['ev','xmas','morning','comms','busbar'];
 const unlockedK=(c,k)=>{let i=CAREER.indexOf(k);if(i<=0)return true;if(!CAREER_ADDED.includes(k))while(i>1&&CAREER_ADDED.includes(CAREER[i-1]))i--;return CAREER.slice(i-1).some(j=>(c.stars[j]||0)>=1);};
 // Starting the career again: stars, rank and achievements are kept (they are the best ever, and online sync keeps the
 // best from every device), but the career runs through the shifts in order again from the chosen one. c.run is the
@@ -155,6 +155,7 @@ function gauss(A,b){const n=b.length,M=A.map((r,i)=>[...r,b[i]]);
   for(let c=0;c<n;c++){let p=c;for(let r=c+1;r<n;r++)if(Math.abs(M[r][c])>Math.abs(M[p][c]))p=r;[M[c],M[p]]=[M[p],M[c]];const d=M[c][c]||1e-9;
     for(let r=0;r<n;r++){if(r===c)continue;const f=M[r][c]/d;if(!f)continue;for(let k=c;k<=n;k++)M[r][k]-=f*M[c][k];}}
   return M.map((r,i)=>r[n]/(r[i]||1e-9));}
+const BB_CAUSES=['Partial discharge flashover in the switchgear','Busbar insulator failure','Moisture in the busbar chamber','Cable box failure on the busbar'];
 const FAULTS=['Lightning strike on the overhead line','Tree contact on the overhead line','Bird strike on the overhead line','Insulator flashover','Cable joint failure'];
 
 // A cold winter weekday: shared by Cold Thursday in both games and the EV evening shift
@@ -253,6 +254,17 @@ const SCENARIOS={
         comms:[{p:'ml',from:a,to:a+210+Math.round(r()*30),cause:'Fibre cut by roadworks on Station Road'},{p:'rv',from:b,to:b+200+Math.round(r()*30),cause:'Comms cabinet failure'}],
         sched:[{k:'lv:ml'+Math.floor(r()*3),m:f1,dur:70+Math.round(r()*50),sec:r()<.5?0:1,tr:false,cause:'Cable joint failure',done:false},
           {k:'lv:rv'+Math.floor(r()*3),m:f2,dur:70+Math.round(r()*50),sec:r()<.5?0:1,tr:false,cause:'Tree contact on the overhead line',done:false}]};}},
+  // A busbar fault at Blackout Canyon: protection trips one random 33 kV section (its transformer, bus section breakers
+  // and feeder breakers) mid-morning, and it stays out for hours, often into the evening peak. Other faults on top.
+  busbar:{color:'var(--alarm)',diff:3,title:'Busbar fault',when:'Tuesday 16 February',focus:'Lose a 33 kV busbar section',soc0:0,nbShape:'demand',noGen:true,links:true,faults:3,
+    nb:{kn:{base:70,dip:26},fm:{base:68,dip:24}},
+    blurb:'Cold and damp, and the Blackout Canyon 33 kV switchboard is overdue its maintenance. Some time this morning busbar protection will trip one section of the busbar, taking out its transformer, its bus section breakers and any feeders on it all at once. You won\'t know which section until it goes, and the repair takes hours. Restore customers through the ties, interconnectors and 11 kV links, keep everything else inside its ratings through the evening peak, and deal with the other faults as they come.',
+    demand:[[0,86],[4,76],[6,82],[7.5,112],[9,122],[11,116],[13,114],[15,120],[16.5,142],[17.5,156],[18.5,152],[20,136],[21.5,116],[23,98],[24,90]],
+    solar:{peak:0,start:7.8,end:16.8,cloud:0},wind:{mean:0,var:0},
+    causes:['Cable joint failure','Insulator flashover in damp weather','Tree contact on the overhead line','Digger strike on the underground cable'],
+    tips:{risk:'With a busbar section out, the transformers you have left and the neighbours carry everything. Watch their headroom before the evening peak, and use the 11 kV links to spread the load.'},
+    build(r){const sec=pick(r,['B1','B2','B3']),at=540+Math.round(r()*150),dur=330+Math.round(r()*90);
+      return{events:[],cutout:null,risk:[{start:960,end:1140,mult:2,label:'Freezing fog'}],sched:[{k:'bb:'+sec,m:at,dur,cause:pick(r,BB_CAUSES),done:false}]};}},
   endure:{color:'var(--c-storm)',diff:3,title:'Storm endurance',when:'Tuesday 3 November',focus:'18-hour storm shift',start:360,end:1440,soc0:30,nbShape:'demand',links:true,
     blurb:'The storm stalls over Blackout Canyon and you have the whole of it: 06:00 to midnight. Three bands of severe gale, strong wind in between, the wind farm cutting out and no planned work to hide behind. The 11 kV links and Volt Face are there when the ties run out. Pace yourself.',
     demand:[[0,74],[4,66],[6,72],[7.5,100],[9,114],[12,104],[15,108],[16.5,128],[17.5,146],[18.5,144],[20,128],[22,100],[24,78]],
@@ -310,6 +322,7 @@ const HANDOVER=GAME==='cr'?{
   mesh:{from:'Pat, night shift',text:'Kilowatt Close is live, fed through Shocking Place with a backup route from Ohm No. The Shocking Place feeder comes out at 09:00 for planned work, so sort out both of them first thing. Close South has Priority Services Register customers: don\'t leave them off.'},
   comms:{from:'Sam, night shift',text:'Heads up: the roadworks on Station Road are right on top of the fibre to Shocking Place, and the comms contractor says the cabinet at Ohm No is on its last legs. If we lose an RTU, we can\'t see that substation or switch anything there from here. Trips won\'t alarm and polling won\'t get an answer. Every breaker there will need a crew, and the customers ringing in will be the first you hear of trouble. Keep a crew close to anywhere you can\'t see.'},
   morning:{from:'Sam, night shift',text:'Sorry, rough night. Here\'s what I\'ve left you. Hertz House is on Ampy Place through its tie, with its Blackout Canyon feeder breaker open. Joule Street is on Watts This, its feeder open at both ends. Mill Lane (Shocking Place) and Resistor Row (Ohm No) are on Volt Face backfeeds. Mobile generator 1 is still running at the far end of Marsh Road with the mid-point switch open: disconnect it before you close that switch. And the T2–T3 bus section is open. Every repair is finished. Get it back to normal before teatime, when the neighbours run out of room.'},
+  busbar:{from:'Jo, night shift',text:'Protection engineers found partial discharge on the Blackout Canyon 33 kV switchboard last week and the replacement panels aren\'t due until spring. If busbar protection operates it takes a whole section out at once: transformer, bus section breakers and feeders. Know your ties, interconnectors and 11 kV links before it happens.'},
   black:{from:'Jo, night shift',text:'At 05:50 busbar protection at Steve Towers tripped the 132 kV section feeding all three of our transformers, so Blackout Canyon is dark. National Grid expect to give us back T1 about 06:15, T2 about 06:50 and T3 about 07:45. I\'ve opened all four 33 kV feeder breakers so nothing comes back at once. Customers have been off since ten to six, so expect cold load pickup: each feeder draws much more than normal when it comes back, and settles over about an hour. Ampy Place can spare a little, and Watts This and Volt Face are fine. Restore in stages.'},
   endure:{from:'Pat, night shift',text:'Three trips since midnight, all repaired and back to normal running, and it\'s getting worse, not better. Three crews have to cover the whole storm, so plan their trips. Use the quiet spells to put the network back to normal.'}}
 :{
@@ -351,6 +364,10 @@ const TIESW={hw:{x:75,y:330,path:'M110 330 H40',lx:48,ly:354,anc:'start'},
 const TXX=[460,600,740],BCY=200,PY=330;
 const SECS={B1:{tx:[0],x1:180,x2:521},B2:{tx:[1],x1:539,x2:661},B3:{tx:[2],x1:679,x2:1000}};
 const FSEC={hw:'B1',ml:'B1',rv:'B3',js:'B3'},BSX={'12':530,'23':670},BSIDS=['12','23'];
+// Busbar fault (S.bb): one 33 kV section out until repaired. bsSecs: the two sections a bus section breaker joins.
+const bsSecs=k=>k==='12'?['B1','B2']:['B2','B3'],SECN33={B1:'section 1 (T1)',B2:'section 2 (T2)',B3:'section 3 (T3)'};
+const bbOut=sec=>!!(S.bb&&!S.bb.ready&&(!sec||S.bb.sec===sec));
+function bbLonger(d){S.bb.until+=d;SECS[S.bb.sec].tx.forEach(i=>{const t=S.tx[i];if(t.out&&t.out.kind==='bus')t.out.until=S.bb.until;});}
 const isBC=n=>n[0]==='I',isSrcN=n=>n==='kn'||n==='fm'||isBC(n);
 const SERVICES=[
   {id:'solar',prim:'ml',ic:'solar',tc:'var(--c-solar)',name:'Shocking Place Solar Farm',kind:'Solar farm',dir:'export',arm:0,use:60,gen:true,ramp:15,fail:.05,allow:90},
@@ -427,10 +444,11 @@ const ICONS={solar:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12
   plug:'<path d="M9 2v5M15 2v5M6 7h12v3a6 6 0 0 1-12 0zM12 16v3a3 3 0 0 0 3 3h3"/>',
   flood:'<path d="M4 11l8-6 8 6M6 10v4M18 10v4"/><path d="M2.5 17c2-1.5 3.8 1.5 5.8 0s3.8-1.5 5.8 0 3.8 1.5 5.8 0M2.5 21c2-1.5 3.8 1.5 5.8 0s3.8-1.5 5.8 0 3.8 1.5 5.8 0"/>',
   comms:'<path d="M12 13v8M8 21h8"/><circle cx="12" cy="11" r="1.6"/><path d="M8.5 7.5a5 5 0 0 1 7 0M5.6 4.6a9 9 0 0 1 12.8 0"/><path d="M3 3l18 18"/>',
+  bus:'<path d="M2 8h20M6 8v12M12 8v4M18 8v12"/><path d="M14 12l-3 4.5h3.5L12 22"/>',
   pylon:'<path d="M12 2 7.5 22M12 2l4.5 20M4 7h16M6 12h12M9.6 7l4.8 5M14.4 7l-4.8 5M8.6 17h6.8M8.6 17l6.8 5M15.4 17l-6.8 5"/>'};
 // Each day's scene: the icon on its card and the weather drawn behind the diagram
-const SCENE={comms:'comms',morning:'sun',black:'pylon',xmas:'flood',ev:'plug',quiet:'sun',grid:'pylon',storm:'storm',heat:'heat',jan:'snow',snow:'snow',gsp:'pylon',mesh:'pylon',endure:'storm',may:'sun',tut:'snow'};
-const WX={comms:'cloud',morning:'cloud',black:'cloud',xmas:'rain',ev:'snow',grid:'cloud',gsp:'cloud',mesh:'snow'};
+const SCENE={busbar:'bus',comms:'comms',morning:'sun',black:'pylon',xmas:'flood',ev:'plug',quiet:'sun',grid:'pylon',storm:'storm',heat:'heat',jan:'snow',snow:'snow',gsp:'pylon',mesh:'pylon',endure:'storm',may:'sun',tut:'snow'};
+const WX={busbar:'cloud',comms:'cloud',morning:'cloud',black:'cloud',xmas:'rain',ev:'snow',grid:'cloud',gsp:'cloud',mesh:'snow'};
 const sceneOf=k=>SCENE[k]||'pylon',wxOf=k=>WX[k]||{pylon:'cloud'}[sceneOf(k)]||sceneOf(k);
 // Street-level demand at the end of each 11 kV feeder: houses, or shops and offices for town centres, stations and
 // business parks. Windows are lit while the far half of the feeder has supply and go dark when it doesn't.
@@ -677,7 +695,7 @@ function newGame(key){
     mgu:LV_ON?MG_FLEET.map((f,j)=>({n:j+1,sz:f.sz,cap:f.cap,site:null,conn:false,pend:false})):[],mgPick:'S',trial:0,recloses:0,vfLoad:0,fd:Object.fromEntries(PIDS.map(p=>[p,{brk:!!PR[p].fd,inc:!!PR[p].fd,fault:null}])),
     tie:Object.fromEntries(PIDS.map(p=>[p,{closed:false}])),
     it:Object.fromEntries(ITIDS.map(k=>[k,{closed:!!ITS[k].nc,fault:null}])),
-    ov:{},edL:{},flows:{},alarms:{},bs:{'12':{closed:true},'23':{closed:true}},bsf:{'12':0,'23':0},isl:{},islands:[],inj:{kn:0,fm:0},parMin:0,
+    ov:{},edL:{},flows:{},alarms:{},bb:null,bs:{'12':{closed:true},'23':{closed:true}},bsf:{'12':0,'23':0},isl:{},islands:[],inj:{kn:0,fm:0},parMin:0,
     sup:Object.fromEntries(PIDS.map(p=>[p,'bc'])),pn:Object.fromEntries(PIDS.map(p=>[p,0])),wB:Object.fromEntries(PIDS.map(p=>[p,1])),spare:{kn:65,fm:60},
     manual:{},armed:{},act:{},autoP:{},manP:{},called:{},fail:{},allow:{},allowLogged:{},
     soc:sc.soc0,op:null,sel:null,cust:{ci:0,cml:0,si:0,off:{}},crews:Array.from({length:sc.crews||3},(_,j)=>j+1).map(n=>({n,x:DEPOT.x,y:DEPOT.y,from:null,to:null,dep:0,arr:0,at:'depot',job:null})),crewJobs:0,parOk:0,vfPeak:0,gspOver:0,gspTrips:0,gspLoad:0,
@@ -927,11 +945,15 @@ function renderFlood(){const F=S.flood,g=$('flood');if(!g)return;if(!F||!F.warne
 /* ---------- Simulation step (one game minute) ---------- */
 function step(){
   const m=S.t;
-  S.tx.forEach((t,i)=>{if(t.out&&!t.out.ready&&m>=t.out.until){t.out.ready=true;
+  S.tx.forEach((t,i)=>{if(t.out&&!t.out.ready&&m>=t.out.until){t.out.ready=true;if(t.out.kind==='bus')return;
     if(GAME==='fc'){t.out=null;t.em=0;t.sh=0;mark(m,'xfer',`T${i+1} restored`);const msg=`T${i+1} is back in service.`;logE(m,msg,'ok');queueAlert(msg,'ok',false);play('ok');return;}
     const msg=t.out.kind==='black'?`National Grid has re-energised the Steve Towers supply to T${i+1}. Close the T${i+1} breaker to put it back in service, but check what it will pick up: everything on closed feeders comes back at once, with cold load.`:t.out.kind==='planned'?`T${i+1} maintenance is finished. Close the T${i+1} breaker to put it back in service.`:t.out.kind==='trip'?`T${i+1} has been inspected after its trip. Close the T${i+1} breaker to put it back in service.`:`T${i+1} has been repaired. Close the T${i+1} breaker to put it back in service.`;
     logE(m,msg,'ok');queueAlert(msg,'ok',false);play('ok');}});
   PIDS.forEach(p=>{const f=S.pt[p].fault;if(f&&!f.ready&&m>=f.until){f.ready=true;const msg=f.flood?`The ${PR[p].name} 11 kV switchgear has been dried and tested. Close the transformer breaker, then the feeder breakers, to put the ${PR[p].name} feeders back on their own substation.`:`The ${PR[p].name} 33/11 kV transformer has been repaired. Close its 33 kV breaker to put the 11 kV feeders back on.`+(LF[p].some((v,i)=>!S.lf[p][i]&&feedOf(p,i)!==null)?' Feeders you moved elsewhere stay there until you move them back.':'');logE(m,msg,'ok');queueAlert(msg,'ok',false);play('ok');}});
+  if(S.bb&&!S.bb.ready&&m>=S.bb.until){S.bb.ready=true;const sec=S.bb.sec;SECS[sec].tx.forEach(i=>{if(S.tx[i].out&&S.tx[i].out.kind==='bus')S.tx[i].out.ready=true;});
+    const fs=PIDS.filter(p=>PR[p].fd&&FSEC[p]===sec);mark(m,'xfer','Busbar repaired');
+    const msg=`The Blackout Canyon 33 kV busbar ${SECN33[sec]} has been repaired and tested. Close the T${SECS[sec].tx[0]+1} breaker and the bus section breaker${sec==='B2'?'s':''}`+(fs.length?`, then the ${fs.map(p=>PR[p].name).join(' and ')} feeder breaker${fs.length>1?'s':''}, to put it back. Check how each substation is fed now before you close its breaker.`:' to put it back.');
+    logE(m,msg,'ok');queueAlert(msg,'ok',false);play('ok');}
   ITIDS.forEach(k=>{const f=S.it[k];if(f.fault&&!f.fault.ready&&m>=f.fault.until){f.fault.ready=true;const msg=`The ${devName('it:'+k)} has been repaired. It can be closed again.`;logE(m,msg,'ok');queueAlert(msg,'ok',false);play('ok');}});
   PIDS.forEach(p=>{const f=S.fd[p];if(f.fault&&!f.fault.ready&&m>=f.fault.until){f.fault.ready=true;const msg=f.fault.planned?`${PR[p].name} feeder maintenance is finished. Close its breaker at Blackout Canyon and its incomer at ${PR[p].name} to put it back.`:`The ${PR[p].name} feeder has been repaired. Close its breaker at Blackout Canyon and its incomer at ${PR[p].name} to put it back.`;logE(m,msg,'ok');queueAlert(msg,'ok',false);play('ok');}});
   for(const e of S.events){
@@ -962,6 +984,16 @@ function step(){
       const was=T.closed;T.closed=false;T.fault={until:m+f.dur,ready:false,label:f.cause};S.faults++;S.chain.push(`a fault on the ${PR[p].name} transformer`);mark(m,'fault',`${PR[p].name} transformer fault`);
       const s=`Fault on the ${PR[p].name} 33/11 kV transformer: ${f.cause.toLowerCase()}. ${was?`Its 33 kV breaker tripped automatically, so the 11 kV feeders at ${PR[p].name} have lost their supply (${nf(n)} customers). `:''}Repair expected by ${fmtT(m+f.dur)}. ${ptHow(p)}`;
       logE(m,s,'alarm');if(was)alEv(m,'trip',`${PR[p].name} transformer breaker`,'pt:'+p,'fault');queueAlert(s,'alarm',true);play('fault');fx('ptg_'+p);}
+    else if(type==='bb'){const sec=id;if(S.bb&&!S.bb.ready)continue;const until=m+f.dur,fs=PIDS.filter(p=>PR[p].fd&&FSEC[p]===sec),lost=fs.filter(p=>fdOn(p)&&S.sup[p]==='bc');
+      let n=0;lost.forEach(p=>LF[p].forEach((v,i)=>[0,1].forEach(s=>{if(secFeed(p,i,s)===p)n+=custOf(p,i,s);})));
+      S.bb={sec,until,ready:false,label:f.cause};S.faults++;S.chain.push('a busbar fault at Blackout Canyon');mark(m,'fault','Busbar fault');
+      SECS[sec].tx.forEach(i=>{const t=S.tx[i];if(!t.out)alEv(m,'trip',`T${i+1}`,'tx:'+i,'busbar protection');t.out={kind:'bus',until,ready:false,label:'Busbar fault: '+f.cause};});
+      BSIDS.filter(k=>bsSecs(k).includes(sec)).forEach(k=>{if(S.bs[k].closed){S.bs[k].closed=false;alEv(m,'trip',ucfirst(devName('bs:'+k)),'bs:'+k,'busbar protection');}});
+      fs.forEach(p=>{if(S.fd[p].brk){S.fd[p].brk=false;alEv(m,'trip',`${PR[p].name} breaker`,'bc:'+p,'busbar protection');}});
+      const s=`Busbar protection operated at Blackout Canyon: ${f.cause.toLowerCase()} on 33 kV busbar ${SECN33[sec]}. T${SECS[sec].tx[0]+1}, the bus section breaker${sec==='B2'?'s':''}`+(fs.length?` and the ${fs.map(p=>PR[p].name).join(' and ')} feeder breakers`:'')+` all tripped. `+
+        (lost.length?`${lost.map(p=>PR[p].name).join(' and ')} ${lost.length>1?'have':'has'} lost supply (${nf(n)} customers). Restore through the ties, interconnectors and 11 kV links. `:sec==='B2'?'No customers are off, but the busbar is now split: T1 alone carries section 1 and T3 alone carries section 3. Watch both through the peak. ':'')+
+        `Repair expected by ${fmtT(until)}. Don't close anything onto that section until then.`;
+      logE(m,s,'alarm');queueAlert(s,'alarm',true);play('fault');fx('bus_'+sec);}
     else if(type==='ar'){const p=id;if(!PIDS.includes(p)||!fdOn(p)||Math.abs(S.flows['bc:'+p]||0)<.5)continue;let n=0;PIDS.forEach(q=>LF[q].forEach((v,i)=>[0,1].forEach(s=>{if(secFeed(q,i,s)===p)n+=custOf(q,i,s);})));
       S.cust.si+=n;lose(m,'ar'+m,'ar','Auto-reclose',n/500);S.recloses++;mark(m,'ar','Auto-reclose');alEv(m,'ar',`${PR[p].name} 33 kV feeder`,'bc:'+p,'held in');logE(m,`${PR[p].name} 33 kV feeder tripped and auto-reclosed: a transient fault (${f.cause.toLowerCase()}) cleared itself. ${nf(n)} customers had a short interruption.`,'info');play('ar');fx('fdg_'+p);}
     else{const p=id,fd=S.fd[p];if(fd.fault||(S.sc.easy&&PIDS.some(q=>S.fd[q].fault&&!S.fd[q].fault.planned)))continue;// easy shifts: one feeder fault at a time
@@ -1192,6 +1224,7 @@ function genCheck(m,k){(S.mgu||[]).forEach(u=>{if(!u.conn)return;if(!genClash(u)
 function doOp0(op,m){const[type,id]=op.k.split(':');play('op');
   if(type==='tx'){const i=+id,t=S.tx[i];
     if(op.act==='close'){if(!t.out)return;
+      if(!t.out.ready&&t.out.kind==='bus'&&S.bb){bbLonger(30);incident(m,`T${i+1} was closed onto the faulted busbar ${SECN33[S.bb.sec]}. Busbar protection tripped it straight away, and the repair now takes 30 minutes longer.`,'cct'+i);return;}
       if(!t.out.ready){t.out.until+=30;incident(m,`T${i+1} was closed before ${t.out.kind==='planned'?'its maintenance was finished':t.out.kind==='trip'?'its inspection was finished':'it was repaired'}. Protection tripped it straight away, and it now takes 30 minutes longer to come back.`,'cct'+i);return;}
       const alive=S.tx.some(x=>!x.out);t.out=null;t.em=0;t.sh=0;mark(m,'xfer',`T${i+1} restored`);logE(m,`T${i+1} breaker closed. T${i+1} is back in service.`,'ok');
       if(!alive){const g=groupsOf(edgesNow());if(g.list.some(x=>kindOf(x)==='bad'))logE(m,'Re-energising Blackout Canyon joined it to Watts This.','warn');}}
@@ -1238,6 +1271,7 @@ function doOp0(op,m){const[type,id]=op.k.split(':');play('op');
     mark(m,'xfer',nm+(v?' opened':' closed'));logE(m,v?`${ucfirst(nm)} at ${PR[p].name} opened: about ${mwv} MW of customers are off supply.`:`${ucfirst(nm)} at ${PR[p].name} closed: about ${mwv} MW of customers are back on.`,v?'warn':'ok');return;}
   if(op.act==='open'){if(!isClosed(k))return;openEdge(k);mark(m,'xfer',nm+' opened');logE(m,`${ucfirst(nm)} opened.`,'info');return;}
   if(isClosed(k))return;
+  if(bbOut()&&((type==='bc'&&FSEC[id]===S.bb.sec)||(type==='bs'&&bsSecs(id).includes(S.bb.sec)))){bbLonger(30);alEv(m,'trip',ucfirst(nm),k,'closed onto fault');incident(m,`The ${nm} was closed onto the faulted busbar ${SECN33[S.bb.sec]}. Busbar protection tripped it straight away, and the repair now takes 30 minutes longer.`,elOf(k));return;}
   if(type==='bc'||type==='in'){const f=S.fd[id];if(f.fault&&!f.fault.ready){f.fault.until+=30;alEv(m,'trip',ucfirst(nm),k,'closed onto fault');incident(m,f.fault.planned?`The ${nm} was closed while field staff were still working on the feeder. It tripped straight away, and the work now takes 30 minutes longer.`:`The ${nm} was closed onto the faulted feeder. It tripped straight away, and the repair now takes 30 minutes longer.`,'fdg_'+id);return;}}
   if(type==='it'){const f=S.it[id];if(f.fault&&!f.fault.ready){f.fault.until+=30;alEv(m,'trip',ucfirst(nm),k,'closed onto fault');incident(m,`The ${devName(k)} was closed onto its fault. It tripped straight away, and the repair now takes 30 minutes longer.`,'itg_'+id);return;}}
   const before=groupsOf(edgesNow()),after=groupsOf(edgesNow(k));
@@ -1336,6 +1370,7 @@ function buildMimic(){
     <rect class="hit" data-sel="tx:${i}" x="${x-24}" y="46" width="132" height="132"/></g>`;
     SELBOX['tx:'+i]=[x-26,44,136,136];});
   ['B1','B2','B3'].forEach(sc=>{s+=`<line class="bus mv" id="bus_${sc}" x1="${SECS[sc].x1}" y1="${BCY}" x2="${SECS[sc].x2}" y2="${BCY}"/>`;});
+  {const BBX={B1:300,B2:600,B3:780};['B1','B2','B3'].forEach(sc=>{s+=`<text id="bbt_${sc}" class="fd-t bb-t" x="${BBX[sc]}" y="${BCY-9}" text-anchor="middle"></text>`;});}
   s+=`<text id="snm_bc" class="t-bus snm" x="1000" y="${BCY-10}" text-anchor="end">BLACKOUT CANYON 33 kV</text>`;
   BSIDS.forEach(k=>{const x=BSX[k];s+=`<g id="bsg_${k}"><rect id="bsb_${k}" class="brk sw" x="${x-8}" y="${BCY-8}" width="16" height="16"/><text class="bs-t" x="${x}" y="${BCY+24}" text-anchor="middle">BS</text>${arw('bsa_'+k,x,BCY-16)}
     <rect class="hit" data-sel="bs:${k}" x="${x-18}" y="${BCY-26}" width="36" height="56"/></g>`;SELBOX['bs:'+k]=[x-15,BCY-15,30,30];});
@@ -1476,7 +1511,8 @@ function renderMimic(){
     setAttr($('lb'+i),'class','brk sw'+(t.out?' open':'')+(opK==='tx:'+i?' operating':''));setAttr($('hb'+i),'class','brk'+(t.out?' open':''));
     setFlow($('fa'+i),t.out?0:t.flow);setFlow($('fb'+i),t.out?0:t.flow);setArw('txa'+i,t.out?0:t.flow,'v');
   });
-  ['B1','B2','B3'].forEach(sc=>setAttr($('bus_'+sc),'class','bus mv'+(secAlive(sc)?'':' dead')));
+  ['B1','B2','B3'].forEach(sc=>{const b=S.bb&&S.bb.sec===sc?S.bb:null,lab=b&&(!b.ready||SECS[sc].tx.some(i=>S.tx[i].out))?(b.ready?'BUSBAR REPAIRED':'BUSBAR FAULT'):'';
+    setAttr($('bus_'+sc),'class','bus mv'+(secAlive(sc)?'':' dead')+(b&&!b.ready?' flt':''));txt('bbt_'+sc,lab);setAttr($('bbt_'+sc),'class','fd-t bb-t'+(b&&b.ready?' ok':''));});
   BSIDS.forEach(k=>{setAttr($('bsb_'+k),'class','brk sw'+(S.bs[k].closed?'':' open')+(opK==='bs:'+k?' operating':''));setArw('bsa_'+k,S.bs[k].closed?S.bsf[k]:0,'h');});
   PIDS.forEach(p=>{const f=S.fd[p],sup=S.sup[p],fid='bc:'+p,en=fdOn(p)&&secAlive(FSEC[p]),fl=S.flows[fid]||0;
     if(PR[p].fd){setAttr($('fdl_'+p),'class','cond mv fd-'+p+(en?heat(S.edL[fid]||0):' dead'));setFlow($('fdf_'+p),en?fl:0);setArw('fda_'+p,en?fl:0,'v');

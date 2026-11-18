@@ -14,6 +14,8 @@
 .brk.trip{stroke:var(--alarm);stroke-width:2.5}
 .dead{stroke:var(--muted)!important;stroke-dasharray:7 6;opacity:.55}
 .bus.dead{stroke-width:5}
+.bus.flt{stroke:var(--alarm);stroke-dasharray:8 5;animation:bbflt 1.2s steps(2) infinite}@keyframes bbflt{50%{stroke-opacity:.45}}
+@media (prefers-reduced-motion:reduce){.bus.flt{animation:none}}
 .operating{animation:opb .45s steps(2) infinite}
 @keyframes opb{50%{opacity:.25}}
 .cct.ready .tx-load{fill:var(--ok)}

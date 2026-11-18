@@ -151,6 +151,12 @@ or scores and career saves will fail on the new address. Paste in the new
 `Code.gs`, save, then **Deploy → Manage deployments → Edit (pencil) → Version:
 New version → Deploy**.
 
+## Updating to version 21 (Busbar fault)
+
+Version 21 accepts scores and career stars for the Busbar fault control room shift ('busbar').
+Replace the code with the new `Code.gs`, save, then **Deploy → Manage deployments → pencil →
+Version: New version → Deploy** (same URL).
+
 ## Updating to version 20 (Comms down)
 
 Version 20 accepts scores and career stars for the Comms down control room shift ('comms').
