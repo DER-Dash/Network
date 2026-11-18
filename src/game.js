@@ -40,7 +40,7 @@ const halfNow=(p,i)=>(lfMW(p,i)*SECF[1]).toFixed(1),halfPeak=(p,i)=>Math.max(Mat
 // Generator choice in an 11 kV feeder or mid-point pop-up: always offered, whatever has taken the far half off
 // (an 11 kV fault, a substation transformer fault, a substation off supply...)
 function qpGen(id){const p=id.slice(0,2),i=+id.slice(2),u=mgAt(id),live=secFeed(p,i,1)!==null&&!mgOn(p,i);
-  if(u&&(u.conn||u.pend))return `<div class="mg-pick"><span>${MG_SZ[u.sz]} ${u.cap} MW generator ${u.conn?'connected here':'on its way here'}:</span>${opBtn('mg:'+id,'open','Disconnect it').replace('btn primary op-btn','btn op-btn')}</div>`;
+  if(u&&(u.conn||u.pend))return `<div class="mg-pick"><span>${MG_SZ[u.sz]} ${u.cap} MW generator ${u.conn?(u.lv?'connected to the LV at the far-half substations':'connected here'):'on its way here'}.${u.conn&&u.lv&&secFeed(p,i,0)===null?` It can't feed the first half. To restore the first half: open the mid-point switch, then close the feeder breaker at ${esc(PR[p].name)}${subLv(p)?'':' once the substation has supply'}.`:''}</span>${opBtn('mg:'+id,'open','Disconnect it').replace('btn primary op-btn','btn op-btn')}</div>`;
   if(u)return `<div class="mg-pick"><span>${MG_SZ[u.sz]} ${u.cap} MW generator parked here, disconnected${u.ret?' (going back to the yard)':''}. Far half ${halfNow(p,i)} MW now, about ${halfPeak(p,i)} at peak.</span>
     <span class="mg-sz">${opBtn('mg:'+id,'close','Reconnect it').replace('btn primary op-btn','btn op-btn')}${opBtn('mg:'+id,'open','Back to yard').replace('btn primary op-btn','btn op-btn')}</span><span>Or swap it for:</span>${mgSizes(id)}</div>`;
   // what it would carry: the far half, or the whole feeder if the mid-point switch is closed and the near half is dead too
