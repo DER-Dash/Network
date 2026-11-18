@@ -43,4 +43,19 @@ async function start(scn){const d=mk(),w=d.window,doc=w.document;await wait(30);
   ok(big()&&big().conn&&!S.mgu.some(x=>x.sz==='S'&&x.site),'large generator swapped in and holds; the small one is back in the yard');
   G.op('mg:hw0','open');t=0;while(big().conn&&t++<60)G.run(1);ok(!big().conn&&big().site==='hw0','disconnected, parked');
   G.op('mg:hw0','open');t=0;while(S.mgu.some(x=>x.site==='hw0')&&t++<60)G.run(1);ok(!S.mgu.some(x=>x.site),'back to yard: every generator is in the yard again');}
+ // a fault in the first half: a generator on the LV at the first-half substations brings those customers back before the repair,
+ // alongside the far half coming back from the far end; closing the breaker onto it is a switching incident
+ {const {G,S,doc}=await start('quiet');S.sched.length=0;G.run(3);const t0=S.t;
+  S.sched.push({k:'lv:hw0',m:S.t,dur:40,sec:0,tr:false,cause:'Cable joint failure',done:false});G.run(2);const f=S.lff.hw[0];
+  ok(f&&f.found&&f.sec===0,'first-half fault found');G.op('mid:hw0','open');let t=0;while(S.mid.hw[0]&&t++<40)G.run(1);
+  doc.querySelector('.hit[data-sel="lf:hw0"]').dispatchEvent(new doc.defaultView.MouseEvent('click',{bubbles:true}));await wait(5);
+  ok(doc.querySelectorAll('#qp [data-mgfor="hw0n"]').length===3&&doc.querySelectorAll('#qp [data-mgfor="hw0"]').length===3,'feeder pop-up offers a generator for each half');
+  S.mgPick='L';G.op('mg:hw0n','close');t=0;const u=()=>S.mgu.find(x=>x.site==='hw0n');while(!(u()&&u().conn)&&t++<150)G.run(1);
+  ok(u()&&u().conn&&S.t<f.until,`first-half generator connected at ${S.t-t0} min, before the repair (${f.until-t0})`);G.run(2);
+  ok(!S.cust.off.hw0s0&&S.cust.off.hw0s1>0,'first half back on from the generator, far half still off');
+  ok(!doc.getElementById('mgg_hw0n').hasAttribute('hidden')&&/\bon\b/.test(doc.getElementById('mgg_hw0n').getAttribute('class')),'first-half generator drawn');
+  S.mgPick='M';G.op('mg:hw0','close');t=0;const v=()=>S.mgu.find(x=>x.site==='hw0');while(!(v()&&v().conn)&&t++<150)G.run(1);G.run(2);
+  ok(v()&&v().conn&&!S.cust.off.hw0s0&&!S.cust.off.hw0s1&&u().conn,'second generator at the far end: whole feeder back on');
+  t=0;while(S.lff.hw[0]&&t++<300)G.run(1);const i0=S.incidents;G.op('lf:hw0','close');G.run(3);
+  ok(S.incidents===i0+1&&!u().conn,'closing the breaker onto the first-half generator is a switching incident');}
  ok(!errs.length,'no script errors '+errs.join(' | '));process.exit(fails?1:0);})();
