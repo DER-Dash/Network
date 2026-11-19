@@ -30,6 +30,19 @@ let errs=[],fails=0;const wait=ms=>new Promise(r=>setTimeout(r,ms));const ok=(c,
   click('.hit[data-sel="s2"]');ok(!!doc.querySelector('#sheet [data-declare="2"]'),'tapping a section offers to declare the fault');
   click('#sheet [data-declare="2"]');ok(!doc.getElementById('endOv').hidden&&/Score/.test(doc.getElementById('endBody').textContent),'declaring ends the puzzle with a score');
   click('#endNext');ok(doc.getElementById('endOv').hidden&&!G.st.ended,'next puzzle starts');}
+ // spurs: faults land on them too, and opening the spur switch isolates one
+ {let onSpur=0;for(let k=0;k<300;k++){G.newPuzzle('hard',5000+k);if(G.P.fault>=G.P.n)onSpur++;}ok(onSpur>30,`faults land on spurs too (${onSpur}/300 on Hard)`);
+  let k=0;do{G.newPuzzle('medium',9000+k++);}while(G.P.fault<G.P.n);const P=G.P,s=G.st,j=P.fault-P.n;
+  ok(doc.querySelectorAll('.hit[data-sel^="p"]').length===P.sp.length&&!!doc.querySelector(`.hit[data-sel="s${P.fault}"]`),'spurs and their switches are drawn and tappable');
+  G.act('cb','close');ok(!s.cb&&s.trips===1,'spur fault trips the breaker when the feeder is re-energised');
+  G.act('p'+j,'open');G.act('cb','close');ok(s.cb&&!G.fedA(s).has(P.fault)&&G.custOff(s)===P.secs[P.fault].cust,'with the spur switch open, everyone but the faulted spur is back on');
+  G.declare(P.fault);ok(s.result.correct&&s.result.iso&&s.result.healthyOff===0,'spur fault found and isolated');}
+ // the crew drives out to a manual switch before it operates
+ {let k=0;do{G.newPuzzle('hard',300+k++);}while(!G.P.sw.some(w=>w.manual));const i=G.P.sw.findIndex(w=>w.manual),s=G.st,c0={...G.crew};
+  G.actUI(String(i),'open');ok(G.busy&&s.sw[i],'manual switch: the crew sets off and the switch has not moved yet');
+  let n=0;while(G.busy&&n++<100)await wait(40);
+  ok(!G.busy&&!s.sw[i]&&s.steps===2&&(G.crew.x!==c0.x||G.crew.y!==c0.y)&&G.crew.at===String(i),'crew arrived, operated it (2 steps), and is standing at the switch');
+  ok(!!doc.querySelector('#crew:not(.home)'),'crew drawn on site');}
  // random play never throws
  for(let k=0;k<200;k++){G.newPuzzle(['easy','medium','hard'][k%3],k);const P=G.P;for(let j=0;j<25;j++){const ks=['cb','nop',...P.sw.map((x,i)=>String(i))];G.act(ks[Math.floor(Math.random()*ks.length)],Math.random()<.5?'open':'close');}G.declare(Math.floor(Math.random()*P.n));}
  ok(!errs.length,'no script errors '+errs.join(' | '));process.exit(fails?1:0);})();
