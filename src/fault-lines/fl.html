@@ -1,0 +1,76 @@
+<header class="bar">
+  <div class="brand">
+    <span class="logo"><svg viewBox="0 0 100 100" role="img" aria-label="Watts Up"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg></span>
+    <div><p class="co">Watts Up Electricity Distribution</p><h1>Fault Lines <span class="mode-tag">Practice · <span id="lvl">Easy</span></span></h1></div>
+  </div>
+  <a class="bar-link" href="../control-room/">Losing Control →</a>
+</header>
+
+<main class="wrap">
+  <section class="status" aria-label="Score so far">
+    <div><span>Steps</span><b><span id="stSteps">0</span><small> / par <span id="stPar">0</span></small></b></div>
+    <div id="stOffBox"><span>Customers off</span><b id="stOff">0</b></div>
+    <div><span>Trips</span><b id="stTrips">0</b></div>
+    <div><span>Time</span><b id="stTime">00:00</b></div>
+  </section>
+
+  <div class="cols">
+    <section class="panel dia" aria-label="Feeder diagram">
+      <h2 id="cFeeder">Feeder</h2>
+      <p class="tip">Tap a switch to open or close it. Tap a section to declare the fault there.</p>
+      <div id="diagram"></div>
+      <p class="legend"><span><i class="lg sq"></i>remote, 1 step</span><span><i class="lg ci"></i>manual: crew, 2 steps</span><span><i class="lg fpi-on"></i>FPI flagged</span><span><i class="lg fpi-off"></i>not flagged</span></p>
+    </section>
+
+    <div class="side">
+      <section class="panel" aria-label="Clues">
+        <h2>Clues</h2>
+        <h3>Protection</h3><p id="cProt"></p><p id="cDist"></p>
+        <h3>Fault passage indicators</h3><ul id="cFpi" class="clist"></ul>
+        <h3>Customer calls</h3><ul id="cCalls" class="calls"></ul>
+      </section>
+      <section class="panel" aria-label="Switching log">
+        <h2>Log</h2>
+        <ul id="log" class="log"></ul>
+      </section>
+    </div>
+  </div>
+</main>
+
+<nav class="dock" aria-label="Game">
+  <button type="button" class="btn" id="hintBtn">Hint <small>−50</small></button>
+  <button type="button" class="btn" id="helpBtn">How to play</button>
+  <button type="button" class="btn primary" id="newBtn">New puzzle</button>
+</nav>
+
+<div id="sheet" class="sheet" role="dialog" aria-label="Selected item" hidden></div>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<div id="helpOv" class="ov" hidden>
+  <div class="card" role="dialog" aria-labelledby="helpT">
+    <h2 id="helpT">Fault Lines</h2>
+    <p>An 11 kV feeder has tripped and locked out, and everyone on it is off. The fault is in one section. Find it with as few switching operations as you can, then isolate it and get everyone else back on.</p>
+    <ol>
+      <li><b>Read the clues.</b> Protection flags, fault passage indicators (FPIs flag when fault current passed through them) and customer calls.</li>
+      <li><b>Test.</b> Open a switch, then close the breaker. If it holds, the fault is beyond the open switch. If it trips, the fault is before it, and it costs points.</li>
+      <li><b>Isolate and restore.</b> Open the switches either side of the faulted section. Close the breaker for the sections before it, and the normally open point for the sections beyond it.</li>
+      <li><b>Declare.</b> Tap the faulted section and declare the fault there.</li>
+    </ol>
+    <p class="fine">Square switches are remote: 1 step. Round ones are manual: a crew goes, 2 steps and 15 minutes. Par is what an expert would need.</p>
+    <h3>Level</h3>
+    <div class="levels">
+      <button type="button" class="btn lv" data-level="easy" aria-pressed="false"><b>Easy</b><small>5 sections, all remote, every indicator working</small></button>
+      <button type="button" class="btn lv" data-level="medium" aria-pressed="false"><b>Medium</b><small>7 sections, some manual switches and failed indicators</small></button>
+      <button type="button" class="btn lv" data-level="hard" aria-pressed="false"><b>Hard</b><small>9 sections, few indicators, misleading calls</small></button>
+    </div>
+    <div class="row"><button type="button" class="btn primary" id="helpGo">Play</button></div>
+  </div>
+</div>
+
+<div id="endOv" class="ov" hidden>
+  <div class="card" role="dialog" aria-labelledby="endTitle">
+    <div class="end-h"><span id="endGrade" class="grade">A</span><h2 id="endTitle">Found it</h2></div>
+    <div id="endBody"></div>
+    <div class="row"><button type="button" class="btn" id="endLevel">Change level</button><button type="button" class="btn primary" id="endNext">Next puzzle</button></div>
+  </div>
+</div>
