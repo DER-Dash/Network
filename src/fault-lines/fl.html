@@ -7,10 +7,12 @@
 </header>
 
 <main class="wrap">
-  <div class="modes" role="group" aria-label="Mode">
+  <div class="modes" id="modes" role="group" aria-label="Mode">
     <button type="button" class="mode" data-mode="daily" aria-pressed="false"><b>Today's puzzle</b><span id="dailyTag"></span></button>
+    <button type="button" class="mode" data-mode="career" aria-pressed="false"><b>Career</b><span id="carTag"></span></button>
     <button type="button" class="mode" data-mode="practice" aria-pressed="false"><b>Practice</b><span id="pracTag"></span></button>
   </div>
+  <p class="lc-bar" id="lcBar" hidden><b>From Losing Control</b> Your shift is paused. Find the fault on the <span id="lcFeeder"></span>, then go back to the shift.</p>
   <section class="status" aria-label="Score so far">
     <div><span>Steps</span><b><span id="stSteps">0</span><small> / par <span id="stPar">0</span></small></b></div>
     <div id="stOffBox"><span>Customers off</span><b id="stOff">0</b></div>
@@ -23,7 +25,7 @@
       <h2 id="cFeeder">Feeder</h2>
       <p class="tip">Tap a switch to open or close it. Tap a section to declare the fault there.</p>
       <div id="diagram"></div>
-      <p class="legend"><span><i class="lg sq"></i>remote, 1 step</span><span><i class="lg ci"></i>manual: crew, 2 steps</span><span><i class="lg fpi-on"></i>FPI flagged</span><span><i class="lg fpi-off"></i>not flagged</span></p>
+      <p class="legend"><span><i class="lg sq"></i>remote, 1 step</span><span><i class="lg ci"></i>manual: crew, 2 steps</span><span><i class="lg fpi-on"></i>FPI flagged</span><span><i class="lg fpi-off"></i>not flagged</span><span id="legAr" hidden><i class="lg sq ar">AR</i>auto-recloser: trips before the breaker</span></p>
     </section>
 
     <div class="side">
@@ -65,8 +67,8 @@
       <li><b>Isolate and restore.</b> Open the switches either side of the faulted section. Close the breaker for the sections before it, and the normally open point for the sections beyond it.</li>
       <li><b>Declare.</b> Tap the faulted section and declare the fault there.</li>
     </ol>
-    <p class="fine"><b>Today's puzzle</b> is the same for everyone. You get one go, and your result grid shares how you did without giving the answer away. Easy on Monday and Tuesday, Medium on Wednesday and Thursday, Hard from Friday to Sunday. <b>Practice</b> gives you as many random puzzles as you like.</p>
-    <p class="fine">Spurs branch off the main line through their own spur switch, and the fault can be on a spur too: open its spur switch to test or isolate it. Square switches are remote: 1 step. Round ones are manual: the crew drives out from the depot, 2 steps and 15 minutes. Par is what an expert would need.</p>
+    <p class="fine"><b>Today's puzzle</b> is the same for everyone. You get one go, and your result grid shares how you did without giving the answer away. Easy on Monday and Tuesday, Medium on Wednesday and Thursday, Hard from Friday to Sunday. <b>Career</b> is thirty puzzles that each teach one idea, from trainee to senior control engineer. <b>Practice</b> gives you as many random puzzles as you like.</p>
+    <p class="fine">Spurs branch off the main line through their own spur switch, and the fault can be on a spur too: open its spur switch to test or isolate it. Square switches are remote: 1 step. AR switches are auto-reclosers: they trip before your breaker does. Round ones are manual: the crew drives out from the depot, 2 steps and 15 minutes. Par is what an expert would need.</p>
     <h3>Practice level</h3>
     <div class="levels">
       <button type="button" class="btn lv" data-level="easy" aria-pressed="false"><b>Easy</b><small>5 sections and a spur, all remote, every indicator working</small></button>
@@ -75,6 +77,10 @@
     </div>
     <div class="row"><a class="btn" href="../control-room/">Play Losing Control</a><button type="button" class="btn primary" id="helpGo">Play</button></div>
   </div>
+</div>
+
+<div id="carOv" class="ov" hidden>
+  <div class="card" id="carCard" role="dialog" aria-labelledby="carT"></div>
 </div>
 
 <div id="endOv" class="ov" hidden>

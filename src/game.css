@@ -860,3 +860,12 @@ html.kiosk .zchips,html.kiosk .tpick{display:none!important}
 .mimic-svg .yard-t{font-size:11px}
 .mg-pick{min-width:0}.mg-sz{min-width:0}.mg-sz .op-btn{padding-inline:4px;font-size:13.5px}
 .mg-or{font-size:12px;color:var(--muted);align-self:center}
+
+/* Find it yourself: Fault Lines in a frame over the paused shift */
+.find-ov{position:fixed;inset:0;z-index:9000;display:flex;flex-direction:column;background:#0B1F3A}
+.find-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 12px;padding-top:max(8px,env(safe-area-inset-top,0px));color:#FFD23F;font-size:14px}
+.find-bar .btn{min-height:40px}
+.find-ov iframe{flex:1 1 auto;width:100%;border:0;background:#fff}
+.find-btn{white-space:nowrap}
+.find-note .find-btn{display:flex;margin-top:8px}
+.find-bar .btn{background:#FFD23F;color:#0B1F3A;border-color:#FFD23F;font-weight:700}

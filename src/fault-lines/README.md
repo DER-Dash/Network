@@ -7,7 +7,33 @@ Design doc (with Steve's answers to the open questions): https://claude.ai/artif
 
 ## Status (19 November 2026)
 
-Build plan steps 1 and 2 are done.
+Build plan steps 1 to 4 are done.
+
+**Career** (step 3):
+
+- 30 hand-built puzzles in `career.js`, five ranks of six: Trainee (trial closes, half-splitting, spurs), Assistant
+  Control Engineer (FPIs, failed FPIs, distance, calls, misleading calls), Control Engineer (back-feeding, manual
+  switches), Authorised Control Engineer (auto-reclosers), Senior Control Engineer (everything at once).
+- Each is a seed plus overrides for `makePuzzle` (`opt`: fault, tees, fpi/man strings per switch, rec, oh, ...).
+  Ids `c1`..`c30` are stable: progress is saved under them (`fl-career`), so never renumber.
+- A briefing card before each puzzle. Stars: ★★★ at or under par with no hints, isolated and everyone else
+  restored; ★★ found, isolated and restored; ★ found it. Finding it unlocks the next. Promotion message on rank-up.
+  Progress is on the device only (no career sync yet).
+- **Auto-reclosers** (new): main switches with `rec`, drawn as AR. The nearest closed recloser upstream of the
+  fault trips instead of the breaker, so everything before it stays on. A puzzle with reclosers starts either
+  with the recloser locked out and the breaker holding (fault beyond it) or the breaker locked out and the
+  recloser untouched (fault before it). The expert and par handle them; random feeders with reclosers are tested.
+
+**Find it yourself** (step 4):
+
+- Losing Control shows a **Find it yourself** button on an 11 kV feeder whose fault hasn't been found yet (the
+  feeder's pop-up and the substation's demand panel). It pauses the shift and opens `../fault-lines/?lc=...` in a
+  full-screen frame: that feeder and primary, its customers, overhead or cable, the shift clock, and the fault in
+  the same half as in Losing Control (near half = first three main sections and their spurs).
+- Fault Lines posts `{type:'fl-lc',k,t,done,correct,quick}` back (same origin only). Found: located now, so the
+  repair starts; quick (within 2 steps of par): a quarter off the repair, at least 15 minutes left. Wrong: patrol
+  carries on. The player still switches the healthy half back on in Losing Control.
+- These puzzles don't count towards practice bests or the daily streak.
 
 **Today's puzzle** (step 2):
 
@@ -42,16 +68,19 @@ Build plan steps 1 and 2 are done.
 Steve's decisions: punchier name in the Losing Control style (chose "Fault Lines"), its own page,
 phone-first layout.
 
-## Next steps (from the build plan)
+## Next steps
 
-2. ~~Daily puzzle with a shareable result grid, on the scoreboard~~ (done; needs the Code.gs redeploy).
-   Ideas for later: the Sunday ring with two normally open points and the two-fault storm day from the design
-   doc; a "Today's Fault Lines" link next to the Losing Control daily challenge.
-3. Career: about 30 hand-built teaching puzzles (half-splitting, using FPIs, back-feeding, auto-reclosers).
-4. "Find it yourself" link from Losing Control when an 11 kV feeder locks out.
+The build plan's Fault Finder steps are all done. Ideas for what's next:
+
+- Career sync across devices through the scoreboard's Careers tab (name + PIN), like Losing Control.
+- Design-doc extras not built yet: the Sunday ring with two NOPs and the two-fault storm day; a patrol tool
+  (a crew walks one section, 5 steps); weather and recent-work clues.
+- A "Today's Fault Lines" link next to the Losing Control daily challenge.
+- Then Connections Queue (build plan steps 5 to 7).
 
 ## Files
 
+- `src/fault-lines/career.js`: the 30 career puzzles and the ranks. build.py puts it at the top of the script.
 - `src/fault-lines/fl.js`: all game logic. Puzzle generator `makePuzzle`, switching model `operate`
   (devices `cb`, `nop`, `'0'..` main switches, `'p0'..` spur switches; spur j is section n+j),
   `candidates` (sections consistent with every clue and test), the expert `nextMove` / `solvePar`
@@ -62,11 +91,15 @@ phone-first layout.
 - `src/tests/faultlines.test.js`: jsdom tests, including the expert solving 900 random puzzles at par.
 - `src/tests/faultlines-daily.test.js`: today's puzzle, resume, share grid, and the Code.gs `fl` branch run
   in `appscript-mock.js` (which now has `get` for doGet too).
+- `src/tests/faultlines-career.test.js`: all 30 career puzzles at par for three stars, unlocks, ranks, reclosers,
+  and a fingerprint of the puzzle generator: **if it fails, a change has altered published daily puzzles**. Put
+  new random draws behind `opt` (as `t0r`, `cu`, `so` do) so plain puzzles come out the same.
+- `src/tests/findit.test.js`: Find it yourself, both sides (Losing Control in `game.js`, Fault Lines `?lc=`).
 
 ## Working conventions
 
 - Build: `python3 src/build.py`. Tests: `cd src/tests && npm test` (all games, a few minutes) or
-  `node faultlines.test.js && node faultlines-daily.test.js` for just this game.
+  `node faultlines.test.js && node faultlines-daily.test.js && node faultlines-career.test.js && node findit.test.js` for just this game.
 - Bump `CACHE` in `sw.js` on every push so phones pick up the new version.
 - Commit as Steve: `git -c user.name="Steve Backhouse" -c user.email="stevebackhouse@gmail.com" commit`,
   push with `git push origin HEAD:main`.

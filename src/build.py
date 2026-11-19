@@ -123,6 +123,8 @@ wr('generation/index.html',redirect('../control-room/?mode=gen','Losing Control 
 def fault_lines(test):
     d=lambda f:rd(os.path.join('fault-lines',f))
     js,css,body=d('fl.js'),d('fl.css'),d('fl.html')
+    # career.js (the 30 career puzzles) goes in just after fl.js's 'use strict' line, before any code runs
+    assert js.startswith("'use strict';\n");js="'use strict';\n"+d('career.js')+js[len("'use strict';\n"):]
     if not test:
         js,n=re.subn(r"\nwindow\.__fl=\{.*?\};\n","\n",js,flags=re.S);assert n==1 and '__fl' not in js
     desc="Fault Lines, a Watts Up puzzle: an 11 kV feeder has tripped. Use the clues and as few switching operations as you can to find the faulted section, isolate it and restore everyone else."
