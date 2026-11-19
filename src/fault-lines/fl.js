@@ -1,6 +1,7 @@
 'use strict';
 /* Fault Lines (Watts Up): an 11 kV feeder has tripped and locked out. Find the faulted section with as few
-   switching operations as possible, isolate it and restore everyone else. Practice mode: random puzzles.
+   switching operations as possible, isolate it and restore everyone else. Two modes: today's puzzle (the same
+   for everyone, one go a day, level set by the weekday, scored on the shared scoreboard) and practice (random).
 
    The feeder: breaker CB at the primary, main sections 0..n-1, switch i between main section i and i+1, and a
    normally open point (NOP) at the far end to a neighbouring feeder that is always live. Spurs are teed off
@@ -25,8 +26,27 @@ const BANG_UG=['"Workmen were digging up the pavement, there was a bang and the 
 const PLAIN=['"Is there a power cut? Everything\'s gone off."','"The lights flickered a couple of times, then went off."','"No power here. How long will it be?"','"We\'ve lost everything, is it just us?"'];
 const HERRING=['"Heard a loud bang about the time it went off. Might have been fireworks though."','"Something went bang down the road, could have been a car backfiring."'];
 const REMOTE_MIN=2,MANUAL_MIN=15;
+const SCORE_URL='https://script.google.com/macros/s/AKfycbx_0hkrfzn5_ApQWr3UwqT-p7SuOf8ubJHBLxNGGQECIbDEJzfIRNRsWquE--FUOhmMNg/exec';
+const HOME_HOST='www.wattsupelectricity.co.uk',SHARE_URL='https://www.wattsupelectricity.co.uk/fault-lines/';
 
-let P=null,st=null,sel=null,crew=null,busy=false;
+/* ---------- Today's puzzle ---------- */
+// the date in the UK, so everyone's puzzle changes at UK midnight
+function todayUK(){try{return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}catch(e){return new Date().toISOString().slice(0,10);}}
+function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+const utc=d=>{const[y,m,da]=d.split('-').map(Number);return Date.UTC(y,m-1,da);};
+const dayNo=d=>Math.round((utc(d)-Date.UTC(2026,10,19))/864e5)+1;   // puzzle #1 was 19 November 2026
+const dayBefore=d=>new Date(utc(d)-864e5).toISOString().slice(0,10);
+// the level follows the weekday: Mon-Tue Easy, Wed-Thu Medium, Fri-Sun Hard (the scoreboard checks this too)
+function dailyLevel(d){const wd=new Date(utc(d)).getUTCDay();return wd===1||wd===2?'easy':wd===3||wd===4?'medium':'hard';}
+const fmtDate=d=>new Date(utc(d)).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
+// the result grid: one square per switching operation, then the declaration. Gives nothing away about where the fault was.
+const SQ={o:'⬜',c:'⬜',h:'🟩',t:'🟥',n:'🟧',i:'💡'};
+function gridRows(s){const a=[...s.moves].map(c=>SQ[c]);a.push(s.result&&s.result.correct?'✅':'⬛');const r=[];for(let i=0;i<a.length;i+=6)r.push(a.slice(i,i+6).join(''));return r;}
+function shareText(){const r=st.result;
+  return `Fault Lines #${P.no} · ${LEVELS[P.level].name}\n${gridRows(st).join('\n')}\n${st.steps} steps, par ${P.par}: ${golf(r.d)} · Grade ${r.grade} · ${nf(r.pts)}\n${SHARE_URL}`;}
+
+let P=null,st=null,sel=null,crew=null,busy=false,mode='practice';
+const games={practice:null,daily:null};   // each mode keeps its own puzzle while you switch between them
 
 /* ---------- Puzzle ---------- */
 function makePuzzle(level,seed){
@@ -55,7 +75,7 @@ function makePuzzle(level,seed){
     prot:F.oh?'Earth fault protection operated. The breaker auto-reclosed once onto the fault, tripped again and locked out.':anyOh?'Overcurrent protection operated. The breaker auto-reclosed once onto the fault, tripped again and locked out.':'Overcurrent protection operated. Underground cable, so no auto-reclose: the breaker locked out straight away.'};}
 
 /* ---------- Switching model ---------- */
-const newState=()=>({cb:false,sw:P.sw.map(()=>true),sp:P.sp.map(()=>true),nop:false,steps:0,mins:0,cml:0,trips:0,nbTrips:0,hints:0,obs:[],log:[],ended:false,result:null});
+const newState=()=>({cb:false,sw:P.sw.map(()=>true),sp:P.sp.map(()=>true),nop:false,steps:0,mins:0,cml:0,trips:0,nbTrips:0,hints:0,obs:[],log:[],ended:false,result:null,moves:'',ops:[]});
 const teeOf=f=>f<P.n?f:P.secs[f].tee,spurIds=()=>P.sp.map((x,j)=>P.n+j);
 function addSpurs(s,set){P.sp.forEach((x,j)=>{if(s.sp[j]&&set.has(x.tee))set.add(P.n+j);});return set;}
 function fedA(s){const A=new Set();if(s.cb)for(let k=0;k<P.n;k++){A.add(k);if(k===P.n-1||!s.sw[k])break;}return addSpurs(s,A);}
@@ -76,13 +96,14 @@ function operate(s,k,act){
   const man=isManual(k),dt=man?MANUAL_MIN:REMOTE_MIN;s.cml+=custOff(s)*dt;s.mins+=dt;s.steps+=man?2:1;
   const A0=fedA(s),B0=fedB(s);setDev(s,k,close);
   const out={k,act,man,t:P.t0+s.mins};
-  if(!close){out.txt=`Opened the ${devName(k)}.`;const off=[...A0,...B0].filter(i=>!fedA(s).has(i)&&!fedB(s).has(i));if(off.length)out.txt+=` ${nameList(new Set(off))} off supply.`;return out;}
+  if(!close){out.code='o';out.txt=`Opened the ${devName(k)}.`;const off=[...A0,...B0].filter(i=>!fedA(s).has(i)&&!fedB(s).has(i));if(off.length)out.txt+=` ${nameList(new Set(off))} off supply.`;return out;}
   const A=fedA(s),B=fedB(s);
   if(A.size>A0.size){if(A.has(P.fault)){s.cb=false;s.trips++;s.obs.push({reg:[...A],trip:true});out.trip=true;out.txt=`Closed the ${devName(k)}: the ${P.primary} breaker tripped straight away. The fault is somewhere in ${nameList(A)}.`;}
     else{s.obs.push({reg:[...A],trip:false});out.txt=`Closed the ${devName(k)}: it held. ${nameList(A)} on supply.`;}}
   if(B.size>B0.size&&!out.trip){if(B.has(P.fault)){s.nop=false;s.nbTrips++;s.obs.push({reg:[...B],trip:true});out.trip=true;out.nb=true;out.txt=`Closed the ${devName(k)}: the ${P.neighbour} feeder breaker tripped, taking its own customers off too. They've opened the normally open point and put their feeder back. The fault is somewhere in ${nameList(B)}.`;}
     else{s.obs.push({reg:[...B],trip:false});out.txt=(out.txt?out.txt+' ':`Closed the ${devName(k)}: it held. `)+`${nameList(B)} on from ${P.neighbour}.`;}}
   if(!out.txt)out.txt=`Closed the ${devName(k)}. Nothing new is on supply yet.`;
+  out.code=out.trip?(out.nb?'n':'t'):A.size>A0.size||B.size>B0.size?'h':'c';
   return out;}
 
 /* ---------- What is known: sections that fit every clue and test ---------- */
@@ -126,17 +147,34 @@ function nextMove(s){const C=candidates(s),n=P.n,Cs=new Set(C);
 function solvePar(){const s=newState();let n=0;while(n++<80){const m=nextMove(s);if(m.declare!=null)break;operate(s,m.k,m.act);}return s.steps;}
 
 /* ---------- Game ---------- */
-function newPuzzle(level,seed){level=level||ls('level')||'easy';if(!LEVELS[level])level='easy';ls('level',level);
-  P=makePuzzle(level,seed==null?(Math.random()*2**31)|0:seed);P.par=solvePar();st=newState();sel=null;busy=false;
+function stash(){if(P)games[mode]={P,st,crew};}
+function setUp(level,seed){P=makePuzzle(level,seed);P.par=solvePar();st=newState();sel=null;busy=false;
   layout();crew={x:DEPOT.x,y:DEPOT.y,at:null};
-  st.log.push({t:P.t0,txt:`${P.feeder} 11 kV feeder at ${P.primary} primary tripped and locked out. ${nf(custOff(st))} customers are off.`,lvl:'alarm'});
-  render();closeSheet();$('endOv').hidden=true;}
+  st.log.push({t:P.t0,txt:`${P.feeder} 11 kV feeder at ${P.primary} primary tripped and locked out. ${nf(custOff(st))} customers are off.`,lvl:'alarm'});}
+function show(){layout();render();closeSheet();$('endOv').hidden=true;}
+// practice: a random puzzle at the chosen level
+function newPuzzle(level,seed){stash();mode='practice';level=level||ls('level')||'easy';if(!LEVELS[level])level='easy';ls('level',level);
+  setUp(level,seed==null?(Math.random()*2**31)|0:seed);games.practice={P,st,crew};show();}
+// today's puzzle: the same seed for everyone. Moves are saved as you go, so a reload picks up where you were.
+function startDaily(){if(busy)return;stash();mode='daily';const date=todayUK(),g=games.daily;
+  if(g&&g.P.daily===date){({P,st,crew}=g);sel=null;show();return;}
+  setUp(dailyLevel(date),hashStr('fault-lines|'+date));P.daily=date;P.no=dayNo(date);
+  let sv=null;try{sv=JSON.parse(ls('day-'+date)||'null');}catch(e){}
+  if(sv&&Array.isArray(sv.ops)){sv.ops.forEach(o=>{if(o==='hint')doHint();else{const[k,a]=String(o).split(':');apply(k,a);}});
+    if(sv.f!=null&&sv.f>=0&&sv.f<P.N)finish(+sv.f,true);}
+  games.daily={P,st,crew};show();if(st.ended)showEnd();}
+function setMode(m){if(busy)return;if(m==='daily')startDaily();else if(games.practice){stash();mode='practice';({P,st,crew}=games.practice);sel=null;show();}else newPuzzle();}
+const dailyKey=()=>'day-'+P.daily;
+function save(){if(P&&P.daily)ls(dailyKey(),JSON.stringify({ops:st.ops,f:st.result?st.result.f:null}));}
+// one operation on the puzzle in play: log it and add it to the result grid
+function apply(k,a){const r=operate(st,k,a);if(r.noop||r.refused)return r;
+  st.log.push({t:r.t,txt:r.txt+(r.man?` (a crew drove out to operate it: ${MANUAL_MIN} min)`:''),lvl:r.trip?'alarm':'ok'});
+  st.moves+=r.code;st.ops.push(k+':'+a);return r;}
 // apply an operation now (the test hook and remote switches)
-function act(k,a){if(!st||st.ended)return null;const r=operate(st,k,a);
+function act(k,a){if(!st||st.ended)return null;const r=apply(k,a);
   if(r.noop){toast(`The ${devName(k)} is already ${a==='open'?'open':'closed'}.`);return r;}
   if(r.refused){toast(r.refused);return r;}
-  st.log.push({t:r.t,txt:r.txt+(r.man?` (a crew drove out to operate it: ${MANUAL_MIN} min)`:''),lvl:r.trip?'alarm':'ok'});closeSheet();render();
-  if(r.trip)flash();return r;}
+  save();closeSheet();render();if(r.trip)flash();return r;}
 // from the page: a manual switch needs the crew to drive there first
 function actUI(k,a){if(!st||st.ended||busy)return;
   const t=operate(cloneSt(st),k,a);if(t.noop||t.refused){act(k,a);return;}
@@ -151,10 +189,13 @@ function actUI(k,a){if(!st||st.ended||busy)return;
     crew.at=k;if(g2){g2.classList.remove('driving');g2.classList.add('working');}const dv=document.querySelector(`[data-dev="${k}"]`);if(dv)dv.classList.add('busy');
     setTimeout(()=>{busy=false;const tt=$('toast');if(tt)tt.hidden=true;act(k,a);},reduce?0:650);};
   requestAnimationFrame(step);}
-function hint(){if(!st||st.ended||busy)return;const m=nextMove(st);st.hints++;
-  st.log.push({t:P.t0+st.mins,txt:'Hint: '+m.why,lvl:'hint'});render();
+function doHint(){const m=nextMove(st);st.hints++;st.moves+='i';st.ops.push('hint');
+  st.log.push({t:P.t0+st.mins,txt:'Hint: '+m.why,lvl:'hint'});return m;}
+function hint(){if(!st||st.ended||busy)return;const m=doHint();save();render();
   if(m.k!=null)select(m.k);else if(m.declare!=null)select('s'+m.declare);}
-function declare(f){if(!st||st.ended)return;st.ended=true;
+function declare(f){if(!st||st.ended)return;finish(f,false);save();closeSheet();render();showEnd();}
+// end the puzzle and score it. replay: rebuilding today's finished puzzle after a reload, so nothing is counted twice.
+function finish(f,replay){st.ended=true;
   const s=st,F=P.fault,A=fedA(s),B=fedB(s),correct=f===F,on=i=>A.has(i)||B.has(i);
   const iso=!on(F)&&(F>=P.n?!s.sp[F-P.n]:(F===0?!s.cb||!s.sw[0]:!s.sw[F-1])&&(F===P.n-1?!s.nop:!s.sw[F]));
   // spurs teed off a faulted main section can't come back until it's repaired
@@ -162,10 +203,11 @@ function declare(f){if(!st||st.ended)return;st.ended=true;
   const healthyOff=P.secs.reduce((a,x,i)=>a+(!lost(i)&&!on(i)?x.cust:0),0);
   const d=s.steps-P.par;let pts=1000+(d<0?-d*50:-d*40)-s.trips*100-s.nbTrips*250-s.hints*50-Math.round(s.cml/500)-(correct?0:400)-(iso?0:200)-Math.round(healthyOff/2);
   pts=Math.max(0,pts);const grade=pts>=900?'A':pts>=750?'B':pts>=600?'C':pts>=400?'D':'E';
-  s.result={f,correct,iso,healthyOff,pts,grade,d};
-  const best=JSON.parse(ls('best')||'{}');if(!(best[P.level]>=pts)){best[P.level]=pts;ls('best',JSON.stringify(best));}
+  s.result={f,correct,iso,healthyOff,pts,grade,d};if(replay)return;
   ls('played',String(+(ls('played')||0)+1));
-  closeSheet();render();showEnd();}
+  if(P.daily){let k={};try{k=JSON.parse(ls('streak')||'{}')||{};}catch(e){}
+    if(k.last!==P.daily){const n=k.last===dayBefore(P.daily)?(k.n||0)+1:1;k={last:P.daily,n,best:Math.max(k.best||0,n)};ls('streak',JSON.stringify(k));}}
+  else{let best={};try{best=JSON.parse(ls('best')||'{}')||{};}catch(e){}if(!(best[P.level]>=pts)){best[P.level]=pts;ls('best',JSON.stringify(best));}}}
 const golf=d=>d<=-3?'Albatross':d===-2?'Eagle':d===-1?'Birdie':d===0?'Par':d===1?'Bogey':d===2?'Double bogey':`+${d} over par`;
 
 /* ---------- Layout and drawing ---------- */
@@ -213,7 +255,14 @@ function svg(){const s=st,A=fedA(s),B=fedB(s),on=i=>A.has(i)||B.has(i),L=LEVELS[
   if(crew)o+=`<g id="crew" class="crew${crew.at?'':' home'}" transform="translate(${crew.x.toFixed(1)} ${crew.y.toFixed(1)}) scale(1.35)">${CREW}</g>`;
   return o+'</svg>';}
 function render(){if(!P)return;const s=st;
-  $('lvl').textContent=LEVELS[P.level].name;document.querySelectorAll('[data-level]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.level===P.level)));
+  const daily=!!P.daily,today=todayUK(),dl=LEVELS[dailyLevel(today)].name;
+  $('modeName').textContent=daily?`Daily #${P.no}`:'Practice';$('lvl').textContent=LEVELS[P.level].name;
+  document.querySelectorAll('[data-level]').forEach(b=>b.setAttribute('aria-pressed',String(!daily&&b.dataset.level===P.level)));
+  document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
+  let done=null;try{done=JSON.parse(ls('day-'+today)||'null');}catch(e){}
+  $('dailyTag').textContent=`#${dayNo(today)} · ${dl}`+(done&&done.f!=null?' · done ✓':'');
+  $('pracTag').textContent=games.practice?LEVELS[games.practice.P.level].name:'Random puzzles';
+  const nb=$('newBtn');nb.textContent=daily?'Results':'New puzzle';nb.disabled=daily&&!s.ended;
   $('stSteps').textContent=s.steps;$('stPar').textContent=P.par;$('stOff').textContent=nf(custOff(s));$('stTime').textContent=fmtT(P.t0+s.mins);$('stTrips').textContent=s.trips+s.nbTrips;
   $('stOffBox').classList.toggle('bad',custOff(s)>0);
   $('diagram').innerHTML=svg();
@@ -238,7 +287,7 @@ function openSheet(){const k=sel,s=st,sh=$('sheet');if(!k||!st){closeSheet();ret
 function closeSheet(){sel=null;const sh=$('sheet');if(sh)sh.hidden=true;if(P&&st)$('diagram').innerHTML=svg();}
 let toastT=0;function toast(t){const e=$('toast');e.textContent=t;e.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>e.hidden=true,4200);}
 function flash(){const d=$('diagram');d.classList.remove('trip');void d.offsetWidth;d.classList.add('trip');}
-function showEnd(){const r=st.result,s=st,F=P.secs[P.fault];
+function showEnd(){const r=st.result,s=st,F=P.secs[P.fault],daily=!!P.daily;
   $('endGrade').textContent=r.grade;$('endGrade').className='grade g-'+r.grade;
   $('endTitle').textContent=r.correct?(r.iso&&!r.healthyOff?'Found, isolated and restored':'Found it'):'Wrong section';
   $('endBody').innerHTML=`<p>The fault was on <b>${esc(secName(P.fault))}</b>: ${esc(P.cause.toLowerCase())}.${r.correct?'':` You declared ${esc(secName(r.f))}, so the crew found nothing there.`}</p>
@@ -249,8 +298,52 @@ function showEnd(){const r=st.result,s=st,F=P.secs[P.fault];
       <li><span>Faulted section isolated</span><b>${r.iso?'Yes':'No'}</b></li>
       <li><span>Healthy customers left off</span><b>${nf(r.healthyOff)}</b></li>
       ${s.hints?`<li><span>Hints used</span><b>${s.hints}</b></li>`:''}
-      <li class="tot"><span>Score</span><b>${nf(r.pts)}</b></li></ul>`;
-  $('endOv').hidden=false;$('endNext').focus();}
+      <li class="tot"><span>Score</span><b>${nf(r.pts)}</b></li></ul>`+(daily?dailyEnd():'');
+  $('endLevel').textContent=daily?'See the feeder':'Change level';$('endNext').textContent=daily?'Practice':'Next puzzle';
+  $('endOv').hidden=false;$('endNext').focus();if(daily)loadBoard();}
+// today's puzzle: the result grid, share, the scoreboard
+const getName=()=>{try{return localStorage.getItem('fc-name')||'';}catch(e){return '';}};   // shared with Losing Control
+const saveName=n=>{try{localStorage.setItem('fc-name',n);}catch(e){}};
+const subKey=()=>'sub-'+P.daily;
+function dailyEnd(){let k={},sub=null;try{k=JSON.parse(ls('streak')||'{}')||{};sub=JSON.parse(ls(subKey())||'null');}catch(e){}
+  return `<div class="daily-end">
+    <h3>Today's result · #${P.no}</h3>
+    <div class="grid-box"><pre class="grid" aria-label="Your moves as coloured squares">${gridRows(st).join('\n')}</pre>
+      <p class="fine grid-key">⬜ open · 🟩 close held · 🟥 tripped · 🟧 neighbour tripped · 💡 hint · ✅ found · ⬛ wrong</p></div>
+    ${k.last===P.daily&&k.n>1?`<p class="streak">Streak: <b>${k.n} days</b>${k.best>k.n?` · best ${k.best}`:''}</p>`:''}
+    <div class="row l"><button type="button" class="btn primary" id="shareBtn">Share result</button><span class="fine" id="shareMsg" role="status"></span></div>
+    <h3>Today's scoreboard</h3>
+    ${sub?`<p class="fine ok" id="subMsg">Submitted as ${esc(sub.name)}: #${sub.rank} of ${sub.total} when you sent it.</p>`:
+      `<div class="sub-row"><input id="pName" type="text" maxlength="20" autocomplete="nickname" placeholder="Your name" aria-label="Your name" value="${esc(getName())}"><button type="button" class="btn" id="submitBtn">Add my score</button></div><p class="fine" id="subMsg" role="status">One go a day: your first score counts.</p>`}
+    <div id="board" class="board"></div>
+    <p class="fine">A new puzzle every day at midnight (UK time). Mon–Tue Easy, Wed–Thu Medium, Fri–Sun Hard.</p></div>`;}
+async function share(){const t=shareText(),m=v=>{const e=$('shareMsg');if(e)e.textContent=v;};
+  try{if(navigator.share){await navigator.share({text:t});m('Shared.');return;}}catch(e){if(e&&e.name==='AbortError')return;}
+  try{await navigator.clipboard.writeText(t);m('Copied. Paste it into a message or post.');return;}catch(e){}
+  const row=$('shareBtn').parentNode;if(!$('shareTxt')){const ta=document.createElement('textarea');ta.id='shareTxt';ta.className='share-txt';ta.rows=5;ta.readOnly=true;ta.value=t;row.after(ta);}
+  $('shareTxt').select();m('Copy this to share it.');}
+const subMsg=(t,c)=>{const e=$('subMsg');if(e){e.textContent=t;e.className='fine '+(c||'');}};
+async function submitScore(){const inp=$('pName'),btn=$('submitBtn');if(!inp||!st.result||!P.daily)return;
+  const nm=inp.value.trim().replace(/\s+/g,' ').slice(0,20);if(nm.length<2){subMsg('Enter your name first.','err');inp.focus();return;}
+  saveName(nm);btn.disabled=true;subMsg('Sending…');const r=st.result,date=P.daily;
+  try{const res=await fetch(SCORE_URL,{method:'POST',body:JSON.stringify({game:'fl',site:location.hostname,name:nm,day:P.level,mode:'fl-daily-'+date,
+      steps:st.steps,par:P.par,trips:st.trips,nbTrips:st.nbTrips,hints:st.hints,cml:Math.round(st.cml),correct:r.correct,iso:r.iso,healthyOff:r.healthyOff,moves:st.moves})});
+    const j=await res.json();
+    if(!j.ok){if(j.error==='name'){btn.disabled=false;subMsg('Please choose a different name.','err');return;}
+      if(j.error==='site'){subMsg(`Scores can only be saved on the original game at ${HOME_HOST}.`,'err');return;}
+      if(!(j.version>=22)){subMsg("Today's scoreboard isn't switched on yet, so this score wasn't saved.",'err');return;}throw new Error(j.error);}
+    ls('sub-'+date,JSON.stringify({name:j.name||nm,rank:j.rank,total:j.total}));inp.disabled=true;btn.textContent='Added';
+    subMsg(j.repeat?`You'd already sent a score today, so that one stands: #${j.rank} of ${j.total}.`:`Added. You're #${j.rank} of ${j.total} today.`,'ok');loadBoard();
+  }catch(e){btn.disabled=false;subMsg("Couldn't reach the scoreboard, so your score wasn't saved. Try again in a moment.",'err');}}
+async function loadBoard(){const el=$('board'),date=P&&P.daily;if(!el||!date)return;el.innerHTML='<p class="fine">Loading scores…</p>';
+  let me='';try{me=(JSON.parse(ls('sub-'+date)||'null')||{}).name||'';}catch(e){}
+  try{const res=await fetch(SCORE_URL+'?game=fl&mode='+encodeURIComponent('fl-daily-'+date));const j=await res.json();if(!$('board')||!P||P.daily!==date)return;
+    if(!j.ok||!(j.version>=22)){el.innerHTML='<p class="fine">Today\'s scoreboard is coming soon.</p>';return;}
+    if(!j.scores.length){el.innerHTML='<p class="fine">No scores yet today. Be the first.</p>';return;}
+    el.innerHTML=`<table class="board-t"><thead><tr><th>#</th><th>Name</th><th>Score</th><th>Steps</th><th>Grade</th></tr></thead><tbody>${j.scores.slice(0,10).map((x,i)=>
+      `<tr class="${me&&x.name.toLowerCase()===me.toLowerCase()?'me':''}"><td>${i+1}</td><td class="nm">${esc(x.name)}</td><td>${nf(x.score)}</td><td>${x.steps}/${x.par}${x.correct?'':' ⬛'}</td><td>${esc(x.grade)}</td></tr>`).join('')}</tbody></table>`+
+      (j.scores.length>10?`<p class="fine">${j.scores.length} players today.</p>`:'');
+  }catch(e){if($('board'))el.innerHTML='<p class="fine">Couldn\'t load the scoreboard. Check your connection.</p>';}}
 function showHelp(on){$('helpOv').hidden=!on;if(on)$('helpGo').focus();}
 
 /* ---------- Events ---------- */
@@ -260,13 +353,20 @@ document.addEventListener('click',e=>{const t=e.target;
   const d=t.closest('[data-declare]');if(d){declare(+d.dataset.declare);return;}
   if(t.closest('[data-close]')){closeSheet();return;}
   const lv=t.closest('[data-level]');if(lv){newPuzzle(lv.dataset.level);showHelp(false);return;}
+  const md=t.closest('[data-mode]');if(md){setMode(md.dataset.mode);return;}
   if(t.id==='hintBtn'){hint();return;}
+  if(t.id==='shareBtn'){share();return;}
+  if(t.id==='submitBtn'){submitScore();return;}
+  if(t.id==='newBtn'&&P&&P.daily){if(st.ended)showEnd();return;}
+  if(t.id==='endNext'&&P&&P.daily){setMode('practice');return;}
   if(t.id==='newBtn'||t.id==='endNext'){newPuzzle(P&&P.level);return;}
   if(t.id==='helpBtn'){showHelp(true);return;}
   if(t.id==='helpGo'){showHelp(false);ls('seen','1');return;}
-  if(t.id==='endLevel'){$('endOv').hidden=true;showHelp(true);return;}});
+  if(t.id==='endLevel'){$('endOv').hidden=true;if(!P.daily)showHelp(true);return;}});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.id==='pName')submitScore();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('helpOv').hidden)showHelp(false);else closeSheet();}});
 
-newPuzzle();
+// open on today's puzzle, unless it's already done today: then practice, with today's result a tap away
+{let d=null;try{d=JSON.parse(ls('day-'+todayUK())||'null');}catch(e){}if(d&&d.f!=null)newPuzzle();else startDaily();}
 if(!ls('seen'))showHelp(true);
-window.__fl={get P(){return P;},get st(){return st;},get crew(){return crew;},get busy(){return busy;},newPuzzle,act,actUI,declare,hint,operate,candidates,nextMove,fedA,fedB,custOff};
+window.__fl={get P(){return P;},get st(){return st;},get crew(){return crew;},get busy(){return busy;},get mode(){return mode;},newPuzzle,startDaily,setMode,act,actUI,declare,hint,operate,candidates,nextMove,fedA,fedB,custOff,todayUK,dailyLevel,dayNo,shareText,gridRows,submitScore,loadBoard};

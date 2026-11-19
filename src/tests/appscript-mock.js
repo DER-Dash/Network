@@ -22,6 +22,6 @@ function makeAppsScript(){
     Session:{getEffectiveUser:()=>({getEmail:()=>'owner@test'})},MailApp:{sendEmail(){}},
     console,Date,JSON,Math,String,Number,Object,Array};
   vm.createContext(G);vm.runInContext(fs.readFileSync(path.join(__dirname,'..','..','scoreboard','Code.gs'),'utf8'),G);
-  const post=d=>JSON.parse(G.doPost({postData:{contents:JSON.stringify(d)}}).text);
-  return{post,sheets,cache,props,clearCache(){Object.keys(cache).forEach(k=>delete cache[k]);}};}
+  const post=d=>JSON.parse(G.doPost({postData:{contents:JSON.stringify(d)}}).text),get=q=>JSON.parse(G.doGet({parameter:q}).text);
+  return{post,get,sheets,cache,props,clearCache(){Object.keys(cache).forEach(k=>delete cache[k]);}};}
 module.exports={makeAppsScript};

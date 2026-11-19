@@ -1,5 +1,8 @@
 /**
  * Losing Control scoreboard and feedback (Watts Up), version 7.
+ * Version 22: Fault Lines daily puzzle ('fl'). Scores go on a 'Fault Lines scores' tab, mode
+ *   'fl-daily-YYYY-MM-DD', day = the level set by that date's weekday. Each player's FIRST score of
+ *   the day counts (it's one go a day). See flPost_.
  * Version 21: accepts the Busbar fault ('busbar') control room shift.
  * Version 20: accepts the Comms down ('comms') control room shift.
  * Version 19: also accepts scores and careers from www.wattsupelectricity.co.uk (the new domain).
@@ -43,7 +46,7 @@
  * formula as the game, so the sheet never trusts a score sent by the browser.
  * Rows saved before version 2 have no mode and count as free play.
  */
-const VERSION = 21;
+const VERSION = 22;
 // Scores are only accepted from the games on these sites. Apps Script can't see the request's
 // origin, so the games send their hostname; copies of the game hosted elsewhere send theirs.
 const HOME_SITES = ['der-dash.github.io', 'www.wattsupelectricity.co.uk', 'wattsupelectricity.co.uk'];
@@ -127,8 +130,93 @@ function best_(rows, day, mode) {
     .sort((a, b) => b.score - a.score || a.at.localeCompare(b.at));
 }
 
+/* ---------- Fault Lines daily puzzle (version 22) ----------
+ * One puzzle a day, the same for everyone. The level follows the weekday (Mon-Tue Easy, Wed-Thu
+ * Medium, Fri-Sun Hard), so a score for the wrong level is refused. The score is recalculated here
+ * with the game's formula. Par can't be worked out here, so the first score of the day fixes it and
+ * later scores must agree. 'moves' is the result grid as letters: o open, h close that held,
+ * c close with nothing new on, t tripped our breaker, n tripped the neighbour, i hint.
+ */
+const FL_SHEET_NAME = 'Fault Lines scores';
+const FL_HEADERS = ['Submitted', 'Name', 'Level', 'Score', 'Grade', 'Steps', 'Par', 'Trips', 'Neighbour trips',
+  'Hints', 'Customer minutes lost', 'Found it', 'Isolated', 'Healthy customers left off', 'Mode', 'Moves'];
+
+function flLevelFor_(date) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  const wd = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay();
+  return wd === 1 || wd === 2 ? 'easy' : wd === 3 || wd === 4 ? 'medium' : 'hard';
+}
+
+function flScore_(x) {
+  const d = x.steps - x.par;
+  const pts = 1000 + (d < 0 ? -d * 50 : -d * 40) - x.trips * 100 - x.nbTrips * 250 - x.hints * 50 -
+    Math.round(x.cml / 500) - (x.correct ? 0 : 400) - (x.iso ? 0 : 200) - Math.round(x.healthyOff / 2);
+  return Math.max(0, pts);
+}
+const flGrade_ = p => p >= 900 ? 'A' : p >= 750 ? 'B' : p >= 600 ? 'C' : p >= 400 ? 'D' : 'E';
+
+function flSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(FL_SHEET_NAME);
+  if (!sh) {
+    sh = ss.insertSheet(FL_SHEET_NAME);
+    sh.appendRow(FL_HEADERS);
+    sh.setFrozenRows(1);
+    sh.getRange(1, 1, 1, FL_HEADERS.length).setFontWeight('bold');
+  }
+  return sh;
+}
+
+function flRows_(mode) {
+  const sh = flSheet_();
+  if (sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, FL_HEADERS.length).getValues()
+    .filter(r => String(r[14]) === mode)
+    .map(r => ({ name: String(r[1]), level: String(r[2]), score: Number(r[3]), grade: String(r[4]), steps: Number(r[5]),
+      par: Number(r[6]), trips: Number(r[7]) + Number(r[8]), correct: r[11] === true || r[11] === 'TRUE' || r[11] === 'yes',
+      at: r[0] instanceof Date ? r[0].toISOString() : String(r[0]) }));
+}
+
+// one go a day: each player's earliest score counts
+function flBoard_(rows) {
+  const first = {};
+  rows.forEach(x => { const k = x.name.toLowerCase(); if (!first[k] || x.at < first[k].at) first[k] = x; });
+  return Object.keys(first).map(k => first[k]).sort((a, b) => b.score - a.score || a.at.localeCompare(b.at));
+}
+
+const flModeOk_ = mode => /^fl-daily-\d{4}-\d{2}-\d{2}$/.test(mode) && modeOk_(mode.slice(3), 'fc');
+
+function flPost_(d, name) {
+  const mode = String(d.mode || '');
+  if (!name || !flModeOk_(mode)) return json_({ ok: false, error: 'Invalid score' });
+  const int = (v, lo, hi) => { const n = Math.round(Number(v)); return isFinite(n) && n >= lo && n <= hi ? n : null; };
+  const moves = String(d.moves || '');
+  const x = { steps: int(d.steps, 0, 300), par: int(d.par, 1, 80), trips: int(d.trips, 0, 80), nbTrips: int(d.nbTrips, 0, 80),
+    hints: int(d.hints, 0, 100), cml: int(d.cml, 0, 1e8), healthyOff: int(d.healthyOff, 0, 100000),
+    correct: d.correct === true, iso: d.iso === true };
+  const count = c => moves.split(c).length - 1, ops = moves.replace(/i/g, '').length;
+  const valid = d.day === flLevelFor_(mode.slice(9)) && /^[ohctni]{1,300}$/.test(moves) &&
+    ['steps', 'par', 'trips', 'nbTrips', 'hints', 'cml', 'healthyOff'].every(k => x[k] !== null) &&
+    count('t') === x.trips && count('n') === x.nbTrips && count('i') === x.hints && x.steps >= ops && x.steps <= ops * 2;
+  if (!valid) return json_({ ok: false, error: 'Invalid score' });
+  const rows = flRows_(mode);
+  if (rows.length && rows.some(r => r.par !== x.par)) return json_({ ok: false, error: 'Invalid score' });
+  const score = flScore_(x), grade = flGrade_(score);
+  flSheet_().appendRow([new Date(), name, d.day, score, grade, x.steps, x.par, x.trips, x.nbTrips, x.hints, x.cml,
+    x.correct, x.iso, x.healthyOff, mode, moves]);
+  const board = flBoard_(flRows_(mode)), i = board.findIndex(r => r.name.toLowerCase() === name.toLowerCase());
+  const mine = board[i];
+  return json_({ ok: true, version: VERSION, name: name, score: mine.score, rank: i + 1, total: board.length,
+    repeat: mine.score !== score || rows.some(r => r.name.toLowerCase() === name.toLowerCase()) });
+}
+
 function doGet(e) {
   const p = (e && e.parameter) || {};
+  if (p.game === 'fl') {
+    const mode = String(p.mode || '');
+    if (!/^fl-daily-\d{4}-\d{2}-\d{2}$/.test(mode)) return json_({ ok: false, error: 'mode' });
+    return json_({ ok: true, version: VERSION, scores: flBoard_(flRows_(mode)).slice(0, 50) });
+  }
   const day = String(p.day || 'may');
   const mode = String(p.mode || (p.game === 'cr' ? 'cr-free' : 'free'));
   // Control room rows saved before version 4 live on the main tab; the mode
@@ -297,6 +385,7 @@ function doPost(e) {
     // names starting with "=" being treated as spreadsheet formulas.
     const name = String(d.name || '').replace(/[^\p{L}\p{N} '_.-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 20);
     if (name && rude_(name)) return json_({ ok: false, error: 'name' });
+    if (d.game === 'fl') return flPost_(d, name);
     const game = d.game === 'cr' ? 'cr' : 'fc';
     const day = (game === 'cr' ? CR_DAYS : DAYS).indexOf(d.day) >= 0 ? d.day : null;
     const rawMode = String(d.mode || (game === 'cr' ? 'cr-free' : 'free'));

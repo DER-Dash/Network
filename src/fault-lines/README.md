@@ -7,7 +7,25 @@ Design doc (with Steve's answers to the open questions): https://claude.ai/artif
 
 ## Status (19 November 2026)
 
-Build plan step 1, **practice mode**, is done:
+Build plan steps 1 and 2 are done.
+
+**Today's puzzle** (step 2):
+
+- One puzzle a day, the same for everyone: seed `hashStr('fault-lines|'+date)`, date in UK time, puzzle #1 was
+  19 November 2026. Level by weekday: Mon–Tue Easy, Wed–Thu Medium, Fri–Sun Hard (the scoreboard checks it).
+- One go a day. Moves are saved in localStorage (`fl-day-DATE`: ops and the declared section) and replayed on
+  reload, so a half-done puzzle resumes and a finished one shows its result. The page opens on today's puzzle,
+  or on practice once today's is done. Practice and today's puzzle each keep their own puzzle when you switch tabs.
+- Result grid, one square per operation: ⬜ open (or a close that put nothing new on), 🟩 close that held,
+  🟥 tripped our breaker, 🟧 tripped the neighbour, 💡 hint, then ✅ found or ⬛ wrong. "Share result" uses the
+  phone's share sheet, else the clipboard, else a text box to copy. No section names in it.
+- Streak of consecutive days (`fl-streak`). Name shared with Losing Control (`fc-name`).
+- Scoreboard: Code.gs version 22, game `fl`, its own **Fault Lines scores** tab. Each player's first score of
+  the day counts. The server recalculates the score, checks the grid letters against trips and hints, and the
+  first score of the day fixes par. **Steve: redeploy Code.gs as a new version** (scoreboard/README.md);
+  until then the board says "coming soon" and the puzzle still plays.
+
+**Practice mode** (step 1):
 
 - Random radial feeders at three levels: Easy (5 sections, 1 spur, all remote, all FPIs working, possible
   sections shaded), Medium (7 sections, 2 spurs, some manual switches, some failed FPIs), Hard (9 sections,
@@ -26,8 +44,9 @@ phone-first layout.
 
 ## Next steps (from the build plan)
 
-2. Daily puzzle (same seed for everyone each day) with a shareable result grid, on the scoreboard
-   (scoreboard/Code.gs, Apps Script; Steve redeploys it as a new version after changes).
+2. ~~Daily puzzle with a shareable result grid, on the scoreboard~~ (done; needs the Code.gs redeploy).
+   Ideas for later: the Sunday ring with two normally open points and the two-fault storm day from the design
+   doc; a "Today's Fault Lines" link next to the Losing Control daily challenge.
 3. Career: about 30 hand-built teaching puzzles (half-splitting, using FPIs, back-feeding, auto-reclosers).
 4. "Find it yourself" link from Losing Control when an 11 kV feeder locks out.
 
@@ -41,11 +60,13 @@ phone-first layout.
 - `src/build.py` builds `fault-lines/index.html` (published) and `build/fault-lines.html` (test copy with the
   `window.__fl` hook). Never edit the built pages.
 - `src/tests/faultlines.test.js`: jsdom tests, including the expert solving 900 random puzzles at par.
+- `src/tests/faultlines-daily.test.js`: today's puzzle, resume, share grid, and the Code.gs `fl` branch run
+  in `appscript-mock.js` (which now has `get` for doGet too).
 
 ## Working conventions
 
 - Build: `python3 src/build.py`. Tests: `cd src/tests && npm test` (all games, a few minutes) or
-  `node faultlines.test.js` for just this game.
+  `node faultlines.test.js && node faultlines-daily.test.js` for just this game.
 - Bump `CACHE` in `sw.js` on every push so phones pick up the new version.
 - Commit as Steve: `git -c user.name="Steve Backhouse" -c user.email="stevebackhouse@gmail.com" commit`,
   push with `git push origin HEAD:main`.

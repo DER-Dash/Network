@@ -162,3 +162,11 @@ Version: New version → Deploy** (same URL).
 Version 20 accepts scores and career stars for the Comms down control room shift ('comms').
 Replace the code with the new `Code.gs`, save, then **Deploy → Manage deployments → pencil →
 Version: New version → Deploy** (same URL).
+
+## Updating to version 22 (Fault Lines daily puzzle)
+
+Version 22 adds the scoreboard for **Fault Lines**' daily puzzle at `/fault-lines/`. Scores go on a new
+**Fault Lines scores** tab, created automatically with the first score. Each player's first score of the day
+counts, and the script recalculates every score itself. Replace the code with the new `Code.gs`, save, then
+**Deploy → Manage deployments → pencil → Version: New version → Deploy** (same URL). Until then the puzzle
+plays normally and its scoreboard says "coming soon". Losing Control is unaffected.
