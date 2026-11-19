@@ -55,9 +55,9 @@ button{font:inherit;color:inherit}
 /* diagram */
 #diagram{margin:4px -6px 0}
 .fl-svg{width:100%;height:auto;display:block;max-width:520px;margin:0 auto}
-.fl-svg.trip,#diagram.trip .fl-svg{animation:shake .4s}
+.fl-svg.trip{animation:shake .4s}
 @keyframes shake{20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
-@media (prefers-reduced-motion:reduce){#diagram.trip .fl-svg{animation:none}}
+@media (prefers-reduced-motion:reduce){.fl-svg.trip{animation:none}}
 .bus{stroke:var(--ink);stroke-width:5;stroke-linecap:round}
 .cond{stroke-width:5;stroke-linecap:round;fill:none}
 .cond.live{stroke:var(--mv)}
@@ -185,3 +185,14 @@ button{font:inherit;color:inherit}
 .board-t td.nm{max-width:9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .board-t tr.me td{background:var(--warn-bg);font-weight:700}
 .sub-row .btn{white-space:nowrap;flex:none}
+
+/* footer: link to Losing Control */
+.foot{margin:16px 0 4px;display:grid;gap:8px}
+.lc-link{display:grid;gap:2px;padding:12px 14px;border-radius:10px;background:var(--wu-navy);color:#fff;text-decoration:none;border-left:5px solid var(--zap)}
+.lc-link b{font:700 18px var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--zap)}
+.lc-link span{font-size:14px;color:#dfe5ee}
+.lc-link:hover span{text-decoration:underline}
+.lc-link:focus-visible{outline:3px solid var(--zap);outline-offset:2px}
+.foot .fine{margin:0;text-align:center}
+.card a{color:var(--mv);font-weight:600}
+a.btn{text-decoration:none;color:var(--ink)}

@@ -30,6 +30,9 @@ let errs=[],fails=0;const wait=ms=>new Promise(r=>setTimeout(r,ms));const ok=(c,
   click('.hit[data-sel="s2"]');ok(!!doc.querySelector('#sheet [data-declare="2"]'),'tapping a section offers to declare the fault');
   click('#sheet [data-declare="2"]');ok(!doc.getElementById('endOv').hidden&&/Score/.test(doc.getElementById('endBody').textContent),'declaring ends the puzzle with a score');
   click('#endNext');ok(doc.getElementById('endOv').hidden&&!G.st.ended,'next puzzle starts');}
+ // only closing onto the fault shakes the diagram, not the switching after it
+ {G.newPuzzle('easy',8);const doc2=doc;G.act('cb','close');ok(!!doc2.querySelector('#diagram .fl-svg.trip'),'closing onto the fault shakes the diagram');
+  G.act('nop','close');G.act('0','open');ok(!doc2.querySelector('.trip'),'the switching after it doesn\'t shake it again');}
  // spurs: faults land on them too, and opening the spur switch isolates one
  {let onSpur=0;for(let k=0;k<300;k++){G.newPuzzle('hard',5000+k);if(G.P.fault>=G.P.n)onSpur++;}ok(onSpur>30,`faults land on spurs too (${onSpur}/300 on Hard)`);
   let k=0;do{G.newPuzzle('medium',9000+k++);}while(G.P.fault<G.P.n);const P=G.P,s=G.st,j=P.fault-P.n;

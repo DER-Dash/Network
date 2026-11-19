@@ -286,7 +286,8 @@ function openSheet(){const k=sel,s=st,sh=$('sheet');if(!k||!st){closeSheet();ret
   sh.innerHTML=h;sh.hidden=false;}
 function closeSheet(){sel=null;const sh=$('sheet');if(sh)sh.hidden=true;if(P&&st)$('diagram').innerHTML=svg();}
 let toastT=0;function toast(t){const e=$('toast');e.textContent=t;e.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>e.hidden=true,4200);}
-function flash(){const d=$('diagram');d.classList.remove('trip');void d.offsetWidth;d.classList.add('trip');}
+// shake only the drawing that shows the trip: the next redraw replaces it, so later switching doesn't shake
+function flash(){const v=$('diagram').querySelector('.fl-svg');if(v)v.classList.add('trip');}
 function showEnd(){const r=st.result,s=st,F=P.secs[P.fault],daily=!!P.daily;
   $('endGrade').textContent=r.grade;$('endGrade').className='grade g-'+r.grade;
   $('endTitle').textContent=r.correct?(r.iso&&!r.healthyOff?'Found, isolated and restored':'Found it'):'Wrong section';
@@ -316,7 +317,8 @@ function dailyEnd(){let k={},sub=null;try{k=JSON.parse(ls('streak')||'{}')||{};s
     ${sub?`<p class="fine ok" id="subMsg">Submitted as ${esc(sub.name)}: #${sub.rank} of ${sub.total} when you sent it.</p>`:
       `<div class="sub-row"><input id="pName" type="text" maxlength="20" autocomplete="nickname" placeholder="Your name" aria-label="Your name" value="${esc(getName())}"><button type="button" class="btn" id="submitBtn">Add my score</button></div><p class="fine" id="subMsg" role="status">One go a day: your first score counts.</p>`}
     <div id="board" class="board"></div>
-    <p class="fine">A new puzzle every day at midnight (UK time). Mon–Tue Easy, Wed–Thu Medium, Fri–Sun Hard.</p></div>`;}
+    <p class="fine">A new puzzle every day at midnight (UK time). Mon–Tue Easy, Wed–Thu Medium, Fri–Sun Hard.</p>
+    <p class="fine">Fancy a longer go? <a href="../control-room/">Play Losing Control</a>, the control room game.</p></div>`;}
 async function share(){const t=shareText(),m=v=>{const e=$('shareMsg');if(e)e.textContent=v;};
   try{if(navigator.share){await navigator.share({text:t});m('Shared.');return;}}catch(e){if(e&&e.name==='AbortError')return;}
   try{await navigator.clipboard.writeText(t);m('Copied. Paste it into a message or post.');return;}catch(e){}
