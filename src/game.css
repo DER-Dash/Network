@@ -869,3 +869,8 @@ html.kiosk .zchips,html.kiosk .tpick{display:none!important}
 .find-btn{white-space:nowrap}
 .find-note .find-btn{display:flex;margin-top:8px}
 .find-bar .btn{background:#FFD23F;color:#0B1F3A;border-color:#FFD23F;font-weight:700}
+
+/* Fault Lines links on the start screen */
+a.btn.fl-go{text-decoration:none;border-color:var(--zap);box-shadow:inset 4px 0 0 var(--zap)}
+.other-game.fl-box{border-color:var(--zap);border-style:solid}
+.other-game a.btn{text-decoration:none}

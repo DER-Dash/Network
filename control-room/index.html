@@ -1345,6 +1345,11 @@ html.kiosk .zchips,html.kiosk .tpick{display:none!important}
 .find-btn{white-space:nowrap}
 .find-note .find-btn{display:flex;margin-top:8px}
 .find-bar .btn{background:#FFD23F;color:#0B1F3A;border-color:#FFD23F;font-weight:700}
+
+/* Fault Lines links on the start screen */
+a.btn.fl-go{text-decoration:none;border-color:var(--zap);box-shadow:inset 4px 0 0 var(--zap)}
+.other-game.fl-box{border-color:var(--zap);border-style:solid}
+.other-game a.btn{text-decoration:none}
 </style>
 </head>
 <body>
@@ -3778,19 +3783,21 @@ function heroArt(){const cr=GAME==='cr',X=[80,160,240],F=[60,125,195,260];
   ${cr?`<g class="ha-crew"><g class="ha-bob crew-b">${CREW_FIG}</g></g><path class="ha-path" d="M14 196 H306"/>`
     :`<g class="ha-wt" transform="translate(296 168)"><path class="ha-tower" d="M0 0 V34"/><g class="ha-blades"><path d="M0 0 V-14 M0 0 L12 7 M0 0 L-12 7"/></g></g><g class="ha-sun" transform="translate(24 176)"><circle r="7"/><path d="M0 -12v3M0 9v3M-12 0h3M9 0h3M-8.5 -8.5l2 2M6.5 6.5l2 2M-8.5 8.5l2 -2M6.5 -6.5l2 -2"/></g>`}
 </svg>`;}
+// Fault Lines, the fault-finding puzzle at /fault-lines/: on both versions of the start screen
+const flGo=`<a class="btn sec-go fl-go" href="../fault-lines/" target="_top"><small>New · a five-minute puzzle</small>Fault Lines: find the fault →</a>`;
 const loadBtn=()=>syncGet()?'':`<button type="button" class="btn sec-go" data-go="load"><small>Played on another device?</small>Load your career</button>`;
 function mainAction(){const cr=GAME==='cr';
   if(!played()){const e=easiestK();
     return `<div class="cta-main">${cr?`<button type="button" class="btn primary big hero-go" data-tut="play"><small>New here? Start with</small>Play the tutorial</button><button type="button" class="btn big hero-go" data-tut="demo"><small>Or sit back and</small>Watch the demo</button>`
       :`<button type="button" class="btn primary big hero-go" data-go="first"><small>New here? Start with the easiest day</small>Play ${esc(SCENARIOS[e].title)}</button>`}</div>
-    <div class="cta-sec"><button type="button" class="btn sec-go" data-go="skip"><small>Played before?</small>Choose your own shift ↓</button>${loadBtn()}</div>
+    <div class="cta-sec"><button type="button" class="btn sec-go" data-go="skip"><small>Played before?</small>Choose your own shift ↓</button>${loadBtn()}${flGo}</div>
     ${cr?`<p class="cta-alt">For a stand or screen: <button type="button" class="linkish" data-tut="kiosk" title="Runs the demo on its own, over and over, and keeps the screen awake. For a display stand.">display mode</button></p>`:''}`;}
   const c=career(),nk=careerNext(),done=careerDone(c)&&!runOn(c),dk=dailyK(),k0=careerKeys()[0];
   return `<div class="cta-main">${done?`<button type="button" class="btn primary big hero-go" data-restart="${k0}" data-go-now><small>Career complete · start again</small>Shift 1: ${esc(SCENARIOS[k0].title)}</button>`
       :`<button type="button" class="btn primary big hero-go" data-go="career"><small>${runOn(c)?'Continue your restarted career':starsOf(c)?'Continue your career':'Start your career'}</small>Shift ${CAREER.indexOf(nk)+1}: ${esc(SCENARIOS[nk].title)}</button>`}
     <button type="button" class="btn big hero-go" data-go="daily"><small>Today's challenge · ${esc(fmtDate(todayUK()))}<span class="daily-top"></span></small>${esc(SCENARIOS[dk].title)}</button></div>
     ${starsOf(c)?`<p class="cta-alt"><button type="button" class="linkish" data-go="restart">Start your career again from any shift</button></p>`:''}
-    <div class="cta-sec"><button type="button" class="btn sec-go" data-go="skip"><small>Something else?</small>Choose your own shift ↓</button>${loadBtn()}${cr?`<button type="button" class="btn sec-go" data-tut="play"><small>Need a refresher?</small>Play the tutorial</button>`:''}</div>
+    <div class="cta-sec"><button type="button" class="btn sec-go" data-go="skip"><small>Something else?</small>Choose your own shift ↓</button>${loadBtn()}${cr?`<button type="button" class="btn sec-go" data-tut="play"><small>Need a refresher?</small>Play the tutorial</button>`:''}${flGo}</div>
     ${cr?`<p class="cta-alt">Or <button type="button" class="linkish" data-tut="demo">watch the demo</button> · For a stand or screen: <button type="button" class="linkish" data-tut="kiosk" title="Runs the demo on its own, over and over, and keeps the screen awake. For a display stand.">display mode</button></p>`:''}`;}
 function heroGo(g){
   if(g==='load'){mode='career';chosen=careerNext();syncTab='load';syncNote='';ls('mode',mode);ls('day',chosen);newGame(chosen);startSheet();
@@ -3843,6 +3850,7 @@ function startSheet(){
   <div class="go"><div class="opts"><label class="chk"><input type="checkbox" id="ovPause" ${autoPause?'checked':''}> Pause on faults and overloads</label><label class="chk"><input type="checkbox" id="ovTips" ${tipsOn?'checked':''}> Show tips</label></div>
   <span style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" data-feedback>Feedback</button><button id="sheetBoardBtn" type="button" class="btn">Scoreboard</button><button id="startBtn" type="button" class="btn primary big">Start shift at ${fmtT(START)}</button></span></div>
   <div class="other-game"><p>${CFG.other.box}</p><a class="btn" href="${modeHref(GAME==='cr'?'fc':'cr')}" target="_top">${CFG.other.cta}</a></div>
+  <div class="other-game fl-box"><p><b>New: Fault Lines.</b> An 11 kV feeder has tripped. Use the clues and as few switching operations as you can to find the fault, isolate it and restore everyone else. A new puzzle every day, plus a 30-puzzle career.</p><a class="btn" href="../fault-lines/" target="_top">Play Fault Lines →</a></div>
   <p class="fine"><span id="runTxt">${runText()}</span> Time slows to half speed while anything is overloaded. MW and MVA are treated as equal. No faults in the first 20 minutes, so you can set up.</p></div>`;
   $('overlay').hidden=false;fillDailyTop();
 }
