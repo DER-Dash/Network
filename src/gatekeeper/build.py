@@ -56,9 +56,9 @@ for name,test in (('gatekeeper.html',True),('gatekeeper-preview.html',False)):
 # control-room/, so the hand-off works on one site before anything is published. Run python3 src/build.py first.
 def bundle():
     P=os.path.join(ROOT,'build','preview');os.makedirs(os.path.join(P,'control-room'),exist_ok=True)
-    g=page(False).replace("LC_URL='../control-room/?mode=gen#gk'","LC_URL='control-room/generation.html#gk'")
+    g=page(False).replace("LC_URL='../control-room/#gk'","LC_URL='control-room/index.html#gk'")
     g=g.replace('href="https://www.wattsupelectricity.co.uk/control-room/"','href="control-room/index.html"')
-    assert "LC_URL='control-room/generation.html#gk'" in g
+    assert "LC_URL='control-room/index.html#gk'" in g
     open(os.path.join(P,'index.html'),'w',encoding='utf-8').write(g)
     for src,dst in (('control-room.html','index.html'),('generation.html','generation.html')):
         f=os.path.join(ROOT,'build',src)

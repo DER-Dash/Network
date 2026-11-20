@@ -397,7 +397,7 @@ const rngFor=(...k)=>rngFrom(hashStr(k.join('|')));
 const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem('gk-'+k);if(v===null)localStorage.removeItem('gk-'+k);else localStorage.setItem('gk-'+k,v);}catch(e){return null;}};
 const YEARS=10,SAVE_V=1,BUDGET=8,AMBER_H=200,CUST_PER_MW=400;
 const SCORE_URL='https://script.google.com/macros/s/AKfycbx_0hkrfzn5_ApQWr3UwqT-p7SuOf8ubJHBLxNGGQECIbDEJzfIRNRsWquE--FUOhmMNg/exec';
-const HOME_HOST='www.wattsupelectricity.co.uk',LC_URL='../control-room/?mode=gen#gk';
+const HOME_HOST='www.wattsupelectricity.co.uk',LC_URL='../control-room/#gk';
 // the UK date, and the Monday of this week (the week's canyon changes at UK midnight on Monday)
 function todayUK(){try{return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}catch(e){return new Date().toISOString().slice(0,10);}}
 function mondayOf(d){const[y,m,da]=d.split('-').map(Number),t=Date.UTC(y,m-1,da),wd=(new Date(t).getUTCDay()+6)%7;return new Date(t-wd*864e5).toISOString().slice(0,10);}
@@ -922,7 +922,7 @@ function showReport(){const r=S.report;if(!r)return;const s=r.sc;
     <ul class="res">${rows.map(([k,n,d])=>`<li><span>${n}</span><b>${Math.round(s[k])}</b><i class="gbar"><s class="${s[k]>=70?'ok':s[k]>=40?'warn':'alarm'}" style="width:${s[k]}%"></s></i><em>${d}</em></li>`).join('')}</ul>
     <h3>From Ofgem</h3><blockquote class="letter">${esc(letter(r))}</blockquote>
     ${end?'':`<h3>Next year</h3><p>Underlying demand grows about ${f1(GROWTH[r.year+1]*100)}%.${nx?` <b>${nx.t}.</b>`:''}</p>`}
-    <p class="lc-hand"><a class="btn" id="repLC" href="${LC_URL}" target="_top">Run this network in Losing Control →</a><span class="fine">A generation shift on the network you've built: your flexible customers are the flexibility you can call.</span></p>
+    <p class="lc-hand"><a class="btn" id="repLC" href="${LC_URL}" target="_top">Run this network in Losing Control →</a><span class="fine">A control room shift on the network you've built, with switching, faults and crews: your flexible customers are the flexibility you can call.</span></p>
     <div class="row"><button type="button" class="btn" id="repClose">Back to the network</button><button type="button" class="btn primary" id="repGo">${end?'Ofgem verdict':`Start year ${r.year+1}`}</button></div>`);
   $('repClose').onclick=closeOv;$('repGo').onclick=()=>{if(end)showEnd();else{closeOv();startYear();render();maybeEvent();syncQuiet();}};
   {const lc=$('repLC');if(lc)lc.onclick=e=>{exportNet();};}
@@ -935,7 +935,7 @@ function showEnd(){const h=S.hist,avg=h.reduce((t,x)=>t+x.avg,0)/h.length,g=grad
     <p class="fine">Connected over the decade: ${f1(S.cust.filter(c=>!c.gone&&c.built&&!c.existing).reduce((t,c)=>t+c.mw,0))} MW, ${S.cust.filter(c=>!c.gone&&c.built&&c.offer==='flex').length} of them flexible.</p>
     <p class="score-big"><small>Career score</small><b>${nf(careerScore())}</b><span class="fine">${S.mode==='week'?`The week's canyon, week of ${fmtDay(S.week)}`:'Free play'}</span></p>
     ${submitBox()}
-    <p class="lc-hand"><a class="btn" id="eLC" href="${LC_URL}" target="_top">Run your network in Losing Control →</a><span class="fine">Take the network you built into a generation shift. The flexible customers you connected are the flexibility you can call, and any reinforcement you skipped is the overload you're fighting.</span></p>
+    <p class="lc-hand"><a class="btn" id="eLC" href="${LC_URL}" target="_top">Run your network in Losing Control →</a><span class="fine">Take the network you built into a control room shift, with switching, faults and field crews. The flexible customers you connected are the flexibility you can call, and any reinforcement you skipped is the overload you're fighting.</span></p>
     <div class="row"><button type="button" class="btn" id="eBack">Back to the network</button><button type="button" class="btn primary" id="eNew">New career</button></div>`);
   $('eBack').onclick=closeOv;$('eNew').onclick=()=>showNew();$('eLC').onclick=()=>{exportNet();};wireSubmit();
   const b=bestGet(),sc=careerScore();if(!b||sc>b.score)ls('best',JSON.stringify({score:sc,grade:g,stars}));}
@@ -1049,7 +1049,7 @@ function wireSync(){const q=s=>$('ovCard').querySelector(s);
   if(q('#syOff'))q('#syOff').onclick=()=>{syncSet(null);syncNote='This device no longer saves online. Your game is still here.';showMenu();};}
 
 /* ---------- Into Losing Control ----------
-   The network you've built, for a Losing Control generation shift (same site, so localStorage 'gk-export').
+   The network you've built, for a Losing Control control room shift (same site, so localStorage 'gk-export').
    kD: how loaded the grid supply point is at peak compared with the network you inherited; E: export at its worst, as a share of the export limit.
    Flexible customers become the flexibility you can call there. */
 function gspPeaks(st){const C=cfg(st),list=st.cust.filter(c=>!c.gone&&c.built&&C.prims.includes(c.prim)).map(c=>[c.mw,U(c).act]);let D=0,E=0;

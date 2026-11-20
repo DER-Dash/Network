@@ -1909,12 +1909,15 @@ if(SCENARIOS.jan)SCENARIOS.tut={...SCENARIOS.jan,hidden:true,title:'Tutorial · 
   blurb:'Cold Thursday, 15:30: the evening peak is building. Learn generation, flexibility and switching on the real network.',build(r){return{events:[],cutout:null,risk:[]};}};
 if(GAME==='fc'){Object.keys(SCENARIOS).forEach(k=>delete SCENARIOS[k]);Object.assign(SCENARIOS,SCENARIOS_FC);}
 /* Your Gatekeeper network: Gatekeeper (/gatekeeper/, same site) leaves the network the player built in localStorage 'gk-export'.
-   It becomes a generation shift: Cold Thursday with demand scaled by how loaded the grid supply point is compared with the
+   It becomes a control room shift, so there's switching, faults and crews as well as generation and flexibility (until
+   Nov 2026 it was a generation shift, which has no switching): Cold Thursday with demand scaled by how loaded the grid supply point is compared with the
    network they inherited (kD), or Sunny Sunday if export is the bigger problem (E, export as a share of its limit). The
    flexible customers they connected are the flexibility they can call (sc.svc). Not on the scoreboard (noBoard). */
 const gkExport=()=>{try{const x=JSON.parse(localStorage.getItem('gk-export')||'null');return x&&x.v===1&&x.kD>0&&x.dsr&&x.batt&&x.solar?x:null;}catch(e){return null;}};
-function gkScenario(){const X=gkExport();if(GAME!=='fc'||!X||!SCENARIOS_FC.jan)return;
-  const sunny=(+X.E||0)>=.55,T=sunny?SCENARIOS_FC.may:SCENARIOS_FC.jan,kD=clamp(X.kD,.75,1.35),nm=g=>g.names&&g.names.length?g.names[0]+(g.n>1?` and ${g.n-1} more`:''):null;
+function gkScenario(){const X=gkExport();if(GAME!=='cr'||!X||!SCENARIOS.jan||!SCENARIOS_FC.may)return;
+  // the control room's Cold Thursday; a sunny day takes Sunny Sunday's weather, demand and faults onto it
+  const M=SCENARIOS_FC.may,sunny=(+X.E||0)>=.55,
+    T=sunny?{...SCENARIOS.jan,color:M.color,when:M.when,soc0:M.soc0,nbShape:M.nbShape,blurb:M.blurb,demand:M.demand,solar:M.solar,wind:M.wind,faults:M.faults,causes:M.causes,build:M.build}:SCENARIOS.jan,kD=clamp(X.kD,.75,1.35),nm=g=>g.names&&g.names.length?g.names[0]+(g.n>1?` and ${g.n-1} more`:''):null;
   const dsr=Math.round(clamp((+X.dsr.mw||0)+(+X.flexBuy||0),0,40)),batt=Math.round(clamp(+X.batt.mw||0,0,40)),sol=+X.solar.mw||0;
   const can=[dsr?`${dsr} MW of demand turn-down (${nm(X.dsr)||'flexibility services'})`:'',batt?`${batt} MW of battery (${nm(X.batt)})`:'',sol?`${Math.round(sol)} MW of curtailable solar (${nm(X.solar)})`:''].filter(Boolean);
   SCENARIOS.gk={...T,hidden:true,noBoard:true,gk:X,diff:kD>1.15?3:kD>.95?2:1,title:'Your network',when:`Year ${X.year} of Gatekeeper · ${T.when.split(' ')[0]}`,
@@ -3942,9 +3945,9 @@ function heroArt(){const cr=GAME==='cr',X=[80,160,240],F=[60,125,195,260];
 // Fault Lines, the fault-finding puzzle at /fault-lines/: on both versions of the start screen
 const flGo=`<a class="btn sec-go fl-go" href="../fault-lines/" target="_top"><small>New · a five-minute puzzle</small>Fault Lines: find the fault →</a>`;
 const gkGo=`<a class="btn sec-go fl-go" href="../gatekeeper/" target="_top"><small>New · a ten-year planning game</small>Gatekeeper: who gets connected? →</a>`;
-// Gatekeeper's network, on the generation start screen; the control room start screen links across to it
-const gkBtn=()=>GAME==='fc'?(SCENARIOS.gk?`<button type="button" class="btn sec-go gk-go" data-go="gk"><small>From Gatekeeper · year ${SCENARIOS.gk.gk.year}</small>Run your network →</button>`:'')
-  :gkExport()?`<a class="btn sec-go gk-go" href="${modeHref('fc')}#gk" target="_top"><small>From Gatekeeper · generation shift</small>Run your network →</a>`:'';
+// Gatekeeper's network, on the control room start screen; the generation start screen links across to it
+const gkBtn=()=>GAME==='cr'?(SCENARIOS.gk?`<button type="button" class="btn sec-go gk-go" data-go="gk"><small>From Gatekeeper · year ${SCENARIOS.gk.gk.year}</small>Run your network →</button>`:'')
+  :gkExport()?`<a class="btn sec-go gk-go" href="${modeHref('cr')}#gk" target="_top"><small>From Gatekeeper · control room shift</small>Run your network →</a>`:'';
 const loadBtn=()=>syncGet()?'':`<button type="button" class="btn sec-go" data-go="load"><small>Played on another device?</small>Load your career</button>`;
 function mainAction(){const cr=GAME==='cr';
   if(!played()){const e=easiestK();
@@ -4316,7 +4319,9 @@ addEventListener('resize',()=>{if(S)renderQP();});
 MQ.addEventListener('change',()=>{PHONE=MQ.matches;applyZoom();if(!PHONE)closeSheet();if(S)render(true);});
 
 if(!SCENARIOS[chosen])chosen=CFG.def;
-if(GAME==='fc'&&SCENARIOS.gk&&/(^|#)gk\b/.test(location.hash)){chosen='gk';mode='free';}
+if(GAME==='cr'&&SCENARIOS.gk&&/(^|#)gk\b/.test(location.hash)){chosen='gk';mode='free';}
+// older Gatekeeper links (and installed copies) open ?mode=gen#gk: your network is a control room shift now
+if(GAME==='fc'&&!FORCE_GAME&&gkExport()&&/(^|#)gk\b/.test(location.hash)){location.replace(modeHref('cr')+'#gk');return;}
 document.title=CFG.docTitle;document.querySelectorAll('.bar .mode-tag').forEach(e=>e.textContent=CFG.tag);
 {const o=modeHref(GAME==='cr'?'fc':'cr'),h=$('hdrOther');if(h){h.href=o;h.textContent=CFG.other.hdr;}const f=$('otherGame');if(f){f.href=o;f.textContent=CFG.other.foot;}}
 if(!CALLS_ON){const l=$('pCalls');if(l)l.remove();}if(!VF_ON){const l=$('lgVF');if(l)l.remove();}if(!CREW_ON){const l=$('lgMan');if(l)l.remove();}

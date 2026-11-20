@@ -42,7 +42,7 @@ queue, send offers, reinforce and run the year, the report. Skippable; Menu → 
 inherited network), `E` (worst export as a share of the limit), and the flexible demand, batteries and solar the
 player connected. Losing Control's generation start screen then shows **Run your network**: Cold Thursday with
 demand × kD (or Sunny Sunday if E ≥ 0.55), and its demand response, battery and solar curtailment allowance set by
-what was connected (`sc.svc`, `applySvc`). Not on the scoreboard. Links: report, end screen and menu → `../control-room/?mode=gen#gk`.
+what was connected (`sc.svc`, `applySvc`). Not on the scoreboard. Links: report, end screen and menu → `../control-room/#gk`. It's a control room shift (switching, faults, crews, plus the connected flexibility); until 20 Nov 2026 it was a generation shift, which has no switching, and old `?mode=gen#gk` links now redirect.
 
 ## Next steps
 - Wire into `src/build.py` and publish at `/gatekeeper/`, link it from Losing Control and Fault Lines.
