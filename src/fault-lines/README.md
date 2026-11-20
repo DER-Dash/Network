@@ -68,6 +68,12 @@ Build plan steps 1 to 4 are done.
 Steve's decisions: punchier name in the Losing Control style (chose "Fault Lines"), its own page,
 phone-first layout.
 
+**Graphics pass** (20 November 2026): call bubbles on the sections that rang in (tap a section to read its
+calls), the relay distance as a band on the line, poles on overhead line and dotted cable, a pulse of power along
+sections a close puts back on, a spark where protection trips, the faulted section lighting up for a moment before
+the result card (`FL_FAST` skips that in tests), bolder flagged FPIs, quiet "off" labels, softer switches in dark
+mode, a slimmer header on phones, and the depot label clear of the van.
+
 ## Next steps
 
 The build plan's Fault Finder steps are all done. Ideas for what's next:

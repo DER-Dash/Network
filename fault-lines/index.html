@@ -237,6 +237,67 @@ text.ar.c{fill:var(--panel)}text.ar.o{fill:var(--ink)}
 .car-item:focus-visible{outline:3px solid var(--zap);outline-offset:2px}
 .lc-bar{margin:0 0 10px;padding:10px 12px;border-radius:8px;background:var(--wu-navy);color:#fff;border-left:5px solid var(--zap);font-size:14px}
 .lc-bar b{display:block;font:700 13px var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--zap)}
+
+/* ---- graphics pass (Nov 2026) ---- */
+/* switches: a softer fill, so in dark mode closed switches don't glare */
+:root{--dev:var(--ink)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--dev:#a9a3c9}}
+:root[data-theme="dark"]{--dev:#a9a3c9}
+.dev{fill:var(--dev);stroke:var(--dev)}
+.dev.open{fill:var(--panel)}
+.lg{border-color:var(--dev);background:var(--dev)}
+/* overhead line with poles; cable dotted when dead */
+.pole{stroke:var(--muted);stroke-width:2;stroke-linecap:round;opacity:.8}
+.pole.live{stroke:var(--mv)}
+.cond.dead.ug{stroke-dasharray:2 7}
+.lg.oh{width:22px;height:12px;border:0;background:linear-gradient(var(--muted),var(--muted)) center/100% 3px no-repeat,linear-gradient(90deg,transparent 4px,var(--muted) 4px,var(--muted) 6px,transparent 6px,transparent 14px,var(--muted) 14px,var(--muted) 16px,transparent 16px)}
+.lg.ug{width:22px;height:4px;border:0;background:repeating-linear-gradient(90deg,var(--muted) 0 2px,transparent 2px 6px)}
+/* relay distance band */
+.dist{fill:var(--warn);fill-opacity:.18;stroke:var(--warn);stroke-opacity:.5;stroke-dasharray:3 3}
+.lg.dist{width:12px;height:16px;border-radius:6px;border:1px dashed var(--warn);background:color-mix(in srgb,var(--warn) 18%,transparent)}
+/* calls */
+.callb path{fill:var(--warn-bg);stroke:var(--warn);stroke-width:1.3}
+.callb text{font:700 10.5px var(--f-mono);fill:var(--warn)}
+.lg.call{width:auto;height:auto;border:1.3px solid var(--warn);background:var(--warn-bg);color:var(--warn);font-style:normal;font-size:10px;padding:0 4px;border-radius:4px}
+.sh-calls{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:4px}
+.sh-calls li{background:var(--sunk);border-left:3px solid var(--warn);border-radius:4px;padding:5px 8px;font-size:13.5px}
+.sh-calls q{font-style:italic;color:var(--muted)}
+/* calmer status: off sections dimmed with a quiet 'off', restored ones green */
+.lab.dead .t-sec{fill:var(--muted)}
+.t-st.off{fill:var(--muted);font-weight:600}
+.lab.live .t-sec{fill:var(--ink)}
+/* bolder indicators */
+.fpi.on rect{fill:var(--alarm);stroke:var(--alarm);filter:drop-shadow(0 0 4px color-mix(in srgb,var(--alarm) 70%,transparent))}
+.fpi.on .fb{fill:#fff}
+.fpi.on{animation:fpiGlow 1.8s ease-in-out infinite}
+@keyframes fpiGlow{50%{opacity:.78}}
+.fpi text{font:700 10.5px var(--f-mono)}
+/* power flowing back on, and a spark where protection trips */
+.pulse{stroke:var(--zap);stroke-width:7;stroke-linecap:round;fill:none;stroke-dasharray:22 900;stroke-dashoffset:22;animation:flow .8s ease-out both;pointer-events:none}
+@keyframes flow{from{stroke-dashoffset:22;opacity:1}to{stroke-dashoffset:-160;opacity:0}}
+.spark path{fill:var(--zap);stroke:var(--alarm);stroke-width:2;stroke-linejoin:round;transform-box:fill-box;transform-origin:center;animation:spark .7s ease-out both}
+@keyframes spark{0%{transform:scale(.2);opacity:1}60%{transform:scale(1.15);opacity:1}100%{transform:scale(1.4);opacity:0}}
+.fx{pointer-events:none}
+/* the end: the faulted section lights up first */
+.fault-band{fill:var(--alarm);fill-opacity:.1;stroke:var(--alarm);stroke-opacity:.6}
+.fl-svg.reveal .bolt{transform-box:fill-box;transform-origin:center;animation:boltIn 1.2s ease-out}
+.fl-svg.reveal .fault-band{animation:bandIn 1.2s ease-out}
+@keyframes boltIn{0%{transform:scale(.3);opacity:0}25%{transform:scale(1.6);opacity:1}45%{transform:scale(1)}60%{opacity:.4}75%{opacity:1}}
+@keyframes bandIn{0%{fill-opacity:0}30%{fill-opacity:.35}100%{fill-opacity:.1}}
+@media (prefers-reduced-motion:reduce){.pulse,.spark path,.fpi.on,.fl-svg.reveal .bolt,.fl-svg.reveal .fault-band{animation:none!important}.pulse{opacity:0}}
+/* phones: a slimmer header and score row, so the feeder starts higher up */
+.lw,.sw{font-style:normal}.sw{display:none}
+@media (max-width:520px){
+  .bar{padding-top:max(6px,env(safe-area-inset-top,0px));padding-bottom:6px;gap:8px}
+  .logo svg{width:28px;height:28px}.co{display:none}
+  .bar h1{font-size:21px;gap:6px}.mode-tag{font-size:10px;padding:2px 6px}
+  .wrap{padding:8px 10px}
+  .modes{gap:6px;margin-bottom:8px}.mode{min-height:40px;padding:5px 8px}
+  .status{gap:5px;margin-bottom:8px}.status>div{padding:4px 7px}.status b{font-size:15px}
+  .lw{display:none}.sw{display:inline}
+  .panel{padding:10px 10px}.panel.dia h2{font-size:13px;letter-spacing:.07em}
+  body.fl-moved .dia .tip{display:none}
+}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -251,14 +312,14 @@ text.ar.c{fill:var(--panel)}text.ar.o{fill:var(--ink)}
 
 <main class="wrap">
   <div class="modes" id="modes" role="group" aria-label="Mode">
-    <button type="button" class="mode" data-mode="daily" aria-pressed="false"><b>Today's puzzle</b><span id="dailyTag"></span></button>
+    <button type="button" class="mode" data-mode="daily" aria-pressed="false"><b><i class="lw">Today's puzzle</i><i class="sw">Today</i></b><span id="dailyTag"></span></button>
     <button type="button" class="mode" data-mode="career" aria-pressed="false"><b>Career</b><span id="carTag"></span></button>
     <button type="button" class="mode" data-mode="practice" aria-pressed="false"><b>Practice</b><span id="pracTag"></span></button>
   </div>
   <p class="lc-bar" id="lcBar" hidden><b>From Losing Control</b> Your shift is paused. Find the fault on the <span id="lcFeeder"></span>, then go back to the shift.</p>
   <section class="status" aria-label="Score so far">
     <div><span>Steps</span><b><span id="stSteps">0</span><small> / par <span id="stPar">0</span></small></b></div>
-    <div id="stOffBox"><span>Customers off</span><b id="stOff">0</b></div>
+    <div id="stOffBox"><span><i class="lw">Customers off</i><i class="sw">Off</i></span><b id="stOff">0</b></div>
     <div><span>Trips</span><b id="stTrips">0</b></div>
     <div><span>Time</span><b id="stTime">00:00</b></div>
   </section>
@@ -268,7 +329,7 @@ text.ar.c{fill:var(--panel)}text.ar.o{fill:var(--ink)}
       <h2 id="cFeeder">Feeder</h2>
       <p class="tip">Tap a switch to open or close it. Tap a section to declare the fault there.</p>
       <div id="diagram"></div>
-      <p class="legend"><span><i class="lg sq"></i>remote, 1 step</span><span><i class="lg ci"></i>manual: crew, 2 steps</span><span><i class="lg fpi-on"></i>FPI flagged</span><span><i class="lg fpi-off"></i>not flagged</span><span id="legAr" hidden><i class="lg sq ar">AR</i>auto-recloser: trips before the breaker</span></p>
+      <p class="legend"><span><i class="lg sq"></i>remote, 1 step</span><span><i class="lg ci"></i>manual: crew, 2 steps</span><span><i class="lg fpi-on"></i>FPI flagged</span><span><i class="lg fpi-off"></i>not flagged</span><span><i class="lg oh"></i>overhead line (poles)</span><span><i class="lg ug"></i>underground cable</span><span id="legDist" hidden><i class="lg dist"></i>relay distance estimate</span><span><i class="lg call">☎</i>customer calls: tap the section</span><span id="legAr" hidden><i class="lg sq ar">AR</i>auto-recloser: trips before the breaker</span></p>
     </section>
 
     <div class="side">
@@ -533,11 +594,11 @@ function operate(s,k,act){
   const A=fedA(s),B=fedB(s);
   // an auto-recloser between the breaker and the fault trips first, leaving everything before it on
   const rj=A.size>A0.size&&A.has(P.fault)?P.sw.map((w,i)=>w.rec&&s.sw[i]&&i<teeOf(P.fault)?i:-1).filter(i=>i>=0).pop():undefined;
-  if(rj!=null){s.sw[rj]=false;s.trips++;const after=fedA(s),gone=[...A].filter(i=>!after.has(i));s.obs.push({reg:gone,trip:true},{reg:[...after],trip:false});out.trip=true;out.rec=true;
+  if(rj!=null){s.sw[rj]=false;s.trips++;const after=fedA(s),gone=[...A].filter(i=>!after.has(i));s.obs.push({reg:gone,trip:true},{reg:[...after],trip:false});out.trip=true;out.rec=true;out.dev=String(rj);
     out.txt=`Closed the ${devName(k)}: the ${devName(String(rj))} tripped onto the fault and locked out. ${nameList(after)} stayed on. The fault is somewhere in ${nameList(new Set(gone))}.`;}
-  else if(A.size>A0.size){if(A.has(P.fault)){s.cb=false;s.trips++;s.obs.push({reg:[...A],trip:true});out.trip=true;out.txt=`Closed the ${devName(k)}: the ${P.primary} breaker tripped straight away. The fault is somewhere in ${nameList(A)}.`;}
+  else if(A.size>A0.size){if(A.has(P.fault)){s.cb=false;s.trips++;s.obs.push({reg:[...A],trip:true});out.trip=true;out.dev='cb';out.txt=`Closed the ${devName(k)}: the ${P.primary} breaker tripped straight away. The fault is somewhere in ${nameList(A)}.`;}
     else{s.obs.push({reg:[...A],trip:false});out.txt=`Closed the ${devName(k)}: it held. ${nameList(A)} on supply.`;}}
-  if(B.size>B0.size&&!out.trip){if(B.has(P.fault)){s.nop=false;s.nbTrips++;s.obs.push({reg:[...B],trip:true});out.trip=true;out.nb=true;out.txt=`Closed the ${devName(k)}: the ${P.neighbour} feeder breaker tripped, taking its own customers off too. They've opened the normally open point and put their feeder back. The fault is somewhere in ${nameList(B)}.`;}
+  if(B.size>B0.size&&!out.trip){if(B.has(P.fault)){s.nop=false;s.nbTrips++;s.obs.push({reg:[...B],trip:true});out.trip=true;out.nb=true;out.dev='nop';out.txt=`Closed the ${devName(k)}: the ${P.neighbour} feeder breaker tripped, taking its own customers off too. They've opened the normally open point and put their feeder back. The fault is somewhere in ${nameList(B)}.`;}
     else{s.obs.push({reg:[...B],trip:false});out.txt=(out.txt?out.txt+' ':`Closed the ${devName(k)}: it held. `)+`${nameList(B)} on from ${P.neighbour}.`;}}
   if(!out.txt)out.txt=`Closed the ${devName(k)}. Nothing new is on supply yet.`;
   out.code=out.trip?(out.nb?'n':'t'):A.size>A0.size||B.size>B0.size?'h':'c';
@@ -651,10 +712,10 @@ function apply(k,a){const r=operate(st,k,a);if(r.noop||r.refused)return r;
   st.log.push({t:r.t,txt:r.txt+(r.man?` (a crew drove out to operate it: ${MANUAL_MIN} min)`:''),lvl:r.trip?'alarm':'ok'});
   st.moves+=r.code;st.ops.push(k+':'+a);return r;}
 // apply an operation now (the test hook and remote switches)
-function act(k,a){if(!st||st.ended)return null;const r=apply(k,a);
+function act(k,a){if(!st||st.ended)return null;const A0=fedA(st),B0=fedB(st),r=apply(k,a);
   if(r.noop){toast(`The ${devName(k)} is already ${a==='open'?'open':'closed'}.`);return r;}
   if(r.refused){toast(r.refused);return r;}
-  save();closeSheet();render();if(r.trip)flash();return r;}
+  save();closeSheet();render();if(r.trip){flash();spark(r.dev);}else flow([...fedA(st)].filter(i=>!A0.has(i)),[...fedB(st)].filter(i=>!B0.has(i)));return r;}
 // from the page: a manual switch needs the crew to drive there first
 function actUI(k,a){if(!st||st.ended||busy)return;
   const t=operate(cloneSt(st),k,a);if(t.noop||t.refused){act(k,a);return;}
@@ -673,7 +734,12 @@ function doHint(){const m=nextMove(st);st.hints++;st.moves+='i';st.ops.push('hin
   st.log.push({t:P.t0+st.mins,txt:'Hint: '+m.why,lvl:'hint'});return m;}
 function hint(){if(!st||st.ended||busy)return;const m=doHint();save();render();
   if(m.k!=null)select(m.k);else if(m.declare!=null)select('s'+m.declare);}
-function declare(f){if(!st||st.ended)return;finish(f,false);save();closeSheet();render();showEnd();}
+// the end: the fault lights up on the diagram for a moment before the result card
+function declare(f){if(!st||st.ended)return;finish(f,false);save();closeSheet();render();
+  const v=$('diagram').querySelector('.fl-svg'),ms=window.FL_FAST||matchMedia('(prefers-reduced-motion: reduce)').matches?0:1300;
+  if(!ms){showEnd();return;}
+  if(v){v.classList.add('reveal');const b=v.querySelector('.bolt');if(b&&b.scrollIntoView)b.scrollIntoView({block:'center',behavior:'smooth'});}
+  busy=true;setTimeout(()=>{busy=false;showEnd();},ms);}
 // end the puzzle and score it. replay: rebuilding today's finished puzzle after a reload, so nothing is counted twice.
 function finish(f,replay){st.ended=true;
   const s=st,F=P.fault,A=fedA(s),B=fedB(s),correct=f===F,on=i=>A.has(i)||B.has(i);
@@ -705,28 +771,41 @@ function devXY(k){if(k==='cb')return{x:X,y:TOP-SW-12};if(k==='nop')return{x:X,y:
 function crewSpot(k){const p=devXY(k);return k==='nop'?{x:p.x-34,y:p.y+4}:k[0]==='p'?{x:p.x-26,y:p.y+4}:{x:p.x+28,y:p.y+4};}
 const CREW='<g class="van"><rect x="-12" y="-9" width="15" height="11" rx="2"/><path d="M3 -6 h5 l4 4 v4 h-9z"/><circle class="wh" cx="-7" cy="3" r="2.6"/><circle class="wh" cx="7" cy="3" r="2.6"/></g>'+
   '<g class="man"><path class="leg" d="M-1.6 -3 L-2 5 M1.6 -3 L2 5"/><rect class="vest" x="-4" y="-11" width="8" height="8.5" rx="2.4"/><circle class="face" cx="0" cy="-14" r="2.7"/><path class="hat" d="M-3.2 -14.8 A3.2 3.4 0 0 1 3.2 -14.8 Z"/></g>';
-function svg(){const s=st,A=fedA(s),B=fedB(s),on=i=>A.has(i)||B.has(i),L=LEVELS[P.level],C=P.showCand&&!s.ended?new Set(candidates(s)):null,last=LY[P.n-1],H=last.sw+66;
+// y on the drawing for a distance along the main line (for the relay estimate)
+function kmY(km){for(let i=0;i<P.n;i++){const x=P.secs[i],L=LY[i];if(km<=x.from+x.km||i===P.n-1)return L.top+Math.max(0,Math.min(1,(km-x.from)/x.km))*(L.bot-L.top);}return TOP;}
+// overhead line: a cross-arm tick for each pole
+const poles=(x,y1,y2,lv)=>{let d='';for(let y=y1+12;y<y2-6;y+=22)d+=`M${x-6} ${y}h12`;return d?`<path class="pole${lv?' live':''}" d="${d}"/>`:'';};
+const callsOn=i=>P.calls.filter(c=>c.sec===i);
+function svg(){const s=st,A=fedA(s),B=fedB(s),on=i=>A.has(i)||B.has(i),C=P.showCand&&!s.ended?new Set(candidates(s)):null,last=LY[P.n-1],H=last.sw+66;
   let o=`<svg viewBox="0 0 360 ${H}" class="fl-svg" role="img" aria-label="${esc(P.feeder)} 11 kV feeder, ${P.n} sections and ${P.sp.length} spur${P.sp.length===1?'':'s'}">`;
   o+=`<text class="t-prim" x="${X-44}" y="22">${esc(P.primary.toUpperCase())} PRIMARY · 11 kV</text><line class="bus" x1="${X-44}" y1="34" x2="${X+90}" y2="34"/>`;
-  o+=`<g class="depot"><path d="M${DEPOT.x+6} ${DEPOT.y-26} l14 -10 l14 10 v14 h-28z"/><text x="352" y="${DEPOT.y+12}" text-anchor="end">DEPOT</text></g>`;
+  o+=`<g class="depot"><path d="M${DEPOT.x+6} ${DEPOT.y-26} l14 -10 l14 10 v14 h-28z"/><text x="352" y="${DEPOT.y+28}" text-anchor="end">DEPOT</text></g>`;
+  // the relay's distance estimate, as a band along the main line
+  if(P.dist){const y1=kmY(P.dist.lo),y2=kmY(P.dist.hi);o+=`<rect class="dist" x="${X-11}" y="${y1.toFixed(1)}" width="22" height="${Math.max(8,y2-y1).toFixed(1)}" rx="11"><title>Relay distance estimate: ${P.dist.lo.toFixed(1)}–${P.dist.hi.toFixed(1)} km</title></rect>`;}
   o+=`<line class="cond ${s.cb?'live':'dead'}" x1="${X}" y1="34" x2="${X}" y2="${TOP}"/>`;
   const end=i=>s.ended&&i===P.fault,bolt=(x,y)=>`<path class="bolt" d="M${x+9} ${y-12} l-7 11 h5 l-4 11 l10 -14 h-5 l4 -8 z"/>`;
-  const label=(i,x,y,sub)=>{const S=P.secs[i],lv=on(i);return `<text class="t-sec${sel==='s'+i?' sel':''}" x="${x}" y="${y}">${esc(S.name)}${i>=P.n?' <tspan class="t-spur">spur</tspan>':''}${end(i)?' · FAULT':''}</text><text class="t-sub" x="${x}" y="${y+17}">${sub}</text><text class="t-st ${lv?'on':'off'}" x="350" y="${y}" text-anchor="end">${lv?'ON':'OFF'}</text>`;};
-  const fpi=(w,flag,x,y)=>w.fpi?`<g class="${w.fail?'fpi none':flag?'fpi on':'fpi off'}"><rect x="${x}" y="${y-10}" width="30" height="16" rx="8"/><text x="${x+15}" y="${y+2}" text-anchor="middle">${w.fail?'?':'FPI'}</text></g>`:'';
+  const cond=(x,y1,y2,lv,oh,i)=>`<line class="cond ${lv?'live':'dead'} ${oh?'oh':'ug'}" data-c="${i}" x1="${x}" y1="${y1}" x2="${x}" y2="${y2}"/>`+(oh?poles(x,y1,y2,lv):'');
+  // section label: dimmed while off; calls from it as a speech bubble with the number of calls
+  const label=(i,x,y,sub)=>{const S=P.secs[i],lv=on(i),n=callsOn(i).length;
+    return `<g class="lab${lv?' live':' dead'}"><text class="t-sec${sel==='s'+i?' sel':''}" x="${x}" y="${y}">${esc(S.name)}${i>=P.n?' <tspan class="t-spur">spur</tspan>':''}${end(i)?' · FAULT':''}</text><text class="t-sub" x="${x}" y="${y+17}">${sub}</text><text class="t-st ${lv?'on':'off'}" x="350" y="${y}" text-anchor="end">${lv?'ON':'off'}</text></g>`+
+      (n?`<g class="callb"><title>${n} customer call${n>1?'s':''} from ${esc(S.name)}</title><path d="M327 ${y+5}h20a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-11l-5 4v-4h-4a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3z"/><text x="337" y="${y+16}" text-anchor="middle">${n>1?n:'☎'}</text></g>`:'');};
+  const fpi=(w,flag,x,y)=>w.fpi?`<g class="${w.fail?'fpi none':flag?'fpi on':'fpi off'}"><rect x="${x-2}" y="${y-11}" width="34" height="18" rx="9"/>${!w.fail&&flag?`<path class="fb" d="M${x+6} ${y-8}l-4 6h3l-2 5 5-7h-3l2-4z"/>`:''}<text x="${x+(!w.fail&&flag?19:15)}" y="${y+2}" text-anchor="middle">${w.fail?'?':'FPI'}</text></g>`:'';
   const dev=(k,x,y,man,c,extra)=>`<g data-dev="${k}" class="devg">`+(man?`<circle class="dev${c?'':' open'}${sel===k?' sel':''}${extra||''}" cx="${x}" cy="${y}" r="${SW}"/>`:`<rect class="dev${c?'':' open'}${sel===k?' sel':''}${extra||''}" x="${x-SW}" y="${y-SW}" width="${SW*2}" height="${SW*2}" rx="2"/>`)+'</g>';
   P.secs.slice(0,P.n).forEach((x,i)=>{const Ly=LY[i],lv=on(i),hasSp=Ly.spur>=0;
     if(C&&C.has(i))o+=`<rect class="cand" x="${X-14}" y="${Ly.top}" width="${352-X+14}" height="${hasSp?44:Ly.bot-Ly.top}" rx="6"/>`;
-    o+=`<line class="cond ${lv?'live':'dead'}${x.oh?' oh':''}" x1="${X}" y1="${Ly.top}" x2="${X}" y2="${Ly.bot}"/>`;
+    if(end(i))o+=`<rect class="fault-band" x="${X-14}" y="${Ly.top}" width="${352-X+14}" height="${hasSp?44:Ly.bot-Ly.top}" rx="6"/>`;
+    o+=cond(X,Ly.top,Ly.bot,lv,x.oh,i);
     if(end(i))o+=bolt(X,hasSp?Ly.top+20:(Ly.top+Ly.bot)/2);
-    o+=label(i,X+24,Ly.label,`${x.cust} customers · ${x.oh?'overhead':'cable'} · ${x.km} km`);
+    o+=label(i,X+24,Ly.label,`${x.cust} customers · ${x.km} km`);
     o+=`<rect class="hit" data-sel="s${i}" x="${X-16}" y="${Ly.top}" width="${352-X+16}" height="${hasSp?44:Ly.bot-Ly.top}"/>`;
     if(hasSp){const j=Ly.spur,f=P.n+j,S=P.secs[f],w=P.sp[j],sl=on(f),c=s.sp[j];
       if(C&&C.has(f))o+=`<rect class="cand" x="${SX-14}" y="${Ly.spTop-4}" width="${352-SX+14}" height="${Ly.spBot-Ly.spTop+6}" rx="6"/>`;
-      o+=`<path class="cond ${lv?'live':'dead'}" d="M${X} ${Ly.tee} H${SX} V${Ly.spSw-SW-2}"/><circle class="tee" cx="${X}" cy="${Ly.tee}" r="4"/>`;
-      o+=`<line class="cond ${sl?'live':'dead'}${S.oh?' oh':''}" x1="${SX}" y1="${Ly.spTop}" x2="${SX}" y2="${Ly.spBot}"/>`;
+      if(end(f))o+=`<rect class="fault-band" x="${SX-14}" y="${Ly.spTop-4}" width="${352-SX+14}" height="${Ly.spBot-Ly.spTop+6}" rx="6"/>`;
+      o+=`<path class="cond ${lv?'live':'dead'}" data-t="${j}" d="M${X} ${Ly.tee} H${SX} V${Ly.spSw-SW-2}"/><circle class="tee" cx="${X}" cy="${Ly.tee}" r="4"/>`;
+      o+=cond(SX,Ly.spTop,Ly.spBot,sl,S.oh,f);
       if(end(f))o+=bolt(SX,(Ly.spTop+Ly.spBot)/2);
       o+=dev('p'+j,SX,Ly.spSw,w.manual,c)+fpi(w,spFlag(j),SX+18,Ly.spSw);
-      o+=label(f,SX+20,Ly.spTop+16,`${S.cust} customers · ${S.oh?'overhead':'cable'} · ${S.km} km`);
+      o+=label(f,SX+20,Ly.spTop+16,`${S.cust} customers · ${S.km} km`);
       o+=`<rect class="hit" data-sel="s${f}" x="${SX-16}" y="${Ly.spTop}" width="${352-SX+16}" height="${Ly.spBot-Ly.spTop+2}"/><rect class="hit" data-sel="p${j}" x="${SX-22}" y="${Ly.spSw-20}" width="44" height="40"/>`;}});
   P.sw.forEach((w,i)=>{const y=LY[i].sw,k=String(i);
     o+=dev(k,X,y,w.manual,s.sw[i])+(w.rec?`<text class="ar ${s.sw[i]?'c':'o'}" x="${X}" y="${y+3.5}" text-anchor="middle">AR</text>`:'')+`<text class="t-km" x="${X-20}" y="${y+16}" text-anchor="end">${(P.secs[i+1].from).toFixed(1)} km</text>`+fpi(w,fpiFlag(i),X-56,y);
@@ -751,7 +830,7 @@ function render(){if(!P)return;const s=st;
   const nb=$('newBtn');nb.textContent=daily?'Results':car?'Puzzles':lc?'Back to shift':'New puzzle';nb.disabled=daily&&!s.ended;
   $('stSteps').textContent=s.steps;$('stPar').textContent=P.par;$('stOff').textContent=nf(custOff(s));$('stTime').textContent=fmtT(P.t0+s.mins);$('stTrips').textContent=s.trips+s.nbTrips;
   $('stOffBox').classList.toggle('bad',custOff(s)>0);
-  $('legAr').hidden=!P.sw.some(w=>w.rec);
+  $('legAr').hidden=!P.sw.some(w=>w.rec);$('legDist').hidden=!P.dist;document.body.classList.toggle('fl-moved',s.steps>0||s.ended);
   $('diagram').innerHTML=svg();
   $('cFeeder').textContent=`${P.feeder} 11 kV feeder · ${P.primary} primary`;
   $('cProt').textContent=P.prot;
@@ -766,6 +845,7 @@ function openSheet(){const k=sel,s=st,sh=$('sheet');if(!k||!st){closeSheet();ret
   let h='';
   if(k[0]==='s'){const i=+k.slice(1),x=P.secs[i],live=fedA(s).has(i)||fedB(s).has(i);
     h=`<div class="sh-h"><b>${esc(secName(i))}</b><button type="button" class="sh-x" data-close aria-label="Close">×</button></div><p class="sh-s">${x.cust} customers · ${x.oh?'overhead line':'underground cable'} · ${x.km} km, ${i>=P.n?`teed off ${esc(P.secs[x.tee].name)}`:`starting ${x.from.toFixed(1)} km from the primary`} · ${live?'on supply':'off supply'}</p>`+
+      (callsOn(i).length?`<ul class="sh-calls">${callsOn(i).map(c=>`<li><span class="tm">${fmtT(c.m)}</span><q>${esc(c.txt.replace(/^"|"$/g,''))}</q></li>`).join('')}</ul>`:'')+
       (s.ended?'':`<div class="sh-row"><button type="button" class="btn primary" data-declare="${i}">Declare the fault is here</button></div><p class="sh-n">This ends the puzzle. Isolate the section and restore everyone else first for the best score.</p>`);}
   else{const c=isClosed(s,k),man=isManual(k);
     h=`<div class="sh-h"><b>${esc(devName(k)[0].toUpperCase()+devName(k).slice(1))}</b><button type="button" class="sh-x" data-close aria-label="Close">×</button></div><p class="sh-s"><span class="sh-st">${c?'Closed':'Open'}</span> · ${man?`manual: the crew drives out, ${MANUAL_MIN} min, 2 steps`:`remote: ${REMOTE_MIN} min, 1 step`}</p>`+
@@ -775,6 +855,18 @@ function closeSheet(){sel=null;const sh=$('sheet');if(sh)sh.hidden=true;if(P&&st
 let toastT=0;function toast(t){const e=$('toast');e.textContent=t;e.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>e.hidden=true,4200);}
 // shake only the drawing that shows the trip: the next redraw replaces it, so later switching doesn't shake
 function flash(){const v=$('diagram').querySelector('.fl-svg');if(v)v.classList.add('trip');}
+// effects drawn into the current diagram: the next redraw replaces it, so they play once
+const NS='http://www.w3.org/2000/svg';
+function addFx(html){const v=$('diagram').querySelector('.fl-svg');if(!v)return;const g=document.createElementNS(NS,'g');g.setAttribute('class','fx');g.innerHTML=html;v.appendChild(g);}
+// a spark where the protection tripped
+function spark(k){if(!k)return;const p=devXY(k);
+  addFx(`<g class="spark" transform="translate(${p.x} ${p.y})"><path d="M0-22L5-7 20-12 9 0 20 12 5 7 0 22-5 7-20 12-9 0-20-12-5-7z"/></g>`);}
+// power running out along the sections a close has just put back on, from whichever end fed them
+function flow(a,b){let h='';const one=(f,up,n)=>{const L=LY[f<P.n?f:P.secs[f].tee],d=`style="animation-delay:${n*90}ms"`;
+    if(f<P.n)h+=`<line class="pulse${up?' up':''}" ${d} x1="${X}" y1="${up?L.bot:L.top}" x2="${X}" y2="${up?L.top:L.bot}"/>`;
+    else h+=`<path class="pulse" ${d} d="M${X} ${L.tee} H${SX} V${L.spBot}"/>`;};
+  a.sort((x,y)=>teeOf(x)-teeOf(y)||x-y).forEach((f,n)=>one(f,false,n));b.sort((x,y)=>teeOf(y)-teeOf(x)||x-y).forEach((f,n)=>one(f,true,n));
+  if(h)addFx(h);}
 function showEnd(){const r=st.result,s=st,F=P.secs[P.fault],daily=!!P.daily,car=P.career!=null,lc=!!P.lc;
   $('endGrade').textContent=r.grade;$('endGrade').className='grade g-'+r.grade;
   $('endTitle').textContent=r.correct?(r.iso&&!r.healthyOff?'Found, isolated and restored':'Found it'):'Wrong section';

@@ -8,14 +8,14 @@
 
 <main class="wrap">
   <div class="modes" id="modes" role="group" aria-label="Mode">
-    <button type="button" class="mode" data-mode="daily" aria-pressed="false"><b>Today's puzzle</b><span id="dailyTag"></span></button>
+    <button type="button" class="mode" data-mode="daily" aria-pressed="false"><b><i class="lw">Today's puzzle</i><i class="sw">Today</i></b><span id="dailyTag"></span></button>
     <button type="button" class="mode" data-mode="career" aria-pressed="false"><b>Career</b><span id="carTag"></span></button>
     <button type="button" class="mode" data-mode="practice" aria-pressed="false"><b>Practice</b><span id="pracTag"></span></button>
   </div>
   <p class="lc-bar" id="lcBar" hidden><b>From Losing Control</b> Your shift is paused. Find the fault on the <span id="lcFeeder"></span>, then go back to the shift.</p>
   <section class="status" aria-label="Score so far">
     <div><span>Steps</span><b><span id="stSteps">0</span><small> / par <span id="stPar">0</span></small></b></div>
-    <div id="stOffBox"><span>Customers off</span><b id="stOff">0</b></div>
+    <div id="stOffBox"><span><i class="lw">Customers off</i><i class="sw">Off</i></span><b id="stOff">0</b></div>
     <div><span>Trips</span><b id="stTrips">0</b></div>
     <div><span>Time</span><b id="stTime">00:00</b></div>
   </section>
@@ -25,7 +25,7 @@
       <h2 id="cFeeder">Feeder</h2>
       <p class="tip">Tap a switch to open or close it. Tap a section to declare the fault there.</p>
       <div id="diagram"></div>
-      <p class="legend"><span><i class="lg sq"></i>remote, 1 step</span><span><i class="lg ci"></i>manual: crew, 2 steps</span><span><i class="lg fpi-on"></i>FPI flagged</span><span><i class="lg fpi-off"></i>not flagged</span><span id="legAr" hidden><i class="lg sq ar">AR</i>auto-recloser: trips before the breaker</span></p>
+      <p class="legend"><span><i class="lg sq"></i>remote, 1 step</span><span><i class="lg ci"></i>manual: crew, 2 steps</span><span><i class="lg fpi-on"></i>FPI flagged</span><span><i class="lg fpi-off"></i>not flagged</span><span><i class="lg oh"></i>overhead line (poles)</span><span><i class="lg ug"></i>underground cable</span><span id="legDist" hidden><i class="lg dist"></i>relay distance estimate</span><span><i class="lg call">☎</i>customer calls: tap the section</span><span id="legAr" hidden><i class="lg sq ar">AR</i>auto-recloser: trips before the breaker</span></p>
     </section>
 
     <div class="side">

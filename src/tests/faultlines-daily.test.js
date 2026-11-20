@@ -5,7 +5,7 @@ const HTML=fs.readFileSync(path.join(__dirname,'..','..','build','fault-lines.ht
 let errs=[],fails=0;const wait=ms=>new Promise(r=>setTimeout(r,ms));const ok=(c,m)=>{if(!c)fails++;console.log((c?'ok ':'FAIL ')+m);};
 const A=makeAppsScript();
 async function load(store,host){
-  const d=new JSDOM(HTML,{url:`https://${host||'www.wattsupelectricity.co.uk'}/fault-lines/`,runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){
+  const d=new JSDOM(HTML,{url:`https://${host||'www.wattsupelectricity.co.uk'}/fault-lines/`,runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){w.FL_FAST=true;
     w.matchMedia=()=>({matches:false,addEventListener(){}});w.onerror=(m,s,l,c)=>errs.push(m+' @'+l+':'+c);
     Object.entries(store||{}).forEach(([k,v])=>w.localStorage.setItem(k,v));
     w.fetch=async(url,opt)=>{const body=opt&&opt.method==='POST'?A.post(JSON.parse(opt.body)):A.get(Object.fromEntries(new URL(url).searchParams));return{json:async()=>body};};}});

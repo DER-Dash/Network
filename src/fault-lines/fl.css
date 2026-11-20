@@ -217,3 +217,64 @@ text.ar.c{fill:var(--panel)}text.ar.o{fill:var(--ink)}
 .car-item:focus-visible{outline:3px solid var(--zap);outline-offset:2px}
 .lc-bar{margin:0 0 10px;padding:10px 12px;border-radius:8px;background:var(--wu-navy);color:#fff;border-left:5px solid var(--zap);font-size:14px}
 .lc-bar b{display:block;font:700 13px var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--zap)}
+
+/* ---- graphics pass (Nov 2026) ---- */
+/* switches: a softer fill, so in dark mode closed switches don't glare */
+:root{--dev:var(--ink)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--dev:#a9a3c9}}
+:root[data-theme="dark"]{--dev:#a9a3c9}
+.dev{fill:var(--dev);stroke:var(--dev)}
+.dev.open{fill:var(--panel)}
+.lg{border-color:var(--dev);background:var(--dev)}
+/* overhead line with poles; cable dotted when dead */
+.pole{stroke:var(--muted);stroke-width:2;stroke-linecap:round;opacity:.8}
+.pole.live{stroke:var(--mv)}
+.cond.dead.ug{stroke-dasharray:2 7}
+.lg.oh{width:22px;height:12px;border:0;background:linear-gradient(var(--muted),var(--muted)) center/100% 3px no-repeat,linear-gradient(90deg,transparent 4px,var(--muted) 4px,var(--muted) 6px,transparent 6px,transparent 14px,var(--muted) 14px,var(--muted) 16px,transparent 16px)}
+.lg.ug{width:22px;height:4px;border:0;background:repeating-linear-gradient(90deg,var(--muted) 0 2px,transparent 2px 6px)}
+/* relay distance band */
+.dist{fill:var(--warn);fill-opacity:.18;stroke:var(--warn);stroke-opacity:.5;stroke-dasharray:3 3}
+.lg.dist{width:12px;height:16px;border-radius:6px;border:1px dashed var(--warn);background:color-mix(in srgb,var(--warn) 18%,transparent)}
+/* calls */
+.callb path{fill:var(--warn-bg);stroke:var(--warn);stroke-width:1.3}
+.callb text{font:700 10.5px var(--f-mono);fill:var(--warn)}
+.lg.call{width:auto;height:auto;border:1.3px solid var(--warn);background:var(--warn-bg);color:var(--warn);font-style:normal;font-size:10px;padding:0 4px;border-radius:4px}
+.sh-calls{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:4px}
+.sh-calls li{background:var(--sunk);border-left:3px solid var(--warn);border-radius:4px;padding:5px 8px;font-size:13.5px}
+.sh-calls q{font-style:italic;color:var(--muted)}
+/* calmer status: off sections dimmed with a quiet 'off', restored ones green */
+.lab.dead .t-sec{fill:var(--muted)}
+.t-st.off{fill:var(--muted);font-weight:600}
+.lab.live .t-sec{fill:var(--ink)}
+/* bolder indicators */
+.fpi.on rect{fill:var(--alarm);stroke:var(--alarm);filter:drop-shadow(0 0 4px color-mix(in srgb,var(--alarm) 70%,transparent))}
+.fpi.on .fb{fill:#fff}
+.fpi.on{animation:fpiGlow 1.8s ease-in-out infinite}
+@keyframes fpiGlow{50%{opacity:.78}}
+.fpi text{font:700 10.5px var(--f-mono)}
+/* power flowing back on, and a spark where protection trips */
+.pulse{stroke:var(--zap);stroke-width:7;stroke-linecap:round;fill:none;stroke-dasharray:22 900;stroke-dashoffset:22;animation:flow .8s ease-out both;pointer-events:none}
+@keyframes flow{from{stroke-dashoffset:22;opacity:1}to{stroke-dashoffset:-160;opacity:0}}
+.spark path{fill:var(--zap);stroke:var(--alarm);stroke-width:2;stroke-linejoin:round;transform-box:fill-box;transform-origin:center;animation:spark .7s ease-out both}
+@keyframes spark{0%{transform:scale(.2);opacity:1}60%{transform:scale(1.15);opacity:1}100%{transform:scale(1.4);opacity:0}}
+.fx{pointer-events:none}
+/* the end: the faulted section lights up first */
+.fault-band{fill:var(--alarm);fill-opacity:.1;stroke:var(--alarm);stroke-opacity:.6}
+.fl-svg.reveal .bolt{transform-box:fill-box;transform-origin:center;animation:boltIn 1.2s ease-out}
+.fl-svg.reveal .fault-band{animation:bandIn 1.2s ease-out}
+@keyframes boltIn{0%{transform:scale(.3);opacity:0}25%{transform:scale(1.6);opacity:1}45%{transform:scale(1)}60%{opacity:.4}75%{opacity:1}}
+@keyframes bandIn{0%{fill-opacity:0}30%{fill-opacity:.35}100%{fill-opacity:.1}}
+@media (prefers-reduced-motion:reduce){.pulse,.spark path,.fpi.on,.fl-svg.reveal .bolt,.fl-svg.reveal .fault-band{animation:none!important}.pulse{opacity:0}}
+/* phones: a slimmer header and score row, so the feeder starts higher up */
+.lw,.sw{font-style:normal}.sw{display:none}
+@media (max-width:520px){
+  .bar{padding-top:max(6px,env(safe-area-inset-top,0px));padding-bottom:6px;gap:8px}
+  .logo svg{width:28px;height:28px}.co{display:none}
+  .bar h1{font-size:21px;gap:6px}.mode-tag{font-size:10px;padding:2px 6px}
+  .wrap{padding:8px 10px}
+  .modes{gap:6px;margin-bottom:8px}.mode{min-height:40px;padding:5px 8px}
+  .status{gap:5px;margin-bottom:8px}.status>div{padding:4px 7px}.status b{font-size:15px}
+  .lw{display:none}.sw{display:inline}
+  .panel{padding:10px 10px}.panel.dia h2{font-size:13px;letter-spacing:.07em}
+  body.fl-moved .dia .tip{display:none}
+}

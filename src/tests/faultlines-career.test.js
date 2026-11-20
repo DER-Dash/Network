@@ -3,7 +3,7 @@
 const {JSDOM}=require('jsdom');const fs=require('fs'),path=require('path'),crypto=require('crypto');
 const HTML=fs.readFileSync(path.join(__dirname,'..','..','build','fault-lines.html'),'utf8');
 let errs=[],fails=0;const wait=ms=>new Promise(r=>setTimeout(r,ms));const ok=(c,m)=>{if(!c)fails++;console.log((c?'ok ':'FAIL ')+m);};
-async function load(store){const w=new JSDOM(HTML,{url:'https://www.wattsupelectricity.co.uk/fault-lines/',runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){
+async function load(store){const w=new JSDOM(HTML,{url:'https://www.wattsupelectricity.co.uk/fault-lines/',runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){w.FL_FAST=true;
   w.matchMedia=()=>({matches:false,addEventListener(){}});w.onerror=(m,s,l,c)=>errs.push(m+' @'+l+':'+c);w.fetch=async()=>({json:async()=>({ok:true,version:22,scores:[]})});
   w.localStorage.setItem('fl-seen','1');Object.entries(store||{}).forEach(([k,v])=>w.localStorage.setItem(k,v));}}).window;await wait(30);return w;}
 const solve=G=>{let m,n=0;while(n++<80&&(m=G.nextMove(G.st)).declare==null)G.act(m.k,m.act);G.declare(m.declare);return G.st.result;};
