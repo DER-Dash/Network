@@ -697,7 +697,7 @@ function genPtFaults(seed,sc,risk){if(!LV_ON||!sc.faults||sc.easy||sc.comms)retu
 const spanOf=k=>{const v=SCENARIOS[k]||{};return{start:v.start!=null?v.start:CFG.start,end:v.end!=null?v.end:CFG.end};};
 const runText=()=>{const r=Math.round((END-START)/CFG.rate/60*2)/2;return `Shift runs ${fmtT(START)}–${END>=1440?'24:00':fmtT(END)}, about ${Math.floor(r)}${r%1?'½':''} minutes at 1×.`;};
 const zeroD=()=>({solar:0,wind:0,bchg:0,bdis:0,chp:0,dsr:0});
-function newGame(key){
+function newGame(key){GFX.intro=false;
   const sc=SCENARIOS[key],date=todayUK(),daily=mode==='daily'&&!sc.noBoard;applySvc(sc);
   ({start:START,end:END}=spanOf(key));
   const seed=daily?hashStr(date+'|'+key+'|'+CFG.salt):((Math.random()*2**31)|0);
@@ -782,7 +782,7 @@ function offWhy(p,i,sx,sup){const f=S.lff&&S.lff[p]&&S.lff[p][i],fn=`${lfName(p,
 function logE(m,text,lvl){S.log.unshift({m,text,lvl});if(S.log.length>60)S.log.pop();logDirty=true;}
 function mark(m,type,label){if(!S.silent)S.marks.push({m,type,label});}
 // a breaker trip or auto-reclose, shown on the alarm list until it's acknowledged
-function alEv(m,kind,name,sel,note){if(S.silent)return;const id='ev'+(S.alEvN=(S.alEvN||0)+1);S.alarms[id]={id,ev:kind,lvl:kind,name,sel:sel||'',note:note||'',since:m,L:0,ack:false};}
+function alEv(m,kind,name,sel,note){if(S.silent)return;if(kind==='trip'&&sel)GFX.arc.push(sel);const id='ev'+(S.alEvN=(S.alEvN||0)+1);S.alarms[id]={id,ev:kind,lvl:kind,name,sel:sel||'',note:note||'',since:m,L:0,ack:false};}
 function queueAlert(text,lvl,pause){if(!S.silent)queued.push({text,lvl,pause,m:S.t});}
 // Switching incidents: one is allowed per shift, a second ends it. In a career they also add up across shifts:
 // the third brings a written warning, the fourth gets you sacked and the career starts again from nothing.
@@ -985,7 +985,7 @@ function step(){
     if(!e.fired&&m>=e.start){e.fired=true;const t=S.tx[e.tx];
       if(!t.out){t.out={kind:'planned',until:e.end,ready:false,label:e.cause};mark(m,'planned',`T${e.tx+1} out`);const s=`Field staff have switched out T${e.tx+1} for planned maintenance until ${fmtT(e.end)}.`;logE(m,s,'warn');queueAlert(s,'warn',false);play('warn');}}
   }
-  if(!S.silent)for(const f of S.sched){if(f.done||m<f.m)continue;f.done=true;const[type,id]=f.k.split(':');
+  if(!S.silent)for(const f of S.sched){if(f.done||m<f.m)continue;f.done=true;const[type,id]=f.k.split(':');if(/lightning/i.test(f.cause||''))strike();
     if(type==='tx'){const i=+id,t=S.tx[i];if(t.out)continue;
       t.out={kind:'fault',until:m+f.dur,ready:false,label:f.cause};S.faults++;S.chain.push(`a fault on the T${i+1} circuit`);mark(m,'fault',`T${i+1} fault`);
       const s=`Fault on the T${i+1} circuit: ${f.cause.toLowerCase()}. T${i+1} tripped. Repair expected by ${fmtT(m+f.dur)}.`;logE(m,s,'alarm');alEv(m,'trip',`T${i+1}`,'tx:'+i,'fault');queueAlert(s,'alarm',true);play('fault');fx('cct'+i);}
@@ -1185,8 +1185,18 @@ function gotoDev(k){if(!k||!SELBOX[k])return;alOpen=null;lastAl='';if(PHONE){jum
   select(k,isSw(k));const pm=$('pMimic');if(pm){const r=pm.getBoundingClientRect(),bar=document.querySelector('.bar'),top=bar&&getComputedStyle(bar).position==='sticky'?bar.offsetHeight:0;
     if(r.top<top||r.bottom>innerHeight)window.scrollTo({top:r.top+window.scrollY-top-8,behavior:RMQ.matches?'auto':'smooth'});}
   requestAnimationFrame(()=>{const sb=$('selbox');if(sb)anim(sb,[{strokeWidth:10,opacity:.15},{strokeWidth:3,opacity:1}],{duration:550,iterations:3});});}
-function renderAlarms(){const red=a=>a.lvl==='over'||a.ev==='trip',list=Object.values(S.alarms).sort((a,b)=>red(b)-red(a)||!!b.ev-!!a.ev||b.since-a.since||b.L-a.L),un=list.filter(a=>!a.ack).length;
-  const h=list.length?`<ul class="al-list">${list.map(a=>a.ev?`<li class="al ${a.ev==='trip'?'over':'high'} unack"><button type="button" data-al="${a.id}" data-alsel="${a.sel||''}" data-k="al-${a.id}" aria-expanded="${alOpen===a.id}"><span class="al-l">${a.ev==='trip'?'Trip':'Auto-reclose'}</span><span class="al-n">${esc(a.name)}</span><span class="al-v"></span><span class="al-t">at ${fmtT(a.since)}${a.note?' · '+esc(a.note):''}</span></button>${alGo(a)}</li>`:`<li class="al ${a.lvl}${a.ack?'':' unack'}"><button type="button" data-al="${a.id}" data-alsel="${a.sel||''}" data-k="al-${a.id}" aria-expanded="${alOpen===a.id}"><span class="al-l">${a.lvl==='over'?'Overload':'High load'}</span><span class="al-n">${esc(a.name)}</span><span class="al-v">${Math.round(a.L*100)}%</span><span class="al-t">since ${fmtT(a.since)}${a.trip!=null?' · trips in '+a.trip+' min':a.lvl==='over'&&a.id.startsWith('nb:')?' · ties trip in '+OV_MIN+' min if it stays over':''}</span></button>${alGo(a)}</li>`).join('')}</ul>`
+// alarm icons by kind, and the site each alarm belongs to (for grouping a long list)
+const AL_IC={trip:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',ar:'<path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/>',over:'<path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-3 2-4 2-7 2 1 3 3 3 5"/>',high:'<path d="M12 3 2 20h20zM12 10v5M12 18v.5"/>'};
+const alIc=a=>`<svg class="al-i" viewBox="0 0 24 24" aria-hidden="true">${AL_IC[a.ev==='trip'?'trip':a.ev?'ar':a.lvl==='over'?'over':'high']}</svg>`;
+function alSite(a){const k=a.sel||a.id||'',[t,id]=k.split(':');if(!id)return 'Network';
+  if(['lf','mid','nop','mg'].includes(t))return PR[id.slice(0,2)]?PR[id.slice(0,2)].name:'Network';
+  if(['in','pt','bc','tie','prim','as'].includes(t)){const q=t==='as'?id.replace('load_',''):id;return PR[q]?PR[q].name:'Network';}
+  if(t==='tx'||t==='bs'||t==='cct')return 'Blackout Canyon';if(t==='nb')return NBS[id]?NBS[id].name:'Neighbours';if(t==='it')return 'Interconnectors';if(t==='lk')return '11 kV links';return 'Network';}
+function renderAlarms(){const red=a=>a.lvl==='over'||a.ev==='trip',sorted=Object.values(S.alarms).sort((a,b)=>red(b)-red(a)||!!b.ev-!!a.ev||b.since-a.since||b.L-a.L),un=sorted.filter(a=>!a.ack).length;
+  // four or more: grouped by site, the site with the most serious alarm first
+  let list=sorted,grp=null;if(sorted.length>=4){const ord=[],by={};sorted.forEach(a=>{const g=alSite(a);if(!by[g]){by[g]=[];ord.push(g);}by[g].push(a);});list=ord.flatMap(g=>by[g]);grp=a=>alSite(a);}
+  let lastG=null;const head=a=>{if(!grp)return'';const g=grp(a);if(g===lastG)return'';lastG=g;const n=list.filter(x=>grp(x)===g).length;return `<li class="al-grp" aria-hidden="true"><span>${esc(g)}</span><b>${n}</b></li>`;};
+  const h=list.length?`<ul class="al-list">${list.map(a=>head(a)+a.ev?`<li class="al ${a.ev==='trip'?'over':'high'} unack"><button type="button" data-al="${a.id}" data-alsel="${a.sel||''}" data-k="al-${a.id}" aria-expanded="${alOpen===a.id}"><span class="al-l">${alIc(a)}${a.ev==='trip'?'Trip':'Auto-reclose'}</span><span class="al-n">${esc(a.name)}</span><span class="al-v"></span><span class="al-t">at ${fmtT(a.since)}${a.note?' · '+esc(a.note):''}</span></button>${alGo(a)}</li>`:`<li class="al ${a.lvl}${a.ack?'':' unack'}"><button type="button" data-al="${a.id}" data-alsel="${a.sel||''}" data-k="al-${a.id}" aria-expanded="${alOpen===a.id}"><span class="al-l">${alIc(a)}${a.lvl==='over'?'Overload':'High load'}</span><span class="al-n">${esc(a.name)}</span><span class="al-v">${Math.round(a.L*100)}%</span><span class="al-t">since ${fmtT(a.since)}${a.trip!=null?' · trips in '+a.trip+' min':a.lvl==='over'&&a.id.startsWith('nb:')?' · ties trip in '+OV_MIN+' min if it stays over':''}</span></button>${alGo(a)}</li>`).join('')}</ul>`
     :'<p class="empty">No alarms. Anything above 80% of its rating, and every breaker trip or auto-reclose, shows here.</p>';
   const k=h+'|'+un;if(k!==lastAl){lastAl=k;$('alBody').innerHTML=h;alSeen=slideNew($('alBody'),alSeen);}
   txt('alCount',list.length?String(list.length):'');setAttr($('alCount'),'class','al-count'+(list.some(red)?' over':list.length?' high':''));
@@ -1229,7 +1239,7 @@ function dispatch(k,act){if(!S||S.ended||!CREW_ON)return;
   const p=crewPos(c,S.t),via=mgu?(mgu.site?devXY('mg:'+mgu.site):{x:DEPOT.x,y:DEPOT.y}):null,mh=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y),
     dist=via?mh(p,via)+mh(via,tgt):mh(p,tgt),travel=c.at===k&&!via?0:Math.max(2,Math.round(dist/CREW_SPEED))+(via?MG_HITCH:0);
   if(travel){c.from={x:p.x,y:p.y};c.via=via;c.to=tgt;c.dep=S.t;c.arr=S.t+travel;c.at=null;}
-  c.job={k,act,at:S.t+travel+(act?opT:0),arr:S.t+travel};
+  c.job={k,act,at:S.t+travel+(act?opT:0),arr:S.t+travel,t0:S.t};
   if(mgu){logE(S.t,`Crew ${c.n} is collecting the ${mgName(mgu)} from ${mgu.site?siteFn(mgu.site):'the yard at the depot'}, to tow it to ${siteFn(k.slice(3))}.`,'info');mgu.site=k.slice(3);mgu.conn=false;mgu.pend=true;}
   logE(S.t,act?`Crew ${c.n} sent to ${opLabel(k,act).toLowerCase()}${opT===MG_CONN?' (collecting and towing it, then '+MG_CONN+' min to connect)':''}. Arrives ${fmtT(S.t+travel)}, done by ${fmtT(c.job.at)}.`:`Crew ${c.n} sent to stand by at the ${devName(k)}. Arrives ${fmtT(S.t+travel)}.`,'info');
   play('click');lastInsp='';render(true);}
@@ -1363,7 +1373,7 @@ function setArw(id,v,axis){const e=$(id);if(!e)return;const on=Math.abs(v)>=.5;e
 const TIEARW={hw:[96,330,-1],ml:[300,603,-1],rv:[1000,633,1],js:[1085,330,1]};
 const ADJ_TIP={batt:['Discharge more: offsets Hertz House\'s load','Charge more: adds load at Hertz House'],dsr:['Reduce demand more','Reduce demand less'],chp:['Run the gas engine harder','Run the gas engine less'],solar:['Curtail less','Curtail more'],wind:['Curtail less','Curtail more']};
 function adjBtn(id,x,y,d){const up=d>0,tip=(ADJ_TIP[id]||['Turn up','Turn down'])[up?0:1];return `<g class="adj" id="adj_${id}_${up?'u':'d'}" data-adj="${id}" data-d="${d}" role="button" aria-label="${tip}"><title>${tip}</title><rect x="${x}" y="${y}" width="22" height="19" rx="4"/><path d="${up?`M${x+5} ${y+13.5}h12l-6-8z`:`M${x+5} ${y+5.5}h12l-6 8z`}"/></g>`;}
-function buildMimic(){
+function buildMimic(){gfxReset();
   const ng=S&&NOGEN();
   let s=`<text id="snm_gsp" class="t-bus snm" x="400" y="26">STEVE TOWERS GSP · 132 kV</text><line class="bus hv" x1="400" y1="40" x2="800" y2="40"/>`;
   s+=`<rect class="hit" data-sel="nb:kn" x="12" y="222" width="104" height="398"/>
@@ -1436,8 +1446,8 @@ function buildMimic(){
       sym=LDX.map((dx,i)=>LV_ON?`<line id="lfl_${p}${i}" class="cond mv" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${ay+44}"/><line id="lfm_${p}${i}" class="cond mv" x1="${x+dx}" y1="${ay+56}" x2="${x+dx}" y2="${y+4}"/><line id="lff0_${p}${i}" class="flow fl-lv idle" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${ay+44}"/><line id="lff1_${p}${i}" class="flow fl-lv idle" x1="${x+dx}" y1="${ay+56}" x2="${x+dx}" y2="${y+4}"/><rect id="lfb_${p}${i}" class="brk sw" x="${x+dx-6}" y="${by+6}" width="12" height="12"/><rect id="midb_${p}${i}" class="brk sw man mid" x="${x+dx-6}" y="${ay+44}" width="12" height="12" rx="6"/>${bld(x+dx,y+3,p,i)}${boltAt('lfx0_'+p+i,x+dx,ay+39)}${boltAt('lfx1_'+p+i,x+dx,ay+63)}<g id="lfq_${p}${i}" class="lfq" hidden><title>Fault on this feeder: location not known yet</title><circle cx="${x+dx-9}" cy="${ay+50}" r="4.6"/><text x="${x+dx-9}" y="${ay+52.6}" text-anchor="middle">?</text></g>`
         :`<line id="lfl_${p}${i}" class="cond mv" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${y+4}"/><line id="lff0_${p}${i}" class="flow fl-lv idle" x1="${x+dx}" y1="${by}" x2="${x+dx}" y2="${y+4}"/><rect id="lfb_${p}${i}" class="brk sw" x="${x+dx-6}" y="${by+8}" width="12" height="12"/>${bld(x+dx,y+3,p,i)}`).join('');
       if(PRIO_ON)LDX.forEach((dx,i)=>{const P=prioOf(p,i);if(!P)return;const fx=x+dx+12,K=PRK[P.kind];sym+=`<g id="pri_${p}${i}" class="pri pri-${P.kind}"><title>${esc(P.name)}</title><circle cx="${fx}" cy="${y-3}" r="7"/><text x="${fx}" y="${y+0.3}" text-anchor="middle">${K.ch}</text></g>`;});
-      if(LV_ON)LDX.forEach((dx,i)=>{const fx=x+dx;sym+=`<g id="mgg_${p}${i}" class="mg" hidden><path class="mg-l" d="M${fx} ${VF_ON&&VFI.includes(i)?y+40:y+17} V${y+45.5}"/><circle cx="${fx}" cy="${y+52}" r="6.5"/><text x="${fx}" y="${y+55}" text-anchor="middle">G</text></g>`;SELBOX['mg:'+p+i]=[fx-9,y+43,18,18];
-        sym+=`<g id="mgg_${p}${i}n" class="mg mgn" hidden><title>Mobile generator on the LV at the first-half substations</title><path class="mg-l" d="M${fx-3} ${ay+37} H${fx-7.5}"/><circle cx="${fx-13}" cy="${ay+37}" r="6"/><text x="${fx-13}" y="${ay+39.8}" text-anchor="middle">G</text></g>`;SELBOX['mg:'+p+i+'n']=[fx-21,ay+29,16,16];});
+      if(LV_ON)LDX.forEach((dx,i)=>{const fx=x+dx;sym+=`<g id="mgg_${p}${i}" class="mg" hidden><path class="mg-l" d="M${fx} ${VF_ON&&VFI.includes(i)?y+40:y+17} V${y+45.5}"/><circle cx="${fx}" cy="${y+52}" r="6.5"/><text x="${fx}" y="${y+55}" text-anchor="middle">G</text><g class="mg-ex"><circle cx="${fx+6}" cy="${y+46}" r="2"/><circle cx="${fx+6}" cy="${y+46}" r="2"/></g></g>`;SELBOX['mg:'+p+i]=[fx-9,y+43,18,18];
+        sym+=`<g id="mgg_${p}${i}n" class="mg mgn" hidden><title>Mobile generator on the LV at the first-half substations</title><path class="mg-l" d="M${fx-3} ${ay+37} H${fx-7.5}"/><circle cx="${fx-13}" cy="${ay+37}" r="6"/><text x="${fx-13}" y="${ay+39.8}" text-anchor="middle">G</text><g class="mg-ex"><circle cx="${fx-19}" cy="${ay+31}" r="2"/><circle cx="${fx-19}" cy="${ay+31}" r="2"/></g></g>`;SELBOX['mg:'+p+i+'n']=[fx-21,ay+29,16,16];});
       s+=`<line id="alb_load_${p}" class="cond mv" x1="${x+LDX[0]-2}" y1="${by}" x2="${x+LDX[2]+2}" y2="${by}" style="stroke-width:3"/>`;
       if(VF_ON)VFI.forEach(i=>{const fx=x+LDX[i];sym+=`<path id="nopl_${p}${i}" class="vf-l" d="M${fx} ${y+17} V${y+24} M${fx} ${y+34} V${y+40}"/><rect id="nopb_${p}${i}" class="brk sw nop open" x="${fx-5}" y="${y+24}" width="10" height="10" rx="5"/>`;});}
     // illustrated generators: drawn in the asset's colour (--sc), about 30 wide and 28 tall from y
@@ -1478,7 +1488,7 @@ function buildMimic(){
       <rect class="cmx-tag" x="${l+6}" y="${t+6}" width="${w-12}" height="16" rx="8"/><text id="cmxt_${p}" class="cmx-t" x="${l+w/2}" y="${t+17.5}" text-anchor="middle">NO COMMS</text></g>`;});
   s+=`<rect id="coachRing" class="coach-ring" x="0" y="0" width="0" height="0" rx="10" visibility="hidden"/>`;
   if(CREW_ON){s+=`<g class="depot"><text class="nb-name crew-n" x="1188" y="34" text-anchor="end">CREW DEPOT</text><text class="nb-r" x="1188" y="48" text-anchor="end">${S.crews.length===1?"1 field crew":S.crews.length+" field crews"}</text>${LV_ON?'<text id="yardT" class="nb-r yard-t" x="1086" y="83" text-anchor="end"></text>':''}<g class="depot-i"><path class="dp-b" d="M1090 75 L1105 64 L1120 75 V89 H1090 Z"/><rect class="dp-d" x="1097" y="77" width="16" height="12" rx="1"/><path class="dp-l" d="M1097 80.5 h16 M1097 84 h16 M1097 87.5 h16"/></g></g><g id="crews">`+
-    [1,2,3].map(n=>`<g id="crew${n}" class="crew"><g class="crew-b">${CREW_FIG}</g><g class="crew-van"><g id="van${n}">${VAN_FIG}</g></g><g class="crew-tag"><circle cx="6.2" cy="-16.4" r="3.9"/><text class="crew-t" x="6.2" y="-14.3" text-anchor="middle">${n}</text></g></g>`).join('')+'</g>';}
+    [1,2,3].map(n=>`<g id="crew${n}" class="crew"><g class="crew-b">${CREW_FIG}</g><g class="crew-van"><g id="van${n}">${VAN_FIG}</g></g><g class="crew-tag"><circle id="crr${n}" class="crew-ring" cx="6.2" cy="-16.4" r="6.4" pathLength="100" transform="rotate(-90 6.2 -16.4)" visibility="hidden"/><circle cx="6.2" cy="-16.4" r="3.9"/><text class="crew-t" x="6.2" y="-14.3" text-anchor="middle">${n}</text></g></g>`).join('')+'</g>';}
   s+=`<rect id="selbox" class="selbox" x="0" y="0" width="0" height="0" rx="6" visibility="hidden"/>`;
   if(GAME==='fc')s=s.replace(/<rect class="hit" data-sel="(?:bc|in|tie|it|bs|lf|nop|lk|nb|pt):[^"]*"[^>]*\/>/g,'');
   {const lg=$('lgLK');if(lg)lg.hidden=!LKIDS.length;}
@@ -1594,7 +1604,7 @@ function renderMimic(){
     off=c.to?(i-1)*7:(c.at==='depot'?(i-1)*16:14+same*12),
     // standing at a first-half generator: in the gap below its icon, clear of the feeder's breaker and mid-point switch
     side=!c.to&&!!c.at&&/^mg:.*n$/.test(c.at);
-    setAttr(g,'transform',side?`translate(${(p.x-same*9).toFixed(1)} ${(p.y+41).toFixed(1)}) scale(1)`:`translate(${(p.x+off).toFixed(1)} ${(p.y+(c.at==='depot'&&!c.to?16:-4)+(c.to?(i-1)*5:0)).toFixed(1)}) scale(1.25)`);g.classList.toggle('walk',!!c.to&&S.running&&!S.paused);g.classList.toggle('drive',!!c.to);g.classList.toggle('tow',!!(c.to&&c.job&&c.job.k.startsWith('mg:')&&c.job.act==='close'&&(!c.via||crewPos(c,tNow).x!==c.via.x||crewPos(c,tNow).y!==c.via.y)&&passedVia(c,tNow)));{const v=$('van'+c.n);if(v)setAttr(v,'transform',c.to&&c.to.x<c.from.x-1?'scale(-1 1)':'');}g.classList.toggle('home',c.at==='depot'&&!c.to);g.classList.toggle('busy',!!c.job);});if(LV_ON){const y=S.mgu.filter(u=>!u.site);txt('yardT',y.length?'Yard: '+y.map(u=>u.cap).join(' · ')+' MW':'Yard empty');}}
+    setAttr(g,'transform',side?`translate(${(p.x-same*9).toFixed(1)} ${(p.y+41).toFixed(1)}) scale(1)`:`translate(${(p.x+off).toFixed(1)} ${(p.y+(c.at==='depot'&&!c.to?16:-4)+(c.to?(i-1)*5:0)).toFixed(1)}) scale(1.25)`);g.classList.toggle('walk',!!c.to&&S.running&&!S.paused);g.classList.toggle('drive',!!c.to);g.classList.toggle('tow',!!(c.to&&c.job&&c.job.k.startsWith('mg:')&&c.job.act==='close'&&(!c.via||crewPos(c,tNow).x!==c.via.x||crewPos(c,tNow).y!==c.via.y)&&passedVia(c,tNow)));{const v=$('van'+c.n);if(v)setAttr(v,'transform',c.to&&c.to.x<c.from.x-1?'scale(-1 1)':'');}g.classList.toggle('home',c.at==='depot'&&!c.to);g.classList.toggle('busy',!!c.job);{const r=$('crr'+c.n),j=c.job,f=j&&j.t0!=null&&j.at>j.t0?clamp((tNow-j.t0)/(j.at-j.t0),0,1):null;if(r){if(f==null)r.setAttribute('visibility','hidden');else{r.setAttribute('visibility','visible');r.setAttribute('stroke-dasharray',`${(f*100).toFixed(1)} 100`);}}}});if(LV_ON){const y=S.mgu.filter(u=>!u.site);txt('yardT',y.length?'Yard: '+y.map(u=>u.cap).join(' · ')+' MW':'Yard empty');}}
   if(S.sc.gsp){const G=S.sc.gsp,on=S.t>=G.start&&S.t<G.end;txt('gspT',on?`LIMIT ${G.limit} MW · NOW ${Math.round(S.gspLoad)} MW`:S.t>=G.warn&&S.t<G.start?'SUPERGRID FAULT EXPECTED':'');setAttr($('gspT'),'class','gsp-t'+(on&&S.gspLoad>G.limit?' alarm':on?' ok':''));}
   const sb=$('selbox'),bx=S.sel&&SELBOX[S.sel];
   if(bx){setAttr(sb,'x',String(bx[0]));setAttr(sb,'y',String(bx[1]));setAttr(sb,'width',String(bx[2]));setAttr(sb,'height',String(bx[3]));setAttr(sb,'visibility','visible');}else setAttr(sb,'visibility','hidden');
@@ -2078,12 +2088,69 @@ function render(force){
     if(S.split&&fs)fs+=' · split bus';txt('kFirm',fv);txt('kFirmSub',fs);setAttr($('kFirmBox'),'class','kpi kpi-firm'+(fc==='ok'?'':' '+fc)+(tipActive&&tipActive.el==='kFirmBox'?' hl':''));
     setAttr($('dPill'),'class','pill '+(fc==='ok'?'ok':fc==='warn'?'warn':'alarm'));txt('dPill',dt);}
   txt('kIns',S.insecureMin+' min');$('kIns').classList.toggle('bad',S.insecureMin>0);
-  seenAs(()=>{renderMimic();renderInsp();renderQP();});renderComms();renderFlood();renderCalls();renderAlarms();renderLog();renderSky();
+  seenAs(()=>{renderMimic();renderInsp();renderQP();gfxSubs();});renderComms();renderFlood();renderCalls();renderAlarms();renderLog();renderSky();gfxAll();
   const now=performance.now();if(force||now-lastChart>350){lastChart=now;drawChart();}
   renderSec();
   const pl=S.ended?'Shift over':!S.running?'Start':S.paused?'Resume':'Pause';txt('playBtn',pl);txt('dPlay',pl);txt('dClock',fmtT(S.t));
   $('resumeBtn').hidden=!(S.paused&&S.running&&!S.ended);
 }
+
+/* ---------- Extra visuals: breakers that move, arc flashes on trips, repair and crew rings, lines weighted by load,
+   customers off per substation, lightning strikes and the shift intro card. All drawing only: no effect on the game. ---------- */
+const GFX={brk:{},t0:{},arc:[],intro:false},SVGNS='http://www.w3.org/2000/svg';
+const gfxCan=()=>!!($('mimic')&&$('mimic').getBBox);
+function gfxLayer(id){const m=$('mimic');if(!m)return null;let g=$(id);if(!g){g=document.createElementNS(SVGNS,'g');g.id=id;g.setAttribute('class','gfx');m.appendChild(g);}return g;}
+function gfxReset(){GFX.brk={};GFX.t0={};GFX.arc=[];}
+// a breaker that changes state gives a short flick
+function gfxBreakers(){const quiet=S.silent||RMQ.matches;
+  document.querySelectorAll('#mimic .brk[id]').forEach(e=>{const o=e.classList.contains('open'),was=GFX.brk[e.id];GFX.brk[e.id]=o;
+    if(was===undefined||was===o||quiet)return;e.classList.remove('flick');void e.getBoundingClientRect();e.classList.add('flick');setTimeout(()=>e.classList.remove('flick'),500);});}
+// an arc flash and a puff of smoke where a breaker tripped
+function gfxArcs(){if(!GFX.arc.length)return;const q=GFX.arc.splice(0);if(RMQ.matches||!gfxCan())return;const L=gfxLayer('gfxA');if(!L)return;
+  q.forEach(k=>{const b=SELBOX[k];if(!b)return;const cx=b[0]+b[2]/2,cy=b[1]+b[3]/2,g=document.createElementNS(SVGNS,'g');
+    g.setAttribute('class','arc');g.setAttribute('transform',`translate(${cx.toFixed(1)} ${cy.toFixed(1)})`);
+    g.innerHTML='<circle class="arc-glow" r="6"/><circle class="arc-core" r="4"/><circle class="arc-smoke s1" r="5"/><circle class="arc-smoke s2" r="4"/><circle class="arc-smoke s3" r="3.5"/>';
+    L.appendChild(g);setTimeout(()=>g.remove(),1700);});}
+// repair progress: a ring that fills from when the repair started (or was first seen) to when it is done
+function gfxRings(){const L=gfxLayer('gfxR');if(!L)return;const out=[],seen={};
+  const ring=(key,cx,cy,until,label,around)=>{if(cx==null||!isFinite(cx))return;seen[key]=1;const t0=GFX.t0[key]!=null?GFX.t0[key]:(GFX.t0[key]=S.t);
+    const f=until>t0?clamp((S.t-t0)/(until-t0),0,1):1,r=around?12:9;
+    out.push(`<g class="rring${around?' around':''}" transform="translate(${cx.toFixed(1)} ${cy.toFixed(1)})"><title>${esc(label)}: repair done about ${fmtT(until)}</title><circle class="rr-bg" r="${r}"/><circle class="rr-p" r="${r}" pathLength="100" stroke-dasharray="${(f*100).toFixed(1)} 100" transform="rotate(-90)"/>`+
+      (around?'':'<path class="rr-w" d="M-3.6 3.6 L1.2 -1.2 M1.2 -1.2 a2.6 2.6 0 1 1 2.2 -2.2 l-1.6 -.2 l-.6 .6 l.2 1.6 z"/>')+'</g>');};
+  const bb=id=>{const e=$(id);if(!e||!e.getBBox||e.closest('[hidden]'))return null;try{const b=e.getBBox();return b.width||b.height?b:null;}catch(x){return null;}};
+  if(LV_ON)PIDS.forEach(p=>LF[p].forEach((v,i)=>{const F=S.lff[p][i];if(!F||!F.found||F.until==null)return;const b=bb(`lfx${F.sec}_${p}${i}`);if(b)ring('lv'+p+i,b.x+b.width/2,b.y+b.height/2,F.until,`${LFN[p][i]} 11 kV fault`,true);}));
+  PIDS.forEach(p=>{const f=S.fd[p]&&S.fd[p].fault;if(f&&!f.ready){const e=$('fdl_'+p);if(e)ring('fd'+p,+e.getAttribute('x1')-18,(+e.getAttribute('y1')+ +e.getAttribute('y2'))/2,f.until,`${PR[p].name} 33 kV feeder`);}
+    const T=S.pt&&S.pt[p];if(T&&T.fault&&!T.fault.ready){const b=SELBOX['pt:'+p];if(b)ring('pt'+p,b[0]-12,b[1]+b[3]/2,T.fault.until,`${PR[p].name} transformer`);}});
+  S.tx.forEach((t,i)=>{if(!t.out||t.out.ready||t.out.kind==='open')return;ring('tx'+i,TXX[i]-34,112,t.out.until,`T${i+1}`);});
+  ITIDS.forEach(k=>{const f=S.it[k]&&S.it[k].fault;if(f&&!f.ready){const b=SELBOX['it:'+k];if(b)ring('it'+k,b[0]+b[2]+12,b[1]+b[3]/2,f.until,devName('it:'+k));}});
+  if(S.bb&&!S.bb.ready)ring('bb',SECS[S.bb.sec].x1+14,BCY-16,S.bb.until,'Busbar');
+  Object.keys(GFX.t0).forEach(k=>{if(!seen[k])delete GFX.t0[k];});
+  const h=out.join('');if(L._h!==h){L._h=h;L.innerHTML=h;}}
+// how many customers are off at each substation, as a bubble beside its name
+function gfxSubs(){if(!LV_ON||!gfxCan())return;const L=gfxLayer('gfxS');if(!L)return;const out=[];
+  PIDS.forEach(p=>{let n=0;LF[p].forEach((v,i)=>[0,1].forEach(s2=>{if(secFeed(p,i,s2)===null)n+=custOf(p,i,s2);}));if(!n)return;
+    const e=$('snm_'+p);if(!e)return;let b;try{b=e.getBBox();}catch(x){return;}if(!b.width)return;
+    const t=nf(n)+' off',w=t.length*6.4+12,x=b.x+b.width+8,y=b.y+b.height/2;
+    out.push(`<g class="cust-b"><title>${nf(n)} customers off supply at ${esc(PR[p].name)}</title><rect x="${x.toFixed(1)}" y="${(y-8).toFixed(1)}" width="${w.toFixed(1)}" height="16" rx="8"/><text x="${(x+w/2).toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="middle">${t}</text></g>`);});
+  const h=out.join('');if(L._h!==h){L._h=h;L.innerHTML=h;}}
+// lines carry their load: thicker as they load up, shimmering near their rating
+function gfxLines(){const set=(el,L,closed)=>{if(!el)return;const w=closed?(2.4+3.2*clamp(L,0,1.25)).toFixed(2):'';if(el.style.strokeWidth!==(w?w+'px':''))el.style.strokeWidth=w?w+'px':'';el.classList.toggle('shim',!!closed&&L>=.9);};
+  PIDS.forEach(p=>{if(PR[p].fd)set($('fdl_'+p),S.edL['bc:'+p]||0,fdOn(p));if(PR[p].nb)set($('tl_'+p),S.edL['tie:'+p]||0,S.tie[p]&&S.tie[p].closed);});
+  ITIDS.forEach(k=>set($('itl_'+k),S.edL['it:'+k]||0,S.it[k]&&S.it[k].closed&&!S.it[k].fault));
+  LKIDS.forEach(k=>set($('lkl_'+k),((S.lkLoad||{})[k]||0)/LINKS[k].r,!!S.lk[k]));}
+// battery charging or discharging, CHP smoke that follows its output
+function gfxGen(){const bl=$('battLvl');if(bl&&S.act){const b=(S.act.bdis||0)-(S.act.bchg||0);bl.classList.toggle('chg',b<-.5);bl.classList.toggle('dis',b>.5);}
+  const ch=$('gi_chp');if(ch&&S.act)ch.style.setProperty('--chp',clamp((S.act.chp||0)/25,0,1).toFixed(2));}
+// lightning: a flash across the diagram when a lightning strike causes a fault
+function strike(){if(S.silent||RMQ.matches)return;const w=$('wx');if(!w)return;w.classList.remove('strike');void w.offsetWidth;w.classList.add('strike');setTimeout(()=>w.classList.remove('strike'),900);}
+// the intro card at the start of a shift: date, title, weather and what to watch for
+function introCard(){if(GFX.intro||!S||S.key==='tut'||S.silent)return;GFX.intro=true;const sc=S.sc;let c=$('introCard');
+  if(!c){c=document.createElement('div');c.id='introCard';c.className='shift-in';c.setAttribute('aria-hidden','true');document.body.appendChild(c);}
+  const wx=(S.risk||[]).map(w=>`${w.label} ${fmtT(w.start)}–${fmtT(w.end)}`).join(' · ');
+  c.style.setProperty('--sc',sc.color||'var(--accent)');
+  c.innerHTML=`<div class="in-card"><span class="in-ic"><svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[sceneOf(S.key)]||''}</svg></span><p class="in-when">${esc(sc.when)} · ${fmtT(START)}</p><h2>${esc(sc.title)}</h2><p class="in-focus">${esc(sc.focus||'')}</p>${wx?`<p class="in-wx">${esc(wx)}</p>`:''}</div>`;
+  c.hidden=false;c.classList.remove('go');void c.offsetWidth;c.classList.add('go');clearTimeout(introCard.t);introCard.t=setTimeout(()=>{c.hidden=true;c.classList.remove('go');},RMQ.matches?1600:3000);}
+function gfxAll(){if(!S||!$('mimic'))return;if(S.running&&!S.ended)introCard();gfxBreakers();gfxArcs();gfxLines();gfxGen();if(gfxCan())gfxRings();}
 let lastRender=0;
 function frame(now){
   const dt=Math.min(.25,(now-lastFrame)/1000);lastFrame=now;

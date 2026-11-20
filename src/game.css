@@ -877,3 +877,69 @@ a.btn.fl-go{text-decoration:none;border-color:var(--zap);box-shadow:inset 4px 0 
 /* Gatekeeper: run the network you built there */
 .btn.sec-go.gk-go{background:#0B1F3A;color:#FFD23F;border-color:#FFD23F}
 .gk-end{border-left:5px solid #FFD23F}
+
+/* ---- Extra visuals (gfx in game.js) ---- */
+.gfx{pointer-events:none}
+/* breakers flick when they change state */
+.brk.flick{animation:brkFlick .45s cubic-bezier(.3,1.6,.5,1);transform-box:fill-box;transform-origin:center}
+@keyframes brkFlick{0%{transform:scale(1.5) rotate(-12deg)}55%{transform:scale(.9) rotate(4deg)}100%{transform:none}}
+/* arc flash and smoke where a breaker tripped */
+.arc-glow{fill:#fff6c8;opacity:.9;animation:arcGlow .5s ease-out forwards}
+.arc-core{fill:#fff;animation:arcCore .3s ease-out forwards}
+@keyframes arcGlow{0%{r:4;opacity:1;fill:#fff}40%{fill:var(--zap)}100%{r:26;opacity:0}}
+@keyframes arcCore{to{r:12;opacity:0}}
+.arc-smoke{fill:var(--muted);opacity:0;animation:arcSmoke 1.5s ease-out .25s forwards}
+.arc-smoke.s2{animation-delay:.4s}.arc-smoke.s3{animation-delay:.55s}
+@keyframes arcSmoke{0%{opacity:.55;transform:translate(0,0) scale(.6)}100%{opacity:0;transform:translate(8px,-30px) scale(2.4)}}
+.arc-smoke.s2{--dx:-6px}
+/* repair progress rings */
+.rring .rr-bg{fill:var(--panel);stroke:var(--rule);stroke-width:2.5}
+.rring.around .rr-bg{fill:none;stroke:color-mix(in srgb,var(--alarm) 25%,transparent)}
+.rring .rr-p{fill:none;stroke:var(--ok);stroke-width:2.8;stroke-linecap:round;transition:stroke-dasharray .4s}
+.rring .rr-w{fill:none;stroke:var(--muted);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+/* crew job progress round the crew's number */
+.crew .crew-tag circle.crew-ring{fill:none;stroke:var(--ok);stroke-width:2.2;stroke-linecap:round}
+/* lines weighted by load: a shimmer near the rating */
+.shim{animation:lineShim 1s ease-in-out infinite alternate}
+@keyframes lineShim{to{stroke-opacity:.55;filter:drop-shadow(0 0 2px var(--warn))}}
+/* customers off at each substation */
+.cust-b rect{fill:var(--alarm)}
+.cust-b text{font:700 10.5px var(--f-mono);fill:#fff;stroke:none}
+/* battery charging and discharging, CHP smoke with output, mobile generator exhaust */
+#battLvl.chg{animation:battChg 1.4s ease-in-out infinite}
+#battLvl.dis{animation:battDis 1.4s ease-in-out infinite}
+@keyframes battChg{50%{fill-opacity:.55}}
+@keyframes battDis{50%{fill-opacity:.55;transform:translateX(-1px)}}
+#gi_chp .gi-smoke{opacity:calc(.25 + .75 * var(--chp,0));transform-box:fill-box;transform-origin:center;scale:calc(.7 + .8 * var(--chp,0))}
+.mg-ex{display:none}
+.mg.on .mg-ex{display:inline}
+.mg-ex circle{fill:var(--muted);opacity:0;animation:mgEx 1.6s ease-out infinite}
+.mg-ex circle+circle{animation-delay:.8s}
+@keyframes mgEx{0%{opacity:.6;transform:translate(0,0) scale(.6)}100%{opacity:0;transform:translate(5px,-14px) scale(2)}}
+/* weather: gusts on storm shifts, a lightning flash with lightning faults */
+.wx-storm .wx-d{display:block;background:repeating-linear-gradient(178deg,transparent 0 46px,color-mix(in srgb,var(--muted) 10%,transparent) 46px 47px);background-size:420px 140px;animation:wxGust 1.1s linear infinite}
+@keyframes wxGust{from{background-position:0 0}to{background-position:-420px 6px}}
+.wx.strike .wx-c{display:block;background:#fff;animation:wxStrike .8s ease-out}
+@keyframes wxStrike{0%,30%{opacity:0}10%{opacity:.85}40%{opacity:.6}100%{opacity:0}}
+/* alarm list: icons, a pulse on new ones, site headings */
+.al-l{display:inline-flex;align-items:center;white-space:nowrap}
+.al-i{flex:none;width:13px;height:13px;vertical-align:-2px;margin-right:4px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.al.unack .al-i{animation:alPulse 1.1s ease-in-out infinite}
+@keyframes alPulse{50%{transform:scale(1.25);opacity:.6}}
+.al-i{transform-box:fill-box;transform-origin:center}
+.al-grp{display:flex;justify-content:space-between;align-items:center;margin:6px 2px 0;font:700 11px var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.al-grp:first-child{margin-top:0}
+.al-grp b{font:700 11px var(--f-mono);background:var(--sunk);border-radius:8px;padding:0 7px}
+/* shift intro card */
+.shift-in{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;pointer-events:none;padding:16px}
+.shift-in .in-card{margin:auto;justify-self:center;flex:0 1 auto}
+.shift-in .in-card{background:var(--brand,#0B1F3A);color:#fff;border-radius:16px;padding:22px 30px 20px;text-align:center;max-width:min(520px,92vw);box-shadow:0 24px 70px rgba(0,0,0,.45);border-top:6px solid var(--sc);opacity:0}
+.shift-in.go .in-card{animation:introIn 3s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes introIn{0%{opacity:0;transform:translateY(24px) scale(.94)}12%{opacity:1;transform:none}80%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-14px) scale(.98)}}
+.in-ic{display:inline-grid;place-items:center;width:52px;height:52px;border-radius:50%;background:color-mix(in srgb,var(--sc) 30%,transparent);margin-bottom:6px}
+.in-ic svg{width:30px;height:30px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.in-when{margin:0;font:600 12px var(--f-display);letter-spacing:.16em;text-transform:uppercase;color:var(--zap,#ffc928)}
+.shift-in h2{margin:4px 0 2px;font:700 38px/1 var(--f-display);letter-spacing:.03em;text-transform:uppercase}
+.in-focus{margin:6px 0 0;font:500 16px var(--f-body);color:#d8e0ec}
+.in-wx{margin:10px 0 0;font:600 12.5px var(--f-mono);color:#ffb3a8}
+@media (prefers-reduced-motion:reduce){.brk.flick,.arc-glow,.arc-core,.arc-smoke,.shim,#battLvl.chg,#battLvl.dis,.mg-ex circle,.wx-d,.al.unack .al-i{animation:none!important}.shift-in.go .in-card{animation:none;opacity:1}}
