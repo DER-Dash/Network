@@ -9,6 +9,12 @@ It has two kinds of shift, chosen on the start screen:
 - **Generation**: balance generation, batteries and flexibility to stay inside firm capacity
   (also at https://www.wattsupelectricity.co.uk/control-room/?mode=gen).
 
+Also on the site, built from the same `src/` folder:
+
+- **Fault Lines** (https://www.wattsupelectricity.co.uk/fault-lines/): a daily fault-finding puzzle.
+- **Gatekeeper** (https://www.wattsupelectricity.co.uk/gatekeeper/): a ten-year connections planning game. The
+  network you build there can be played as a Losing Control generation shift ("Run your network").
+
 The main address (https://www.wattsupelectricity.co.uk/) and the old `/generation/` address
 redirect to the game. Old links to https://der-dash.github.io/Network/ forward to the new domain.
 

@@ -170,3 +170,19 @@ Version 22 adds the scoreboard for **Fault Lines**' daily puzzle at `/fault-line
 counts, and the script recalculates every score itself. Replace the code with the new `Code.gs`, save, then
 **Deploy → Manage deployments → pencil → Version: New version → Deploy** (same URL). Until then the puzzle
 plays normally and its scoreboard says "coming soon". Losing Control is unaffected.
+
+## Updating to version 23 (Gatekeeper)
+
+Version 23 adds **Gatekeeper**, the connections planning game at `/gatekeeper/`:
+
+- **Scores** go on a new **Gatekeeper scores** tab, created automatically with the first score. A score is a whole
+  ten-year career. The game sends the five scores from each year's report card, and the script works out the
+  grades, stars and career score itself (the sum of the yearly averages × 10, up to 10,000). Each player's best
+  career counts. There are two boards: free play (`gk-free`) and the week's canyon (`gk-week-<Monday>`), which is
+  the same for everyone that week; the script checks its seed. Last week's canyon is still accepted for a week.
+- **Saving a game online** uses the same name and PIN as Losing Control. Two new columns on the **Careers** tab,
+  added automatically, hold the game in progress (the newest save wins) and the best career score.
+
+Replace the code with the new `Code.gs`, save, then **Deploy → Manage deployments → pencil → Version: New version →
+Deploy** (same URL). Losing Control and Fault Lines are unaffected. Until it is deployed, Gatekeeper plays normally
+and its scoreboard says "coming soon".

@@ -1,5 +1,9 @@
 /**
  * Losing Control scoreboard and feedback (Watts Up), version 7.
+ * Version 23: Gatekeeper ('gk'), the connections planning game. Career scores go on a 'Gatekeeper scores' tab
+ *   (mode 'gk-free' or 'gk-week-YYYY-MM-DD' for the week's canyon, Monday's date): the score is worked out here from
+ *   the ten yearly report cards. Career saves (the game in progress) go in two new columns on the Careers tab,
+ *   under the same name and PIN as Losing Control. See gkPost_ and gkCareer_.
  * Version 22: Fault Lines daily puzzle ('fl'). Scores go on a 'Fault Lines scores' tab, mode
  *   'fl-daily-YYYY-MM-DD', day = the level set by that date's weekday. Each player's FIRST score of
  *   the day counts (it's one go a day). See flPost_.
@@ -46,7 +50,7 @@
  * formula as the game, so the sheet never trusts a score sent by the browser.
  * Rows saved before version 2 have no mode and count as free play.
  */
-const VERSION = 22;
+const VERSION = 23;
 // Scores are only accepted from the games on these sites. Apps Script can't see the request's
 // origin, so the games send their hostname; copies of the game hosted elsewhere send theirs.
 const HOME_SITES = ['der-dash.github.io', 'www.wattsupelectricity.co.uk', 'wattsupelectricity.co.uk'];
@@ -210,8 +214,82 @@ function flPost_(d, name) {
     repeat: mine.score !== score || rows.some(r => r.name.toLowerCase() === name.toLowerCase()) });
 }
 
+/* ---------- Gatekeeper (version 23) ----------
+ * A ten-year career, one year a round. The game sends the five scores (0-100) from each year's report card;
+ * the average of a year sets its grade, and the career score is the sum of the yearly averages x 10 (up to 10,000).
+ * The week's canyon is the same for everyone that week: its seed is a hash of the Monday, checked here.
+ */
+const GK_SHEET_NAME = 'Gatekeeper scores';
+const GK_HEADERS = ['Submitted', 'Name', 'Mode', 'Score', 'Grade', 'Stars', 'Connections', 'Security', 'Curtailment',
+  'Cost', 'Regulator', 'Yearly grades', 'Seed'];
+const GK_KEYS = ['conn', 'sec', 'curt', 'cost', 'reg'];
+const gkGrade_ = x => x >= 85 ? 'A' : x >= 70 ? 'B' : x >= 55 ? 'C' : x >= 40 ? 'D' : 'E';
+const gkStars_ = g => ({ A: 3, B: 2, C: 1 })[g] || 0;
+function gkHash_(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+const gkWeekSeed_ = monday => gkHash_('gatekeeper|week|' + monday);
+function gkModeOk_(mode) {
+  if (mode === 'gk-free') return true;
+  const m = /^gk-week-(\d{4})-(\d{2})-(\d{2})$/.exec(mode);
+  if (!m) return false;
+  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+  // a Monday, and recent: a career takes a while, so last week's canyon is still accepted
+  return d.getUTCDay() === 1 && d.getTime() <= Date.now() + 86400000 && Date.now() - d.getTime() < 15 * 86400000;
+}
+function gkSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(GK_SHEET_NAME);
+  if (!sh) {
+    sh = ss.insertSheet(GK_SHEET_NAME);
+    sh.appendRow(GK_HEADERS);
+    sh.setFrozenRows(1);
+    sh.getRange(1, 1, 1, GK_HEADERS.length).setFontWeight('bold');
+  }
+  return sh;
+}
+function gkRows_(mode) {
+  const sh = gkSheet_();
+  if (sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, GK_HEADERS.length).getValues()
+    .filter(r => String(r[2]) === mode)
+    .map(r => ({ name: String(r[1]), score: Number(r[3]), grade: String(r[4]), stars: Number(r[5]), years: String(r[11]),
+      at: r[0] instanceof Date ? r[0].toISOString() : String(r[0]) }));
+}
+// each player's best career
+function gkBoard_(rows) {
+  const best = {};
+  rows.forEach(x => { const k = x.name.toLowerCase(); if (!best[k] || x.score > best[k].score) best[k] = x; });
+  return Object.keys(best).map(k => best[k]).sort((a, b) => b.score - a.score || a.at.localeCompare(b.at));
+}
+function gkPost_(d, name) {
+  const mode = String(d.mode || '');
+  if (!name || !gkModeOk_(mode)) return json_({ ok: false, error: 'Invalid score' });
+  const seed = Math.round(Number(d.seed));
+  if (mode !== 'gk-free' && seed !== gkWeekSeed_(mode.slice(8))) return json_({ ok: false, error: 'Invalid score' });
+  const years = Array.isArray(d.years) ? d.years : [];
+  if (years.length !== 10) return json_({ ok: false, error: 'Invalid score' });
+  const sc = [];
+  for (let i = 0; i < 10; i++) {
+    const y = years[i] || {}, row = {};
+    for (const k of GK_KEYS) { const v = Number(y[k]); if (!isFinite(v) || v < 0 || v > 100) return json_({ ok: false, error: 'Invalid score' }); row[k] = v; }
+    sc.push(row);
+  }
+  const avgs = sc.map(y => GK_KEYS.reduce((t, k) => t + y[k], 0) / 5), grades = avgs.map(gkGrade_);
+  const score = Math.round(avgs.reduce((a, b) => a + b, 0) * 10), grade = gkGrade_(avgs.reduce((a, b) => a + b, 0) / 10);
+  const stars = grades.reduce((t, g) => t + gkStars_(g), 0);
+  const mean = k => Math.round(sc.reduce((t, y) => t + y[k], 0) / 10);
+  gkSheet_().appendRow([new Date(), name, mode, score, grade, stars, mean('conn'), mean('sec'), mean('curt'), mean('cost'), mean('reg'),
+    grades.join(''), isFinite(seed) ? seed : '']);
+  const board = gkBoard_(gkRows_(mode)), i = board.findIndex(r => r.name.toLowerCase() === name.toLowerCase());
+  return json_({ ok: true, version: VERSION, name: name, score: score, grade: grade, stars: stars, best: board[i].score, rank: i + 1, total: board.length });
+}
+
 function doGet(e) {
   const p = (e && e.parameter) || {};
+  if (p.game === 'gk') {
+    const mode = String(p.mode || 'gk-free');
+    if (!/^gk-(free|week-\d{4}-\d{2}-\d{2})$/.test(mode)) return json_({ ok: false, error: 'mode' });
+    return json_({ ok: true, version: VERSION, scores: gkBoard_(gkRows_(mode)).slice(0, 50) });
+  }
   if (p.game === 'fl') {
     const mode = String(p.mode || '');
     if (!/^fl-daily-\d{4}-\d{2}-\d{2}$/.test(mode)) return json_({ ok: false, error: 'mode' });
@@ -233,7 +311,8 @@ function doGet(e) {
  * save again under the same name with a new PIN.
  */
 const CAREER_SHEET_NAME = 'Careers';
-const CAREER_HEADERS = ['Name', 'PIN (scrambled)', 'Updated', 'Control room career', 'Generation career', 'Control room stars', 'Generation stars'];
+const CAREER_HEADERS = ['Name', 'PIN (scrambled)', 'Updated', 'Control room career', 'Generation career', 'Control room stars', 'Generation stars',
+  'Gatekeeper game', 'Gatekeeper best score'];
 const PIN_TRIES = 5, PIN_LOCK_SECONDS = 900;
 
 function careerSheet_() {
@@ -246,7 +325,28 @@ function careerSheet_() {
     sh.setFrozenRows(1);
     sh.getRange(1, 1, 1, CAREER_HEADERS.length).setFontWeight('bold');
   }
+  // sheets made before version 23 have seven columns: add the Gatekeeper ones
+  if (sh.getRange(1, 8).getValue() !== CAREER_HEADERS[7]) sh.getRange(1, 8, 1, 2).setValues([CAREER_HEADERS.slice(7)]);
   return sh;
+}
+
+// Gatekeeper's save: the game in progress (the newest wins, by its time t) and the best finished career.
+const GK_SAVE_MAX = 45000;
+function gkClean_(c) {
+  const out = { save: '', t: 0, best: null };
+  if (!c || typeof c !== 'object') return out;
+  const save = typeof c.save === 'string' ? c.save : '';
+  if (save && save.length <= GK_SAVE_MAX) {
+    try { const g = JSON.parse(save); if (g && typeof g === 'object' && g.year >= 1 && g.year <= 10) { out.save = save; out.t = Math.max(0, Math.round(Number(c.t) || 0)); } } catch (err) { }
+  }
+  const b = c.best && typeof c.best === 'object' ? c.best : null;
+  if (b) { const sc = Math.round(Number(b.score)); if (isFinite(sc) && sc >= 0 && sc <= 10000) out.best = { score: sc, grade: gkGrade_(sc / 100), stars: Math.max(0, Math.min(30, Math.round(Number(b.stars) || 0))) }; }
+  return out;
+}
+function gkMerge_(a, b) {
+  const n = b.t > a.t ? b : a, out = { save: n.save, t: n.t, best: a.best };
+  if (b.best && (!out.best || b.best.score > out.best.score)) out.best = b.best;
+  return out;
 }
 
 function pinSalt_() {
@@ -306,16 +406,19 @@ function careerSync_(d) {
   if (name.length < 2 || rude_(name)) return json_({ ok: false, error: 'name' });
   const pin = String(d.pin || '');
   if (!/^\d{4}$/.test(pin)) return json_({ ok: false, error: 'pin_format' });
-  const game = d.game === 'cr' ? 'cr' : 'fc', col = game === 'cr' ? 4 : 5;
+  const game = d.game === 'cr' ? 'cr' : d.game === 'gk' ? 'gk' : 'fc', col = { cr: 4, fc: 5, gk: 8 }[game];
+  if (game === 'gk' && d.career && typeof d.career.save === 'string' && d.career.save.length > GK_SAVE_MAX) return json_({ ok: false, error: 'big' });
+  const clean = c => game === 'gk' ? gkClean_(c) : cleanCareer_(c, game), merge = game === 'gk' ? gkMerge_ : mergeCareer_;
+  const total = c => game === 'gk' ? (c.best ? c.best.score : '') : starTotal_(c), totalCol = game === 'gk' ? 9 : col + 2;
   const key = name.toLowerCase(), cache = CacheService.getScriptCache(), failKey = 'pinFail:' + key;
   if (Number(cache.get(failKey) || 0) >= PIN_TRIES) return json_({ ok: false, error: 'locked' });
   const sh = careerSheet_(), last = sh.getLastRow();
   const names = last >= 2 ? sh.getRange(2, 1, last - 1, 1).getValues().map(r => String(r[0]).toLowerCase()) : [];
-  const i = names.indexOf(key), hash = pinHash_(key, pin), mine = cleanCareer_(d.career, game);
+  const i = names.indexOf(key), hash = pinHash_(key, pin), mine = clean(d.career);
   if (i < 0) {
     if (d.intent === 'load') return json_({ ok: false, error: 'none' });
-    const row = [name, hash, new Date(), '', '', '', ''];
-    row[col - 1] = JSON.stringify(mine); row[col + 1] = starTotal_(mine);
+    const row = [name, hash, new Date(), '', '', '', '', '', ''];
+    row[col - 1] = JSON.stringify(mine); row[totalCol - 1] = total(mine);
     sh.appendRow(row);
     return json_({ ok: true, version: VERSION, created: true, name: name, career: mine });
   }
@@ -328,10 +431,10 @@ function careerSync_(d) {
   cache.remove(failKey);
   let saved = {};
   try { saved = JSON.parse(String(vals[col - 1] || '{}')); } catch (err) { saved = {}; }
-  const merged = mergeCareer_(cleanCareer_(saved, game), mine);
+  const merged = merge(clean(saved), mine);
   sh.getRange(r, 3).setValue(new Date());
   sh.getRange(r, col).setValue(JSON.stringify(merged));
-  sh.getRange(r, col + 2).setValue(starTotal_(merged));
+  sh.getRange(r, totalCol).setValue(total(merged));
   return json_({ ok: true, version: VERSION, created: false, name: String(vals[0]), career: merged });
 }
 
@@ -352,7 +455,7 @@ function feedback_(d) {
   const count = Number(cache.get('fbCount') || 0);
   if (count >= 20) return json_({ ok: false, error: 'busy' });
   cache.put('fbCount', String(count + 1), 600);
-  const game = d.game === 'cr' ? 'Control room game' : 'Generation game';
+  const game = d.game === 'cr' ? 'Control room game' : d.game === 'gk' ? 'Gatekeeper' : d.game === 'fl' ? 'Fault Lines' : 'Generation game';
   const name = clean_(d.name, 60), contact = clean_(d.contact, 100), context = clean_(d.context, 300);
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName(FEEDBACK_SHEET_NAME);
@@ -386,6 +489,7 @@ function doPost(e) {
     const name = String(d.name || '').replace(/[^\p{L}\p{N} '_.-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 20);
     if (name && rude_(name)) return json_({ ok: false, error: 'name' });
     if (d.game === 'fl') return flPost_(d, name);
+    if (d.game === 'gk') return gkPost_(d, name);
     const game = d.game === 'cr' ? 'cr' : 'fc';
     const day = (game === 'cr' ? CR_DAYS : DAYS).indexOf(d.day) >= 0 ? d.day : null;
     const rawMode = String(d.mode || (game === 'cr' ? 'cr-free' : 'free'));

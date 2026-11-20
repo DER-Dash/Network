@@ -310,6 +310,22 @@ const SCENARIOS_FC={
 if(SCENARIOS.jan)SCENARIOS.tut={...SCENARIOS.jan,hidden:true,title:'Tutorial · Cold Thursday',focus:'Learn the control room',faults:0,
   blurb:'Cold Thursday, 15:30: the evening peak is building. Learn generation, flexibility and switching on the real network.',build(r){return{events:[],cutout:null,risk:[]};}};
 if(GAME==='fc'){Object.keys(SCENARIOS).forEach(k=>delete SCENARIOS[k]);Object.assign(SCENARIOS,SCENARIOS_FC);}
+/* Your Gatekeeper network: Gatekeeper (/gatekeeper/, same site) leaves the network the player built in localStorage 'gk-export'.
+   It becomes a generation shift: Cold Thursday with demand scaled by how loaded the grid supply point is compared with the
+   network they inherited (kD), or Sunny Sunday if export is the bigger problem (E, export as a share of its limit). The
+   flexible customers they connected are the flexibility they can call (sc.svc). Not on the scoreboard (noBoard). */
+const gkExport=()=>{try{const x=JSON.parse(localStorage.getItem('gk-export')||'null');return x&&x.v===1&&x.kD>0&&x.dsr&&x.batt&&x.solar?x:null;}catch(e){return null;}};
+function gkScenario(){const X=gkExport();if(GAME!=='fc'||!X||!SCENARIOS_FC.jan)return;
+  const sunny=(+X.E||0)>=.55,T=sunny?SCENARIOS_FC.may:SCENARIOS_FC.jan,kD=clamp(X.kD,.75,1.35),nm=g=>g.names&&g.names.length?g.names[0]+(g.n>1?` and ${g.n-1} more`:''):null;
+  const dsr=Math.round(clamp((+X.dsr.mw||0)+(+X.flexBuy||0),0,40)),batt=Math.round(clamp(+X.batt.mw||0,0,40)),sol=+X.solar.mw||0;
+  const can=[dsr?`${dsr} MW of demand turn-down (${nm(X.dsr)||'flexibility services'})`:'',batt?`${batt} MW of battery (${nm(X.batt)})`:'',sol?`${Math.round(sol)} MW of curtailable solar (${nm(X.solar)})`:''].filter(Boolean);
+  SCENARIOS.gk={...T,hidden:true,noBoard:true,gk:X,diff:kD>1.15?3:kD>.95?2:1,title:'Your network',when:`Year ${X.year} of Gatekeeper · ${T.when.split(' ')[0]}`,
+    focus:sunny?'Your network on a sunny day':'Your network at winter peak',
+    demand:T.demand.map(([h,v])=>[h,Math.round(v*(sunny?Math.min(kD,1.1):kD)*10)/10]),
+    solar:sunny?{...T.solar,peak:Math.round(clamp(76+(+X.E)*120,90,220))}:T.solar,
+    svc:{dsr:{cap:dsr,name:nm(X.dsr)},bchg:{cap:batt,name:nm(X.batt)},bdis:{cap:batt,name:nm(X.batt)},solar:{allow:Math.round(20+sol*4),name:nm(X.solar)}},  // no name: the usual one
+    blurb:`The network you built in Gatekeeper, after ${X.year} year${X.year===1?'':'s'}. ${sunny?`On sunny days export reaches ${Math.round(X.E*100)}% of the limit.`:`Peak demand on the grid supply point is ${Math.round(X.kD*100)}% of what you inherited${X.sgt?', even with the supergrid transformer you built':''}.`} The flexibility you can call is what you connected: ${can.length?can.join(', '):'none, so it\'s down to switching and the Ohm No CHP'}. ${T.blurb}`};}
+gkScenario();
 // Handover notes: a short note from the engineer going off shift, shown before each career shift starts
 const HANDOVER=GAME==='cr'?{
   quiet:{from:'Pat, night shift',text:'Quiet night, nothing tripped. Everything is in its normal running arrangement and all three crews are back at the depot. Kings Hill Hospital is on the far half of the Kings Hill feeder, so if that one locks out, get the far half back first.'},
@@ -380,6 +396,10 @@ const SERVICES=[
   {id:'dsr',prim:'hw',ic:'dsr',tc:'var(--c-dsr)',name:'Hertz House Industrial Estate',kind:'Demand response',dir:'import',arm:5,use:200,cap:15,ramp:5,fail:.12},
 ];
 const SV=Object.fromEntries(SERVICES.map(s=>[s.id,s]));
+// A scenario can change a service's capacity, name or curtailment allowance (sc.svc): the Gatekeeper network shift
+// uses the flexible customers the player connected there. Everything else gets these defaults back.
+const SV0=Object.fromEntries(SERVICES.map(s=>[s.id,{cap:s.cap,name:s.name,allow:s.allow}]));
+function applySvc(sc){SERVICES.forEach(s=>{const d=SV0[s.id],o=(sc&&sc.svc&&sc.svc[s.id])||{};s.cap=o.cap!=null?o.cap:d.cap;s.name=o.name||d.name;s.allow=o.allow!=null?o.allow:d.allow;});}
 const ASSETS=[
   {id:'load_hw',type:'load',prim:'hw',x:128,name:'Demand'},
   {id:'batt',type:'batt',prim:'hw',x:215,name:'Battery',col:'var(--c-batt)'},
@@ -678,7 +698,7 @@ const spanOf=k=>{const v=SCENARIOS[k]||{};return{start:v.start!=null?v.start:CFG
 const runText=()=>{const r=Math.round((END-START)/CFG.rate/60*2)/2;return `Shift runs ${fmtT(START)}–${END>=1440?'24:00':fmtT(END)}, about ${Math.floor(r)}${r%1?'½':''} minutes at 1×.`;};
 const zeroD=()=>({solar:0,wind:0,bchg:0,bdis:0,chp:0,dsr:0});
 function newGame(key){
-  const sc=SCENARIOS[key],date=todayUK(),daily=mode==='daily';
+  const sc=SCENARIOS[key],date=todayUK(),daily=mode==='daily'&&!sc.noBoard;applySvc(sc);
   ({start:START,end:END}=spanOf(key));
   const seed=daily?hashStr(date+'|'+key+'|'+CFG.salt):((Math.random()*2**31)|0);
   const rng=rngFrom(seed),b=sc.build(rng),surgeK=sc.surge ? .85+.3*rng() : 1;
@@ -740,7 +760,7 @@ function netP(c,p,a){let v=dem(c,p);
   if(p==='ml')v+=-(c.solar-a.solar);
   if(p==='rv')v+=-(c.wind-a.wind)-a.chp;
   return v;}
-function availability(c,m){if(NOGEN())return zeroD();const a={solar:c.solar,wind:c.wind,bchg:S.soc<SOC_MAX-.3?30:0,bdis:S.soc>.3?Math.min(30,S.soc*60):0,chp:25,dsr:15};
+function availability(c,m){if(NOGEN())return zeroD();const a={solar:c.solar,wind:c.wind,bchg:S.soc<SOC_MAX-.3?SV.bchg.cap:0,bdis:S.soc>.3?Math.min(SV.bdis.cap,S.soc*60):0,chp:SV.chp.cap,dsr:SV.dsr.cap};
   SERVICES.forEach(s=>{if(s.gen&&S.allow[s.id]<=0)a[s.id]=0;if(S.fail[s.id]>m)a[s.id]=0;});return a;}
 function spareOf(k,m){const sc=S.sc,nb=(sc.nb&&sc.nb[k])||NBS[k];let sh;
   if(sc.nbShape==='solar'){const h=m/60,f=(h-sc.solar.start)/(sc.solar.end-sc.solar.start);sh=f>0&&f<1?Math.pow(Math.sin(Math.PI*f),1.4):0;}
@@ -1893,7 +1913,7 @@ function adjust(f,id,d){if(!S||S.ended||NOGEN())return;
   play('click');lastChart=0;render(true);}
 function nudge(id,dir,quiet){if(!S||S.ended||NOGEN())return;const M=S.manual;
   if(id==='solar'||id==='wind')M[id]=clamp(M[id]-5*dir,0,capOf(SV[id]));
-  else if(id==='batt'){if(dir>0){if(M.bchg>0)M.bchg=Math.max(0,M.bchg-5);else M.bdis=Math.min(30,M.bdis+5);}else{if(M.bdis>0)M.bdis=Math.max(0,M.bdis-5);else M.bchg=Math.min(30,M.bchg+5);}}
+  else if(id==='batt'){if(dir>0){if(M.bchg>0)M.bchg=Math.max(0,M.bchg-5);else M.bdis=Math.min(SV.bdis.cap,M.bdis+5);}else{if(M.bdis>0)M.bdis=Math.max(0,M.bdis-5);else M.bchg=Math.min(SV.bchg.cap,M.bchg+5);}}
   else M[id]=clamp(M[id]+5*dir,0,capOf(SV[id]));
   play('click');lastChart=0;if(!quiet&&!PHONE&&S.sel!=='as:'+id){S.sel='as:'+id;lastInsp='';}render(true);}
 
@@ -2256,30 +2276,34 @@ function heroArt(){const cr=GAME==='cr',X=[80,160,240],F=[60,125,195,260];
 </svg>`;}
 // Fault Lines, the fault-finding puzzle at /fault-lines/: on both versions of the start screen
 const flGo=`<a class="btn sec-go fl-go" href="../fault-lines/" target="_top"><small>New · a five-minute puzzle</small>Fault Lines: find the fault →</a>`;
+const gkGo=`<a class="btn sec-go fl-go" href="../gatekeeper/" target="_top"><small>New · a ten-year planning game</small>Gatekeeper: who gets connected? →</a>`;
+// Gatekeeper's network, on the generation start screen; the control room start screen links across to it
+const gkBtn=()=>GAME==='fc'?(SCENARIOS.gk?`<button type="button" class="btn sec-go gk-go" data-go="gk"><small>From Gatekeeper · year ${SCENARIOS.gk.gk.year}</small>Run your network →</button>`:'')
+  :gkExport()?`<a class="btn sec-go gk-go" href="${modeHref('fc')}#gk" target="_top"><small>From Gatekeeper · generation shift</small>Run your network →</a>`:'';
 const loadBtn=()=>syncGet()?'':`<button type="button" class="btn sec-go" data-go="load"><small>Played on another device?</small>Load your career</button>`;
 function mainAction(){const cr=GAME==='cr';
   if(!played()){const e=easiestK();
     return `<div class="cta-main">${cr?`<button type="button" class="btn primary big hero-go" data-tut="play"><small>New here? Start with</small>Play the tutorial</button><button type="button" class="btn big hero-go" data-tut="demo"><small>Or sit back and</small>Watch the demo</button>`
       :`<button type="button" class="btn primary big hero-go" data-go="first"><small>New here? Start with the easiest day</small>Play ${esc(SCENARIOS[e].title)}</button>`}</div>
-    <div class="cta-sec"><button type="button" class="btn sec-go" data-go="skip"><small>Played before?</small>Choose your own shift ↓</button>${loadBtn()}${flGo}</div>
+    <div class="cta-sec"><button type="button" class="btn sec-go" data-go="skip"><small>Played before?</small>Choose your own shift ↓</button>${gkBtn()}${loadBtn()}${flGo}${gkGo}</div>
     ${cr?`<p class="cta-alt">For a stand or screen: <button type="button" class="linkish" data-tut="kiosk" title="Runs the demo on its own, over and over, and keeps the screen awake. For a display stand.">display mode</button></p>`:''}`;}
   const c=career(),nk=careerNext(),done=careerDone(c)&&!runOn(c),dk=dailyK(),k0=careerKeys()[0];
   return `<div class="cta-main">${done?`<button type="button" class="btn primary big hero-go" data-restart="${k0}" data-go-now><small>Career complete · start again</small>Shift 1: ${esc(SCENARIOS[k0].title)}</button>`
       :`<button type="button" class="btn primary big hero-go" data-go="career"><small>${runOn(c)?'Continue your restarted career':starsOf(c)?'Continue your career':'Start your career'}</small>Shift ${CAREER.indexOf(nk)+1}: ${esc(SCENARIOS[nk].title)}</button>`}
     <button type="button" class="btn big hero-go" data-go="daily"><small>Today's challenge · ${esc(fmtDate(todayUK()))}<span class="daily-top"></span></small>${esc(SCENARIOS[dk].title)}</button></div>
     ${starsOf(c)?`<p class="cta-alt"><button type="button" class="linkish" data-go="restart">Start your career again from any shift</button></p>`:''}
-    <div class="cta-sec"><button type="button" class="btn sec-go" data-go="skip"><small>Something else?</small>Choose your own shift ↓</button>${loadBtn()}${cr?`<button type="button" class="btn sec-go" data-tut="play"><small>Need a refresher?</small>Play the tutorial</button>`:''}${flGo}</div>
+    <div class="cta-sec"><button type="button" class="btn sec-go" data-go="skip"><small>Something else?</small>Choose your own shift ↓</button>${gkBtn()}${loadBtn()}${cr?`<button type="button" class="btn sec-go" data-tut="play"><small>Need a refresher?</small>Play the tutorial</button>`:''}${flGo}${gkGo}</div>
     ${cr?`<p class="cta-alt">Or <button type="button" class="linkish" data-tut="demo">watch the demo</button> · For a stand or screen: <button type="button" class="linkish" data-tut="kiosk" title="Runs the demo on its own, over and over, and keeps the screen awake. For a display stand.">display mode</button></p>`:''}`;}
 function heroGo(g){
   if(g==='load'){mode='career';chosen=careerNext();syncTab='load';syncNote='';ls('mode',mode);ls('day',chosen);newGame(chosen);startSheet();
     const b=$('syncBox');if(b){b.scrollIntoView({behavior:'smooth',block:'center'});const n=$('syName');if(n){if(n.value)$('syPin').focus({preventScroll:true});else n.focus({preventScroll:true});}}return;}
   if(g==='restart'){mode='career';ls('mode',mode);chosen=careerNext();newGame(chosen);startSheet();const b=$('restartBox');if(b){b.scrollIntoView({behavior:'smooth',block:'center'});const f=$('restartFrom');if(f)f.focus({preventScroll:true});}return;}
   if(g==='skip'){const t=$('pick');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});return;}
-  if(g==='career'){mode='career';chosen=careerNext();}else if(g==='daily'){mode='daily';chosen=dailyK();}else if(g==='first'){mode='free';chosen=easiestK();}else return;
+  if(g==='career'){mode='career';chosen=careerNext();}else if(g==='daily'){mode='daily';chosen=dailyK();}else if(g==='first'){mode='free';chosen=easiestK();}else if(g==='gk'&&SCENARIOS.gk){mode='free';chosen='gk';}else return;
   ls('mode',mode);ls('day',chosen);newGame(chosen);$('startBtn').click();}
 function startSheet(){
   const date=todayUK();
-  const cc=career(),keys=mode==='career'?CAREER.filter(k=>SCENARIOS[k]):Object.keys(SCENARIOS).filter(k=>!SCENARIOS[k].hidden);
+  const cc=career(),keys=mode==='career'?CAREER.filter(k=>SCENARIOS[k]):Object.keys(SCENARIOS).filter(k=>!SCENARIOS[k].hidden).concat(mode==='free'&&SCENARIOS.gk?['gk']:[]);
   if(mode==='career'&&!unlockedK(cc,chosen)){chosen=CAREER.find(k=>unlockedK(cc,k)&&!(cc.stars[k]>=1))||CAREER[0];}
   const sc=keys.map(k=>[k,SCENARIOS[k]]).map(([k,v])=>`<button type="button" class="scn${mode==='career'&&!unlockedK(cc,k)?' locked':''}" data-scn="${k}"${mode==='career'&&!unlockedK(cc,k)?' disabled':''} style="--sc:${v.color}" aria-pressed="${k===chosen}"><span class="scn-top">${ico(sceneOf(k),v.color)}<span class="f">${mode==='career'?`Shift ${CAREER.indexOf(k)+1} · `:''}${v.focus}</span></span><b>${v.title}${mode==='career'?` <span class="stars">${unlockedK(cc,k)?starStr(cc.stars[k]||0):'🔒'}</span>`:''}</b>${diffHtml(v.diff,v.color)}<span class="d">${v.when}</span><span class="best">${ls('best-'+k)?'Your best: <b>'+nf(+ls('best-'+k))+'</b>':'Not played yet'}</span><p>${v.blurb}</p></button>`).join('');
   $('sheet').innerHTML=`${BAND}<div class="hero"><div class="hero-t">
@@ -2478,13 +2502,15 @@ function showEnd(){
       ${CR.newA.length?`<div class="ach ach-new">${CR.newA.map(a=>badge(a,true)).join('')}</div>`:''}
       ${syncGet()||S.syncRes?`<p class="fine sync-end" id="endSync" role="status">${esc(endSyncTxt())}</p>`:''}
       ${S.mode!=='career'?'':CR.next?(unlockedK(career(),CR.next)?'':`<p class="fine">Finish this shift to unlock ${esc(SCENARIOS[CR.next].title)}. Press Try again below.</p>`):`<p><b>That's every career shift done${CR.runEnd?' again':''}.</b> Replay any of them to earn more stars, or <button type="button" class="linkish" data-restart="${careerKeys()[0]}">start your career again from shift 1</button>.</p>`}</div>`:'';
-  $('sheet').innerHTML=`${BAND}<p class="eyebrow">${esc(S.sc.title)}, ${esc(S.sc.when)} · ${S.mode==='daily'?"Today's challenge, "+fmtDate(S.date):S.mode==='career'?'Career · '+esc(CR?CR.rank:''):'Free play'}</p>${head}${cbox}${drawDebrief()}${drawReplay()}${score}${sub}${costs}${btns}`;
+  $('sheet').innerHTML=`${BAND}<p class="eyebrow">${esc(S.sc.title)}, ${esc(S.sc.when)} · ${S.mode==='daily'?"Today's challenge, "+fmtDate(S.date):S.mode==='career'?'Career · '+esc(CR?CR.rank:''):'Free play'}</p>${head}${cbox}${drawDebrief()}${drawReplay()}${score}${S.sc.noBoard?gkEnd():sub}${costs}${btns}`;
   $('overlay').hidden=false;if(S.sacked&&!S.sackShown){S.sackShown=1;showLetter('sacked',S.sacked);}else if(S.letterDue){const D=S.letterDue;S.letterDue=null;showLetter(D.kind,D);}
 }
 
 // Career: right under the grade, carry straight on to the next day
 function nextBar(){const CR=S.careerRes;if(S.mode!=='career'||!CR||!CR.next||!SCENARIOS[CR.next]||!unlockedK(career(),CR.next))return '';const v=SCENARIOS[CR.next],i=careerKeys().indexOf(CR.next)+1;
   return `<div class="next-bar" style="--sc:${v.color}">${ico(sceneOf(CR.next),v.color)}<div><span class="k">Next in your career · Shift ${i}</span><b>${esc(v.title)}</b><span class="s">${esc(v.when)} · ${esc(v.focus)}</span></div><button type="button" class="btn primary big" data-next="${CR.next}">Continue to next day →</button></div>`;}
+const gkEnd=()=>`<div class="submit gk-end"><p><b>Your Gatekeeper network.</b> This shift isn't on the scoreboard. Short of flexibility, or over firm capacity? Back in Gatekeeper, connect more flexible customers or reinforce, then bring the network back.</p><a class="btn" href="${GK_URL}" target="_top">Back to Gatekeeper →</a></div>`;
+const GK_URL='../gatekeeper/';
 function unlockEnd(){S.unlocked=true;['againBtn','sheetBoardBtn','replayBtn'].forEach(i=>{const b=$(i);if(b)b.disabled=false;});const n=$('lockNote');if(n)n.hidden=true;}
 const endSyncTxt=()=>{const r=S.syncRes;return !r?'Saving your career online…':r.ok?`Career saved online as ${r.name}.`:syncNote||SYNC_ERR.net;};
 function setMsg(t,cls){const m=$('submitMsg');if(m){m.textContent=t;m.className='fine '+(cls||'');}}
@@ -2587,7 +2613,7 @@ document.addEventListener('click',e=>{
   if(id==='cookieYes'){setConsent(true);return;}if(id==='cookieNo'){setConsent(false);return;}if(id==='cookieSettings'){$('cookie').hidden=false;return;}
   if(id==='shareBtn'){shareScore();return;}
   if(id==='submitScore'){submitScore();return;}
-  if(id==='boardBtn'||id==='sheetBoardBtn'){if(S.running&&!S.ended){S.paused=true;acc=0;}boardFrom=S.ended?'end':$('overlay').hidden?'game':'start';boardMode=S.mode;showBoard(S.key);return;}
+  if(id==='boardBtn'||id==='sheetBoardBtn'){if(S.running&&!S.ended){S.paused=true;acc=0;}boardFrom=S.ended?'end':$('overlay').hidden?'game':'start';boardMode=S.mode;showBoard(SCENARIOS[S.key]&&!SCENARIOS[S.key].hidden?S.key:CFG.def);return;}
   if(id==='boardBack'){if(boardFrom==='end'&&S.ended)showEnd();else if(boardFrom==='game'){$('overlay').hidden=true;render(true);}else startSheet();return;}
   if(id==='muteBtn'){setSound(!SND.on);return;}
   if(id==='musicBtn'){if(!SND.on)setSound(true);setMusic(!MUS.on);return;}
@@ -2625,6 +2651,7 @@ addEventListener('resize',()=>{if(S)renderQP();});
 MQ.addEventListener('change',()=>{PHONE=MQ.matches;applyZoom();if(!PHONE)closeSheet();if(S)render(true);});
 
 if(!SCENARIOS[chosen])chosen=CFG.def;
+if(GAME==='fc'&&SCENARIOS.gk&&/(^|#)gk\b/.test(location.hash)){chosen='gk';mode='free';}
 document.title=CFG.docTitle;document.querySelectorAll('.bar .mode-tag').forEach(e=>e.textContent=CFG.tag);
 {const o=modeHref(GAME==='cr'?'fc':'cr'),h=$('hdrOther');if(h){h.href=o;h.textContent=CFG.other.hdr;}const f=$('otherGame');if(f){f.href=o;f.textContent=CFG.other.foot;}}
 if(!CALLS_ON){const l=$('pCalls');if(l)l.remove();}if(!VF_ON){const l=$('lgVF');if(l)l.remove();}if(!CREW_ON){const l=$('lgMan');if(l)l.remove();}

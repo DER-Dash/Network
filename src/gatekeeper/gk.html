@@ -1,0 +1,60 @@
+<header class="bar">
+  <div class="brand">
+    <span class="logo"><svg viewBox="0 0 100 100" role="img" aria-label="Watts Up"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg></span>
+    <div><p class="co">Watts Up Electricity Distribution</p><h1>Gatekeeper <span class="mode-tag">Year <span id="yr">1</span> of 10</span><span class="mode-tag wk" id="wkTag" hidden></span></h1></div>
+  </div>
+  <a class="bar-link" href="../control-room/">Losing Control →</a>
+</header>
+
+<main class="wrap">
+  <section class="status" aria-label="This year">
+    <div id="stBudgetBox"><span>Budget left</span><b id="stBudget">£15.0m</b></div>
+    <div><span>Offers</span><b id="stQueue">0/0</b></div>
+    <div><span>Last grade</span><b id="stGrade">–</b></div>
+    <div><span>Stars</span><b>★ <span id="stStars">0</span></b></div>
+  </section>
+  <p class="phase"><span id="phaseTip"></span> <span class="rules" id="rules"></span></p>
+
+  <div class="cols">
+    <section class="panel" aria-label="Connections queue">
+      <h2>Connections queue <small id="qCount"></small></h2>
+      <div id="queue" class="cards"></div>
+    </section>
+
+    <section class="panel" aria-label="Network">
+      <h2>Blackout Canyon network</h2>
+      <p class="tip">Firm headroom: the room left in the worst hour of the year if one transformer is out. Tap a substation for its customers.</p>
+      <div id="gsp"></div>
+      <div class="tiles" id="tiles"></div>
+      <p class="tip" id="connSum"></p>
+    </section>
+
+    <section class="panel" aria-label="Contracted, not yet connected">
+      <h2>Contracted, not connected</h2>
+      <p class="tip">These hold firm headroom until they connect or leave the queue.</p>
+      <ul id="pipe" class="pipe"></ul>
+    </section>
+
+    <section class="panel" aria-label="Reinforcement">
+      <h2>Under construction</h2>
+      <ul id="builds" class="pipe"></ul>
+    </section>
+  </div>
+
+  <footer class="foot">
+    <a class="lc-link" href="../control-room/"><b>Losing Control</b><span>The Watts Up control room game: run the network you built through faults, storms and peak demand →</span></a>
+    <a class="lc-link" href="../fault-lines/"><b>Fault Lines</b><span>The daily fault-finding puzzle →</span></a>
+    <p class="fine">© 2026 Steve Backhouse. All rights reserved. Blackout Canyon and every place and company in this game are made up. Close to the GB connection rules, with some artistic licence.</p>
+  </footer>
+</main>
+
+<nav class="dock" aria-label="Game">
+  <button type="button" class="btn" id="helpBtn">Menu</button>
+  <button type="button" class="btn" id="reBtn">Reinforce</button>
+  <button type="button" class="btn primary" id="goBtn">Send offers</button>
+</nav>
+
+<div id="sheet" class="sheet" role="dialog" aria-label="Application" hidden></div>
+<div id="toast" class="toast" role="status" hidden></div>
+<div id="coach" class="coach" role="status" hidden></div>
+<div id="ov" class="ov" hidden><div class="card" id="ovCard" role="dialog" aria-modal="true"></div></div>

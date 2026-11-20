@@ -162,3 +162,6 @@ def fault_lines(test):
 '''
 wr('build/fault-lines.html',fault_lines(True))
 wr('fault-lines/index.html',fault_lines(False))
+
+# ---- Gatekeeper: the connections planning game, its own page at /gatekeeper/ (sources in src/gatekeeper) ----
+exec(compile(open(os.path.join(HERE,'gatekeeper','build.py'),encoding='utf-8').read(),os.path.join(HERE,'gatekeeper','build.py'),'exec'),{'__file__':os.path.join(HERE,'gatekeeper','build.py'),'__name__':'gk_build'})
