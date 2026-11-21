@@ -1866,7 +1866,9 @@ function renderQP(){const q=$('qp');if(!q)return;const k=S&&!S.ended&&S.qp&&S.se
 // The area a switch pop-up should leave visible, in diagram units: the whole 11 kV feeder for its breaker,
 // mid-point switch, backfeed or generator
 function qpClear(k,all){const[t,id]=k.split(':');if(!['lf','mid','nop','mg'].includes(t))return null;const p=id.slice(0,2),ids=all?(LF[p]||[]).map((v,i)=>p+i):[id];
-  const els=ids.flatMap(f=>['lfb_','lfl_','lfm_','midb_','lft_','nopb_','nopl_','mgg_'].map(x=>$(x+f))).concat(all?[$('ptg_'+p)]:[]).filter(e=>e&&e.getBBox&&!e.hasAttribute('hidden'));if(!els.length)return null;
+  // a mobile generator counts by its symbol, not its exhaust puffs: they drift and grow, and measuring them made the box wander
+  const gen=f=>{const g=$('mgg_'+f);return g&&!g.hasAttribute('hidden')?[...g.children].filter(c=>!c.classList.contains('mg-ex')):[];};
+  const els=ids.flatMap(f=>['lfb_','lfl_','lfm_','midb_','lft_','nopb_','nopl_'].map(x=>$(x+f)).concat(gen(f),gen(f+'n'))).concat(all?[$('ptg_'+p)]:[]).filter(e=>e&&e.getBBox&&!e.hasAttribute('hidden'));if(!els.length)return null;
   let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;try{els.forEach(e=>{const b=e.getBBox();x0=Math.min(x0,b.x);y0=Math.min(y0,b.y);x1=Math.max(x1,b.x+b.width);y1=Math.max(y1,b.y+b.height);});}catch(e){return null;}
   return[x0-3,y0-3,x1-x0+6,y1-y0+6];}
 // Phones during a shift: the header shrinks to one sticky row of numbers; this opens and closes the rest of it
