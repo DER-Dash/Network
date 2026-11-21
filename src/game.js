@@ -49,12 +49,14 @@ function qpGen(id){const p=id.slice(0,2),i=+id.slice(2),u=mgAt(id),live=secFeed(
 // Generator for the first half: on the LV at its substations, offered whenever the first half is off supply
 // (an 11 kV fault there, the substation transformer out, the substation off...)
 const nearDead=(p,i)=>secFeed(p,i,0)===null;
+// both generator choices for a feeder: the first half (breaker side) at the top, the second half (far end) below it
+function qpGens(id){const a=qpGenN(id),b=qpGen(id);return a?`<p class="mg-h">First half · breaker side</p>${a}<p class="mg-h">Second half · far end</p>${b}`:b;}
 function qpGenN(fid){const p=fid.slice(0,2),i=parseInt(fid.slice(2)),id=p+i+'n',u=mgAt(id),F=S.lff[p][i],need=nearDead(p,i)||!!(u&&u.conn),inF=!!(F&&F.found&&F.sec===0);if(!u&&!need)return'';
   const now=(lfMW(p,i)*SECF[0]).toFixed(1),pk=halfPeak(p,i),b=(a,l)=>opBtn('mg:'+id,a,l).replace('btn primary op-btn','btn op-btn');
   if(u&&(u.conn||u.pend))return `<div class="mg-pick"><span>First half: ${MG_SZ[u.sz].toLowerCase()} ${u.cap} MW generator ${u.conn?'connected to the LV at the first-half substations':'on its way to the first-half substations'}.${u.conn?' Disconnect it before you close the feeder breaker'+(PR[p]&&subLv(p)?'':' or put the substation back')+'.':''}</span>${b('open','Disconnect it')}</div>`;
   if(u)return `<div class="mg-pick"><span>First half: ${MG_SZ[u.sz].toLowerCase()} ${u.cap} MW generator parked at the first-half substations, disconnected${u.ret?' (going back to the yard)':''}. First half ${now} MW now, about ${pk} at peak.</span>
     <span class="mg-sz">${need?b('close','Reconnect it'):''}${b('open','Back to yard')}</span>${need?`<span>Or swap it for:</span>${mgSizes(id)}`:''}</div>`;
-  return `<div class="mg-pick"><span>Generator for the first half: ${inF?'the fault is in the first half, so ':'the first half is off supply: '}a generator can go on the LV at its substations and bring those customers back${inF?' before the repair':''}. ${now} MW now, about ${pk} at peak.</span>${mgSizes(id)}</div>`;}
+  return `<div class="mg-pick"><span>${inF?'The fault is in the first half, so ':'The first half is off supply: '}a generator can go on the LV at its substations and bring those customers back${inF?' before the repair':''}. ${now} MW now, about ${pk} at peak.</span>${mgSizes(id)}</div>`;}
 // three size buttons: free count shown; picking one sends a crew to collect it
 function mgSizes(id){return `<span class="mg-sz">${Object.keys(MG_SZ).map(sz=>{const here=mgAt(id),cap=MG_FLEET.find(f=>f.sz===sz).cap,n=S.mgu.filter(u=>u.sz===sz&&!u.conn&&!u.pend&&u!==here).length,busy=!!(S.op||crewFor('mg:'+id));
   return `<button type="button" class="btn op-btn" data-mgsz="${sz}" data-mgfor="${id}"${n&&!busy&&!S.ended?'':' disabled'} title="${MG_SZ[sz]} generator, ${cap} MW: ${n} free">${cap} MW<small>${n?n+' free':'none free'}</small></button>`;}).join('')}</span>`;}
@@ -1607,7 +1609,7 @@ function renderMimic(){
     off=c.to?(i-1)*7:(c.at==='depot'?(i-1)*16:14+same*12),
     // standing at a first-half generator: in the gap below its icon, clear of the feeder's breaker and mid-point switch
     side=!c.to&&!!c.at&&/^mg:.*n$/.test(c.at);
-    setAttr(g,'transform',side?`translate(${(p.x-same*9).toFixed(1)} ${(p.y+41).toFixed(1)}) scale(1)`:`translate(${(p.x+off).toFixed(1)} ${(p.y+(c.at==='depot'&&!c.to?16:-4)+(c.to?(i-1)*5:0)).toFixed(1)}) scale(1.25)`);g.classList.toggle('walk',!!c.to&&S.running&&!S.paused);g.classList.toggle('drive',!!c.to);g.classList.toggle('tow',!!(c.to&&c.job&&c.job.k.startsWith('mg:')&&c.job.act==='close'&&(!c.via||crewPos(c,tNow).x!==c.via.x||crewPos(c,tNow).y!==c.via.y)&&passedVia(c,tNow)));{const v=$('van'+c.n);if(v)setAttr(v,'transform',c.to&&c.to.x<c.from.x-1?'scale(-1 1)':'');}g.classList.toggle('home',c.at==='depot'&&!c.to);g.classList.toggle('busy',!!c.job);{const r=$('crr'+c.n),j=c.job,f=j&&j.t0!=null&&j.at>j.t0?clamp((tNow-j.t0)/(j.at-j.t0),0,1):null;if(r){if(f==null)r.setAttribute('visibility','hidden');else{r.setAttribute('visibility','visible');r.setAttribute('stroke-dasharray',`${(f*100).toFixed(1)} 100`);}}}});if(LV_ON){const y=S.mgu.filter(u=>!u.site);txt('yardT',y.length?'Yard: '+y.map(u=>u.cap).join(' · ')+' MW':'Yard empty');}}
+    setAttr(g,'transform',side?`translate(${(p.x-same*9).toFixed(1)} ${(p.y+41).toFixed(1)}) scale(1)`:`translate(${(p.x+off).toFixed(1)} ${(p.y+(c.at==='depot'&&!c.to?16:-4)+(c.to?(i-1)*5:0)).toFixed(1)}) scale(1.25)`);g.classList.toggle('walk',!!c.to&&S.running&&!S.paused);g.classList.toggle('drive',!!c.to);g.classList.toggle('tow',!!(c.to&&c.job&&c.job.k.startsWith('mg:')&&c.job.act==='close'&&(!c.via||crewPos(c,tNow).x!==c.via.x||crewPos(c,tNow).y!==c.via.y)&&passedVia(c,tNow)));{const v=$('van'+c.n);if(v)setAttr(v,'transform',c.to&&c.to.x<c.from.x-1?'scale(-1 1)':'');}g.classList.toggle('home',c.at==='depot'&&!c.to);g.classList.toggle('busy',!!c.job);{const r=$('crr'+c.n),j=c.job,f=j&&j.t0!=null&&j.at>j.t0?clamp((tNow-j.t0)/(j.at-j.t0),0,1):null;if(r){setAttr(r,'visibility',f==null?'hidden':'visible');if(f!=null)setAttr(r,'stroke-dasharray',`${(f*100).toFixed(1)} 100`);}}});if(LV_ON){const y=S.mgu.filter(u=>!u.site);txt('yardT',y.length?'Yard: '+y.map(u=>u.cap).join(' · ')+' MW':'Yard empty');}}
   if(S.sc.gsp){const G=S.sc.gsp,on=S.t>=G.start&&S.t<G.end;txt('gspT',on?`LIMIT ${G.limit} MW · NOW ${Math.round(S.gspLoad)} MW`:S.t>=G.warn&&S.t<G.start?'SUPERGRID FAULT EXPECTED':'');setAttr($('gspT'),'class','gsp-t'+(on&&S.gspLoad>G.limit?' alarm':on?' ok':''));}
   const sb=$('selbox'),bx=S.sel&&SELBOX[S.sel];
   if(bx){setAttr(sb,'x',String(bx[0]));setAttr(sb,'y',String(bx[1]));setAttr(sb,'width',String(bx[2]));setAttr(sb,'height',String(bx[3]));setAttr(sb,'visibility','visible');}else setAttr(sb,'visibility','hidden');
@@ -1743,7 +1745,7 @@ function assetHtml(id){const a=ASB[id];
     ${VF_ON?`<div class="op-row">${VFI.map(i=>opPair('nop:'+p+i,S.nop[p][i],`Open ${LFN[p][i]} backfeed`,`Close ${LFN[p][i]} backfeed`)).join('')}</div><p class="i-note">Backfeeds move a feeder onto Volt Face, a neighbouring 11 kV network on a different grid supply. Open the feeder breaker first, then close the backfeed.</p>`:''}
     ${LV_ON?`<h4 class="i-sub">Mid-point switches</h4><div class="op-row">${S.lf[p].map((v,i)=>opPair('mid:'+p+i,midOn(p,i),`Open ${LFN[p][i]} mid-point`,`Close ${LFN[p][i]} mid-point`)).join('')}</div>
     <h4 class="i-sub">Mobile generators · yard: ${yardTxt()}</h4>${S.lf[p].map((v,i)=>{const row=(id,lbl)=>{const u=mgAt(id);return `<div class="mg-row"><span class="mg-f">${esc(lbl)}<small>${id.endsWith('n')?'first half, on the LV':'far half'} ${halfNow(p,i)} MW now, about ${halfPeak(p,i)} MW at peak</small></span>`+(u&&(u.conn||u.pend)?opBtn('mg:'+id,'open',`Disconnect the ${MG_SZ[u.sz].toLowerCase()}`):u?opBtn('mg:'+id,'close',`Reconnect the ${MG_SZ[u.sz].toLowerCase()}`)+opBtn('mg:'+id,'open','Back to yard')+`<span class="mg-or">or swap for</span>`+mgSizes(id):mgSizes(id))+'</div>';},F=S.lff[p][i];
-      return row(p+i,LFN[p][i])+(mgAt(p+i+'n')||nearDead(p,i)?row(p+i+'n',LFN[p][i]+' (first half)'):'');}).join('').replace(/btn primary op-btn/g,'btn op-btn')}
+      return mgAt(p+i+'n')||nearDead(p,i)?row(p+i+'n',LFN[p][i]+' (first half)')+row(p+i,LFN[p][i]+' (second half)'):row(p+i,LFN[p][i]);}).join('').replace(/btn primary op-btn/g,'btn op-btn')}
     <p class="i-note">Fault finding: when a feeder locks out you don't know which half is faulted. Open its mid-point switch (manual, so a crew goes), then trial-close the breaker. If it holds, the fault is in the second half; if it trips, it's in the first. Repairs start once the fault is found. A mobile generator is collected from the yard at the depot, towed to the far end of a feeder and connected (${MG_CONN} minutes once there). Choose 5, 10 or 15 MW to suit the load: too small and it trips. With the fault found in the second half, it connects to the LV there instead and brings those customers back while the 11 kV fault is repaired. With the fault found in the first half, a second generator can go on the LV at the first-half substations in the same way.</p>`:''}
     ${PRIO_ON&&S.lf[p].some((v,i)=>prioOf(p,i))?`<h4 class="i-sub">Priority customers</h4><ul class="i-plain">${S.lf[p].map((v,i)=>{const P=prioOf(p,i);return P?`<li class="${secFeed(p,i,P.sec)===null?'off':''}"><span class="pri-tag pri-${P.kind}">${PRK[P.kind].ch}</span> ${esc(prioTxt(P))}${secFeed(p,i,P.sec)===null?' · <b>off supply now</b>':''}</li>`:'';}).join('')}</ul>`:''}
     <p class="i-note">Opening an 11 kV feeder takes its customers off supply to cut the load on the network. Every minute customers are off supply costs 1 point per MW, so use it as a last resort and close it again as soon as you can.</p>`;}
@@ -1831,7 +1833,7 @@ function qpHtml(k){const[t,id]=k.split(':');let closed,st,cls='';
   const act=closed?'open':'close',title=t==='tx'?`T${+id+1} breaker`:ucfirst(devName(k))+(t==='bc'?' at Blackout Canyon':t==='lf'||t==='nop'||t==='mid'?' · '+PR[id.slice(0,2)].name:'');
   return `<div class="qp-h"><b>${esc(title)}</b><button type="button" class="qp-x" id="qpClose" aria-label="Close this pop-up">×</button></div>
     <p class="qp-s ${cls}"><span class="qp-st">${closed?'Closed':'Open'}</span> · ${esc(st)}</p>${isManual(k)?qpCrew(k):''}
-    <div class="qp-row">${opPair(k,closed)}${isManual(k)&&!crewAt(k)&&!crewFor(k)?`<button type="button" class="btn" data-crew="${k}">Send crew</button>`:''}${LV_ON&&(t==='lf'||t==='mid')?qpGen(id)+qpGenN(id)+findBtn(...lfP(id)):''}<button type="button" class="btn" id="qpMore">Details</button></div>`;}
+    <div class="qp-row">${opPair(k,closed)}${isManual(k)&&!crewAt(k)&&!crewFor(k)?`<button type="button" class="btn" data-crew="${k}">Send crew</button>`:''}${LV_ON&&(t==='lf'||t==='mid')?qpGens(id)+findBtn(...lfP(id)):''}<button type="button" class="btn" id="qpMore">Details</button></div>`;}
 // Phones: both actions, always Open then Close, so the player picks one rather than tapping the only button offered.
 // Both look the same and both can be pressed, as on a real control screen: pressing the one that matches the
 // current state just reports that nothing changed.
@@ -1841,9 +1843,11 @@ function opPair(k,closed,ol,cl){ol=ol||'Open';cl=cl||'Close';const one=a=>{const
 function qpCrew(k){const j=crewFor(k),h=crewAt(k);return `<p class="qp-crew">${j?`Crew ${j.n} ${j.to?'walking there, arrives '+fmtT(j.arr):'on site'}${j.job.act?', will '+j.job.act+' it by '+fmtT(j.job.at):''}.`:h?`Crew ${h.n} is standing by here: operating takes ${CREW_OP} min.`:'Manual switch: a field crew has to walk here first.'}</p>`;}
 function renderQP(){const q=$('qp');if(!q)return;const k=S&&!S.ended&&S.qp&&S.sel;
   if(!k||!isSw(k)||!SELBOX[k]){if(!q.hidden){q.hidden=true;lastQP='';}return;}
-  const h=qpHtml(k);if(h!==lastQP){const ae=document.activeElement,fid=ae&&q.contains(ae)?ae.id:'',fk=ae&&q.contains(ae)&&ae.dataset?ae.dataset.k:'';q.innerHTML=h;lastQP=h;const f=fid?$(fid):fk?[...q.querySelectorAll('[data-k]')].find(x=>x.dataset.k===fk):null;if(f)f.focus();}
+  const h=qpHtml(k);if(h!==lastQP){const ae=document.activeElement,fid=ae&&q.contains(ae)?ae.id:'',fk=ae&&q.contains(ae)&&ae.dataset?ae.dataset.k:'';q.innerHTML=h;lastQP=h;const f=fid?$(fid):fk?[...q.querySelectorAll('[data-k]')].find(x=>x.dataset.k===fk):null;if(f)f.focus({preventScroll:true});}
   q.hidden=false;q.classList.toggle('side',!!S.qpSide&&SIDEQ.matches);q.classList.toggle('side-l',!!S.qpSide&&!!S.qpLeft&&SIDEQ.matches);
-  const ms=$('mscroll'),r=$('mimic').getBoundingClientRect(),mr=ms.getBoundingClientRect();if(!r.width)return;const vb=($('mimic').getAttribute('viewBox')||'0 0 1200 668').split(' ').map(Number),sc=Math.min(r.width/vb[2],r.height/vb[3]),padX=(r.width-vb[2]*sc)/2,padY=(r.height-vb[3]*sc)/2,bx=SELBOX[k],W=q.offsetWidth,H=q.offsetHeight,ox=r.left-mr.left+ms.scrollLeft+padX,oy=r.top-mr.top+ms.scrollTop+padY,cw=vb[2]*sc,ch=vb[3]*sc;
+  const ms=$('mscroll'),r=$('mimic').getBoundingClientRect(),mr=ms.getBoundingClientRect();if(!r.width)return;
+  // measured at the left edge: near the right edge the box is squeezed narrower, which used to make it hop from side to side
+  {const pl=q.style.left;q.style.left='0px';q._w=q.offsetWidth;q._h=q.offsetHeight;q.style.left=pl;}const vb=($('mimic').getAttribute('viewBox')||'0 0 1200 668').split(' ').map(Number),sc=Math.min(r.width/vb[2],r.height/vb[3]),padX=(r.width-vb[2]*sc)/2,padY=(r.height-vb[3]*sc)/2,bx=SELBOX[k],W=q._w,H=q._h,ox=r.left-mr.left+ms.scrollLeft+padX,oy=r.top-mr.top+ms.scrollTop+padY,cw=vb[2]*sc,ch=vb[3]*sc;
   // Keep clear of what the box is about: for anything on an 11 kV feeder, the whole feeder (breaker to buildings),
   // otherwise the device itself. Try beside it first for feeders (they run up and down), below/above for the rest.
   // Feeders: first try to leave the whole substation's feeders in view, then just this feeder.
@@ -1854,8 +1858,11 @@ function renderQP(){const q=$('qp');if(!q)return;const k=S&&!S.ended&&S.qp&&S.se
   const fits=([l,t])=>l>=vl-.5&&l+W<=vr+.5&&t>=vt-.5&&t+H<=vbm+.5;
   const F=qpClear(k),G=F&&qpClear(k,true),fi=F?+k.split(':')[1].slice(2):1;
   const cands=F?[...side(G,fi===0),...side(F,fi===0),...ud(F)]:[...ud(bx),...side(bx,false)],pick=cands.find(fits);
-  let l,tp;if(pick)[l,tp]=pick;else{l=cx(dcx-W/2);tp=oy+(bx[1]+bx[3])*sc+6;if(tp+H>oy+ch)tp=oy+bx[1]*sc-H-6;tp=Math.max(oy+2,tp);}
-  q.style.left=Math.round(l)+'px';q.style.top=Math.round(tp)+'px';}
+  const keep=q._at&&q._at.k===k&&fits([q._at.l,q._at.t])&&cands.some(c=>Math.abs(c[0]-q._at.l)<2&&Math.abs(c[1]-q._at.t)<2)?[q._at.l,q._at.t]:null;
+  let l,tp;if(keep)[l,tp]=keep;else if(pick)[l,tp]=pick;else{l=cx(dcx-W/2);tp=oy+(bx[1]+bx[3])*sc+6;if(tp+H>oy+ch)tp=oy+bx[1]*sc-H-6;tp=Math.max(oy+2,tp);}
+  // never let it hop about: after two moves in a second and a half for the same device, it stays put
+  const now=performance.now(),A=q._at;if(A&&A.k===k&&(Math.abs(A.l-l)>2||Math.abs(A.t-tp)>2)){q._mv=(q._mv||[]).filter(x=>now-x<1500);if(q._mv.length>=2){l=A.l;tp=A.t;}else q._mv.push(now);}else if(!A||A.k!==k)q._mv=[];
+  q._at={k,l,t:tp};q.style.left=Math.round(l)+'px';q.style.top=Math.round(tp)+'px';}
 // The area a switch pop-up should leave visible, in diagram units: the whole 11 kV feeder for its breaker,
 // mid-point switch, backfeed or generator
 function qpClear(k,all){const[t,id]=k.split(':');if(!['lf','mid','nop','mg'].includes(t))return null;const p=id.slice(0,2),ids=all?(LF[p]||[]).map((v,i)=>p+i):[id];
@@ -2100,14 +2107,11 @@ function render(force){
 
 /* ---------- Extra visuals: breakers that move, arc flashes on trips, repair and crew rings, lines weighted by load,
    customers off per substation, lightning strikes and the shift intro card. All drawing only: no effect on the game. ---------- */
-const GFX={brk:{},t0:{},arc:[],intro:false},SVGNS='http://www.w3.org/2000/svg';
+const GFX={t0:{},arc:[],intro:false},SVGNS='http://www.w3.org/2000/svg';
 const gfxCan=()=>!!($('mimic')&&$('mimic').getBBox);
 function gfxLayer(id){const m=$('mimic');if(!m)return null;let g=$(id);if(!g){g=document.createElementNS(SVGNS,'g');g.id=id;g.setAttribute('class','gfx');m.appendChild(g);}return g;}
-function gfxReset(){GFX.brk={};GFX.t0={};GFX.arc=[];}
-// a breaker that changes state gives a short flick
-function gfxBreakers(){const quiet=S.silent||RMQ.matches;
-  document.querySelectorAll('#mimic .brk[id]').forEach(e=>{const o=e.classList.contains('open'),was=GFX.brk[e.id];GFX.brk[e.id]=o;
-    if(was===undefined||was===o||quiet)return;e.classList.remove('flick');void e.getBoundingClientRect();e.classList.add('flick');setTimeout(()=>e.classList.remove('flick'),500);});}
+function gfxReset(){GFX.t0={};GFX.arc=[];}
+// (breakers already pulse when they change state: see setAttr)
 // an arc flash and a puff of smoke where a breaker tripped
 function gfxArcs(){if(!GFX.arc.length)return;const q=GFX.arc.splice(0);if(RMQ.matches||!gfxCan())return;const L=gfxLayer('gfxA');if(!L)return;
   q.forEach(k=>{const b=SELBOX[k];if(!b)return;const cx=b[0]+b[2]/2,cy=b[1]+b[3]/2,g=document.createElementNS(SVGNS,'g');
@@ -2153,7 +2157,7 @@ function introCard(){if(GFX.intro||!S||S.key==='tut'||S.silent)return;GFX.intro=
   c.style.setProperty('--sc',sc.color||'var(--accent)');
   c.innerHTML=`<div class="in-card"><span class="in-ic"><svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[sceneOf(S.key)]||''}</svg></span><p class="in-when">${esc(sc.when)} · ${fmtT(START)}</p><h2>${esc(sc.title)}</h2><p class="in-focus">${esc(sc.focus||'')}</p>${wx?`<p class="in-wx">${esc(wx)}</p>`:''}</div>`;
   c.hidden=false;c.classList.remove('go');void c.offsetWidth;c.classList.add('go');clearTimeout(introCard.t);introCard.t=setTimeout(()=>{c.hidden=true;c.classList.remove('go');},RMQ.matches?1600:3000);}
-function gfxAll(){if(!S||!$('mimic'))return;if(S.running&&!S.ended)introCard();gfxBreakers();gfxArcs();gfxLines();gfxGen();if(gfxCan())gfxRings();}
+function gfxAll(){if(!S||!$('mimic'))return;if(S.running&&!S.ended)introCard();gfxArcs();gfxLines();gfxGen();if(gfxCan())gfxRings();}
 let lastRender=0;
 function frame(now){
   const dt=Math.min(.25,(now-lastFrame)/1000);lastFrame=now;

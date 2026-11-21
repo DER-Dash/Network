@@ -39,7 +39,7 @@ async function start(scn){const d=mk(),w=d.window,doc=w.document;await wait(30);
   ok(small()&&!small().conn,'small generator tripped and is parked at Town Centre');
   doc.querySelector('.hit[data-sel="lf:hw0"]').dispatchEvent(new doc.defaultView.MouseEvent('click',{bubbles:true}));await wait(5);
   const lbl=[...doc.querySelectorAll('#qp button')].map(b=>b.textContent);ok(lbl.some(x=>/Reconnect it/.test(x))&&lbl.some(x=>/Back to yard/.test(x))&&doc.querySelectorAll('#qp [data-mgfor="hw0"]').length===3,'pop-up offers reconnect, back to yard, or a swap: '+lbl.join(' | '));
-  doc.querySelector('#qp [data-mgsz="L"]').click();t=0;const big=()=>S.mgu.find(x=>x.sz==='L'&&x.site==='hw0');while(!(big()&&big().conn)&&t++<150)G.run(1);G.run(3);
+  doc.querySelector('#qp [data-mgsz="L"][data-mgfor="hw0"]').click();t=0;const big=()=>S.mgu.find(x=>x.sz==='L'&&x.site==='hw0');while(!(big()&&big().conn)&&t++<150)G.run(1);G.run(3);
   ok(big()&&big().conn&&!S.mgu.some(x=>x.sz==='S'&&x.site),'large generator swapped in and holds; the small one is back in the yard');
   G.op('mg:hw0','open');t=0;while(big().conn&&t++<60)G.run(1);ok(!big().conn&&big().site==='hw0','disconnected, parked');
   G.op('mg:hw0','open');t=0;while(S.mgu.some(x=>x.site==='hw0')&&t++<60)G.run(1);ok(!S.mgu.some(x=>x.site),'back to yard: every generator is in the yard again');}

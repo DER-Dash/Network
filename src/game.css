@@ -881,7 +881,6 @@ a.btn.fl-go{text-decoration:none;border-color:var(--zap);box-shadow:inset 4px 0 
 /* ---- Extra visuals (gfx in game.js) ---- */
 .gfx{pointer-events:none}
 /* breakers flick when they change state */
-.brk.flick{animation:brkFlick .45s cubic-bezier(.3,1.6,.5,1);transform-box:fill-box;transform-origin:center}
 @keyframes brkFlick{0%{transform:scale(1.5) rotate(-12deg)}55%{transform:scale(.9) rotate(4deg)}100%{transform:none}}
 /* arc flash and smoke where a breaker tripped */
 .arc-glow{fill:#fff6c8;opacity:.9;animation:arcGlow .5s ease-out forwards}
@@ -943,3 +942,5 @@ a.btn.fl-go{text-decoration:none;border-color:var(--zap);box-shadow:inset 4px 0 
 .in-focus{margin:6px 0 0;font:500 16px var(--f-body);color:#d8e0ec}
 .in-wx{margin:10px 0 0;font:600 12.5px var(--f-mono);color:#ffb3a8}
 @media (prefers-reduced-motion:reduce){.brk.flick,.arc-glow,.arc-core,.arc-smoke,.shim,#battLvl.chg,#battLvl.dis,.mg-ex circle,.wx-d,.al.unack .al-i{animation:none!important}.shift-in.go .in-card{animation:none;opacity:1}}
+
+.mg-h{flex:1 1 100%;margin:8px 0 -2px;font:700 11px var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
