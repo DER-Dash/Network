@@ -15,4 +15,9 @@ let errs=[],fails=0;const wait=ms=>new Promise(r=>setTimeout(r,ms));const ok=(c,
  ok(body().querySelectorAll('li.al.unack').length===0&&!/Auto-reclose/.test(body().textContent),'nothing left showing as unacknowledged or as an auto-reclose');
  for(let k=0;k<5;k++)S.alarms['x'+k]={id:'x'+k,ev:'trip',lvl:'trip',name:'Trip '+k,sel:k%2?'lf:hw0':'tx:0',since:S.t,L:0,ack:false};await render();
  ok(body().querySelectorAll('.al-grp').length>=2,'four or more alarms are grouped by site');
+ // a new 11 kV fault: the alert banner offers Find it yourself, and the button goes once the fault is found
+ {S.paused=false;S.rngC=()=>0.99;S.sched.push({k:'lv:hw1',m:S.t,dur:200,sec:1,tr:false,cause:'Tree contact on the overhead line',done:false});G.run(1);await wait(250);
+  ok(!!doc.querySelector('#bannerMsg [data-find="hw1"]'),'fault banner offers Find it yourself in Fault Lines');
+  S.lff.hw[1].found=true;S.lff.hw[1].until=S.t+100;await wait(250);
+  ok(!doc.querySelector('#bannerMsg [data-find]'),'the button goes once the fault is found');}
  ok(!errs.length,'no script errors '+errs.join(' | '));process.exit(fails?1:0);})();

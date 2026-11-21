@@ -788,7 +788,7 @@ function logE(m,text,lvl){S.log.unshift({m,text,lvl});if(S.log.length>60)S.log.p
 function mark(m,type,label){if(!S.silent)S.marks.push({m,type,label});}
 // a breaker trip or auto-reclose, shown on the alarm list until it's acknowledged
 function alEv(m,kind,name,sel,note){if(S.silent)return;if(kind==='trip'&&sel)GFX.arc.push(sel);const id='ev'+(S.alEvN=(S.alEvN||0)+1);S.alarms[id]={id,ev:kind,lvl:kind,name,sel:sel||'',note:note||'',since:m,L:0,ack:false};}
-function queueAlert(text,lvl,pause){if(!S.silent)queued.push({text,lvl,pause,m:S.t});}
+function queueAlert(text,lvl,pause,find){if(!S.silent)queued.push({text,lvl,pause,m:S.t,find});}
 // Switching incidents: one is allowed per shift, a second ends it. In a career they also add up across shifts:
 // the third brings a written warning, the fourth gets you sacked and the career starts again from nothing.
 const clip=(t,n)=>t.length<=n?t:t.slice(0,t.lastIndexOf(' ',n-1)).replace(/[,;:–-]+$/,'')+'…';
@@ -894,7 +894,7 @@ function callsFor(m,p,i,sx,n){if(!CALLS_ON||S.silent||!S.callQ)return;const r=S.
 function reveal(m,k,how){const T=S.tele[k];if(!T)return;delete S.tele[k];const[p,i]=lfP(k),f=S.lff[p][i];if(f)f.seen=m;
   const pre=how==='crew'?`The crew at ${PR[p].name} reports by radio: `:how==='comms'?`Comms to ${PR[p].name} are back, and the RTU has sent everything it missed. `:how==='poll'?`RTU at ${PR[p].name} polled. `:how==='op'?`Operating on the ${lfName(p,i)} showed that its breaker at ${PR[p].name} was already open. `:`The RTU at ${PR[p].name} has caught up. `;
   const s=pre+T.mk(m)+` It tripped at ${fmtT(T.m)}, ${m-T.m} min before ${how==='crew'?'anyone could see it':'the alarm came through'}.`;
-  logE(m,s,'alarm');T.al.forEach(a=>alEv(m,...a));queueAlert(s,'alarm',true);play('fault');fx('lfb_'+k);}
+  logE(m,s,'alarm');T.al.forEach(a=>alEv(m,...a));queueAlert(s,'alarm',true,k);play('fault');fx('lfb_'+k);}
 function pollRtu(p){if(!S||S.ended||!CALLS_ON||!PR[p])return;if(S.polls.some(o=>o.p===p))return;
   if(commsOut(p)){logE(S.t,`No reply from the RTU at ${PR[p].name}: comms are down. Send a crew to see what's happening there.`,'warn');showBanner({m:S.t,text:`No reply from the RTU at ${PR[p].name}: comms are down.`,lvl:'warn'},'Send a crew to the substation: they can see and operate everything there.');play('warn');return;}
   S.polls.push({p,at:S.t});logE(S.t,`Polling the RTU at ${PR[p].name}.`,'info');play('click');render(true);}
@@ -1006,7 +1006,7 @@ function step(){
       const al=[];if(LF_OH[p][i]&&dv.startsWith('lf:'))al.push(['ar',`${ucfirst(devName(dv))} (${PR[p].name})`,dv,'onto a permanent fault']);al.push(['trip',`${ucfirst(devName(dv))} (${PR[p].name})`,dv,LF_OH[p][i]&&dv.startsWith('lf:')?'locked out':'fault']);
       if(CALLS_ON){if(!f2.found&&S.rngC()<.7)queueCall(m+3+Math.floor(S.rngC()*6),p,i,f2.sec,pick(S.rngC,f2.oh?HINT_OH:HINT_UG),'hint');// a caller who saw or heard it, in the faulted half
         if(!S.sc.easy&&dv==='lf:'+p+i&&(commsOut(p)||S.rngC()<TELE_P)){f2.hid=true;S.tele[p+i]={m,until:commsOut(p)?1e9:m+TELE_MIN+Math.floor(S.rngC()*TELE_VAR),mk,al};continue;}}// the RTU is slow to report it
-      logE(m,mk(m),'alarm');al.forEach(a=>alEv(m,...a));queueAlert(mk(m),'alarm',true);play('fault');fx(elOf(dv));}
+      logE(m,mk(m),'alarm');al.forEach(a=>alEv(m,...a));queueAlert(mk(m),'alarm',true,p+i);play('fault');fx(elOf(dv));}
     else if(type==='pt'){const p=id,T=S.pt[p];if(!PIDS.includes(p)||T.fault)continue;let n=0;LF[p].forEach((v,i)=>[0,1].forEach(s=>{if(secFeed(p,i,s)===p)n+=custOf(p,i,s);}));
       const was=T.closed;T.closed=false;T.fault={until:m+f.dur,ready:false,label:f.cause};S.faults++;S.chain.push(`a fault on the ${PR[p].name} transformer`);mark(m,'fault',`${PR[p].name} transformer fault`);
       const s=`Fault on the ${PR[p].name} 33/11 kV transformer: ${f.cause.toLowerCase()}. ${was?`Its 33 kV breaker tripped automatically, so the 11 kV feeders at ${PR[p].name} have lost their supply (${nf(n)} customers). `:''}Repair expected by ${fmtT(m+f.dur)}. ${ptHow(p)}`;
@@ -1184,7 +1184,8 @@ const anyOver=()=>S&&Object.values(S.alarms).some(a=>a.lvl==='over');
 let lastAl='',alOpen=null;
 // The option under an alarm that has been tapped: go to the breaker or switch it is about
 function alGo(a){if(alOpen!==a.id)return '';const k=a.sel;
-  return `<div class="al-acts">${k&&SELBOX[k]?`<button type="button" class="btn primary" data-goto="${k}" data-k="alg-${a.id}">Go to ${esc(a.name)} →</button>`:'<span class="fine">Not on the diagram.</span>'}</div>`;}
+  const fi=a.ev==='trip'&&/^(lf|mid|nop|lk):/.test(k||'')?(()=>{const id=k.split(':')[1];return /^[a-z]{2}\d$/.test(id)?findBtn(...lfP(id)):'';})():'';
+  return `<div class="al-acts">${k&&SELBOX[k]?`<button type="button" class="btn primary" data-goto="${k}" data-k="alg-${a.id}">Go to ${esc(a.name)} →</button>`:'<span class="fine">Not on the diagram.</span>'}${fi}</div>`;}
 // Go to a device from an alarm: bring the diagram into view, ring the device and open its controls
 function gotoDev(k){if(!k||!SELBOX[k])return;alOpen=null;lastAl='';if(PHONE){jumpTo(k);return;}
   select(k,isSw(k));const pm=$('pMimic');if(pm){const r=pm.getBoundingClientRect(),bar=document.querySelector('.bar'),top=bar&&getComputedStyle(bar).position==='sticky'?bar.offsetHeight:0;
@@ -1354,13 +1355,15 @@ function flushAlerts(){
   if(!queued.length)return;
   if(S.tut){queued=[];return;}
   const top=queued.find(q=>q.lvl==='alarm')||queued.find(q=>q.lvl==='warn')||queued[queued.length-1];
-  const pause=queued.some(q=>q.pause);queued=[];
+  const pause=queued.some(q=>q.pause),fd=queued.find(q=>q.find);if(fd&&!top.find)top.find=fd.find;queued=[];
   showBanner(top,guidance());
   if(pause&&autoPause&&S.running){S.paused=true;acc=0;}
 }
 function showBanner(a,g){const b=$('banner');b.className='banner '+(a.lvl==='alarm'?'alarm':a.lvl==='warn'?'warn':'');
-  $('bannerMsg').innerHTML=`<b>${fmtT(a.m)}</b>${esc(a.text)}<span class="g">${esc(g)}</span>`;b.hidden=false;$('resumeBtn').hidden=!(S.paused&&S.running);}
+  const fb=a.find&&canFind(...lfP(a.find))?`<span class="find-cta">${findBtn(...lfP(a.find),true)}<small>Play it as a Fault Lines puzzle while the shift waits. Find it and the repair starts straight away.</small></span>`:'';
+  $('bannerMsg').innerHTML=`<b>${fmtT(a.m)}</b>${esc(a.text)}<span class="g">${esc(g)}</span>${fb}`;b.hidden=false;$('resumeBtn').hidden=!(S.paused&&S.running);}
 function hideBanner(){$('banner').hidden=true;}
+function tidyFindCta(){const c=document.querySelector('#bannerMsg .find-cta');if(!c)return;const b=c.querySelector('[data-find]');if(!b||!canFind(...lfP(b.dataset.find)))c.remove();}
 
 /* ---------- Effects ---------- */
 function fx(id){if(S.silent)return;const p=$('pMimic');p.classList.remove('flashing');void p.offsetWidth;p.classList.add('flashing');
@@ -1780,7 +1783,8 @@ function select(k,fromDiagram){S.sel=k==='none'?null:k;S.qpSide=false;S.qp=!!fro
    Opens ../fault-lines/?lc=... in a frame over the paused shift. Fault Lines posts back {type:'fl-lc',k,t,done,correct,quick}.
    Found: the fault is located now (repairs start), and a quick find (within 2 steps of par) cuts a quarter off the repair. */
 const canFind=(p,i)=>{const f=LV_ON&&S&&S.lff&&S.lff[p]&&S.lff[p][i];return !!(f&&!f.found&&!(S.tele&&S.tele[p+i])&&S.running&&!S.ended&&!S.tut);};
-const findBtn=(p,i)=>canFind(p,i)?`<button type="button" class="btn find-btn" data-find="${p}${i}">Find it yourself</button>`:'';
+const FIND_IC='<svg class="find-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21M10.5 7.5l-2 3.5h3l-2 3.5"/></svg>';
+const findBtn=(p,i,big)=>canFind(p,i)?`<button type="button" class="btn find-btn${big?' big':''}" data-find="${p}${i}">${FIND_IC}${big?'Find it yourself in Fault Lines':'Find it yourself'}</button>`:'';
 let findAt=null;
 function openFind(k){const[p,i]=lfP(k);if(!canFind(p,i)||findAt)return;const f=S.lff[p][i];
   findAt={k,t:f.start,was:S.paused};S.paused=true;acc=0;
@@ -2100,7 +2104,7 @@ function render(force){
     if(S.split&&fs)fs+=' · split bus';txt('kFirm',fv);txt('kFirmSub',fs);setAttr($('kFirmBox'),'class','kpi kpi-firm'+(fc==='ok'?'':' '+fc)+(tipActive&&tipActive.el==='kFirmBox'?' hl':''));
     setAttr($('dPill'),'class','pill '+(fc==='ok'?'ok':fc==='warn'?'warn':'alarm'));txt('dPill',dt);}
   txt('kIns',S.insecureMin+' min');$('kIns').classList.toggle('bad',S.insecureMin>0);
-  seenAs(()=>{renderMimic();renderInsp();renderQP();gfxSubs();});renderComms();renderFlood();renderCalls();renderAlarms();renderLog();renderSky();gfxAll();
+  seenAs(()=>{renderMimic();renderInsp();renderQP();gfxSubs();});renderComms();renderFlood();renderCalls();renderAlarms();renderLog();renderSky();gfxAll();tidyFindCta();
   const now=performance.now();if(force||now-lastChart>350){lastChart=now;drawChart();}
   renderSec();
   const pl=S.ended?'Shift over':!S.running?'Start':S.paused?'Resume':'Pause';txt('playBtn',pl);txt('dPlay',pl);txt('dClock',fmtT(S.t));

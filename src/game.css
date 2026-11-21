@@ -866,7 +866,15 @@ html.kiosk .zchips,html.kiosk .tpick{display:none!important}
 .find-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 12px;padding-top:max(8px,env(safe-area-inset-top,0px));color:#FFD23F;font-size:14px}
 .find-bar .btn{min-height:40px}
 .find-ov iframe{flex:1 1 auto;width:100%;border:0;background:#fff}
-.find-btn{white-space:nowrap}
+.find-btn{white-space:nowrap;background:var(--zap);border-color:var(--zap);color:var(--wu-navy);font-weight:700;gap:6px}
+.find-btn:hover{filter:brightness(1.06)}
+.find-ic{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.find-btn.big{font-size:16px;padding:10px 18px;min-height:46px;box-shadow:0 0 0 0 color-mix(in srgb,var(--zap) 70%,transparent);animation:findPulse 1.8s ease-out 3}
+@keyframes findPulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--zap) 70%,transparent)}100%{box-shadow:0 0 0 14px transparent}}
+.find-cta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}
+.find-cta small{font-size:13px;opacity:.85;flex:1 1 220px}
+.al-acts .find-btn{margin-left:8px}
+@media (prefers-reduced-motion:reduce){.find-btn.big{animation:none}}
 .find-note .find-btn{display:flex;margin-top:8px}
 .find-bar .btn{background:#FFD23F;color:#0B1F3A;border-color:#FFD23F;font-weight:700}
 
@@ -944,3 +952,7 @@ a.btn.fl-go{text-decoration:none;border-color:var(--zap);box-shadow:inset 4px 0 
 @media (prefers-reduced-motion:reduce){.brk.flick,.arc-glow,.arc-core,.arc-smoke,.shim,#battLvl.chg,#battLvl.dis,.mg-ex circle,.wx-d,.al.unack .al-i{animation:none!important}.shift-in.go .in-card{animation:none;opacity:1}}
 
 .mg-h{flex:1 1 100%;margin:8px 0 -2px;font:700 11px var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+/* Find it yourself: always the bright Watts Up yellow, icon beside the words, wherever it sits */
+.btn.find-btn,.banner .btn.find-btn,.al-acts .btn.find-btn{display:inline-flex;flex-direction:row;align-items:center;justify-content:center;gap:7px;background:var(--zap);border:2px solid var(--zap);color:var(--wu-navy);font-weight:700;text-align:left}
+.banner .btn.find-btn:hover,.al-acts .btn.find-btn:hover{background:var(--zap);color:var(--wu-navy);filter:brightness(1.06)}
+.banner .find-cta small{color:inherit}
