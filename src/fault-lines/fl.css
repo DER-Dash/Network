@@ -278,3 +278,5 @@ text.ar.c{fill:var(--panel)}text.ar.o{fill:var(--ink)}
   .panel{padding:10px 10px}.panel.dia h2{font-size:13px;letter-spacing:.07em}
   body.fl-moved .dia .tip{display:none}
 }
+
+.feeder-end{stroke:var(--ink);stroke-width:4;stroke-linecap:round}

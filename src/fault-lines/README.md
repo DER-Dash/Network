@@ -34,6 +34,12 @@ Build plan steps 1 to 4 are done.
   repair starts; quick (within 2 steps of par): a quarter off the repair, at least 15 minutes left. Wrong: patrol
   carries on. The player still switches the healthy half back on in Losing Control.
 - These puzzles don't count towards practice bests or the daily streak.
+- The far end matches Losing Control: `nb` in the `lc` data is the feeder's real back-feed (Volt Face, or an 11 kV link
+  to a live neighbour, with the label to draw), or 0 for none, which draws "End of feeder: no back-feed" with no NOP.
+- Switching comes back: every operation posts `{type:'fl-lc-sw',k,t,sw}` and the result carries `sw` too, so even
+  Losing Control's own Back button keeps it. `sw` = first half on from the breaker, second half on from the back-feed,
+  mid-point switch (after section 3) closed. `findCopy` in game.js applies what a two-half feeder can show: the
+  healthy half back on, the mid-point open, and a log line; customers restored inside the faulted half stay off.
 
 **Today's puzzle** (step 2):
 

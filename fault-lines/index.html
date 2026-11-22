@@ -298,6 +298,8 @@ text.ar.c{fill:var(--panel)}text.ar.o{fill:var(--ink)}
   .panel{padding:10px 10px}.panel.dia h2{font-size:13px;letter-spacing:.07em}
   body.fl-moved .dia .tip{display:none}
 }
+
+.feeder-end{stroke:var(--ink);stroke-width:4;stroke-linecap:round}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -556,6 +558,7 @@ function makePuzzle(level,seed,opt){opt=opt||{};
     primary:pick(PRIMARIES),feeder:pick(FEEDERS),neighbour:pick(NEIGHBOURS),
     prot:F.oh?'Earth fault protection operated. The breaker auto-reclosed once onto the fault, tripped again and locked out.':anyOh?'Overcurrent protection operated. The breaker auto-reclosed once onto the fault, tripped again and locked out.':'Overcurrent protection operated. Underground cable, so no auto-reclose: the breaker locked out straight away.'};
   if(opt.names)Object.assign(Q,opt.names);
+  if(opt.nb!==undefined){if(opt.nb&&opt.nb.n){Q.neighbour=String(opt.nb.n).slice(0,40);Q.nbText=String(opt.nb.t||'').slice(0,70);}else Q.noNop=true;}
   // auto-reclosers: the nearest one upstream of the fault trips, recloses twice onto it and locks out, and the breaker holds
   const recs=sw.map((w,i)=>w.rec?i:-1).filter(i=>i>=0);
   if(recs.length){const t=fault<n?fault:secs[fault].tee,up=recs.filter(i=>i<t),j=up.length?up[up.length-1]:null,nm=i=>`${secs[i].name} and ${secs[i+1].name}`;Q.lock=j;
@@ -584,7 +587,7 @@ const nameList=set=>{const a=[...set].sort((x,y)=>teeOf(x)-teeOf(y)||x-y).map(se
 const cloneSt=s=>({...s,sw:s.sw.slice(),sp:s.sp.slice(),obs:s.obs.slice(),log:[]});
 
 // one switching operation on state s. Returns a short result for the log, or {refused} when it would parallel the feeders.
-function operate(s,k,act){
+function operate(s,k,act){if(k==='nop'&&P.noNop)return{refused:'This feeder has no back-feed at its far end, so there is nothing to close there.'};
   const close=act==='close';if(isClosed(s,k)===close)return{noop:true};
   if(close){const t=cloneSt(s);setDev(t,k,true);const A=fedA(t),B=fedB(t);if([...A].some(i=>B.has(i)))return{refused:`Closing the ${devName(k)} would parallel this feeder with ${P.neighbour} primary, which is on a different grid supply. Open a switch between them first.`};}
   const man=isManual(k),dt=man?MANUAL_MIN:REMOTE_MIN;s.cml+=custOff(s)*dt;s.mins+=dt;s.steps+=man?2:1;
@@ -626,7 +629,7 @@ function restoreCfg(f){const n=P.n,cfg=[];
   cfg.push(f>0?[String(f-1),'open']:['cb','open']);cfg.push(f<n-1?[String(f),'open']:['nop','open']);
   for(let i=0;i<f-1;i++)cfg.push([String(i),'close']);for(let i=f+1;i<n-1;i++)cfg.push([String(i),'close']);
   P.sp.forEach((w,q)=>{if(w.tee!==f)cfg.push(['p'+q,'close']);});
-  if(f<n-1)cfg.push(['nop','close']);if(f>0)cfg.push(['cb','close']);return cfg;}
+  if(f<n-1&&!P.noNop)cfg.push(['nop','close']);if(f>0)cfg.push(['cb','close']);return cfg;}
 function nextMove(s){const C=candidates(s),n=P.n,Cs=new Set(C);
   if(C.length===1){const f=C[0],m=firstOp(s,restoreCfg(f));
     if(!m)return{declare:f,why:`Everything else that can be is back on. Tap ${secName(f)} and declare the fault there.`};
@@ -700,11 +703,17 @@ function careerEnd(){const r=st.result,k=r.car,i=P.career,nx=CAREER[i+1];
    cable, customers, a seed, an easy shift, and m, the shift clock in minutes after midnight. The near half here is the first three main sections and their spurs. */
 function lcParams(){try{const v=new URLSearchParams(location.search).get('lc');if(!v)return null;const d=JSON.parse(v);return d&&typeof d==='object'?d:null;}catch(e){return null;}}
 function startLc(d){stash();mode='lc';const lv=d.e?'easy':'medium',seed=(Math.round(Number(d.s))||1)>>>0;
-  const o={L:{n:6,spurs:1,showCand:!!d.e},oh:!!d.oh,cust:Math.max(100,Math.min(20000,Math.round(Number(d.c))||1500)),
+  const o={L:{n:6,spurs:1,showCand:!!d.e},nb:d.nb&&d.nb.n?{n:d.nb.n,t:d.nb.t}:null,oh:!!d.oh,cust:Math.max(100,Math.min(20000,Math.round(Number(d.c))||1500)),
     t0:Number.isFinite(+d.m)?((Math.round(+d.m)%1440)+1440)%1440:undefined,names:{primary:String(d.pr||'Kings Hill').slice(0,40),feeder:String(d.f||'Town Centre').replace(/ feeder$/i,'').slice(0,40)}};
   const Q=makePuzzle(lv,seed,o),half=d.h?1:0,inHalf=[...Array(Q.N).keys()].filter(f=>((f<Q.n?f:Q.secs[f].tee)>=3)===!!half);
   setUp(lv,seed,{...o,fault:inHalf[Math.floor(rngFrom(seed^0x5bd1e995)()*inHalf.length)]});P.lc=d;games.lc={P,st,crew};show();}
-function lcBack(){const r=st.result,m={type:'fl-lc',k:P.lc.k,t:P.lc.t,done:!!r,correct:!!(r&&r.correct),grade:r?r.grade:'',steps:st.steps,par:P.par,quick:!!(r&&r.correct&&st.steps<=P.par+2)};
+// the switching to copy back into Losing Control: is any of the first half (sections 1-3 and their spurs) on from the
+// breaker, any of the second half on from the back-feed, and is the mid-point switch (after section 3) open
+function lcState(){const A=fedA(st),B=fedB(st),near=f=>(f<P.n?f:P.secs[f].tee)<3,ids=[...Array(P.N).keys()];
+  return{near:ids.some(f=>near(f)&&A.has(f)),far:ids.some(f=>!near(f)&&B.has(f)),mid:!!st.sw[2],nb:!!st.nop};}
+// tell Losing Control after every operation, so leaving with its own Back button still keeps the switching
+function lcTell(){if(!P||!P.lc||window.parent===window)return;try{window.parent.postMessage({type:'fl-lc-sw',k:P.lc.k,t:P.lc.t,sw:lcState()},location.origin==='null'?'*':location.origin);}catch(e){}}
+function lcBack(){const r=st.result,m={type:'fl-lc',k:P.lc.k,t:P.lc.t,done:!!r,correct:!!(r&&r.correct),grade:r?r.grade:'',steps:st.steps,par:P.par,quick:!!(r&&r.correct&&st.steps<=P.par+2),sw:lcState()};
   if(window.parent&&window.parent!==window)window.parent.postMessage(m,location.origin==='null'?'*':location.origin);else location.href='../control-room/';}
 function save(){if(P&&P.daily)ls(dailyKey(),JSON.stringify({ops:st.ops,f:st.result?st.result.f:null}));}
 // one operation on the puzzle in play: log it and add it to the result grid
@@ -715,7 +724,7 @@ function apply(k,a){const r=operate(st,k,a);if(r.noop||r.refused)return r;
 function act(k,a){if(!st||st.ended)return null;const A0=fedA(st),B0=fedB(st),r=apply(k,a);
   if(r.noop){toast(`The ${devName(k)} is already ${a==='open'?'open':'closed'}.`);return r;}
   if(r.refused){toast(r.refused);return r;}
-  save();closeSheet();render();if(r.trip){flash();spark(r.dev);}else flow([...fedA(st)].filter(i=>!A0.has(i)),[...fedB(st)].filter(i=>!B0.has(i)));return r;}
+  save();lcTell();closeSheet();render();if(r.trip){flash();spark(r.dev);}else flow([...fedA(st)].filter(i=>!A0.has(i)),[...fedB(st)].filter(i=>!B0.has(i)));return r;}
 // from the page: a manual switch needs the crew to drive there first
 function actUI(k,a){if(!st||st.ended||busy)return;
   const t=operate(cloneSt(st),k,a);if(t.noop||t.refused){act(k,a);return;}
@@ -745,7 +754,7 @@ function finish(f,replay){st.ended=true;
   const s=st,F=P.fault,A=fedA(s),B=fedB(s),correct=f===F,on=i=>A.has(i)||B.has(i);
   const iso=!on(F)&&(F>=P.n?!s.sp[F-P.n]:(F===0?!s.cb||!s.sw[0]:!s.sw[F-1])&&(F===P.n-1?!s.nop:!s.sw[F]));
   // spurs teed off a faulted main section can't come back until it's repaired
-  const lost=i=>i===F||(F<P.n&&i>=P.n&&P.secs[i].tee===F);
+  const lost=i=>i===F||(F<P.n&&i>=P.n&&P.secs[i].tee===F)||(P.noNop&&F<P.n&&(i<P.n?i>F:P.secs[i].tee>F));
   const healthyOff=P.secs.reduce((a,x,i)=>a+(!lost(i)&&!on(i)?x.cust:0),0);
   const d=s.steps-P.par;let pts=1000+(d<0?-d*50:-d*40)-s.trips*100-s.nbTrips*250-s.hints*50-Math.round(s.cml/500)-(correct?0:400)-(iso?0:200)-Math.round(healthyOff/2);
   pts=Math.max(0,pts);const grade=pts>=900?'A':pts>=750?'B':pts>=600?'C':pts>=400?'D':'E';
@@ -811,8 +820,9 @@ function svg(){const s=st,A=fedA(s),B=fedB(s),on=i=>A.has(i)||B.has(i),C=P.showC
     o+=dev(k,X,y,w.manual,s.sw[i])+(w.rec?`<text class="ar ${s.sw[i]?'c':'o'}" x="${X}" y="${y+3.5}" text-anchor="middle">AR</text>`:'')+`<text class="t-km" x="${X-20}" y="${y+16}" text-anchor="end">${(P.secs[i+1].from).toFixed(1)} km</text>`+fpi(w,fpiFlag(i),X-56,y);
     o+=`<rect class="hit" data-sel="${k}" x="${X-24}" y="${y-22}" width="48" height="44"/>`;});
   {const y=TOP-SW-12;o+=`<g data-dev="cb" class="devg"><rect class="dev cb${s.cb?'':' open'}${sel==='cb'?' sel':''}" x="${X-SW-1}" y="${y-SW-1}" width="${SW*2+2}" height="${SW*2+2}" rx="2"/></g><text class="t-dev" x="${X+20}" y="${y+5}">Feeder breaker</text><rect class="hit" data-sel="cb" x="${X-26}" y="${y-22}" width="140" height="44"/>`;}
-  {const y=last.sw;o+=dev('nop',X,y,P.nopManual,s.nop)+`<text class="t-dev" x="${X+20}" y="${y+5}">Normally open point</text>`;
-    o+=`<path class="cond live nb" d="M${X} ${y+SW} V${y+44} H350"/><text class="t-nb" x="350" y="${y+37}" text-anchor="end">To ${esc(P.neighbour)} primary (live)</text>`;
+  if(P.noNop){const y=last.sw;o+=`<path class="feeder-end" d="M${X-12} ${y-SW+2} H${X+12}"/><text class="t-dev" x="${X+20}" y="${y-SW+6}">End of feeder: no back-feed</text>`;}
+  else{const y=last.sw;o+=dev('nop',X,y,P.nopManual,s.nop)+`<text class="t-dev" x="${X+20}" y="${y+5}">Normally open point</text>`;
+    o+=`<path class="cond live nb" d="M${X} ${y+SW} V${y+44} H350"/><text class="t-nb" x="350" y="${y+37}" text-anchor="end">${esc(P.nbText||`To ${P.neighbour} primary (live)`)}</text>`;
     o+=`<rect class="hit" data-sel="nop" x="${X-26}" y="${y-22}" width="160" height="44"/>`;}
   if(crew)o+=`<g id="crew" class="crew${crew.at?'':' home'}" transform="translate(${crew.x.toFixed(1)} ${crew.y.toFixed(1)}) scale(1.35)">${CREW}</g>`;
   return o+'</svg>';}

@@ -3397,9 +3397,12 @@ const canFind=(p,i)=>{const f=LV_ON&&S&&S.lff&&S.lff[p]&&S.lff[p][i];return !!(f
 const FIND_IC='<svg class="find-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21M10.5 7.5l-2 3.5h3l-2 3.5"/></svg>';
 const findBtn=(p,i,big)=>canFind(p,i)?`<button type="button" class="btn find-btn${big?' big':''}" data-find="${p}${i}">${FIND_IC}${big?'Find it yourself in Fault Lines':'Find it yourself'}</button>`:'';
 let findAt=null;
-function openFind(k){const[p,i]=lfP(k);if(!canFind(p,i)||findAt)return;const f=S.lff[p][i];
-  findAt={k,t:f.start,was:S.paused};S.paused=true;acc=0;
-  const d={k,t:f.start,f:LFN[p][i],pr:PR[p].name,h:f.sec?1:0,oh:!!LF_OH[p][i],c:custOf(p,i,0)+custOf(p,i,1),s:hashStr(S.key+'|'+k+'|'+f.start+'|'+(S.seed||0))>>>0,e:!!S.sc.easy,m:S.t};
+// the back-feed this feeder really has at its far end, for the puzzle: Volt Face, an 11 kV link to a live neighbour, or none
+function findSrc(p,i){if(VF_ON&&VFI.includes(i))return{kind:'vf',n:'Volt Face',t:'To the Volt Face 11 kV backfeed (live)'};
+  const l=linkOf(p,i);if(l&&S.lf[l.q]&&S.lf[l.q][l.j]&&midOn(l.q,l.j)&&subLv(l.q))return{kind:'lk',k:l.k,n:PR[l.q].name,t:`To ${PR[l.q].name} through the 11 kV link (live)`};return null;}
+function openFind(k){const[p,i]=lfP(k);if(!canFind(p,i)||findAt)return;const f=S.lff[p][i],src=findSrc(p,i);
+  findAt={k,t:f.start,was:S.paused,src,sw:null};S.paused=true;acc=0;
+  const d={k,t:f.start,f:LFN[p][i],pr:PR[p].name,h:f.sec?1:0,oh:!!LF_OH[p][i],c:custOf(p,i,0)+custOf(p,i,1),s:hashStr(S.key+'|'+k+'|'+f.start+'|'+(S.seed||0))>>>0,e:!!S.sc.easy,m:S.t,nb:src?{n:src.n,t:src.t}:0};
   let ov=$('findOv');if(!ov){ov=document.createElement('div');ov.id='findOv';ov.className='find-ov';document.body.appendChild(ov);}
   ov.innerHTML=`<div class="find-bar"><b>Find it yourself · ${esc(LFN[p][i])}</b><button type="button" class="btn" id="findClose">Back to the shift</button></div><iframe id="findFrame" title="Fault Lines: find the fault on the ${esc(lfName(p,i))}" src="../fault-lines/?lc=${encodeURIComponent(JSON.stringify(d))}"></iframe>`;
   ov.hidden=false;track('find_yourself',{feeder:k});render(true);}
@@ -3410,9 +3413,20 @@ function closeFind(res){const ov=$('findOv');if(ov){ov.hidden=true;ov.innerHTML=
       if(res.quick){f.until=Math.max(m+15,f.until-Math.round(f.dur/4));const s2=`Quick work: the crew is going straight to the ${f.sec?'second':'first'} half of the ${lfName(p,i)}, so the repair should be done by ${fmtT(f.until)}.`;logE(m,s2,'ok');queueAlert(s2,'ok',false);}
       track('find_result',{feeder:a.k,correct:true,quick:!!res.quick});}
     else{const s2=`Your fault-finding on the ${lfName(p,i)} pointed the crew at the wrong section. Line patrol carries on and will find it by ${fmtT(f.start+PATROL)}.`;logE(m,s2,'warn');queueAlert(s2,'warn',false);track('find_result',{feeder:a.k,correct:false});}}
+  {const sw=(res&&res.sw)||a.sw;if(sw&&f&&f.start===a.t)findCopy(p,i,f,sw,a.src);}
   if(S.running&&!S.ended)S.paused=a.was;acc=0;lastInsp='';lastQP='';render(true);}
-addEventListener('message',e=>{const d=e.data;if(!d||d.type!=='fl-lc'||!findAt)return;if(location.origin!=='null'&&e.origin!==location.origin)return;
-  const fr=$('findFrame');if(fr&&e.source&&e.source!==fr.contentWindow)return;closeFind(d);});
+// copy the switching done in Fault Lines onto the feeder here. This feeder has two halves split by the mid-point switch:
+// the half without the fault can come back (the first from the breaker, the second from the back-feed), the faulted half can't.
+function findCopy(p,i,f,sw,src){const m=S.t,nm=LFN[p][i],sec=f.sec,lf=!!sw.near&&sec===1,far=!!sw.far&&sec===0&&!!src,midOpen=!sw.mid||lf||far,did=[];
+  if(midOn(p,i)===midOpen){S.mid[p][i]=!midOpen;did.push(`mid-point switch ${midOpen?'opened':'closed'}`);}
+  if(S.lf[p][i]!==lf){S.lf[p][i]=lf;did.push(`breaker at ${PR[p].name} ${lf?'closed: the first half is back on':'open'}`);}
+  if(far&&src){if(src.kind==='vf'&&!S.nop[p][i]){S.nop[p][i]=true;did.push('Volt Face backfeed closed: the second half is back on');}
+    if(src.kind==='lk'&&!S.lk[src.k]){S.lk[src.k]=true;did.push(`11 kV link to ${src.n} closed: the second half is back on`);}}
+  const lost=(sec===1&&sw.far)||(sec===0&&sw.near)?` Customers you put back on in the faulted ${sec?'second':'first'} half stay off here: that whole half waits for the repair.`:'';
+  if(did.length||lost){const s2=`Switching from Fault Lines copied onto ${nm} at ${PR[p].name}: ${did.length?did.join(', '):'no change'}.${lost}`;logE(m,s2,'info');mark(m,'xfer','Fault Lines switching');}}
+addEventListener('message',e=>{const d=e.data;if(!d||(d.type!=='fl-lc'&&d.type!=='fl-lc-sw')||!findAt)return;if(location.origin!=='null'&&e.origin!==location.origin)return;
+  const fr=$('findFrame');if(fr&&e.source&&e.source!==fr.contentWindow)return;
+  if(d.type==='fl-lc-sw'){if(d.k===findAt.k&&d.t===findAt.t&&d.sw)findAt.sw=d.sw;return;}closeFind(d);});
 function lvFaultTxt(p,i){const F=S.lff&&S.lff[p]&&S.lff[p][i];if(!F)return '';
   return F.found?`fault in the ${F.sec?'second':'first'} half · repair ${fmtT(F.until)}`:`faulted · location unknown (patrol ${fmtT(F.start+PATROL)})`;}
 let lastQP='';
