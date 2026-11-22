@@ -1464,6 +1464,24 @@ a.btn.fl-go{text-decoration:none;border-color:var(--zap);box-shadow:inset 4px 0 
 .ptw-row .btn{flex:1 1 100%;margin-top:2px}
 .ptw-tag{font:700 10.5px var(--f-display);letter-spacing:.12em;text-transform:uppercase;background:var(--warn);color:#fff;border-radius:3px;padding:1px 6px}
 .ptw-row.on .ptw-tag{background:var(--ok)}.ptw-row.ready .ptw-tag,.ptw-row.done .ptw-tag{background:var(--zap);color:var(--wu-navy)}
+
+/* ---- Regulator's report card and Ofwatt's letter ---- */
+.reg{margin:16px 0}
+.reg h3{margin:0 0 8px;font:700 15px var(--f-display);letter-spacing:.1em;text-transform:uppercase}
+.reg h3 small{font:500 12px var(--f-body);letter-spacing:0;text-transform:none;color:var(--muted);margin-left:6px}
+.reg-t{width:100%;border-collapse:collapse;font-size:14px}
+.reg-t th{text-align:left;font:700 11px var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:4px 8px;border-bottom:1px solid var(--rule)}
+.reg-t td{padding:7px 8px;border-bottom:1px solid var(--rule);font-variant-numeric:tabular-nums}
+.reg-t td small{display:block;font-size:11.5px;color:var(--muted)}
+.reg-t td:nth-child(n+2),.reg-t th:nth-child(n+2){text-align:right}
+.reg-t tr.ok td:first-child{box-shadow:inset 4px 0 var(--ok)}.reg-t tr.warn td:first-child{box-shadow:inset 4px 0 var(--warn)}.reg-t tr.alarm td:first-child{box-shadow:inset 4px 0 var(--alarm)}
+.reg-t tr.tot td{font-weight:700;border-bottom:0}
+.reg-t tr.none td{color:var(--muted);font-style:italic}
+.reg-cta{margin:10px 0 0}
+.reg-letter .reg-t{color:#1c1b22;margin:10px 0 14px}.reg-letter .reg-t th,.reg-letter .reg-t td small{color:#5c5a66}.reg-letter .reg-t td,.reg-letter .reg-t th{border-color:#ddd8cc}
+.reg-head{background:#173b2f!important;border-bottom-color:#7fd1a8!important}
+.reg-head .lt-brand b span{color:#7fd1a8}
+.ofw-mark{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;background:#7fd1a8;color:#173b2f;font:800 18px var(--f-display,system-ui);flex:none}
 </style>
 </head>
 <body>
@@ -2360,7 +2378,7 @@ function newGame(key){GFX.intro=false;
   const sched=genFaults(rng,sc,b.risk).concat(genLvFaults(seed,sc,b.risk),genPtFaults(seed,sc,b.risk),b.sched||[]).sort((a,b)=>a.m-b.m),dv=sc.demand.map(x=>x[1]);
   S={key,sc,mode,date,seed,surgeK,t:START-60,dmin:Math.min(...dv),dmax:Math.max(...dv),
     events:b.events.map(e=>({...e,fired:false,noticed:false})),cutout:b.cutout?{...b.cutout,fired:false,done:false}:null,
-    risk:b.risk,sched,N,commsPlan:(b.comms||[]).map(c=>({...c,done:false,back:false})),comms:{},commsSnap:{},rng2:rngFrom(seed^0x5bd1e995),rngC:rngFrom(seed^0x3c6ef372),flood:b.flood?{...b.flood,warned:false,near:false,arrived:false,live:null,receded:false}:null,
+    risk:b.risk,sched,N,commsPlan:(b.comms||[]).map(c=>({...c,done:false,back:false})),comms:{},commsSnap:{},rng2:rngFrom(seed^0x5bd1e995),rngE:rngFrom(seed^0x6a09e667),rngC:rngFrom(seed^0x3c6ef372),flood:b.flood?{...b.flood,warned:false,near:false,arrived:false,live:null,receded:false}:null,
     tx:[0,1,2].map(()=>({temp:60,out:null,em:0,sh:0,L:0,flow:0})),
     share,lf:Object.fromEntries(Object.keys(LF).map(p=>[p,LF[p].map(()=>true)])),nop:Object.fromEntries(Object.keys(LF).map(p=>[p,LF[p].map(()=>false)])),lk:{hm:false,mr:false,rj:false},
     mid:Object.fromEntries(Object.keys(LF).map(p=>[p,LF[p].map(()=>true)])),lff:Object.fromEntries(Object.keys(LF).map(p=>[p,LF[p].map(()=>null)])),pt:Object.fromEntries(Object.keys(LF).map(p=>[p,{closed:true,fault:null}])),
@@ -2376,6 +2394,7 @@ function newGame(key){GFX.intro=false;
   SERVICES.forEach(s=>{S.manual[s.id]=0;S.armed[s.id]=0;S.act[s.id]=0;S.autoP[s.id]=0;S.manP[s.id]=0;S.called[s.id]=false;S.fail[s.id]=0;S.allow[s.id]=s.allow||0;});
   const c0=comps(S.t,false),L0=Math.abs(PIDS.reduce((a,p)=>a+netP(c0,p,zeroD()),0))/3/R;S.tx.forEach(t=>t.temp=20+100*L0*L0);
   if(sc.init)sc.init(S);
+  if(S.rngE()<.4)S.falseAl={m:START+60+Math.floor(S.rngE()*Math.max(1,END-START-150)),done:false};// a false RTU trip alarm, on some shifts
   buildMimic();
   for(let i=0;i<60;i++)step();
   S.silent=false;S.alarms={};S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.peakL=0;S.ens=0;S.cust={ci:0,cml:0,si:0,off:{},pri:0,pmin:{}};S.loss=[];S.lossOpen={};S.cp={};S.crewJobs=0;S.trial=0;S.isoMin=0;S.recloses=0;S.parOk=0;S.calls=[];S.callQ=[];S.callN=0;S.tele={};S.polls=[];S.callRing=-99;S.vfPeak=0;S.gspOver=0;S.gspTrips=0;S.log=[];S.full=[];S.marks=[];S.chain=[];queued=[];
@@ -2468,7 +2487,8 @@ function letterHtml(kind,D){const nm=getName()||'Control Engineer',date=fmtLong(
     <footer class="lt-foot">Watts Up Electricity Distribution Ltd · Keeping the lights on. Mostly.</footer></div>`;}
 function fmtLong(d){const[y,mo,da]=d.split('-').map(Number);return new Date(Date.UTC(y,mo-1,da)).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});}
 let letterNow=null;
-function showLetter(kind,D){letterNow={kind,D};let el=$('letter');if(!el){el=document.createElement('div');el.id='letter';el.className='letter-wrap';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');document.body.appendChild(el);}
+function showLetter(kind,D){letterNow={kind,D};if(kind==='reg'){let el=$('letter');if(!el){el=document.createElement('div');el.id='letter';el.className='letter-wrap';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');document.body.appendChild(el);}
+    el.setAttribute('aria-label',`Ofwatt's letter on week ${D.w}`);el.innerHTML=`<div class="letter-in">${regLetterHtml(D)}<div class="lt-btns"><button type="button" class="btn primary big" data-letter-ok>Back to the results</button></div></div>`;el.hidden=false;el.scrollTop=0;play('ok');const b=el.querySelector('[data-letter-ok]');if(b)b.focus({preventScroll:true});return;}let el=$('letter');if(!el){el=document.createElement('div');el.id='letter';el.className='letter-wrap';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');document.body.appendChild(el);}
   el.setAttribute('aria-label',kind==='warn'?'Final written warning':'Notice of dismissal');
   el.innerHTML=`<div class="letter-in">${letterHtml(kind,D)}<div class="lt-btns">${kind==='warn'?'<button type="button" class="btn primary big" data-letter-ok>I understand</button>'
     :'<button type="button" class="btn" data-letter-ok>See the shift results</button><button type="button" class="btn primary big" data-letter-restart>Start my new career</button>'}</div></div>`;
@@ -2678,6 +2698,7 @@ function step(){
   if(S.cutout&&!S.cutout.fired&&m>=S.cutout.start){S.cutout.fired=true;mark(m,'fail','Wind stop');const s=`Spinney Windy Things shut down on high wind speed. Restart expected around ${fmtT(S.cutout.end)}.`;logE(m,s,'alarm');queueAlert(s,'alarm',true);play('warn');}
   if(S.cutout&&S.cutout.fired&&!S.cutout.done&&m>=S.cutout.end){S.cutout.done=true;logE(m,'Spinney Windy Things restarting.','ok');}
   if(S.op&&m>=S.op.at){const op=S.op;S.op=null;doOp(op,m);}
+  if(!S.silent)rareStep(m);
   if(!S.silent)stepCrews(m);
   if(!S.silent&&S.plan)runPlan(m);
   if(!S.silent){stepLv(m);checkLv(m,null);stepFlood(m);stepComms(m);stepCalls(m);}
@@ -2759,7 +2780,7 @@ function step(){
   if(S.sc.clp){const K=S.clp||(S.clp={});Object.keys(K).forEach(f=>{K[f]=1+(K[f]-1)*Math.exp(-1/40);if(K[f]<1.01)delete K[f];});}
   {const C=S.cust;PIDS.forEach(p=>LF[p].forEach((f,i)=>SECF.forEach((h,sx)=>{const k=p+i+'s'+sx,fed=secFeed(p,i,sx,sup)!==null,n=Math.round(CUST_TOTAL*S.share[p]*f*h);
     const P=prioOf(p,i),pr=P&&P.sec===sx?P:null;
-    if(!fed){const o=C.off[k]=(C.off[k]||0)+1,w=(C.why||(C.why={}))[k]=offWhy(p,i,sx,sup);let d=0;const eK=S.sc.ensK||1;if(o===1)callsFor(m,p,i,sx,n);if(o===SHORT_INT){C.ci+=n;C.cml+=SHORT_INT*n;d=n/100+SHORT_INT*n/500;}else if(o>SHORT_INT){C.cml+=n;d=n/500;}lose(m,w.k,w.r,w.l,d*eK);
+    if(!fed){const o=C.off[k]=(C.off[k]||0)+1,w=(C.why||(C.why={}))[k]=offWhy(p,i,sx,sup);let d=0;const eK=S.sc.ensK||1;if(o===1)callsFor(m,p,i,sx,n);if(o===LONG_INT)C.long=(C.long||0)+n;if(o===SHORT_INT){C.ci+=n;C.cml+=SHORT_INT*n;d=n/100+SHORT_INT*n/500;}else if(o>SHORT_INT){C.cml+=n;d=n/500;}lose(m,w.k,w.r,w.l,d*eK);
       if(pr&&!S.silent){const x=PRK[pr.kind].pts*eK;C.pri+=x;C.pmin[p+i]=(C.pmin[p+i]||0)+1;lose(m,'prio:'+p+i,w.r==='repair'?'prio_rep':'prio',`${pr.name} off supply (${lfName(p,i)}, ${PR[p].name})`,x);
         if(o===1){const s=`${pr.name} is off supply on the ${lfName(p,i)} at ${PR[p].name}. ${PRK[pr.kind].label==='Hospital'?'The hospital':pr.kind==='care'?'The care home':'These customers'} cost${pr.kind==='psr'?'':'s'} ${x} extra points a minute until restored.`;logE(m,s,'alarm');queueAlert(s,'alarm',false);}}}
     else if(C.off[k]){if(S.sc.clp&&!S.silent){const K=S.clp||(S.clp={}),x=1+.65*Math.min(1,(C.off[k]+(S.sc.clpPre||0))/120);if(x>(K[p+i]||1)+.05){K[p+i]=x;if(sx===0||!S.lf[p][i])logE(m,`Cold load pickup: ${LFN[p][i]} (${PR[p].name}) is drawing about ${Math.round((x-1)*100)}% more than normal after being off. It settles over the next hour.`,'warn');}}
@@ -2833,7 +2854,8 @@ let lastAl='',alOpen=null;
 // The option under an alarm that has been tapped: go to the breaker or switch it is about
 function alGo(a){if(alOpen!==a.id)return '';const k=a.sel;
   const fi=a.ev==='trip'&&/^(lf|mid|nop|lk):/.test(k||'')?(()=>{const id=k.split(':')[1];return /^[a-z]{2}\d$/.test(id)?findBtn(...lfP(id)):'';})():'';
-  return `<div class="al-acts">${k&&SELBOX[k]?`<button type="button" class="btn primary" data-goto="${k}" data-k="alg-${a.id}">Go to ${esc(a.name)} →</button>`:'<span class="fine">Not on the diagram.</span>'}${fi}</div>`;}
+  const fp=a.fake?`<button type="button" class="btn" data-fakepoll="${a.id}">Poll the RTU</button>`:'';
+  return `<div class="al-acts">${fp}${k&&SELBOX[k]?`<button type="button" class="btn primary" data-goto="${k}" data-k="alg-${a.id}">Go to ${esc(a.name)} →</button>`:'<span class="fine">Not on the diagram.</span>'}${fi}</div>`;}
 // Go to a device from an alarm: bring the diagram into view, ring the device and open its controls
 function gotoDev(k){if(!k||!SELBOX[k])return;alOpen=null;lastAl='';if(PHONE){jumpTo(k);return;}
   select(k,isSw(k));const pm=$('pMimic');if(pm){const r=pm.getBoundingClientRect(),bar=document.querySelector('.bar'),top=bar&&getComputedStyle(bar).position==='sticky'?bar.offsetHeight:0;
@@ -2891,7 +2913,7 @@ function dispatch(k,act){if(!S||S.ended||!CREW_ON)return;
   if(!c){const idle=S.crews.filter(x=>!x.job);if(!idle.length){showBanner({m:S.t,text:S.crews.length===1?'Your only field crew is busy. Wait for it to finish its job.':`All ${['','one','two','three','four'][S.crews.length]||S.crews.length} field crews are busy. Wait for one to finish its job.`,lvl:'warn'},'Crews walk to manual switches, which takes time. Send one ahead to stand by where you will need it.');return;}
     c=idle.sort((a,b)=>{const pa=crewPos(a,S.t),pb=crewPos(b,S.t);return(Math.abs(pa.x-tgt.x)+Math.abs(pa.y-tgt.y))-(Math.abs(pb.x-tgt.x)+Math.abs(pb.y-tgt.y));})[0];}
   const p=crewPos(c,S.t),via=mgu?(mgu.site?devXY('mg:'+mgu.site):{x:DEPOT.x,y:DEPOT.y}):null,mh=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y),
-    dist=via?mh(p,via)+mh(via,tgt):mh(p,tgt),travel=c.at===k&&!via?0:Math.max(2,Math.round(dist/CREW_SPEED))+(via?MG_HITCH:0);
+    dist=via?mh(p,via)+mh(via,tgt):mh(p,tgt),travel0=c.at===k&&!via?0:Math.max(2,Math.round(dist/CREW_SPEED))+(via?MG_HITCH:0);const travel=travel0+rareDelay(c,k,travel0);
   if(travel){c.from={x:p.x,y:p.y};c.via=via;c.to=tgt;c.dep=S.t;c.arr=S.t+travel;c.at=null;}
   c.job={k,act,at:S.t+travel+(act?opT:0),arr:S.t+travel,t0:S.t};
   if(mgu){logE(S.t,`Crew ${c.n} is collecting the ${mgName(mgu)} from ${mgu.site?siteFn(mgu.site):'the yard at the depot'}, to tow it to ${siteFn(k.slice(3))}.`,'info');mgu.site=k.slice(3);mgu.conn=false;mgu.pend=true;}
@@ -2904,7 +2926,7 @@ function issueOp(k,act){if(!S||S.ended||GAME==='fc')return;if(act==='close'){con
   if(isManual(k)){dispatch(k,act);return;}
   if(S.op){showBanner({m:S.t,text:`Wait for the current operation (${opLabel(S.op.k,S.op.act).toLowerCase()}) to finish.`,lvl:'warn'},'Each operation takes one minute.');return;}
   S.op={k,act,at:S.t+1};logE(S.t,`Operating: ${opLabel(k,act).toLowerCase()}.`,'info');play('click');lastInsp='';render(true);}
-function doOp(op,m){if(op.k.startsWith('ptw:')){const[p,i]=lfP(op.k.slice(4));ptwDone(m,p,i,op.act);return;}if(CALLS_ON&&S.tele){const[t,id]=op.k.split(':');if(['lf','mid','nop','mg'].includes(t)&&S.tele[id])reveal(m,id,'op');}doOp0(op,m);if(LV_ON&&op.act==='close'){genCheck(m,op.k);checkLv(m,op.k);}}
+function doOp(op,m){if(op.k.startsWith('ptw:')){const[p,i]=lfP(op.k.slice(4));ptwDone(m,p,i,op.act);return;}if(rareFail(op,m))return;if(CALLS_ON&&S.tele){const[t,id]=op.k.split(':');if(['lf','mid','nop','mg'].includes(t)&&S.tele[id])reveal(m,id,'op');}doOp0(op,m);if(LV_ON&&op.act==='close'){genCheck(m,op.k);checkLv(m,op.k);}}
 function genCheck(m,k){(S.mgu||[]).forEach(u=>{if(!u.conn)return;if(!genClash(u))return;u.conn=false;
   incident(m,`Closing the ${devName(k)} put another supply onto the mobile generator at ${siteFn(u.site)} without synchronising, so the generator tripped. Disconnect a generator before closing anything else onto its section.`,'mgg_'+u.site);});}
 function doOp0(op,m){const[type,id]=op.k.split(':');play('op');
@@ -3429,6 +3451,71 @@ const QP_T=GAME==='fc'?[]:['tx','pt','bc','in','tie','it','bs','lf','nop','lk','
 function select(k,fromDiagram){S.sel=k==='none'?null:k;S.qpSide=false;S.qp=!!fromDiagram&&isSw(S.sel);lastInsp='';
   if(PHONE){if(S.qp)closeSheet();else if(S.sel)openSheet();}render(true);}
 
+
+/* ---------- The regulator's report card ----------
+   Each control room shift is scored the way a network operator is judged: customer interruptions per 100 customers
+   (CI), customer minutes lost per customer (CML), long interruptions over 3 hours (a payment for each customer) and
+   switching incidents. Ofwatt is a made-up regulator. In a career, every fifth shift brings Ofwatt's letter on the week. */
+const LONG_INT=180,REG={ciT:8,cmlT:6,ciR:1500,cmlR:1200,gsp:30,incP:10000,cap:25000};
+function regOf(){const C=S.cust,ci=C.ci/CUST_TOTAL*100,cml=C.cml/CUST_TOTAL,lg=C.long||0,inc=S.incidents;
+  const cl=v=>Math.max(-REG.cap,Math.min(REG.cap,Math.round(v))),pCi=cl((REG.ciT-ci)*REG.ciR),pCml=cl((REG.cmlT-cml)*REG.cmlR),pLg=-lg*REG.gsp,pInc=-inc*REG.incP;
+  return{ci:+ci.toFixed(1),cml:+cml.toFixed(1),lg,inc,pCi,pCml,pLg,pInc,tot:pCi+pCml+pLg+pInc};}
+const gbpS=v=>(v<0?'−':'+')+'£'+nf(Math.abs(v));
+const rag=(v,good,bad)=>v<=good?'ok':v<=bad?'warn':'alarm';
+function regCard(r){return `<div class="reg"><h3>Regulator's report card <small>Ofwatt (made up) · this shift</small></h3>
+  <table class="reg-t"><thead><tr><th>Measure</th><th>This shift</th><th>Target</th><th>Incentive</th></tr></thead><tbody>
+  <tr class="${rag(r.ci,REG.ciT,REG.ciT*1.5)}"><td>Customer interruptions <small>CI, per 100 customers</small></td><td>${r.ci}</td><td>${REG.ciT}</td><td>${gbpS(r.pCi)}</td></tr>
+  <tr class="${rag(r.cml,REG.cmlT,REG.cmlT*1.5)}"><td>Customer minutes lost <small>CML, per customer</small></td><td>${r.cml}</td><td>${REG.cmlT}</td><td>${gbpS(r.pCml)}</td></tr>
+  <tr class="${r.lg?'alarm':'ok'}"><td>Long interruptions <small>customers off over 3 hours, £${REG.gsp} each</small></td><td>${nf(r.lg)}</td><td>0</td><td>${gbpS(r.pLg)}</td></tr>
+  <tr class="${r.inc?'alarm':'ok'}"><td>Switching incidents <small>safety</small></td><td>${r.inc}</td><td>0</td><td>${gbpS(r.pInc)}</td></tr>
+  <tr class="tot"><td colspan="3">Incentive for this shift</td><td>${gbpS(r.tot)}</td></tr></tbody></table>
+  <p class="fine">Better than target earns a reward and worse costs a penalty, like the real incentives on network operators. The amounts are made up.</p></div>`;}
+// the week a career shift falls in: shifts 1-5, 6-10, 11-15
+function regWeek(k){const ks=careerKeys(),j=ks.indexOf(k);if(j<0)return null;const w=Math.floor(j/5);return{w:w+1,keys:ks.slice(w*5,w*5+5),last:j===Math.min(ks.length-1,w*5+4)};}
+function regLetterHtml(D){const nm=getName()||'Control Engineer',date=fmtLong(todayUK()),rows=D.keys.map(k=>({k,r:D.reg[k]}));
+  const got=rows.filter(x=>x.r),tot=got.reduce((a,x)=>a+x.r.tot,0),inc=got.reduce((a,x)=>a+x.r.inc,0),lg=got.reduce((a,x)=>a+x.r.lg,0);
+  const verdict=!got.length?'':tot>=20000&&!inc?'outperformed its targets':tot>=0?'met its targets':'fell short of its targets';
+  const ref='OFW/RIO/'+String(Date.now()).slice(-5);
+  return `<div class="lt-paper reg-letter" role="document"><header class="lt-head reg-head"><div class="lt-brand"><span class="ofw-mark" aria-hidden="true">Ow</span><div><b>Of<span>watt</span></b><small>The (made-up) energy regulator</small></div></div>
+    <address>Ofwatt<br>10 Regulation Row<br>Wattminster WM1 1RR</address></header>
+    <div class="lt-meta"><span>Our ref: ${ref}</span><span>${esc(date)}</span></div>
+    <p class="lt-to">${getName()?esc(nm)+'<br>':''}Control Engineer<br>Watts Up Electricity Distribution<br>Blackout Canyon Control Room</p>
+    <p>Dear ${esc(nm)},</p><p class="lt-subj">Performance review: week ${D.w}</p>
+    <p>We have reviewed the Blackout Canyon network's performance for the shifts you ran in week ${D.w}. Overall, the network <b>${verdict}</b>, with a total incentive of <b>${gbpS(tot)}</b>.</p>
+    <table class="reg-t"><thead><tr><th>Shift</th><th>CI</th><th>CML</th><th>Long</th><th>Incidents</th><th>Incentive</th></tr></thead><tbody>
+    ${rows.map(({k,r})=>r?`<tr><td>${esc(SCENARIOS[k].title)}</td><td>${r.ci}</td><td>${r.cml}</td><td>${nf(r.lg)}</td><td>${r.inc}</td><td>${gbpS(r.tot)}</td></tr>`:`<tr class="none"><td>${esc((SCENARIOS[k]||{}).title||k)}</td><td colspan="5">not yet reported</td></tr>`).join('')}
+    <tr class="tot"><td>Week ${D.w}</td><td colspan="4"></td><td>${gbpS(tot)}</td></tr></tbody></table>
+    ${lg?`<p>${nf(lg)} customers were off for more than three hours. Each one is owed a payment. Please look at how quickly you restore supplies through ties, interconnectors, backfeeds and mobile generators.</p>`:'<p>No customer was off for more than three hours. Well done.</p>'}
+    ${inc?`<p><b>Safety:</b> ${inc} switching incident${inc>1?'s were':' was'} reported. We take these very seriously and expect them to stop.</p>`:''}
+    <p>We will review your performance again at the end of next week.</p>
+    <p>Yours sincerely,</p><p class="lt-sig">R. E. Gulator</p><p class="lt-signame">R. E. Gulator<br>Head of Network Performance, Ofwatt</p>
+    <footer class="lt-foot">Ofwatt is made up for this game. It isn't Ofgem, and these aren't real figures.</footer></div>`;}
+
+/* ---------- Rare events ----------
+   Now and then, on any shift but the Quiet shift: a switch fails to operate (try again), a crew is held up on the
+   way, or an RTU sends a trip alarm for a breaker that is still closed. At most a few a shift. Off in the test copies
+   of the page unless a test turns them on. */
+let RARE=!FORCE_GAME;
+const rareOn=()=>!!(RARE&&S&&GAME==='cr'&&!S.silent&&!S.sc.easy&&!S.tut);
+const FAIL_P=.035,DELAY_P=.06;
+function rareFail(op,m){const[t]=op.k.split(':');if(!rareOn()||['ptw','mg'].includes(t)||(S.evFail||0)>=2||S.rngE()>=FAIL_P)return false;
+  S.evFail=(S.evFail||0)+1;const was=devClosed(op.k),nm=devName(op.k),man=isManual(op.k);
+  const s=`The ${nm} failed to ${op.act}: ${pick(S.rngE,man?['the operating handle is seized','the crew found the mechanism jammed','a stiff linkage stopped it moving']:['the mechanism stuck','the spring didn\'t charge','the trip coil didn\'t pick up'])}. It's still ${was?'closed':'open'}. Try again.`;
+  logE(m,s,'warn');queueAlert(s,'warn',true);play('warn');mark(m,'fail',`${ucfirst(nm)} failed to operate`);return true;}
+function rareDelay(c,k,travel){if(!rareOn()||!travel||(S.evDelay||0)>=2||S.rngE()>=DELAY_P)return 0;S.evDelay=(S.evDelay||0)+1;
+  const d=15+Math.round(S.rngE()*20),why=pick(S.rngE,['a flooded road','a puncture on the van','a road closure','a lorry blocking the lane']);
+  const s=`Crew ${c.n} is held up by ${why} on the way to the ${devName(k)}: about ${d} minutes late.`;logE(S.t,s,'warn');queueAlert(s,'warn',false);return d;}
+// a false trip alarm: a closed 11 kV feeder breaker on supply, with no fault on it
+function rareFalse(m){const F=S.falseAl;if(!F||F.done||m<F.m)return;F.done=true;if(!rareOn())return;
+  const c=[];PIDS.forEach(p=>LF[p].forEach((v,i)=>{if(S.lf[p][i]&&!S.lff[p][i]&&secFeed(p,i,0)===p&&!commsOut(p))c.push(p+i);}));if(!c.length)return;
+  const k=c[Math.floor(S.rngE()*c.length)],[p,i]=lfP(k),sel='lf:'+k;F.k=k;
+  alEv(m,'trip',`${ucfirst(devName(sel))} (${PR[p].name})`,sel,'RTU indication');GFX.arc=GFX.arc.filter(x=>x!==sel);
+  const id=Object.keys(S.alarms).pop();if(id)S.alarms[id].fake=true;F.id=id;
+  const s=`Trip alarm: the ${lfName(p,i)} breaker at ${PR[p].name} (RTU indication).`;logE(m,s,'alarm');queueAlert(s,'alarm',true);play('trip');}
+function fakePoll(id){const a=S.alarms[id];if(!a||!a.fake)return;const k=a.sel.split(':')[1],[p,i]=lfP(k);delete S.alarms[id];
+  const s=`RTU at ${PR[p].name} polled: the ${lfName(p,i)} breaker is closed and carrying load. The trip alarm was a false indication from a faulty auxiliary contact. A technician will fix it after the shift.`;
+  logE(S.t,s,'ok');if(S.falseAl)S.falseAl.cleared=true;lastAl='';render(true);}
+function rareStep(m){rareFalse(m);const F=S.falseAl;if(F&&F.id&&!F.cleared&&m>=F.m+45&&S.alarms[F.id]){delete S.alarms[F.id];F.cleared=true;const[p,i]=lfP(F.k);logE(m,`The RTU at ${PR[p].name} reset itself: the trip alarm on the ${lfName(p,i)} was a false indication. The breaker never opened.`,'info');lastAl='';}}
 /* ---------- Permits to work (11 kV feeder faults) ----------
    Once a fault is found, the repair can't start until the faulted half is isolated and the crew has applied earths
    under a permit to work. Isolation points are locked off while the permit is in force. When the repair is done the
@@ -3491,7 +3578,7 @@ function runPlan(m){const P=S.plan;if(!P||!P.on)return;
       s.inc=S.incidents;s.trips=S.trips;s.st='run';issueOp(s.k,s.act);renderPlan(true);return;}
     if(s.st==='run'){if((S.op&&S.op.k===s.k)||crewFor(s.k))return;
       const ok=devClosed(s.k)===want&&S.incidents===s.inc;s.st=ok?'done':'fail';
-      if(!ok){P.on=false;const t=`Switching schedule stopped at step ${P.i+1} (${opLabel(s.k,s.act).toLowerCase()}): ${S.incidents>s.inc?'it caused a switching incident':'it didn\'t stay '+(want?'closed':'open')}. Check the network before carrying on.`;logE(m,t,'alarm');queueAlert(t,'alarm',true);renderPlan(true);return;}
+      if(!ok){P.on=false;const t=`Switching schedule stopped at step ${P.i+1} (${opLabel(s.k,s.act).toLowerCase()}): ${S.incidents>s.inc?'it caused a switching incident':'it didn\'t end up '+(want?'closed':'open')}. Check the network before carrying on.`;logE(m,t,'alarm');queueAlert(t,'alarm',true);renderPlan(true);return;}
       P.i++;renderPlan(true);continue;}
     return;}}
 let lastPlan='';
@@ -4207,6 +4294,8 @@ function endShift(){
     play('done');
   }
   S.final={...sc,grade:L?'Lost':g,gl,gd,result:L?'lost':'complete'};
+  S.reg=GAME==='cr'&&!S.sacked?regOf():null;S.regLetter=null;
+  if(S.reg&&S.mode==='career'&&!L){const c=career();c.reg=c.reg||{};c.reg[S.key]=S.reg;saveCareer(c);const W=regWeek(S.key);if(W&&W.last)S.regLetter={w:W.w,keys:W.keys,reg:c.reg};}
   if(sc.total>(+ls('best-'+S.key)||0))ls('best-'+S.key,String(sc.total));
   if(S.sacked)S.careerRes=null;else{const c=career(),before=starsOf(c),done=!L,st=L?0:{A:3,B:2,C:1,D:1}[g]||0,newA=[];const prevUnl=CAREER.filter(k=>unlockedK(c,k));
    const award=(id,ok)=>{if(ok&&!c.ach[id]&&ACH.some(a=>a.id===id)){c.ach[id]=1;newA.push(ACH.find(a=>a.id===id));}};
@@ -4331,8 +4420,8 @@ function showEnd(){
       ${CR.newA.length?`<div class="ach ach-new">${CR.newA.map(a=>badge(a,true)).join('')}</div>`:''}
       ${syncGet()||S.syncRes?`<p class="fine sync-end" id="endSync" role="status">${esc(endSyncTxt())}</p>`:''}
       ${S.mode!=='career'?'':CR.next?(unlockedK(career(),CR.next)?'':`<p class="fine">Finish this shift to unlock ${esc(SCENARIOS[CR.next].title)}. Press Try again below.</p>`):`<p><b>That's every career shift done${CR.runEnd?' again':''}.</b> Replay any of them to earn more stars, or <button type="button" class="linkish" data-restart="${careerKeys()[0]}">start your career again from shift 1</button>.</p>`}</div>`:'';
-  $('sheet').innerHTML=`${BAND}<p class="eyebrow">${esc(S.sc.title)}, ${esc(S.sc.when)} · ${S.mode==='daily'?"Today's challenge, "+fmtDate(S.date):S.mode==='career'?'Career · '+esc(CR?CR.rank:''):'Free play'}</p>${head}${cbox}${drawDebrief()}${drawReplay()}${score}${S.sc.noBoard?gkEnd():sub}${costs}${btns}`;
-  $('overlay').hidden=false;if(S.sacked&&!S.sackShown){S.sackShown=1;showLetter('sacked',S.sacked);}else if(S.letterDue){const D=S.letterDue;S.letterDue=null;showLetter(D.kind,D);}
+  $('sheet').innerHTML=`${BAND}<p class="eyebrow">${esc(S.sc.title)}, ${esc(S.sc.when)} · ${S.mode==='daily'?"Today's challenge, "+fmtDate(S.date):S.mode==='career'?'Career · '+esc(CR?CR.rank:''):'Free play'}</p>${head}${cbox}${S.regLetter?`<p class="reg-cta"><button type="button" class="btn primary" data-regletter>Read Ofwatt's letter on week ${S.regLetter.w}</button></p>`:''}${drawDebrief()}${S.reg?regCard(S.reg):''}${drawReplay()}${score}${S.sc.noBoard?gkEnd():sub}${costs}${btns}`;
+  $('overlay').hidden=false;if(S.sacked&&!S.sackShown){S.sackShown=1;showLetter('sacked',S.sacked);}else if(S.letterDue){const D=S.letterDue;S.letterDue=null;showLetter(D.kind,D);}else if(S.regLetter&&!S.regShown){S.regShown=1;showLetter('reg',S.regLetter);}
 }
 
 // Career: right under the grade, carry straight on to the next day
@@ -4422,6 +4511,8 @@ document.addEventListener('click',e=>{
   if(!e.target.closest('#pick'))hidePick();
   if(e.target.closest('[data-letter-ok]')){closeLetter();return;}
   if(e.target.closest('[data-letter-restart]')){closeLetter();mode='career';ls('mode',mode);chosen=careerKeys()[0];ls('day',chosen);newGame(chosen);startSheet();return;}
+  if(e.target.closest('[data-regletter]')&&S&&S.regLetter){showLetter('reg',S.regLetter);return;}
+  {const fpl=e.target.closest('[data-fakepoll]');if(fpl&&S){fakePoll(fpl.dataset.fakepoll);return;}}
   {const lb=e.target.closest('[data-letter]');if(lb){const c=career();showLetter(lb.dataset.letter,lb.dataset.letter==='sacked'?(S&&S.sacked):{log:c.errLog||[],errs:c.errs||0});return;}}
   {const g=e.target.closest('[data-goto]');if(g&&S){gotoDev(g.dataset.goto);return;}}
   {const al=e.target.closest('.al-list [data-al]');if(al&&S){alOpen=alOpen===al.dataset.al?null:al.dataset.al;lastAl='';renderAlarms();const b=document.querySelector(`[data-goto]`);if(b)b.focus({preventScroll:true});return;}}

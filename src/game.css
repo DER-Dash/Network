@@ -988,3 +988,21 @@ a.btn.fl-go{text-decoration:none;border-color:var(--zap);box-shadow:inset 4px 0 
 .ptw-row .btn{flex:1 1 100%;margin-top:2px}
 .ptw-tag{font:700 10.5px var(--f-display);letter-spacing:.12em;text-transform:uppercase;background:var(--warn);color:#fff;border-radius:3px;padding:1px 6px}
 .ptw-row.on .ptw-tag{background:var(--ok)}.ptw-row.ready .ptw-tag,.ptw-row.done .ptw-tag{background:var(--zap);color:var(--wu-navy)}
+
+/* ---- Regulator's report card and Ofwatt's letter ---- */
+.reg{margin:16px 0}
+.reg h3{margin:0 0 8px;font:700 15px var(--f-display);letter-spacing:.1em;text-transform:uppercase}
+.reg h3 small{font:500 12px var(--f-body);letter-spacing:0;text-transform:none;color:var(--muted);margin-left:6px}
+.reg-t{width:100%;border-collapse:collapse;font-size:14px}
+.reg-t th{text-align:left;font:700 11px var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:4px 8px;border-bottom:1px solid var(--rule)}
+.reg-t td{padding:7px 8px;border-bottom:1px solid var(--rule);font-variant-numeric:tabular-nums}
+.reg-t td small{display:block;font-size:11.5px;color:var(--muted)}
+.reg-t td:nth-child(n+2),.reg-t th:nth-child(n+2){text-align:right}
+.reg-t tr.ok td:first-child{box-shadow:inset 4px 0 var(--ok)}.reg-t tr.warn td:first-child{box-shadow:inset 4px 0 var(--warn)}.reg-t tr.alarm td:first-child{box-shadow:inset 4px 0 var(--alarm)}
+.reg-t tr.tot td{font-weight:700;border-bottom:0}
+.reg-t tr.none td{color:var(--muted);font-style:italic}
+.reg-cta{margin:10px 0 0}
+.reg-letter .reg-t{color:#1c1b22;margin:10px 0 14px}.reg-letter .reg-t th,.reg-letter .reg-t td small{color:#5c5a66}.reg-letter .reg-t td,.reg-letter .reg-t th{border-color:#ddd8cc}
+.reg-head{background:#173b2f!important;border-bottom-color:#7fd1a8!important}
+.reg-head .lt-brand b span{color:#7fd1a8}
+.ofw-mark{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;background:#7fd1a8;color:#173b2f;font:800 18px var(--f-display,system-ui);flex:none}
