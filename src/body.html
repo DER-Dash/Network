@@ -8,6 +8,7 @@
     <div class="sky" id="sky" aria-hidden="true"></div>
     <div class="controls" id="barCtl">
       <button id="playBtn" class="btn primary" type="button">Start</button>
+      <button id="planBtn" class="btn plan-btn" type="button" aria-pressed="false" title="Plan several switching operations, then issue them as one schedule"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2.8h6V4M8.5 10h7M8.5 14h7M8.5 18h4"/></svg><span>Schedule</span></button>
       <div class="seg" role="group" aria-label="Game speed">
         <button type="button" data-speed="0.5" aria-pressed="false" aria-label="Half speed">½×</button>
         <button type="button" data-speed="1" aria-pressed="true">1×</button>
@@ -109,6 +110,7 @@
   </section>
   </div>
 </main>
+<div id="planBox" class="plan-box" role="region" aria-label="Switching schedule" hidden></div><div id="planToast" class="plan-toast" role="status" hidden></div>
 <footer class="foot"><span>© 2026 Steve Backhouse. All rights reserved. No copying or re-hosting without permission. Blackout Canyon and every site in this game are made up. Watts Up Ltd: keeping the lights on.</span><button type="button" class="linkish" data-feedback>Send feedback</button><a id="otherGame" href="?mode=gen" target="_top">Play the generation shifts</a><a href="../fault-lines/" target="_top">New: Fault Lines puzzle</a><button type="button" class="linkish" id="cookieSettings" hidden>Cookie settings</button></footer>
 
 <nav class="dock" aria-label="Game controls"><b id="dClock">08:00</b><span id="dPill" class="pill ok">N-1 secure</span><button id="dAl" type="button" class="al-count" aria-label="Show the most urgent alarm"></button><button id="dCtl" type="button" class="btn icon-btn" aria-label="Open the control panel"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button><button id="dSpeed" type="button" class="btn" aria-label="Change speed">1×</button><button id="dPlay" type="button" class="btn primary">Start</button></nav>

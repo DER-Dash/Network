@@ -36,6 +36,7 @@ const click=(doc,el)=>el.dispatchEvent(new doc.defaultView.MouseEvent('click',{b
   ok(S.lff.hw[1]&&S.lff.hw[1].found&&S.lff.hw[1].sec===1&&S.lf.hw[1],'fault located in the second half and the first half is back on');
   ok(S.trial===0,'no trial close onto the fault needed');
   // calls from a restored half show as back on
+  G.ptw.issue('hw',1);until(G,()=>S.lff.hw[1].ptw==='issued',60);until(G,()=>S.lff.hw[1].ptw==='done',200);G.ptw.cancel('hw',1);// permit to work, repair, permit cancelled
   until(G,()=>!S.lff.hw[1],200);G.op('mid:hw1','close');until(G,()=>S.mid.hw[1],120);G.run(2);
   ok(doc.querySelectorAll('#callBody .call.done').length>0&&!doc.querySelector('#callBody [data-poll]'),'calls marked back on once restored');
  }

@@ -19,14 +19,18 @@ const fault=(S,k,sec,tr,dur)=>{S.rngC=()=>.99;S.sched.push({k,m:S.t,dur:dur||80,
   until(G,S,()=>!S.mid.hw[1]);ok(!S.mid.hw[1],'mid-point switch opened by crew');
   G.op('lf:hw1','close');G.run(2);
   ok(!S.lf.hw[1]&&S.trial===1&&F.found&&F.sec===0,'trial close trips: fault located in the first half');
-  ok(F.until>S.t,'repair now under way, until '+F.until);
+  ok(F.until==null,'found, but the repair waits for a permit to work');
+  G.ptw.issue('hw',1);G.run(1);ok(S.crews.some(c=>c.job&&c.job.k==='ptw:hw1'),'a crew goes to apply earths and take the permit');
+  until(G,S,()=>F.ptw==='issued',60);ok(F.ptw==='issued'&&F.until>S.t,'permit issued: repair under way, until '+F.until);
+  G.op('lf:hw1','close');G.run(2);ok(!S.lf.hw[1]&&S.trial===1,'the breaker is locked off under the permit: closing it is refused');
   // generator onto the healthy far half
   S.mgPick='L';G.op('mg:hw1','close');G.run(1);ok(S.mgu.some(u=>u.site==='hw1'&&u.pend),'generator reserved and on its way');
   const tg=until(G,S,()=>S.mgu.some(u=>u.conn),90);ok(tg>=45,'generator connected after '+tg+' min');
   ok(S.cust.off['hw1s1']===0&&S.cust.off['hw1s0']>0,'generator restores the far half only');
   ok(G.S.mgu.find(u=>u.conn).site==='hw1','generator on Kings Hill');
   // repair, then restore without paralleling the generator
-  until(G,S,()=>!S.lff.hw[1],200);ok(!S.lff.hw[1],'fault repaired');
+  until(G,S,()=>F.ptw==='done',200);ok(F.ptw==='done'&&S.lff.hw[1],'repaired, earths still on until the permit is cancelled');
+  G.ptw.cancel('hw',1);until(G,S,()=>!S.lff.hw[1],60);ok(!S.lff.hw[1],'permit cancelled: section handed back');
   G.op('lf:hw1','close');G.run(2);ok(S.lf.hw[1]&&S.cust.off['hw1s0']===0,'first half back from Hertz House');
   const inc0=S.incidents;G.op('mid:hw1','close');until(G,S,()=>S.mid.hw[1]||S.incidents>inc0);
   ok(S.incidents===inc0+1&&!S.mgu.some(u=>u.conn),'closing the mid-point onto the generator is an incident and trips it');

@@ -25,9 +25,9 @@ const VFS=()=>[1,2],VFI0=()=>1;
   ok(S.paused&&fr&&!doc.getElementById('findOv').hidden,'tapping it pauses the shift and opens Fault Lines over it');
   const u=new URL(fr.getAttribute('src'),w.location.href);d0=JSON.parse(u.searchParams.get('lc'));
   ok(u.pathname==='/fault-lines/'&&d0.k==='hw1'&&d0.h===1&&d0.f==='Kings Hill'&&d0.pr==='Hertz House'&&d0.t===F.start&&d0.c>0,`it asks for that feeder, with the fault in the far half (${JSON.stringify(d0)})`);
-  post(w,{type:'fl-lc',k:'hw1',t:F.start,done:true,correct:true,quick:true});
+  const dur0=F.dur;post(w,{type:'fl-lc',k:'hw1',t:F.start,done:true,correct:true,quick:true});
   ok(doc.getElementById('findOv').hidden&&!S.paused,'the result closes the puzzle and the shift carries on');
-  ok(F.found&&F.sec===1&&F.until<S.t+F.dur&&F.until>=S.t+15,`found: located now, and a quick find shortens the repair (${F.until-S.t} of ${F.dur} min)`);
+  ok(F.found&&F.sec===1&&F.until==null&&F.dur<dur0&&F.dur>=15,`found: located now, and a quick find shortens the repair it waits to start (${F.dur} of ${dur0} min)`);
   const vis=()=>[...doc.querySelectorAll('[data-find="hw1"]')].filter(x=>!x.closest('[hidden]'));ok(!vis().length,'no Find it yourself on the panel once it\'s found');
   G.select('lf:hw1',true);ok(!vis().length,'nor on the feeder\'s pop-up');
   // a wrong answer: patrol carries on
