@@ -288,3 +288,7 @@ a.btn{text-decoration:none;color:var(--ink)}
 .tut-hl{outline:3px solid var(--zap)!important;outline-offset:3px;border-radius:8px;animation:tutp 1.4s ease-in-out infinite}
 @keyframes tutp{50%{outline-color:transparent}}
 @media (prefers-reduced-motion:reduce){.tut-hl{animation:none}}
+/* queue position, Gate 2 moves, developer notes */
+.qpos{display:inline-grid;place-items:center;min-width:1.5em;height:1.5em;margin-right:6px;border-radius:4px;background:var(--sunk);border:1px solid var(--rule);font:600 11px var(--f-mono);color:var(--muted);vertical-align:1px}
+.ab .up{font:700 10px var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--ok);margin-left:4px}
+.pipe .dev{display:block;font-style:italic;color:var(--muted)}

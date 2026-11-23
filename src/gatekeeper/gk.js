@@ -108,10 +108,10 @@ const FLEX_COST=.4,FLEX_MW=5;
 const GROWTH=[0,0,.015,.018,.02,.022,.025,.028,.032,.04,.055];   // underlying demand growth at the start of each year (EVs, heat pumps)
 const EVENTS={
   2:{t:'Cold winter forecast',b:'The Met Office expects a cold winter. Peak demand will run about 5% above your planning forecast this year, and your headroom figures don\'t know that.',fx:s=>{s.weather=1.05;}},
-  3:{t:'Ofgem reform: Gate 2',b:'The queue moves from first come, first served to <b>first ready and needed, first connected</b>. From now on, generation and storage need Gate 2 evidence (land rights and planning) before you give them a confirmed date. Projects that don\'t meet it go on the Gate 1 waiting list. And contracted projects that miss their milestones can now be removed from the queue: do it, or they keep sitting on headroom.',fx:s=>{s.reform=true;}},
+  3:{t:'Ofgem reform: Gate 2',b:'The queue moves from first come, first served to <b>first ready and needed, first connected</b>. From now on, generation and storage need Gate 2 before you give them a confirmed date: <b>ready</b> (land rights and planning) and <b>needed</b> (in the regional plan, which says Shocking Place already has all the solar it needs). Projects that pass go to the front of the queue; the rest go on the Gate 1 waiting list. And contracted projects that miss their milestones can now be removed from the queue: do it, or they keep sitting on headroom.',fx:s=>{s.reform=true;}},
   4:{t:'Landowner objection',b:'A landowner has objected to your cable route. Your furthest-along reinforcement is delayed by a year.',fx:s=>{const b=s.builds.filter(b=>!b.applied).sort((a,b)=>a.done-b.done)[0];if(b){b.done++;s.cust.forEach(c=>{if(!c.gone&&!c.built&&c.waitB&&c.waitB.includes(b.id))c.conn=Math.max(c.conn,b.done);});s.evNote=`${BUILDS[b.kind].name}${b.prim?' at '+PRIMS[b.prim].name:''} now ready in year ${b.done}.`;}else s.evNote='Luckily you had nothing under construction, so nothing is held up.';}},
   5:{t:'Flexible by default',b:'Ofgem expects network operators to offer flexible connections first wherever they speed things up. Customers know it too: they\'ll put up with half as much curtailment again as before.',fx:s=>{s.flexDefault=true;}},
-  6:{t:'Demand connections reform',b:'Data centres are queuing up across the country, and a lot of them are speculative. Demand projects now need the same readiness evidence as generation: no confirmed date without land rights and planning.',fx:s=>{s.demandReform=true;}},
+  6:{t:'Demand connections reform',b:'Data centres are queuing up across the country, and a lot of them are speculative. Demand projects now need Gate 2 too: land rights, planning, and a place in the plan. Data centres are only needed in the AI growth zone at Hertz House (and Kilowatt Close, if you build it).',fx:s=>{s.demandReform=true;}},
   7:{t:'A big customer cancels',b:'',fx:s=>{const c=s.cust.filter(c=>!c.gone&&!c.existing&&c.offer!=='flex').sort((a,b)=>b.mw-a.mw)[0];if(c){c.gone=true;s.evNote=`${c.name} (${f1(c.mw)} MW at ${PRIMS[c.prim].name}) has pulled out${c.built?' and disconnected':''}, freeing up its headroom.`;}else s.evNote='Nobody to cancel: your queue is all flexible.';}},
   8:{t:'Storm season',b:'Two deep lows are forecast to cross Blackout Canyon this winter. Two storms this year instead of one: wherever you are over firm capacity, customers will go off.',fx:s=>{s.storms=2;}},
   9:{t:'Another cold winter',b:'A cold winter is forecast again: peak demand about 5% above plan.',fx:s=>{s.weather=1.05;}},
@@ -149,10 +149,14 @@ function startYear(){
     if(a.spec&&rr<.6)return;
     if(!a.spec&&!a.planning&&rr<.6)a.planning=true;else if(!a.spec&&!a.land&&rr<.5)a.land=true;
     a.pat--;a.back=true;delete a.choice;back.push(a);});
-  S.held=[];S.queue=back.concat(makeApps());
+  S.held=[];S.queue=back.concat(makeApps());S.queue.forEach((a,i)=>a.app=i+1);queueSort();
   S.phase='queue';S.resp=null;S.report=null;selApp=null;
   save();}
 
+// Before the reform, the queue is in the order applications arrived (last year's held ones first). After it, projects
+// that meet Gate 2 (ready and needed) go ahead of earlier ones that don't: first ready and needed, first connected.
+function queueSort(){if(!S.reform)return;const k=a=>g2Applies(a)&&!gate2(a)?1:0;
+  S.queue=S.queue.map((a,i)=>[a,i]).sort((x,y)=>k(x[0])-k(y[0])||x[1]-y[1]).map(x=>x[0]);}
 function makeApps(){const r=rngFor(S.seed,'apps',S.year),y=S.year,out=[];
   const n=4+Math.ceil(y*.45);
   const w={solar:3,batt:y>=2?2:.6,ev:1+y*.25,homes:2,dc:y>=6?2+(y-6)*.6:y>=4?.5:0};
@@ -176,9 +180,13 @@ function applyBuild(s,b){b.applied=true;
   else if(b.kind==='gsp'){s.gsp.F+=60;s.gsp.R+=50;}
   else if(b.kind==='kc'){s.kc=true;if(!s.prims.includes('kc'))s.prims.push('kc');s.peak.kc=.25*s.peak.js+.15*s.peak.hw;s.peak.js*=.75;s.peak.hw*=.85;}}
 const readyDelay=c=>c.spec?Infinity:(c.land?0:1)+(c.planning?0:1);
-function energise(){S.cust.forEach(c=>{if(!c.gone&&!c.built&&!c.spec&&S.year>=c.conn&&(!c.waitB||c.waitB.every(id=>{const b=S.builds.find(x=>x.id===id);return b&&b.applied;})))c.built=true;});}
+function energise(){S.cust.forEach(c=>{if(!c.gone&&!c.built&&!c.spec&&S.year>=c.conn+(c.slip||0)&&(!c.waitB||c.waitB.every(id=>{const b=S.builds.find(x=>x.id===id);return b&&b.applied;})))c.built=true;});}
 const missed=c=>!c.gone&&!c.built&&!c.existing&&S.year>c.conn;
-const gate2=a=>a.land&&a.planning;
+// "Needed": the regional plan (an artistic take on Clean Power 2030 and the strategic plan) says what each area needs.
+// Shocking Place already has all the solar the plan wants; data centres are needed only in the AI growth zone at
+// Hertz House (and Kilowatt Close once it's built). Storage, housing and EV charging are needed everywhere.
+const needed=a=>a.kind==='solar'?a.prim!=='ml':a.kind==='dc'?(a.prim==='hw'||a.prim==='kc'):true;
+const gate2=a=>a.land&&a.planning&&needed(a);
 const g2Applies=a=>S.reform&&(KINDS[a.kind].gen||S.demandReform);
 
 /* ---------- Network configuration (with builds still under construction, or proposed ones) ---------- */
@@ -217,17 +225,22 @@ function simulate(s,opt){opt=opt||{};const C=opt.C||cfg(s),prims=C.prims;
   prims.forEach(p=>R.p[p]={bh:0,bm:0,maxD:0,maxE:0,cut:0});
   for(let m=0;m<12;m++){R.months[m]={p:{},gsp:{maxD:0,maxE:0,bh:0},cut:0,bh:0,cml:0};prims.forEach(p=>R.months[m].p[p]={maxD:0,maxE:0,bh:0,cut:0});}
   const v=new Map();list.forEach(c=>{R.cut[c.id]=0;R.pot[c.id]=0;Object.defineProperty(c,'_a',{value:U(c).act,configurable:true,enumerable:false,writable:true});});
-  const storms=(opt.storms||[]).map(x=>({...x,cml:0,lostMW:0}));
+  const storms=(opt.storms||[]).map(x=>({...x,cml:0,lostMW:0})),pro=s.anm==='pro';
+  // ANM: take 'need' MW off flexible customers in direction dir (+1 import, -1 export). Last in, first off (the list is
+  // newest first) or pro rata (everyone at this constraint gives up the same share). Returns the MW taken off.
+  function curtail(list,need,dir,w,M,net){let done=0;const take=(c,k)=>{v.set(c,v.get(c)-k*dir);done+=k;R.cut[c.id]+=k*w;R.p[c.prim].cut+=k*w;M.p[c.prim].cut+=k*w;M.cut+=k*w;if(net)net[c.prim]-=k*dir;};
+    if(pro){let tot=0;for(const c of list){const x=v.get(c)*dir;if(x>0)tot+=x;}if(tot<=1e-9)return 0;const f=Math.min(1,need/tot);for(const c of list){const x=v.get(c)*dir;if(x>0)take(c,x*f);}return done;}
+    for(const c of list){if(need-done<=1e-9)break;const x=v.get(c)*dir;if(x>0)take(c,Math.min(x,need-done));}return done;}
   for(let i=0;i<NP;i++){const pt=PTS[i],w=pt.wt,M=R.months[pt.m];let g=0;const net={};
     for(const p of prims){let n=baseDem(s,C,p,i,true);
       for(const c of firm[p])n+=c.mw*c._a[i];
       for(const c of flex[p]){const x=c.mw*c._a[i];v.set(c,x);R.pot[c.id]+=Math.abs(x)*w;n+=x;}
       const F=C.cap[p].F,Rv=C.cap[p].R;
-      if(n>F){let need=n-F;for(const c of flex[p]){const x=v.get(c);if(x>0&&need>1e-9){const k=Math.min(x,need);v.set(c,x-k);need-=k;n-=k;R.cut[c.id]+=k*w;R.p[p].cut+=k*w;M.p[p].cut+=k*w;M.cut+=k*w;}}}
-      else if(n<-Rv){let need=-Rv-n;for(const c of flex[p]){const x=v.get(c);if(x<0&&need>1e-9){const k=Math.min(-x,need);v.set(c,x+k);need-=k;n+=k;R.cut[c.id]+=k*w;R.p[p].cut+=k*w;M.p[p].cut+=k*w;M.cut+=k*w;}}}
+      if(n>F){const k=curtail(flex[p],n-F,1,w,M);n-=k;}
+      else if(n<-Rv){const k=curtail(flex[p],-Rv-n,-1,w,M);n+=k;}
       net[p]=n;g+=n;}
-    if(g>C.gsp.F){let need=g-C.gsp.F;for(const c of flexAll){const x=v.get(c);if(x>0&&need>1e-9){const k=Math.min(x,need);v.set(c,x-k);need-=k;g-=k;net[c.prim]-=k;R.cut[c.id]+=k*w;R.p[c.prim].cut+=k*w;M.p[c.prim].cut+=k*w;M.cut+=k*w;}}}
-    else if(g<-C.gsp.R){let need=-C.gsp.R-g;for(const c of flexAll){const x=v.get(c);if(x<0&&need>1e-9){const k=Math.min(-x,need);v.set(c,x+k);need-=k;g+=k;net[c.prim]+=k;R.cut[c.id]+=k*w;R.p[c.prim].cut+=k*w;M.p[c.prim].cut+=k*w;M.cut+=k*w;}}}
+    if(g>C.gsp.F){const k=curtail(flexAll,g-C.gsp.F,1,w,M,net);g-=k;}
+    else if(g<-C.gsp.R){const k=curtail(flexAll,-C.gsp.R-g,-1,w,M,net);g+=k;}
     for(const p of prims){const n=net[p],F=C.cap[p].F,Rv=C.cap[p].R,o=Math.max(0,n-F)+Math.max(0,-Rv-n),P=R.p[p],MP=M.p[p];
       if(o>1e-6){P.bh+=w;P.bm+=o*w;MP.bh+=w;M.bh+=w;}
       if(n/F>P.maxD)P.maxD=n/F;if(-n/Rv>P.maxE)P.maxE=-n/Rv;if(n/F>MP.maxD)MP.maxD=n/F;if(-n/Rv>MP.maxE)MP.maxE=-n/Rv;
@@ -274,6 +287,10 @@ function reinfFor(a){const D=dims(a),add=[],reuse=new Set();
     if(d.gsp&&cnt('gsp')<BUILDS.gsp.max){add.push({kind:'gsp'});added=true;}
     if(!added)return null;}
   return null;}
+// pro rata: how much a new flexible connection raises the curtailment of the flexible customers already connected or contracted
+function othersImpact(a){const x=mk(a,'flex');x.id=-1;const others=S.cust.filter(c=>!c.gone&&c.offer==='flex');if(!others.length)return null;
+  const pc=R=>{let c=0,p=0;others.forEach(o=>{c+=R.cut[o.id]||0;p+=R.pot[o.id]||0;});return p>0?c/p*100:0;};
+  return {before:pc(simulate(S,{all:true})),after:pc(simulate(S,{all:true,extra:x}))};}
 function flexEst(a){const x=mk(a,'flex');x.id=-1;const R=simulate(S,{all:true,extra:x});return R.pot[-1]>0?R.cut[-1]/R.pot[-1]*100:0;}
 const tolNow=a=>a.tol*(S.flexDefault?1.5:1);
 const canTimed=a=>a.kind==='batt'||(a.kind==='ev'&&a.sub==='depot');
@@ -286,8 +303,8 @@ function offers(a){const A=assess(a),out=[],g2=g2Applies(a),g2bad=g2&&!gate2(a);
       line:`Connects in year ${r.done}${r.done>S.year?` (${r.done-S.year} year${r.done-S.year>1?'s':''} to wait)`:''} once ${[...r.builds.map(x=>BUILDS[x.kind].name.toLowerCase()+(x.prim?' at '+PRIMS[x.prim].name:'')),...r.reuse.map(x=>'the '+BUILDS[x.kind].name.toLowerCase()+' already under way')].join(' and ')} ${r.builds.length+r.reuse.length>1?'are':'is'} done. ${r.cost?`New work: ${money(r.cost)}`:'No new work needed'}${r.contrib?`, customer pays ${money(r.contrib)}`:r.cost?', customer pays nothing (demand)':''}.`}
       :{type:'reinf',label:'Firm after reinforcement',avail:false,line:'Too big for this site, even after every upgrade you could build.'});}
   if(!KINDS[a.kind].noFlex){if(A.flBad)out.push({type:'flex',label:'Flexible connection',avail:false,line:'Curtailment can\'t fix fault level: it needs new switchgear first.'});
-    else{const est=flexEst(a);out.push({type:'flex',label:'Flexible connection',avail:true,conn:S.year,est,limit:Math.max(3,Math.ceil(est+2)),
-      line:`Connect now; your ANM system curtails it when the network is tight, newest first. Estimated curtailment ${f1(est)}% of its ${KINDS[a.kind].gen?'output':'use'}. Above the limit you agree, you pay compensation.`});}}
+    else{const est=flexEst(a),pro=S.anm==='pro',imp=pro?othersImpact(a):null;out.push({type:'flex',label:'Flexible connection',avail:true,conn:S.year,est,limit:Math.max(3,Math.ceil(est+2)),
+      line:`Connect now; your ANM system curtails it when the network is tight, ${pro?'shared pro rata with the other flexible customers':'newest first'}. Estimated curtailment ${f1(est)}% of its ${KINDS[a.kind].gen?'output':'use'}.${imp&&imp.after-imp.before>=.05?` The flexible customers already here go from ${f1(imp.before)}% to ${f1(imp.after)}%.`:''} Above the limit you agree, you pay compensation.`});}}
   if(canTimed(a)){const t=mk(a,'timed'),b=A.b,w=plan(S,pend(a).concat([t])),d=delta(b,w,a),cls=clsOf(d,A.flBad);
     out.push({type:'timed',label:'Timed connection',avail:!A.flBad,cls,conn:S.year,line:`${a.kind==='batt'?'Charges only overnight and 10:00 to 16:00, exports only 07:00 to 09:00 and 16:00 to 20:00.':'Charges only 22:00 to 06:00.'} ${cls==='green'?'Fits within firm capacity.':`Still breaks firm limits about ${nf(d.h)} hours a year.`}`});}
   out.push({type:'hold',label:g2bad?'Gate 1: waiting list':'Ask for more information',avail:true,line:g2bad?'Doesn\'t meet Gate 2 yet. It keeps a place on the waiting list and comes back next year if it is still going.':'Put off the decision for a year. Real projects come back; speculative ones often drop out.'});
@@ -304,9 +321,13 @@ function acceptP(a,o){const K=KINDS[a.kind];
   if(o.type==='timed')return a.kind==='batt'?.8:.88;
   return 0;}
 function sendOffers(){sending=true;try{return sendOffers0();}finally{sending=false;tut('sent');}}
-function sendOffers0(){const res=[],Y=S.year;S.yr.genMW=0;S.yr.accMW=0;S.yr.delay=[];
+// Could this application realistically have been connected this year? (Gate 1 projects after the reform don't count.)
+function viable(a,O){if(a.spec||(g2Applies(a)&&!gate2(a)))return false;const Y=S.year;
+  return O.list.some(x=>x.avail&&((x.type==='firm'&&x.cls!=='red')||(x.type==='timed'&&x.cls!=='red')||(x.type==='flex'&&acceptP(a,x)>=.5)||(x.type==='reinf'&&x.conn-Y<=a.pat)));}
+function sendOffers0(){const res=[],Y=S.year;S.yr.genMW=0;S.yr.accMW=0;S.yr.delay=[];S.yr.viaMW=0;S.yr.waitMW=0;
   S.queue.forEach(a=>{if(!a.spec)S.yr.genMW+=a.mw;});
   for(const a of S.queue){const O=offers(a),o=O.list.find(x=>x.type===a.choice&&x.avail)||O.list.find(x=>x.type==='hold');
+    const via=viable(a,O);if(via)S.yr.viaMW+=a.mw;
     const r=rngFor(S.seed,'resp',Y,a.id)(),row={a,type:o.type,label:o.label,g2:!!o.g2};
     if(o.g2){S.yr.g2++;row.g2pen=true;}
     if(o.type==='hold'){
@@ -325,6 +346,8 @@ function sendOffers0(){const res=[],Y=S.year;S.yr.genMW=0;S.yr.accMW=0;S.yr.dela
           c.waitB=ids;c.reinf=true;c.contrib=R?R.contrib:0;}
         if(o.type==='flex'){c.limit=o.limit;c.est=o.est;}
         c.conn=Math.max(conn,Y+(a.spec?0:readyDelay(a)));if(a.spec)c.conn=Y+1+Math.floor(r*3);
+        // some real projects run late: they miss their milestone but would still be built (the developer usually says why)
+        if(!a.spec){const sr=rngFor(S.seed,'slip',a.name,Y)();c.slip=sr<.2?(sr<.06?2:1):0;}
         S.cust.push(c);
         if(!a.spec){S.yr.accMW+=a.mw;S.yr.delay.push(c.conn-Y);}
         row.q=a.spec?'Signed by return of post.':o.type==='flex'?`We can live with ${f1(o.est)}% curtailment. Signed.`:o.type==='reinf'?`Year ${c.conn} it is. Signed.`:'Signed and returned. Thank you.';
@@ -333,6 +356,7 @@ function sendOffers0(){const res=[],Y=S.year;S.yr.genMW=0;S.yr.accMW=0;S.yr.dela
         const why=o.type==='reinf'?(o.conn-Y>a.pat?'too slow':'too expensive'):o.type==='flex'?'too much curtailment':o.type==='timed'?'the hours don\'t work for us':'we\'ve found another site';
         row.q=`No thanks: ${why}.`;
         if(o.type==='reinf'&&o.conn-Y>a.pat+1){row.complaint=true;S.yr.complaints++;row.q+=' We\'re complaining to Ofgem about the delay.';}}}
+    if(!a.spec&&row.out!=='accepted'&&!(g2Applies(a)&&!gate2(a)))S.yr.waitMW+=a.mw;
     res.push(row);}
   S.queue=[];energise();S.resp=res;S.phase='plan';selApp=null;save();return res;}
 function startBuild(kind,prim,contrib){const B=BUILDS[kind],id=S.nextId++;
@@ -350,25 +374,29 @@ function runYear(){const R=simulate(S,{storms:S.stormPlan});
   const bm=Object.values(R.p).reduce((t,x)=>t+x.bm,0)+R.gsp.bm,bh=Object.values(R.p).reduce((t,x)=>t+x.bh,0)+R.gsp.bh;
   const zombies=S.reform?S.cust.filter(missed).length:0;
   const y=S.yr,genMW=y.genMW,avgD=y.delay.length?y.delay.reduce((a,b)=>a+b,0)/y.delay.length:0;
+  // Connections: what you connected against what could realistically have been connected this year (viable)
+  const via=y.viaMW!=null?y.viaMW:genMW,waitMW=y.waitMW||0;
+  // Cost: overspend hurts; so does leaving the allowance unspent while real customers wait
+  const unspent=Math.max(0,BUDGET-S.spend)/BUDGET,under=Math.round(80*unspent*Math.min(1,waitMW/15));
   const sc={
-    conn:genMW>0?clamp(100*Math.min(1,y.accMW/(.8*genMW))*(1-.1*avgD),0,100):100,
-    sec:clamp(100-2*Math.sqrt(bm)-R.cml/300,0,100),
-    curt:pot>0?clamp(100-4*(cut/pot*100)-12*over.length,0,100):100,
-    cost:S.spend<=BUDGET?100:clamp(100-200*(S.spend-BUDGET)/BUDGET,0,100),
+    conn:via>0?clamp(100*Math.pow(Math.min(1,y.accMW/via),1.5)*(1-.15*avgD),0,100):100,
+    sec:clamp(100-2.5*Math.sqrt(bm)-R.cml/250,0,100),
+    curt:pot>0?clamp(100-6*(cut/pot*100)-15*over.length,0,100):100,
+    cost:S.spend>BUDGET?clamp(100-200*(S.spend-BUDGET)/BUDGET,0,100):clamp(100-under,0,100),
     reg:clamp(100-12*y.complaints-6*y.g2-4*zombies-(R.cml>0?10:0),0,100)};
   const avg=(sc.conn+sc.sec+sc.curt+sc.cost+sc.reg)/5,grade=gradeOf(avg);
   S.report={year:S.year,sc,avg,grade,R:{p:R.p,gsp:R.gsp,months:R.months,cml:R.cml,storms:R.storms},bm,bh,cut,pot,over:over.map(o=>({name:o.c.name,pct:o.pct,limit:o.c.limit})),comp,zombies,
-    accMW:y.accMW,genMW,avgD,complaints:y.complaints,g2:y.g2,spend:S.spend};
+    accMW:y.accMW,genMW,viaMW:via,waitMW,under,avgD,complaints:y.complaints,g2:y.g2,spend:S.spend};
   S.hist.push({year:S.year,grade,avg,sc});
   S.phase=S.year>=YEARS?'end':'report';save();return S.report;}
 const careerScore=()=>Math.round(S.hist.reduce((t,h)=>t+h.avg,0)*10);
 const gradeOf=x=>x>=85?'A':x>=70?'B':x>=55?'C':x>=40?'D':'E';
 const starsOf=g=>({A:3,B:2,C:1}[g]||0);
 function letter(rep){const s=rep.sc,worst=Object.entries(s).sort((a,b)=>a[1]-b[1])[0][0];
-  const L={conn:`Developers in Blackout Canyon tell us they can't get connected. You connected ${f1(rep.accMW)} MW of the ${f1(rep.genMW)} MW of real projects that applied${rep.avgD>.5?`, and made them wait ${f1(rep.avgD)} years on average`:''}. We expect better use of flexible connections and reinforcement.`,
+  const L={conn:`Developers in Blackout Canyon tell us they can't get connected. You connected ${f1(rep.accMW)} MW of the ${f1(rep.viaMW!=null?rep.viaMW:rep.genMW)} MW of real projects you had a way to connect${rep.avgD>.5?`, and made them wait ${f1(rep.avgD)} years on average`:''}. We expect better use of flexible connections and reinforcement.`,
     sec:`The network spent ${nf(rep.bh)} hours over its firm limits this year${rep.R.cml>0?`, and ${nf(rep.R.cml)} customer minutes were lost in the storm`:''}. You are connecting customers faster than you are building the network to carry them.`,
     curt:`Flexible customers lost ${nf(rep.cut)} MWh to curtailment${rep.over.length?`, and ${rep.over.length} went past their curtailment limit`:''}. Flexible connections only work if customers trust the estimates you give them.`,
-    cost:`You spent ${money(rep.spend)} against an allowance of ${money(BUDGET)}. Customers pay for overspend through their bills, and we will be looking at it closely.`,
+    cost:rep.spend>BUDGET?`You spent ${money(rep.spend)} against an allowance of ${money(BUDGET)}. Customers pay for overspend through their bills, and we will be looking at it closely.`:`You left ${money(BUDGET-rep.spend)} of your ${money(BUDGET)} allowance unspent while ${f1(rep.waitMW)} MW of real projects waited to connect. An allowance not spent on the network customers need is not a saving.`,
     reg:`We received ${rep.complaints} complaint${rep.complaints===1?'':'s'} about your connections service${rep.g2?`, and you gave confirmed dates to ${rep.g2} project${rep.g2===1?'':'s'} that didn't meet Gate 2`:''}${rep.zombies?`. ${rep.zombies} project${rep.zombies===1?' is':'s are'} still holding queue positions after missing milestones`:''}. Please treat the queue fairly and by the rules.`};
   if(rep.avg>=85)return s[worst]<70?`A good year overall, with one concern. ${L[worst]}`:'A good year. Keep it up.';
   return L[worst];}
@@ -389,7 +417,7 @@ function render(){if(!S)return;
   const last=S.hist[S.hist.length-1];$('stGrade').textContent=last?last.grade:'–';
   $('stStars').textContent=S.hist.reduce((t,h)=>t+starsOf(h.grade),0);
   $('phaseTip').textContent=PHASE_TIP[S.phase]||'';
-  const rules=[S.reform?'Gate 2 rules':'First come, first served',S.demandReform?'demand readiness checks':'',S.flexDefault?'flexible by default':''].filter(Boolean).join(' · ');
+  const rules=[S.reform?'Gate 2 rules':'First come, first served',S.anm==='pro'?'pro rata curtailment':'',S.demandReform?'demand readiness checks':'',S.flexDefault?'flexible by default':''].filter(Boolean).join(' · ');
   $('rules').textContent=rules;
   renderNet();renderQueue();renderPipe();renderBuilds();renderDock();renderTut();}
 
@@ -415,19 +443,23 @@ function renderNet(){const b=plan(S,pendAll()),a=S.phase==='queue'&&selApp?S.que
   $('tiles').innerHTML=h;}
 function fitTag(cls){return `<i class="fit c-${cls}">${cls==='green'?'Fits firm':cls==='amber'?'Fits some of the year':'Doesn\'t fit firm'}</i>`;}
 function readyTags(a){const g2=g2Applies(a);
-  return `<i class="${a.land?'y':'n'}">Land ${a.land?'✓':'✗'}</i><i class="${a.planning?'y':'n'}">Planning ${a.planning?'✓':'✗'}</i>${g2?`<i class="g2 ${gate2(a)?'y':'n'}">${gate2(a)?'Gate 2 ✓':'Gate 1 only'}</i>`:''}`;}
+  return `<i class="${a.land?'y':'n'}">Land ${a.land?'✓':'✗'}</i><i class="${a.planning?'y':'n'}">Planning ${a.planning?'✓':'✗'}</i>${g2?`<i class="${needed(a)?'y':'n'}">Needed ${needed(a)?'✓':'✗'}</i><i class="g2 ${gate2(a)?'y':'n'}">${gate2(a)?'Gate 2 ✓':'Gate 1 only'}</i>`:''}`;}
+const g2Why=a=>[a.land?'':'land rights',a.planning?'':'planning',needed(a)?'':'a need in the regional plan'].filter(Boolean).join(', ');
 const kindLine=a=>`${KINDS[a.kind].name}${a.kind==='ev'?(a.sub==='depot'?' (fleet depot)':' (public hub)'):''} · ${f1(a.mw)} MW ${a.kind==='batt'?'import and export':KINDS[a.kind].gen?'export':'import'} · ${PRIMS[a.prim].name}`;
 const OFF_SHORT={firm:'Firm',reinf:'After reinforcement',flex:'Flexible',timed:'Timed',hold:'Hold',refuse:'Refuse'};
 function renderQueue(){const el=$('queue');
   if(S.phase!=='queue'){el.innerHTML=S.resp?`<p class="tip">Offers sent for year ${S.year}. <button type="button" class="link" id="seeResp">See the responses</button></p>`:'';const sr=$('seeResp');if(sr)sr.onclick=showResponses;$('qCount').textContent='';return;}
-  $('qCount').textContent=`${S.queue.length} applications`;
-  const b0=plan(S,[]);el.innerHTML=S.queue.map(a=>{const A=assess(a,b0);
+  $('qCount').textContent=`${S.queue.length} applications · ${S.reform?'Gate 2 projects first':'in the order they applied'}`;
+  const b0=plan(S,[]);el.innerHTML=S.queue.map((a,i)=>{const A=assess(a,b0);
     return `<button type="button" class="app${a.choice?' chosen':''}${selApp===a.id?' sel':''}" data-a="${a.id}"><span class="ic" aria-hidden="true">${KINDS[a.kind].ic}</span>
-      <span class="ab"><b>${esc(a.name)}${a.back?' <small class="back">back again</small>':''}</b><small>${kindLine(a)}</small>
+      <span class="ab"><b><span class="qpos">${i+1}</span>${esc(a.name)}${a.back?' <small class="back">back again</small>':''}${S.reform&&a.app&&a.app>i+1?' <small class="up">moved up: Gate 2</small>':''}</b><small>${kindLine(a)}</small>
       <span class="tags">${fitTag(A.cls)}${readyTags(a)}</span></span>
       <span class="chip${a.choice?'':' none'}">${a.choice?OFF_SHORT[a.choice]:'Choose'}</span></button>`;}).join('')||'<p class="tip">No applications this year.</p>';}
+const NOTES=['"Our planning appeal is decided next spring."','"The panels are on a ship. On site early next year."','"Finance closes in the new year, then we start."','"The contractor went bust; a new one starts in March."'];
+// what the developer says when chased: real late projects usually explain; speculative ones mostly don't answer
+function devNote(c){const r=rngFor(S.seed,'note',c.name)();if(c.spec)return r<.3?NOTES[Math.floor(r*13)%NOTES.length]:'No reply to our letters.';return r<.8?NOTES[Math.floor(r*17)%NOTES.length]:'No reply to our letters.';}
 function custStatus(c){if(c.built)return '';
-  if(missed(c))return `<span class="st n">Missed milestone (due year ${c.conn})</span>`;
+  if(missed(c))return `<span class="st n">Missed milestone (due year ${c.conn})</span><small class="dev">${esc(devNote(c))}</small>`;
   if(c.waitB&&c.waitB.length)return `<span class="st">Waiting for reinforcement, year ${c.conn}</span>`;
   return `<span class="st">Building, connects year ${c.conn}</span>`;}
 function renderPipe(){const list=S.cust.filter(c=>!c.gone&&!c.built&&!c.existing);
@@ -457,7 +489,7 @@ function openApp(id){const a=S.queue.find(x=>x.id===id);if(!a)return;selApp=id;c
   const g2=g2Applies(a);
   $('sheet').innerHTML=`<div class="sh-h"><div><b>${KINDS[a.kind].ic} ${esc(a.name)}</b><p class="sh-s">${kindLine(a)}</p></div><button type="button" class="sh-x" id="shX" aria-label="Close">×</button></div>
     <p class="tags">${fitTag(A.cls)}${readyTags(a)}</p>
-    <p class="sh-n">Wants connecting this year. Will wait ${a.pat} year${a.pat===1?'':'s'}${a.back?' more':''}${K.noFlex?'':`, and put up with about ${f1(tolNow(a))}% curtailment`}.${g2&&!gate2(a)?' <b>Doesn\'t meet Gate 2:</b> no confirmed date under the new rules.':''}</p>
+    <p class="sh-n">Wants connecting this year. Will wait ${a.pat} year${a.pat===1?'':'s'}${a.back?' more':''}${K.noFlex?'':`, and put up with about ${f1(tolNow(a))}% curtailment`}.${g2&&!gate2(a)?` <b>Doesn't meet Gate 2</b> (no ${g2Why(a)}): no confirmed date under the new rules.`:''}</p>
     <div class="gauges">${g}</div><p class="sh-why c-${A.cls}">${why}</p>
     <h3>Your offer</h3><div class="offers">${O.list.map(o=>`<button type="button" class="off${a.choice===o.type?' on':''}" data-o="${o.type}" ${o.avail?'':'disabled'} aria-pressed="${a.choice===o.type}">
       <b>${o.label}${o.cls&&o.cls!=='green'&&o.avail?` <i class="fit c-${o.cls}">${o.cls==='amber'?'some risk':'overloads'}</i>`:''}${o.g2?' <i class="fit c-red">breaks Gate 2</i>':''}</b><small>${o.line}</small></button>`).join('')}</div>`;
@@ -506,12 +538,16 @@ function showReinforce(){const opts=[];
   const flexRow=p=>`<li><span><b>Flexibility services · ${PRIMS[p].name}</b><small>Pay local customers to turn down ${FLEX_MW} MW at winter teatime peaks this year. ${money(FLEX_COST)}. Counts towards firm demand capacity.</small></span>
     <button type="button" class="btn sm${S.flexBuy[p]?' same':''}" data-f="${p}" ${ro||S.flexBuy[p]?'disabled':''}>${S.flexBuy[p]?'Bought':'Buy'}</button></li>`;
   ov(`<h2>Reinforcement</h2><p class="fine">Allowance ${money(BUDGET)} a year. Left this year: <b class="${left<0?'neg':''}">${money(left)}</b>. Building costs are spread over the years it takes. Overspend hurts your cost score.</p>
+    <h3>Flexible connections: who gets curtailed first</h3>
+    <div class="sync-tabs" role="group" aria-label="Curtailment rule"><button type="button" class="sync-t" data-anm="lifo" aria-pressed="${S.anm!=='pro'}" ${ro?'disabled':''}>Last in, first off</button><button type="button" class="sync-t" data-anm="pro" aria-pressed="${S.anm==='pro'}" ${ro?'disabled':''}>Pro rata</button></div>
+    <p class="fine">${S.anm==='pro'?'<b>Pro rata:</b> everyone behind a constraint is curtailed by the same share. Fairer to newcomers, so new flexible offers look better, but every new connection eats into existing customers\' curtailment and their limits.':'<b>Last in, first off:</b> the newest flexible customer is curtailed first. Existing customers keep what they were promised, but newcomers behind a busy constraint get high estimates and walk away.'} Applies to the whole network from this year.</p>
     <h3>This winter</h3><ul class="blist">${S.prims.map(flexRow).join('')}</ul>
     <h3>Build</h3><ul class="blist">${opts.map(row).join('')}</ul>
     <div class="row"><button type="button" class="btn primary" id="bOk">Done</button></div>`);
   $('bOk').onclick=closeOv;
   $('ovCard').querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>{startBuild(b.dataset.b,b.dataset.p||null,0);save();toast(`${BUILDS[b.dataset.b].name} started.`);showReinforce();});
-  $('ovCard').querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{S.flexBuy[b.dataset.f]=true;S.spend+=FLEX_COST;save();showReinforce();});}
+  $('ovCard').querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{S.flexBuy[b.dataset.f]=true;S.spend+=FLEX_COST;save();showReinforce();});
+  $('ovCard').querySelectorAll('[data-anm]').forEach(b=>b.onclick=()=>{S.anm=b.dataset.anm==='pro'?'pro':'lifo';save();showReinforce();});}
 function stopPlay(){if(playTimer){clearInterval(playTimer);playTimer=null;}}
 function playYear(){tut('run');const rep=runYear(),R=rep.R;let m=-1;
   const prims=Object.keys(R.p);
@@ -537,10 +573,10 @@ function playYear(){tut('run');const rep=runYear(),R=rep.R;let m=-1;
   step();playTimer=setInterval(step,window.__GK_FAST?1:700);
   $('pSkip').onclick=()=>{stopPlay();showReport();};}
 function showReport(){const r=S.report;if(!r)return;const s=r.sc;
-  const rows=[['conn','Connections',`${f1(r.accMW)} of ${f1(r.genMW)} MW of real projects connected or contracted${r.avgD>0?`, ${f1(r.avgD)} years' wait on average`:''}`],
+  const rows=[['conn','Connections',`${f1(r.accMW)} MW of real projects connected or contracted, out of ${f1(r.viaMW!=null?r.viaMW:r.genMW)} MW that could have been${r.avgD>0?`, ${f1(r.avgD)} years' wait on average`:''}`],
     ['sec','Network security',`${nf(r.bh)} hours over firm limits${r.R.cml>0?`, ${nf(r.R.cml)} customer minutes lost`:''}`],
     ['curt','Curtailment',r.pot>0?`${nf(r.cut)} MWh curtailed (${f1(r.cut/r.pot*100)}%)${r.over.length?`, ${r.over.length} over their limit: ${money(r.comp)} compensation`:''}`:'No flexible customers connected'],
-    ['cost','Cost',`${money(r.spend)} spent of ${money(BUDGET)}`],
+    ['cost','Cost',`${money(r.spend)} spent of ${money(BUDGET)}${r.under?`: ${money(BUDGET-r.spend)} left unspent while ${f1(r.waitMW)} MW of real projects waited`:''}`],
     ['reg','Regulator rating',`${r.complaints} complaint${r.complaints===1?'':'s'}${r.g2?`, ${r.g2} Gate 2 breach${r.g2===1?'':'es'}`:''}${r.zombies?`, ${r.zombies} stale project${r.zombies===1?'':'s'} left in the queue`:''}`]];
   const nx=EVENTS[r.year+1],end=r.year>=YEARS;
   ov(`<div class="end-h"><span class="grade g-${r.grade}">${r.grade}</span><div><p class="eyebrow">Year ${r.year} of ${YEARS}</p><h2>Year-end report</h2></div></div>
@@ -723,7 +759,7 @@ function init(){
   S=load();if(!S){const wk=mondayOf(todayUK());newCareer(weekSeed(wk),'week',wk);}
   document.addEventListener('click',e=>{const t=e.target.closest('[data-a],[data-p],[data-rm]');if(!t||t.closest('#ov'))return;
     if(t.dataset.a&&S.phase==='queue')openApp(+t.dataset.a);
-    else if(t.dataset.rm){const c=S.cust.find(x=>x.id===+t.dataset.rm);if(c&&S.reform&&missed(c)){c.gone=true;save();toast(`${c.name} removed from the queue. Its headroom is free again.`);render();}}
+    else if(t.dataset.rm){const c=S.cust.find(x=>x.id===+t.dataset.rm);if(c&&S.reform&&missed(c)){c.gone=true;if(!c.spec&&S.yr){S.yr.complaints++;S.yr.terminated=(S.yr.terminated||0)+1;}save();toast(c.spec?`${c.name} removed from the queue. Its headroom is free again.`:`${c.name} removed. It was a real project, nearly ready to build: the developer has complained to Ofgem.`);render();}}
     else if(t.dataset.p&&t.classList.contains('tile'))openPrim(t.dataset.p);});
   $('goBtn').onclick=go;$('reBtn').onclick=showReinforce;$('helpBtn').onclick=showMenu;
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('ov').hidden&&!playTimer)closeOv();else if(!$('sheet').hidden)closeSheet();}});
@@ -733,5 +769,5 @@ function init(){
   else if(S.phase==='end')showEnd();
   else maybeEvent();
   syncQuiet();}
-if(typeof window!=='undefined'&&window.__GK_TEST)window.__gk={get S(){return S;},set S(v){S=v;},newCareer,startYear,plan,simulate,assess,offers,reinfFor,flexEst,sendOffers,runYear,startBuild,render,PTS,unit,go,exportNet,gspPeaks,baseState,saveData,weekSeed,mondayOf,careerScore,showBoard,showMenu,syncGame,get tutI(){return tutI;}};
+if(typeof window!=='undefined'&&window.__GK_TEST)window.__gk={get S(){return S;},set S(v){S=v;},newCareer,startYear,plan,simulate,assess,offers,reinfFor,flexEst,sendOffers,runYear,startBuild,render,devNote,gate2,g2Applies,PTS,unit,go,exportNet,gspPeaks,baseState,saveData,weekSeed,mondayOf,careerScore,showBoard,showMenu,syncGame,get tutI(){return tutI;}};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();

@@ -44,6 +44,19 @@ player connected. Losing Control's generation start screen then shows **Run your
 demand × kD (or Sunny Sunday if E ≥ 0.55), and its demand response, battery and solar curtailment allowance set by
 what was connected (`sc.svc`, `applySvc`). Not on the scoreboard. Links: report, end screen and menu → `../control-room/#gk`. It's a control room shift (switching, faults, crews, plus the connected flexibility); until 20 Nov 2026 it was a generation shift, which has no switching, and old `?mode=gen#gk` links now redirect.
 
+## Rules added after launch (23 Nov 2026)
+- **Gate 2 = ready and needed**: `needed()` is the regional plan (no more solar at Shocking Place; data centres only in
+  the Hertz House growth zone and Kilowatt Close). After the reform, `queueSort()` puts Gate 2 projects ahead of earlier
+  Gate 1 ones; cards show their queue position and "moved up: Gate 2".
+- **Milestones**: about 1 in 5 real projects you accept runs 1-2 years late (`slip`). Missed milestones show what the
+  developer says (`devNote`): real ones usually explain, speculative ones mostly don't reply. Removing a real one draws
+  a complaint; leaving any missed project costs 4 regulator points a year.
+- **Curtailment rule** (Reinforce screen): last in, first off or pro rata (`S.anm`). Pro rata offers say how much they
+  raise existing flexible customers' curtailment.
+- **Scores**: connections are judged against the MW that could realistically have been connected (`viable()`), and the
+  cost score also penalises leaving the allowance unspent while real projects wait. Curtailment and security weigh a
+  little more. Bot runs: random play about 6,600 (C), sensible play about 8,500, careful planning about 8,700.
+
 ## Next steps
 - Wire into `src/build.py` and publish at `/gatekeeper/`, link it from Losing Control and Fault Lines.
 - Redeploy `Code.gs` as a new version (version 23).
