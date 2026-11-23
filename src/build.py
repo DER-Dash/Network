@@ -116,7 +116,8 @@ def redirect(target,title):
 </html>
 '''
 # The generation game used to live at the main address and at /generation/. Both now open the one game.
-wr('index.html',redirect('control-room/','Losing Control'))
+# The main address: the Watts Up games home page (src/home/home.html). Old links with a #hash or ?mode= still go to Losing Control.
+wr('index.html',rd(os.path.join('home','home.html')))
 wr('generation/index.html',redirect('../control-room/?mode=gen','Losing Control · Generation'))
 
 # ---- Fault Lines: the fault-finding puzzle, its own page at /fault-lines/ (sources in src/fault-lines) ----

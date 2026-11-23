@@ -1,0 +1,524 @@
+<!doctype html>
+<!-- © 2026 Steve Backhouse. All rights reserved. Not open source: see https://github.com/DER-Dash/Network/blob/main/LICENSE -->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Watts Up Games</title>
+<meta name="description" content="Free browser games about running an electricity network. Switch through faults in the control room, find the fault on a feeder, and decide who gets connected in Blackout Canyon.">
+<link rel="canonical" href="https://www.wattsupelectricity.co.uk/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Watts Up">
+<meta property="og:title" content="Watts Up Games: keep the lights on in Blackout Canyon">
+<meta property="og:description" content="Three free browser games about running an electricity network: Losing Control, Fault Lines and Gatekeeper.">
+<meta property="og:url" content="https://www.wattsupelectricity.co.uk/">
+<meta property="og:image" content="https://www.wattsupelectricity.co.uk/og-image.png">
+<meta name="theme-color" content="#0B1F3A">
+<link rel="icon" href="icons/cr-192.png">
+<link rel="apple-touch-icon" href="icons/cr-apple-180.png">
+<script>
+// Old links to the main address (installed apps, #tutorial, ?mode=gen ...) still open Losing Control
+(function(){var h=location.hash,q=location.search;if((h&&h.length>1)||/[?&](mode|source|seed|challenge|daily)=/.test(q))location.replace('control-room/'+q+h);})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --navy:#0B1F3A; --navy-2:#13305a; --zap:#FFC928; --zap-2:#FFD23F; --navy-ink:#ffffff; --navy-muted:#c3cee0;
+  --bg:#f3f1ea; --panel:#ffffff; --ink:#14203a; --muted:#56607a; --rule:#e0dccf;
+  --c-lc:#2f7fd6; --c-fl:#dc5a24; --c-gk:#2c8a57;
+  --sky:#cfe7f7; --sky-2:#eaf5fc; --rock:#e7955a; --rock-2:#d0743f; --rock-3:#f4b27e; --grass:#8fc27f; --grass-2:#6fae63;
+  --outline:#0B1F3A; --win:#FFD23F;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0c1424; --panel:#152238; --ink:#e9eef7; --muted:#a3afc6; --rule:#263552;
+    --c-lc:#6fb0ff; --c-fl:#ff8a55; --c-gk:#52b886;
+    --sky:#1f3a5e; --sky-2:#18304f; --rock:#b9683a; --rock-2:#9a5330; --rock-3:#cf8452; --grass:#4f8a4a; --grass-2:#3f7540;
+    --outline:#050d1a;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c1424; --panel:#152238; --ink:#e9eef7; --muted:#a3afc6; --rule:#263552;
+  --c-lc:#6fb0ff; --c-fl:#ff8a55; --c-gk:#52b886;
+  --sky:#1f3a5e; --sky-2:#18304f; --rock:#b9683a; --rock-2:#9a5330; --rock-3:#cf8452; --grass:#4f8a4a; --grass-2:#3f7540;
+  --outline:#050d1a;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 var(--f-body);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+img,svg{display:block;max-width:100%}
+.wrap{max-width:1160px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+:focus-visible{outline:3px solid var(--zap);outline-offset:3px;border-radius:6px}
+
+/* ---------- Header band ---------- */
+.top{background:var(--navy);color:var(--navy-ink);padding-top:env(safe-area-inset-top,0px)}
+.top-in{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:14px}
+.logo{display:flex;align-items:center;gap:12px;text-decoration:none;min-width:0}
+.logo svg{width:48px;height:48px;flex:none}
+.wm{display:flex;flex-direction:column;line-height:1}
+.wm b{font:800 30px/0.95 var(--f-display);letter-spacing:.01em}
+.wm b span{color:var(--zap-2)}
+.wm small{margin-top:5px;font:600 11.5px var(--f-display);letter-spacing:.32em;text-transform:uppercase;color:var(--navy-muted)}
+.top-mail{font:600 15px var(--f-body);color:var(--navy-muted);text-decoration:none;border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:8px 14px;white-space:nowrap}
+.top-mail:hover{color:#fff;border-color:var(--zap)}
+@media (max-width:560px){.top-mail .lw{display:none}.wm b{font-size:26px}.logo svg{width:42px;height:42px}}
+
+/* ---------- Hero ---------- */
+.hero{background:var(--navy);color:var(--navy-ink);border-bottom:5px solid var(--zap);overflow:hidden}
+.hero-in{display:grid;grid-template-columns:1.05fr 1fr;gap:40px;align-items:center;padding-block:36px 0}
+.eyebrow{margin:0 0 12px;font:700 14px var(--f-display);letter-spacing:.18em;text-transform:uppercase;color:var(--zap-2)}
+.hero h1{margin:0;font:800 clamp(40px,6.4vw,76px)/.95 var(--f-display);letter-spacing:.005em;text-transform:uppercase;text-wrap:balance}
+.hero h1 em{font-style:normal;color:var(--zap-2)}
+.lede{margin:18px 0 26px;max-width:34em;font-size:19px;line-height:1.5;color:var(--navy-muted)}
+.cta{display:flex;flex-wrap:wrap;gap:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 22px;border-radius:12px;font:700 18px var(--f-body);text-decoration:none;border:2px solid transparent;transition:transform .15s ease,box-shadow .15s ease}
+.btn:hover{transform:translateY(-2px)}
+.btn-zap{background:var(--zap);color:var(--navy);box-shadow:0 4px 0 #c99400}
+.btn-zap:hover{box-shadow:0 6px 0 #c99400}
+.btn-ghost{color:#fff;border-color:rgba(255,255,255,.35)}
+.btn-ghost:hover{border-color:var(--zap)}
+.hero-art{align-self:end;margin-bottom:-5px}
+.hero-art svg{width:100%;height:auto}
+.facts{display:flex;flex-wrap:wrap;gap:8px 18px;margin:28px 0 36px;padding:0;list-style:none;font:600 15px var(--f-body);color:var(--navy-muted)}
+.facts li{display:flex;align-items:center;gap:7px}
+.facts li::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--zap)}
+@media (max-width:860px){
+  .hero-in{grid-template-columns:1fr;gap:8px;padding-top:26px}
+  .facts{margin:22px 0 4px}
+  .hero-art{max-width:560px;width:100%;margin-inline:auto}
+}
+
+/* ---------- Games ---------- */
+.games{padding:64px 0 24px}
+.sec-h{display:flex;align-items:end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:26px}
+.sec-h h2{margin:0;font:800 clamp(32px,4.4vw,48px)/1 var(--f-display);text-transform:uppercase;letter-spacing:.01em}
+.sec-h p{margin:0;max-width:32em;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+@media (max-width:980px){.grid{grid-template-columns:1fr 1fr}}
+@media (max-width:660px){.grid{grid-template-columns:1fr}}
+.card{--c:var(--c-lc);display:flex;flex-direction:column;background:var(--panel);border:2px solid var(--rule);border-radius:20px;overflow:hidden;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.card:hover{transform:translateY(-4px);box-shadow:0 18px 40px rgba(11,31,58,.14);border-color:var(--c)}
+.card.fl{--c:var(--c-fl)}.card.gk{--c:var(--c-gk)}
+.art{position:relative;background:var(--sky);border-bottom:3px solid var(--outline)}
+.art svg{width:100%;height:auto}
+.badge-unused{position:absolute;left:14px;top:14px;background:var(--navy);color:#fff;font:700 13px var(--f-display);letter-spacing:.12em;text-transform:uppercase;padding:5px 10px;border-radius:8px;border:2px solid var(--zap)}
+.card-b{display:flex;flex-direction:column;flex:1;padding:20px 22px 22px}
+.kind{margin:0;font:700 13.5px var(--f-display);letter-spacing:.16em;text-transform:uppercase;color:var(--c)}
+.card h3{margin:4px 0 10px;font:800 34px/1 var(--f-display);text-transform:uppercase;letter-spacing:.01em}
+.card-b>p{margin:0 0 16px;color:var(--muted);font-size:16.5px}
+.feat{margin:0 0 20px;padding:0;list-style:none;display:grid;gap:8px;font-size:15.5px}
+.feat li{display:grid;grid-template-columns:22px 1fr;gap:6px;align-items:start}
+.feat li::before{content:"";width:16px;height:16px;margin-top:4px;border-radius:5px;background:var(--c);mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M9.5 1 3 9h4.2L6 15l7-8.4H8.6z'/%3E%3C/svg%3E") center/contain no-repeat;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M9.5 1 3 9h4.2L6 15l7-8.4H8.6z'/%3E%3C/svg%3E") center/contain no-repeat}
+.card .go{margin-top:auto;display:flex;gap:10px;flex-wrap:wrap}
+.btn-play{flex:1;background:var(--navy);color:#fff;box-shadow:0 4px 0 var(--c)}
+.btn-play:hover{box-shadow:0 6px 0 var(--c)}
+:root[data-theme="dark"] .btn-play{background:var(--c);color:var(--navy)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn-play{background:var(--c);color:#0B1F3A;box-shadow:0 4px 0 #050d1a}}
+.btn-sub{min-height:50px;padding:0 16px;border:2px solid var(--rule);color:var(--ink);font-size:16px}
+.btn-sub:hover{border-color:var(--c)}
+
+/* ---------- Blackout Canyon strip ---------- */
+.canyon{padding:40px 0 8px}
+.canyon-in{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center;background:var(--panel);border:2px solid var(--rule);border-radius:20px;padding:24px 28px}
+.canyon-in svg{width:150px;height:auto}
+.canyon h2{margin:0 0 6px;font:800 30px/1 var(--f-display);text-transform:uppercase}
+.canyon p{margin:0;color:var(--muted)}
+@media (max-width:620px){.canyon-in{grid-template-columns:1fr;text-align:left;padding:20px}.canyon-in svg{width:120px}}
+
+/* ---------- Contact ---------- */
+.contact{padding:48px 0 64px}
+.contact-in{position:relative;overflow:hidden;background:var(--navy);color:#fff;border-radius:24px;padding:36px 32px;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;border-bottom:6px solid var(--zap)}
+.contact h2{margin:0 0 8px;font:800 clamp(30px,4vw,42px)/1 var(--f-display);text-transform:uppercase}
+.contact p{margin:0;color:var(--navy-muted);max-width:36em}
+.mail{display:inline-flex;align-items:center;gap:10px;background:var(--zap);color:var(--navy);font:700 clamp(16px,2.2vw,20px) var(--f-body);text-decoration:none;padding:14px 22px;border-radius:14px;box-shadow:0 4px 0 #c99400;overflow-wrap:anywhere}
+.mail svg{width:24px;height:24px;flex:none}
+.mail:hover{transform:translateY(-2px);box-shadow:0 6px 0 #c99400}
+@media (max-width:760px){.contact-in{grid-template-columns:1fr;padding:28px 20px}}
+
+footer{border-top:1px solid var(--rule);padding:22px 0 calc(28px + env(safe-area-inset-bottom,0px));color:var(--muted);font-size:14px}
+footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between}
+footer p{margin:0}
+
+/* ---------- Cartoon motion ---------- */
+.spin{animation:spin 5s linear infinite}
+.spin.s2{animation-duration:6.5s}.spin.s3{animation-duration:4.2s}
+@keyframes spin{to{transform:rotate(360deg)}}
+.blink{animation:blink 1.4s steps(2,jump-none) infinite}
+@keyframes blink{50%{opacity:.25}}
+.spark{transform-box:fill-box;transform-origin:center;animation:spark 1.6s ease-in-out infinite}
+@keyframes spark{0%,100%{transform:scale(.85);opacity:.85}50%{transform:scale(1.15);opacity:1}}
+.bob{animation:bob 3s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-4px)}}
+.flow{stroke-dasharray:6 10;animation:flow 1.2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-16}}
+.ol{stroke:var(--outline);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top-in">
+    <a class="logo" href="./" aria-label="Watts Up Electricity Distribution, home">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="40" fill="none" stroke="#FFD23F" stroke-width="6"/><path d="M58 18 L30 56 H47 L41 84 L71 44 H54 L61 18 Z" fill="#FFD23F"/></svg>
+      <span class="wm"><b>Watts <span>Up</span></b><small>Electricity Distribution</small></span>
+    </a>
+    <a class="top-mail" href="mailto:control@wattsupelectricity.co.uk"><span class="lw">Contact </span>✉</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap hero-in">
+    <div>
+      <p class="eyebrow">Watts Up games</p>
+      <h1>Keep the lights on in <em>Blackout Canyon</em></h1>
+      <p class="lede">Free browser games about running an electricity network. Take the control room through a stormy shift, track down a fault on a feeder, or decide who gets connected over the next ten years.</p>
+      <div class="cta">
+        <a class="btn btn-zap" href="#games">Choose a game ↓</a>
+        <a class="btn btn-ghost" href="fault-lines/">Today's puzzle</a>
+      </div>
+      <ul class="facts"><li>Free to play</li><li>Phone or computer</li><li>No sign-up</li><li>Scoreboards</li></ul>
+    </div>
+    <div class="hero-art">
+      <!-- Blackout Canyon: mesas, pylons, wind turbines, a substation and a little town -->
+      <svg viewBox="0 0 560 400" role="img" aria-label="Cartoon of Blackout Canyon: red rock mesas, wind turbines, a pylon line, a substation and a small town with its lights on">
+        <defs>
+          <linearGradient id="hSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d4a7c"/><stop offset="1" stop-color="#5d8fc0"/></linearGradient>
+          <clipPath id="hClip"><rect x="10" y="10" width="540" height="400" rx="28"/></clipPath>
+        </defs>
+        <g clip-path="url(#hClip)">
+          <rect x="10" y="10" width="540" height="400" fill="url(#hSky)"/>
+          <!-- sun / moon glow -->
+          <circle cx="455" cy="88" r="44" fill="#FFD23F" opacity=".25"/>
+          <circle cx="455" cy="88" r="30" fill="#FFD23F" class="ol"/>
+          <!-- stars -->
+          <g fill="#fff" opacity=".8"><circle cx="70" cy="50" r="2"/><circle cx="150" cy="80" r="1.6"/><circle cx="250" cy="40" r="2"/><circle cx="330" cy="70" r="1.4"/><circle cx="530" cy="150" r="1.6"/></g>
+          <!-- clouds -->
+          <g class="bob"><path d="M78 128c-2-16 20-24 30-12 6-14 30-12 32 4 14-2 20 16 6 20H86c-10 0-14-8-8-12z" fill="#fff" class="ol"/></g>
+          <!-- far mesas -->
+          <path d="M10 250 L60 250 L70 200 L150 200 L162 250 L230 250 L240 215 L300 215 L312 250 L560 250 L560 410 L10 410Z" fill="var(--rock-3)" class="ol"/>
+          <path d="M70 200h80M240 215h60" stroke="#fff" stroke-opacity=".35" stroke-width="4"/>
+          <!-- wind turbines on the far mesa -->
+          <g>
+            <path d="M112 200 L116 112 L120 200Z" fill="#fff" class="ol"/>
+            <g transform="translate(116 112)"><g class="spin"><path d="M0 0 L-4 -46 Q0 -50 4 -46Z M0 0 L41 21 Q41 27 36 27Z M0 0 L-37 27 Q-41 23 -38 20Z" fill="#fff" class="ol"/></g><circle r="6" fill="#FFD23F" class="ol"/></g>
+            <path d="M268 215 L271 150 L274 215Z" fill="#fff" class="ol"/>
+            <g transform="translate(271 150)"><g class="spin s2"><path d="M0 0 L-3 -34 Q0 -37 3 -34Z M0 0 L30 16 Q30 20 26 20Z M0 0 L-27 20 Q-30 17 -28 14Z" fill="#fff" class="ol"/></g><circle r="5" fill="#FFD23F" class="ol"/></g>
+          </g>
+          <!-- near canyon -->
+          <path d="M10 300 C80 290 120 270 170 276 C230 284 260 300 330 292 C400 284 460 270 560 280 L560 410 L10 410Z" fill="var(--rock)" class="ol"/>
+          <path d="M40 330c40-8 70-4 110 2M300 330c50-6 90-10 150-4" stroke="var(--rock-2)" stroke-width="5" stroke-linecap="round" fill="none"/>
+          <!-- pylon line -->
+          <g fill="none">
+            <path d="M60 196 Q140 214 222 200 Q300 188 380 206" stroke="var(--outline)" stroke-width="2.5"/>
+            <path d="M60 196 Q140 214 222 200 Q300 188 380 206" stroke="#FFD23F" stroke-width="2.5" class="flow"/>
+          </g>
+          <g class="ol" fill="none">
+            <path d="M48 296 L60 190 L72 296 M52 258 L68 258 M55 228 L65 228 M46 196 L74 196"/>
+            <path d="M210 288 L222 194 L234 288 M214 252 L230 252 M217 222 L227 222 M208 200 L236 200"/>
+          </g>
+          <!-- substation -->
+          <g>
+            <rect x="350" y="232" width="86" height="58" rx="6" fill="#e9eef7" class="ol"/>
+            <path d="M350 232 l8-14 h70 l8 14" fill="#cfd8e6" class="ol"/>
+            <circle cx="380" cy="262" r="12" fill="#fff" class="ol"/><circle cx="380" cy="276" r="12" fill="#fff" class="ol"/>
+            <rect x="404" y="252" width="18" height="18" rx="3" fill="#0B1F3A" class="ol"/>
+            <path d="M380 206 V250" class="ol"/>
+            <path d="M409 258 l6 -4 -2 6 6 -2 -9 8 2 -5z" fill="#FFD23F"/>
+            <rect x="358" y="292" width="72" height="6" rx="3" fill="#0B1F3A"/>
+          </g>
+          <!-- town -->
+          <g>
+            <path d="M436 300 l20-18 20 18v34h-40z" fill="#fff" class="ol"/>
+            <rect x="447" y="306" width="10" height="10" fill="var(--win)" class="ol blink"/>
+            <path d="M472 304 l26-24 26 24v40h-52z" fill="#ffe9d6" class="ol"/>
+            <rect x="484" y="312" width="10" height="10" fill="var(--win)" class="ol"/><rect x="500" y="312" width="10" height="10" fill="var(--win)" class="ol"/>
+            <rect x="520" y="290" width="40" height="56" fill="#dfe7f3" class="ol"/>
+            <rect x="528" y="298" width="8" height="8" fill="var(--win)" class="ol"/><rect x="542" y="298" width="8" height="8" fill="var(--win)" class="ol"/><rect x="528" y="314" width="8" height="8" fill="var(--win)" class="ol"/>
+            <path d="M436 290 Q420 280 420 262" class="ol" fill="none"/>
+          </g>
+          <!-- solar farm in front -->
+          <g>
+            <path d="M70 352 l30-12 h56 l-30 12z" fill="#2f5fa8" class="ol"/>
+            <path d="M84 346 h56 M100 340 l-30 12 M118 340 l-30 12 M136 340 l-30 12" stroke="#9cc3f0" stroke-width="2"/>
+            <path d="M92 352 v12 M140 352 v12" class="ol"/>
+            <path d="M170 368 l30-12 h56 l-30 12z" fill="#2f5fa8" class="ol"/>
+            <path d="M184 362 h56 M200 356 l-30 12 M218 356 l-30 12 M236 356 l-30 12" stroke="#9cc3f0" stroke-width="2"/>
+            <path d="M192 368 v12 M240 368 v12" class="ol"/>
+          </g>
+          <!-- canyon sign -->
+          <g transform="translate(300 330) rotate(-3)">
+            <path d="M14 22 v40 M106 22 v40" class="ol"/>
+            <rect x="0" y="0" width="120" height="34" rx="6" fill="#FFD23F" class="ol"/>
+            <text x="60" y="23" text-anchor="middle" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="800" font-size="16" fill="#0B1F3A" letter-spacing="1" textLength="104" lengthAdjust="spacingAndGlyphs">BLACKOUT CANYON</text>
+          </g>
+        </g>
+        <rect x="10" y="10" width="540" height="420" rx="28" fill="none" stroke="#FFD23F" stroke-width="4"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<main>
+<section class="games" id="games" aria-labelledby="gamesT">
+  <div class="wrap">
+    <div class="sec-h">
+      <h2 id="gamesT">Choose your game</h2>
+      <p>Three jobs from a real distribution network, turned into games. Each one plays in your browser, on a phone or a computer.</p>
+    </div>
+    <div class="grid">
+
+      <!-- Losing Control -->
+      <article class="card lc">
+        <div class="art">
+          <svg viewBox="0 0 400 240" role="img" aria-label="Cartoon of a control engineer with a headset at a desk, in front of a big network diagram with a flashing red alarm">
+            <rect width="400" height="240" fill="var(--sky)"/>
+            <!-- big wall screen -->
+            <rect x="40" y="26" width="320" height="128" rx="12" fill="#0B1F3A" class="ol"/>
+            <g fill="none" stroke-width="4" stroke-linecap="round">
+              <path d="M70 60 H330" stroke="#c46ab0"/>
+              <path d="M110 60 V92 M200 60 V92 M290 60 V92" stroke="#5db3d6"/>
+              <path d="M80 98 H140 M170 98 H230 M260 98 H320" stroke="#5db3d6"/>
+              <path d="M140 98 H170" stroke="#5db3d6" stroke-dasharray="3 6"/>
+              <path d="M230 98 H260" stroke="#ff8a55"/>
+              <path d="M100 98 V128 M120 98 V128 M190 98 V128 M210 98 V128 M280 98 V128 M300 98 V128" stroke="#5db3d6"/>
+            </g>
+            <g fill="#fff"><rect x="104" y="72" width="12" height="12" rx="2"/><rect x="194" y="72" width="12" height="12" rx="2"/><rect x="284" y="72" width="12" height="12" rx="2" fill="#ff6b5a" class="blink"/></g>
+            <circle cx="243" cy="98" r="9" fill="#FFD23F" class="spark"/>
+            <text x="54" y="46" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="12" fill="#FFD23F" letter-spacing="1.5" textLength="150" lengthAdjust="spacingAndGlyphs">BLACKOUT CANYON 33 kV</text>
+            <!-- alarm beacon -->
+            <g transform="translate(346 18)"><circle r="16" fill="#ff6b5a" opacity=".35" class="blink"/><path d="M-9 4 a9 9 0 0 1 18 0 v4 h-18z" fill="#ff6b5a" class="ol"/></g>
+            <!-- desk -->
+            <rect x="20" y="178" width="360" height="20" rx="4" fill="#9a6a45" class="ol"/>
+            <rect x="20" y="198" width="360" height="42" fill="#7d5536"/>
+            <!-- monitors -->
+            <rect x="40" y="140" width="70" height="44" rx="6" fill="#e9eef7" class="ol"/>
+            <path d="M50 170 l12 -10 10 6 14 -14 14 8" fill="none" stroke="#2f7fd6" stroke-width="3" stroke-linecap="round"/>
+            <rect x="292" y="140" width="70" height="44" rx="6" fill="#e9eef7" class="ol"/>
+            <path d="M302 152 h50 M302 162 h36 M302 172 h44" stroke="#c4352b" stroke-width="3" stroke-linecap="round"/>
+            <!-- engineer -->
+            <g class="bob">
+              <path d="M150 182 c0-34 18-48 50-48 s50 14 50 48z" fill="#2f7fd6" class="ol"/>
+              <path d="M188 136 l12 14 12-14" fill="#fff" class="ol"/>
+              <circle cx="200" cy="104" r="28" fill="#f2c39c" class="ol"/>
+              <path d="M172 98 c0-24 56-24 56 0 c-8-10-48-10-56 0z" fill="#5b3a29" class="ol"/>
+              <circle cx="190" cy="106" r="3.5" fill="#0B1F3A"/><circle cx="210" cy="106" r="3.5" fill="#0B1F3A"/>
+              <path d="M192 118 q8 6 16 0" fill="none" class="ol"/>
+              <!-- headset -->
+              <path d="M170 104 a30 30 0 0 1 60 0" fill="none" stroke="#e9eef7" stroke-width="5"/>
+              <rect x="163" y="96" width="12" height="20" rx="5" fill="#FFC928" class="ol" stroke-width="2"/><rect x="225" y="96" width="12" height="20" rx="5" fill="#FFC928" class="ol" stroke-width="2"/>
+              <path d="M170 116 q2 12 16 11" fill="none" stroke="#e9eef7" stroke-width="3"/><circle cx="187" cy="127" r="3" fill="#e9eef7"/>
+              <!-- arm on the switch -->
+              <path d="M236 160 q20 4 26 18" fill="none" stroke="#2f7fd6" stroke-width="14" stroke-linecap="round"/>
+              <path d="M236 160 q20 4 26 18" fill="none" class="ol" stroke-width="2"/>
+            </g>
+            <!-- mug -->
+            <path d="M120 162 h20 v18 h-20z" fill="#FFD23F" class="ol"/><path d="M140 166 q8 0 8 6 t-8 6" fill="none" class="ol"/>
+            <path d="M126 156 q4 -6 0 -10 M134 156 q4 -6 0 -10" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" class="bob"/>
+            <!-- big red/green switch -->
+            <rect x="252" y="168" width="28" height="14" rx="4" fill="#c4352b" class="ol"/>
+          </svg>
+        </div>
+        <div class="card-b">
+          <p class="kind">Real-time control room</p>
+          <h3>Losing Control</h3>
+          <p>You're the control engineer for Blackout Canyon's network for one shift. Transformers trip, feeders fault, storms roll in and demand peaks at teatime. Switch load between substations, send out field crews, bring in generators and get every customer back on supply. At the end of the shift, the regulator marks your work.</p>
+          <ul class="feat">
+            <li>Shifts from a quiet Monday to storms and busbar faults</li>
+            <li>A daily challenge, a career and a scoreboard</li>
+            <li>Generation shifts: balance solar, wind, batteries and flexibility</li>
+          </ul>
+          <div class="go"><a class="btn btn-play" href="control-room/">Play Losing Control →</a></div>
+        </div>
+      </article>
+
+      <!-- Fault Lines -->
+      <article class="card fl">
+        <div class="art">
+          <svg viewBox="0 0 400 240" role="img" aria-label="Cartoon of an overhead line on wooden poles with a spark where the fault is, a crew van and an engineer in a hard hat pointing at it">
+            <rect width="400" height="240" fill="var(--sky)"/>
+            <circle cx="60" cy="48" r="22" fill="#FFD23F" class="ol"/>
+            <g class="bob"><path d="M268 54c-2-14 18-20 26-10 6-12 26-10 28 4 12-2 16 14 4 16h-50c-9 0-12-6-8-10z" fill="#fff" class="ol"/></g>
+            <!-- hills -->
+            <path d="M0 170 C80 150 140 160 200 166 C270 172 330 150 400 156 V240 H0Z" fill="var(--grass)" class="ol"/>
+            <path d="M0 200 C90 186 180 196 260 204 C320 210 360 198 400 200 V240 H0Z" fill="var(--grass-2)"/>
+            <!-- line + poles -->
+            <path d="M0 84 Q50 96 100 86 Q170 76 220 88 Q280 100 330 86 Q370 78 400 84" fill="none" stroke="#0B1F3A" stroke-width="3"/>
+            <g class="ol" fill="#9a6a45">
+              <rect x="94" y="80" width="10" height="92"/><rect x="214" y="84" width="10" height="88"/><rect x="324" y="80" width="10" height="84"/>
+            </g>
+            <g class="ol"><path d="M82 84 H116 M202 88 H236 M312 84 H346"/></g>
+            <!-- section switch on a pole (square = remote) -->
+            <rect x="207" y="104" width="24" height="18" rx="3" fill="#fff" class="ol"/>
+            <!-- FPI -->
+            <circle cx="99" cy="128" r="9" fill="#FFD23F" class="ol blink"/>
+            <!-- fault spark between poles -->
+            <g transform="translate(276 94)"><path class="spark" d="M0 -26 L8 -6 L26 -10 L10 4 L20 22 L0 10 L-20 22 L-10 4 L-26 -10 L-8 -6Z" fill="#FFD23F" stroke="#dc5a24" stroke-width="3" stroke-linejoin="round"/></g>
+            <!-- crew van -->
+            <g transform="translate(20 170)">
+              <path d="M0 10 h92 l20 18 v20 h-112z" fill="#fff" class="ol"/>
+              <rect x="0" y="30" width="112" height="8" fill="#FFD23F"/>
+              <path d="M92 10 l20 18 h-20z" fill="#bcdcf3" class="ol"/>
+              <rect x="6" y="2" width="22" height="8" rx="3" fill="#FFC928" class="ol"/>
+              <rect x="10" y="4" width="14" height="4" fill="#ff8a55" class="blink"/>
+              <text x="42" y="26" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="12" fill="#0B1F3A" letter-spacing=".5" textLength="46" lengthAdjust="spacingAndGlyphs">WATTS UP</text>
+              <circle cx="24" cy="50" r="10" fill="#0B1F3A" class="ol"/><circle cx="90" cy="50" r="10" fill="#0B1F3A" class="ol"/>
+              <circle cx="24" cy="50" r="4" fill="#ccd"/><circle cx="90" cy="50" r="4" fill="#ccd"/>
+            </g>
+            <!-- engineer pointing -->
+            <g transform="translate(300 150)">
+              <path d="M-16 66 v-34 c0-12 8-18 16-18 s16 6 16 18 v34z" fill="#ff8a55" class="ol"/>
+              <path d="M-16 40 h32" stroke="#FFD23F" stroke-width="5"/>
+              <circle cx="0" cy="0" r="15" fill="#f2c39c" class="ol"/>
+              <path d="M-18 -4 a18 16 0 0 1 36 0 h4 v5 h-44 v-5z" fill="#FFD23F" class="ol"/>
+              <circle cx="-5" cy="4" r="2.5" fill="#0B1F3A"/><circle cx="5" cy="4" r="2.5" fill="#0B1F3A"/>
+              <path d="M-5 9 q5 4 10 0" fill="none" class="ol" stroke-width="2"/>
+              <path d="M12 24 L34 -4" stroke="#ff8a55" stroke-width="10" stroke-linecap="round"/>
+              <path d="M12 24 L34 -4" class="ol" stroke-width="2"/>
+              <circle cx="36" cy="-7" r="6" fill="#f2c39c" class="ol"/>
+            </g>
+            <!-- clue bubble -->
+            <g transform="translate(130 22)">
+              <path d="M0 0 h84 a8 8 0 0 1 8 8 v20 a8 8 0 0 1 -8 8 h-50 l-10 10 v-10 h-24 a8 8 0 0 1 -8 -8 v-20 a8 8 0 0 1 8 -8z" fill="#fff" class="ol"/>
+              <text x="42" y="24" text-anchor="middle" font-family="Barlow, sans-serif" font-weight="700" font-size="13" fill="#0B1F3A">☎ No power!</text>
+            </g>
+          </svg>
+        </div>
+        <div class="card-b">
+          <p class="kind">Fault-finding puzzle</p>
+          <h3>Fault Lines</h3>
+          <p>An 11 kV feeder has tripped and locked out, and everyone on it is off. Read the clues (protection flags, fault passage indicators and customer calls), then open and close switches to find the faulted section in as few steps as you can. Isolate it and get everyone else back on.</p>
+          <ul class="feat">
+            <li>A new puzzle every day, the same for everyone. Share your result grid</li>
+            <li>A 30-puzzle career, from trainee to senior control engineer</li>
+            <li>Unlimited practice at easy, medium and hard</li>
+          </ul>
+          <div class="go"><a class="btn btn-play" href="fault-lines/">Play Fault Lines →</a></div>
+        </div>
+      </article>
+
+      <!-- Gatekeeper -->
+      <article class="card gk">
+        <div class="art">
+          <svg viewBox="0 0 400 240" role="img" aria-label="Cartoon of a gate marked Connections, with a queue of a solar panel, a wind turbine, a battery, an electric car charger and a data centre waiting to get through">
+            <rect width="400" height="240" fill="var(--sky)"/>
+            <circle cx="350" cy="44" r="20" fill="#FFD23F" class="ol"/>
+            <path d="M0 176 C100 166 180 172 260 168 C320 165 360 170 400 168 V240 H0Z" fill="var(--grass)" class="ol"/>
+            <!-- the gate -->
+            <g>
+              <rect x="40" y="70" width="14" height="112" fill="#9a6a45" class="ol"/>
+              <rect x="126" y="70" width="14" height="112" fill="#9a6a45" class="ol"/>
+              <rect x="30" y="40" width="120" height="30" rx="6" fill="#0B1F3A" class="ol"/>
+              <text x="90" y="61" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="17" fill="#FFD23F" letter-spacing="1.5" textLength="104" lengthAdjust="spacingAndGlyphs">CONNECTIONS</text>
+              <g class="ol" fill="none"><path d="M54 92 H126 M54 120 H126 M54 148 H126 M64 92 V170 M90 92 V170 M116 92 V170"/></g>
+              <circle cx="122" cy="132" r="5" fill="#FFD23F" class="ol"/>
+            </g>
+            <!-- gatekeeper with clipboard -->
+            <g transform="translate(24 132)"><g class="bob">
+              <circle cx="0" cy="0" r="12" fill="#c98f66" class="ol"/>
+              <path d="M-14 -3 a14 12 0 0 1 28 0 h3 v4 h-34 v-4z" fill="#fff" class="ol"/>
+              <path d="M-12 46 v-26 c0-8 6-12 12-12 s12 4 12 12 v26z" fill="#2c8a57" class="ol"/>
+              <rect x="6" y="18" width="14" height="18" rx="2" fill="#fff" class="ol"/>
+            </g></g>
+            <!-- queue -->
+            <!-- solar panel -->
+            <g transform="translate(160 136)">
+              <path d="M0 22 l12 -22 h40 l-12 22z" fill="#2f5fa8" class="ol"/>
+              <path d="M6 11 h40 M25 0 l-12 22 M39 0 l-12 22" stroke="#9cc3f0" stroke-width="2"/>
+              <path d="M16 22 v12 M36 22 v12" class="ol"/>
+              <circle cx="20" cy="28" r="0"/>
+            </g>
+            <!-- wind turbine -->
+            <g transform="translate(236 72)">
+              <path d="M-3 100 L0 22 L3 100Z" fill="#fff" class="ol"/>
+              <g transform="translate(0 22)"><g class="spin s3"><path d="M0 0 L-3 -30 Q0 -33 3 -30Z M0 0 L27 14 Q27 18 23 18Z M0 0 L-24 18 Q-27 15 -25 12Z" fill="#fff" class="ol"/></g><circle r="5" fill="#FFD23F" class="ol"/></g>
+            </g>
+            <!-- battery -->
+            <g transform="translate(262 130)">
+              <rect x="0" y="6" width="36" height="46" rx="6" fill="#a68bff" class="ol"/>
+              <rect x="11" y="0" width="14" height="8" rx="2" fill="#a68bff" class="ol"/>
+              <path d="M20 14 l-8 16 h7 l-3 14 10 -18 h-7z" fill="#FFD23F" class="ol" stroke-width="2"/>
+            </g>
+            <!-- EV charger -->
+            <g transform="translate(308 124)">
+              <rect x="0" y="0" width="26" height="58" rx="6" fill="#e9eef7" class="ol"/>
+              <rect x="5" y="8" width="16" height="12" rx="2" fill="#52b886" class="ol"/>
+              <path d="M26 30 q14 0 14 14 v10" fill="none" class="ol"/>
+            </g>
+            <!-- data centre -->
+            <g transform="translate(350 104)">
+              <rect x="0" y="0" width="44" height="78" rx="4" fill="#3a4a66" class="ol"/>
+              <g fill="#52b886"><rect x="8" y="10" width="28" height="5" class="blink"/><rect x="8" y="24" width="28" height="5"/><rect x="8" y="38" width="28" height="5" class="blink"/><rect x="8" y="52" width="28" height="5"/></g>
+            </g>
+            <!-- waiting dots -->
+            <g fill="#0B1F3A"><circle cx="188" cy="128" r="3"/><circle cx="182" cy="121" r="3.5"/></g>
+            <g transform="translate(140 84)">
+              <path d="M0 0 h64 a6 6 0 0 1 6 6 v14 a6 6 0 0 1 -6 6 h-64 a6 6 0 0 1 -6 -6 v-14 a6 6 0 0 1 6 -6z" fill="#fff" class="ol"/>
+              <text x="32" y="18" text-anchor="middle" font-family="Barlow, sans-serif" font-weight="700" font-size="12" fill="#0B1F3A">Me next?</text>
+            </g>
+          </svg>
+        </div>
+        <div class="card-b">
+          <p class="kind">Ten-year planning game</p>
+          <h3>Gatekeeper</h3>
+          <p>Ten years as Blackout Canyon's connections and planning engineer. Solar farms, batteries, EV hubs and data centres all want a connection. Offer firm or flexible terms, reinforce the network or say not yet, and keep the lights on as the queue grows.</p>
+          <ul class="feat">
+            <li>A report card each year on connections, security, curtailment and cost</li>
+            <li>Queue reform, cold winters, storms and a big customer who pulls out</li>
+            <li>A new canyon every week, with its own scoreboard</li>
+          </ul>
+          <div class="go"><a class="btn btn-play" href="gatekeeper/">Play Gatekeeper →</a></div>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<section class="canyon" aria-labelledby="canT">
+  <div class="wrap">
+    <div class="canyon-in">
+      <svg viewBox="0 0 160 110" aria-hidden="true">
+        <path d="M6 96 L22 96 L28 60 L66 60 L72 96 L92 96 L98 74 L128 74 L134 96 L154 96 L154 104 L6 104Z" fill="var(--rock)" class="ol"/>
+        <path d="M28 60h38M98 74h30" stroke="#fff" stroke-opacity=".4" stroke-width="3"/>
+        <path d="M47 60 L49 18 L51 60Z" fill="#fff" class="ol"/>
+        <g transform="translate(49 18)"><g class="spin"><path d="M0 0 L-2.5 -20 Q0 -22 2.5 -20Z M0 0 L18 9 Q18 12 15 12Z M0 0 L-16 12 Q-18 10 -17 8Z" fill="#fff" class="ol" stroke-width="2.5"/></g><circle r="3.5" fill="#FFD23F" class="ol" stroke-width="2"/></g>
+        <circle cx="128" cy="30" r="14" fill="#FFD23F" class="ol"/>
+      </svg>
+      <div>
+        <h2 id="canT">Welcome to Blackout Canyon</h2>
+        <p>All three games share one made-up network: the Steve Towers grid supply point, the Blackout Canyon 33 kV substation, and the primaries at Hertz House, Shocking Place, Ohm No and Joule Street (and, on some shifts, Kilowatt Close), with links to Ampy Place and Watts This. The places are invented. The switching, the faults and the trade-offs are based on how real distribution networks are run.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="contact" aria-labelledby="conT">
+  <div class="wrap">
+    <div class="contact-in">
+      <div>
+        <h2 id="conT">Get in touch</h2>
+        <p>Questions, ideas for a new game, found a bug, or want to use the games for training or an event? Drop us a line.</p>
+      </div>
+      <a class="mail" href="mailto:control@wattsupelectricity.co.uk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><span>control@<wbr>wattsupelectricity.co.uk</span></a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>© 2026 Steve Backhouse. All rights reserved.</p>
+    <p>Blackout Canyon and every place in these games are made up.</p>
+  </div>
+</footer>
+</body>
+</html>
