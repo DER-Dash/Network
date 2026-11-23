@@ -1125,6 +1125,7 @@ button.al-count{border:0;font:inherit;cursor:pointer}
 
 /* ---------- Phones: zoom buttons above the diagram, and the "which one?" picker ---------- */
 .zchips{display:none}
+.swipe-hint{display:none}
 .qp.tpick{width:250px}
 .tpick-l{display:flex;flex-direction:column;gap:6px;margin-top:6px}
 .tpick-l .btn{justify-content:flex-start;text-align:left;min-height:44px;font-size:14px}
@@ -1482,6 +1483,31 @@ a.btn.fl-go{text-decoration:none;border-color:var(--zap);box-shadow:inset 4px 0 
 .reg-head{background:#173b2f!important;border-bottom-color:#7fd1a8!important}
 .reg-head .lt-brand b span{color:#7fd1a8}
 .ofw-mark{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;background:#7fd1a8;color:#173b2f;font:800 18px var(--f-display,system-ui);flex:none}
+
+/* ---------- Phones: one substation at a time, with tabs ---------- */
+@media (max-width:700px), (max-height:500px) and (orientation:landscape){
+  .mimic-svg.subv{width:100%;max-width:none;height:auto;touch-action:pan-y pinch-zoom}
+  .zchip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--panel)}
+  .zchip.red::after,.zchip.amber::after{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:6px;vertical-align:1px;background:var(--alarm)}
+  .zchip.amber::after{background:var(--warn)}
+  .zchip[aria-pressed="true"].red::after,.zchip[aria-pressed="true"].amber::after{box-shadow:0 0 0 2px var(--panel)}
+  .swipe-hint{display:block;text-align:center;color:var(--muted);font-size:12px;margin:4px 0 0}
+  .mimic-svg:not(.subv)~.swipe-hint,#mscroll:has(.mimic-svg:not(.subv))+.swipe-hint{display:none}
+}
+
+/* ---------- Phones: the switch pop-up as a sheet along the bottom ---------- */
+.qp.sheetm{position:fixed;left:0!important;right:0;top:auto!important;width:auto;max-width:none;z-index:40;border-width:2px 0 0;border-radius:16px 16px 0 0;
+  max-height:min(56vh,440px);overflow-y:auto;overscroll-behavior:contain;padding:6px 16px calc(14px + env(safe-area-inset-bottom,0px));font-size:15px;box-shadow:0 -10px 30px rgba(0,0,0,.35)}
+.qp.sheetm::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--rule);margin:2px auto 8px}
+.qp.sheetm .qp-h b{font-size:18px}
+.qp.sheetm .qp-x{font-size:28px;min-width:44px;min-height:44px}
+.qp.sheetm .qp-s{font-size:15px;line-height:1.45;margin:4px 0 12px}
+.qp.sheetm .op-btn,.qp.sheetm .op-pair-row .op-btn{min-height:54px;font-size:18px;font-weight:700}
+.qp.sheetm .btn{min-height:48px;font-size:16px}
+.qp.sheetm .qp-row{gap:10px;flex-wrap:wrap}
+@media (max-width:700px){html.sheet-on body{padding-bottom:50vh}}
+@media (max-width:700px){.mimic-svg.subv{max-height:calc(100vh - 210px)}}
+@media (max-height:500px) and (orientation:landscape){.mimic-svg.subv{max-height:calc(100vh - 24px)}}
 </style>
 </head>
 <body>
@@ -1537,6 +1563,7 @@ a.btn.fl-go{text-decoration:none;border-color:var(--zap);box-shadow:inset 4px 0 
     </div>
     <div class="zchips" id="zChips" role="group" aria-label="Zoom to part of the network"></div>
     <div class="mscroll" id="mscroll"><div id="wx" class="wx" aria-hidden="true"><i class="wx-a"></i><i class="wx-b"></i><i class="wx-c"></i><i class="wx-d"></i></div><div id="qp" class="qp" role="dialog" aria-label="Switch control" hidden></div><div id="pick" class="qp tpick" role="dialog" aria-label="Which switch?" hidden></div><svg id="mimic" class="mimic-svg" viewBox="0 0 1200 610" role="img" aria-label="Network diagram of Blackout Canyon, its four substations and two neighbouring networks"></svg></div>
+    <p class="swipe-hint" id="swipeHint">Swipe sideways for the next substation</p>
   </section>
   <section class="panel p-ahead" id="pAhead" aria-label="Look-ahead">
     <div class="ph"><h2>Look-ahead</h2>
@@ -3175,7 +3202,8 @@ function buildMimic(){gfxReset();
       <line class="fl-sg" x1="${x}" x2="${x+112}" y1="384" y2="384"/><text class="fl-k" x="${x+6}" y="370">RIVER OHM</text><text class="fl-k" x="${x+106}" y="398" text-anchor="end">switchgear</text>
       <text id="flood_t" class="fl-t" x="${x+56}" y="468" text-anchor="middle"></text><rect class="hit" data-sel="pt:${S.flood.p}" x="${x}" y="356" width="112" height="118"/></g>`;}
   buildChips();hidePick();
-  const el=$('mimic');el.setAttribute('viewBox',PIDS.includes('kc')?(LVD?'0 0 1200 764':'0 0 1200 698'):'0 0 1200 668');el.innerHTML=s;
+  const el=$('mimic');el.setAttribute('viewBox',PIDS.includes('kc')?(LVD?'0 0 1200 764':'0 0 1200 698'):'0 0 1200 668');el.dataset.vb=el.getAttribute('viewBox');el.innerHTML=s;
+  if(PHONE)applyZoom();
 }
 function txt(id,v){const e=$(id);if(e&&e.textContent!==v)e.textContent=v;}
 // Two-line sub-label under a generator or flexibility symbol (lines split on \n), so neighbouring labels don't run into each other
@@ -3680,9 +3708,15 @@ function opPair(k,closed,ol,cl){ol=ol||'Open';cl=cl||'Close';if(S&&S.plan&&S.pla
   return `<div class="op-pair-row">${one('open')}${one('close')}</div>`;}
 function qpCrew(k){const j=crewFor(k),h=crewAt(k);return `<p class="qp-crew">${j?`Crew ${j.n} ${j.to?'walking there, arrives '+fmtT(j.arr):'on site'}${j.job.act?', will '+j.job.act+' it by '+fmtT(j.job.at):''}.`:h?`Crew ${h.n} is standing by here: operating takes ${CREW_OP} min.`:'Manual switch: a field crew has to walk here first.'}</p>`;}
 function renderQP(){const q=$('qp');if(!q)return;const k=S&&!S.ended&&S.qp&&S.sel;
-  if(!k||!isSw(k)||!SELBOX[k]){if(!q.hidden){q.hidden=true;lastQP='';}return;}
+  // phones (not short landscape): a sheet along the bottom of the screen, outside the diagram so nothing clips it
+  const bs=PHONE&&!SIDEQ.matches;if(bs&&q.parentElement!==document.body)document.body.appendChild(q);else if(!bs&&q.parentElement===document.body){const ms=$('mscroll');if(ms)ms.appendChild(q);}
+  q.classList.toggle('sheetm',bs);
+  if(!k||!isSw(k)||!SELBOX[k]){if(!q.hidden){q.hidden=true;lastQP='';}q._sk='';document.documentElement.classList.remove('sheet-on');return;}
+  if(!bs)document.documentElement.classList.remove('sheet-on');
   const h=qpHtml(k);if(h!==lastQP){const ae=document.activeElement,fid=ae&&q.contains(ae)?ae.id:'',fk=ae&&q.contains(ae)&&ae.dataset?ae.dataset.k:'';q.innerHTML=h;lastQP=h;const f=fid?$(fid):fk?[...q.querySelectorAll('[data-k]')].find(x=>x.dataset.k===fk):null;if(f)f.focus({preventScroll:true});}
-  q.hidden=false;q.classList.toggle('side',!!S.qpSide&&SIDEQ.matches);q.classList.toggle('side-l',!!S.qpSide&&!!S.qpLeft&&SIDEQ.matches);
+  q.hidden=false;if(bs){q.style.left='';q.style.top='';const dk=document.querySelector('.dock');q.style.bottom=(dk&&getComputedStyle(dk).display!=='none'?dk.getBoundingClientRect().height:0)+'px';document.documentElement.classList.add('sheet-on');if(q._sk!==k){q._sk=k;devIntoView(k);}return;}q.style.bottom='';const svgE=$('mimic');if(SIDEQ.matches&&svgE.classList.contains('subv')){// short landscape, one substation: dock to the side away from the device
+    const m=svgE.getScreenCTM&&svgE.getScreenCTM(),bx=SELBOX[k];const right=m&&bx?((bx[0]+bx[2]/2)*m.a+m.e)>innerWidth/2:false;q.classList.add('side');q.classList.toggle('side-l',right);return;}
+  q.classList.toggle('side',!!S.qpSide&&SIDEQ.matches);q.classList.toggle('side-l',!!S.qpSide&&!!S.qpLeft&&SIDEQ.matches);
   const ms=$('mscroll'),r=$('mimic').getBoundingClientRect(),mr=ms.getBoundingClientRect();if(!r.width)return;
   // measured at the left edge: near the right edge the box is squeezed narrower, which used to make it hop from side to side
   {const pl=q.style.left;q.style.left='0px';q._w=q.offsetWidth;q._h=q.offsetHeight;q.style.left=pl;}const vb=($('mimic').getAttribute('viewBox')||'0 0 1200 668').split(' ').map(Number),sc=Math.min(r.width/vb[2],r.height/vb[3]),padX=(r.width-vb[2]*sc)/2,padY=(r.height-vb[3]*sc)/2,bx=SELBOX[k],W=q._w,H=q._h,ox=r.left-mr.left+ms.scrollLeft+padX,oy=r.top-mr.top+ms.scrollTop+padY,cw=vb[2]*sc,ch=vb[3]*sc;
@@ -3712,36 +3746,48 @@ function qpClear(k,all){const[t,id]=k.split(':');if(!['lf','mid','nop','mg'].inc
 // Phones during a shift: the header shrinks to one sticky row of numbers; this opens and closes the rest of it
 function setBar(open){document.documentElement.classList.toggle('bar-open',open);setAttr($('barMore'),'aria-expanded',String(open));}
 // Tapping an alarm on a phone zooms the diagram onto the device, scrolls it into view and opens its controls
+/* ---------- Phones: one substation at a time ----------
+   Zoomed in on a phone, the diagram shows one part of the network, cropped to fit the screen: Blackout Canyon (the
+   grid side, which scrolls sideways) or a single substation with its feeders, generation, ties and links. The chips
+   above are tabs, with a dot where something needs attention; swipe left or right to move between them. */
+let subZone=ls('zone')||'hw';
+// the zones a device belongs to: its substation, Blackout Canyon for the grid side, both ends for interconnectors and links
+function zonesOfKey(k){const[t,id]=k.split(':');if(!id)return[];
+  if(['prim','bc','in','tie','pt'].includes(t))return PR[id]?[id]:[];
+  if(['lf','mid','nop','mg','ptw'].includes(t))return[id.slice(0,2)];
+  if(t==='as'){const a=ASB[id];return a&&a.prim?[a.prim]:[];}
+  if(t==='it'&&ITS[id])return[ITS[id].a,ITS[id].b];if(t==='lk'&&LINKS[id])return[LINKS[id].a[0],LINKS[id].b[0]];
+  if(t==='tx'||t==='bs'||t==='cct')return['bc'];return[];}
+const ZONES=()=>['bc',...PIDS];
+function zoneBox(z){if(!SELBOX||!S)return null;if(z==='bc')return[150,0,880,PY+40];
+  const own=['prim','bc','in','pt','lf','mid','nop','mg','ptw','as'],ks=Object.keys(SELBOX).filter(k=>own.includes(k.split(':')[0])&&zonesOfKey(k).includes(z));if(!ks.length)return null;
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;ks.forEach(k=>{const b=SELBOX[k];x0=Math.min(x0,b[0]);y0=Math.min(y0,b[1]);x1=Math.max(x1,b[0]+b[2]);y1=Math.max(y1,b[1]+b[3]);});
+  x0-=44;x1+=44;y0-=40;y1+=34;return[x0,y0,x1-x0,y1-y0];}
+function zoneAt(x,y){let best='bc',bd=1e9;PIDS.forEach(z=>{const b=zoneBox(z);if(!b)return;const cx=b[0]+b[2]/2,cy=b[1]+b[3]/2,d=Math.hypot(x-cx,y-cy)-(x>=b[0]&&x<=b[0]+b[2]&&y>=b[1]&&y<=b[1]+b[3]?1e5:0);if(d<bd){bd=d;best=z;}});
+  if(y<BCY+20)best='bc';return best;}
+function setZone(z,quiet){if(!ZONES().includes(z))z=PIDS[0];subZone=z;ls('zone',z);zoomed=true;hidePick();applyZoom();
+  if(!quiet){const pm=$('pMimic'),bar=document.querySelector('.bar'),top=bar&&getComputedStyle(bar).position==='sticky'?bar.offsetHeight:0;if(pm){const y=pm.getBoundingClientRect().top+window.scrollY-top-6;if(Math.abs(window.scrollY-y)>40)window.scrollTo({top:y,behavior:RMQ.matches?'auto':'smooth'});}}}
+// bring a device into view: across the zone if it scrolls sideways, and up the page so the bottom sheet doesn't hide it
+function devIntoView(k){requestAnimationFrame(()=>{const svg=$('mimic'),ms=$('mscroll'),b=SELBOX[k];if(!svg||!b)return;const m=svg.getScreenCTM&&svg.getScreenCTM();if(!m||!m.a)return;
+  const cx=(b[0]+b[2]/2)*m.a+m.e,cy=(b[1]+b[3]/2)*m.d+m.f,mr=ms.getBoundingClientRect();
+  if(ms.scrollWidth>ms.clientWidth+4)ms.scrollLeft=Math.max(0,ms.scrollLeft+cx-(mr.left+ms.clientWidth/2));
+  const target=innerHeight*(SIDEQ.matches?.5:.24);if(Math.abs(cy-target)>30)window.scrollBy({top:cy-target,behavior:RMQ.matches?'auto':'smooth'});});}
 function jumpTo(k){if(!PHONE||!k||!SELBOX[k]){select(k||'none');return;}
-  if(!zoomed){zoomed=true;applyZoom();}
-  select(k,isSw(k));S.qpSide=true;
-  requestAnimationFrame(()=>{const ms=$('mscroll'),svg=$('mimic'),r=svg.getBoundingClientRect(),vb=(svg.getAttribute('viewBox')||'0 0 1200 668').split(' ').map(Number),
-      sc=Math.min(r.width/vb[2],r.height/vb[3]),bx=SELBOX[k],cx=(r.width-vb[2]*sc)/2+(bx[0]+bx[2]/2)*sc,cy=(r.height-vb[3]*sc)/2+(bx[1]+bx[3]/2)*sc;
-    const side=SIDEQ.matches,qw=side?Math.min(380,innerWidth*.46)+16:0;// short landscape: the pop-up is docked on the right
-    ms.scrollLeft=Math.max(0,cx-(ms.clientWidth-qw)/2);
-    // a device near the right-hand end can't scroll clear of a right-hand panel, so the panel goes on the left instead
-    {const dx=svg.getBoundingClientRect().left+cx;S.qpLeft=side&&dx>innerWidth-qw;if(S.qpLeft)ms.scrollLeft=Math.max(0,cx-qw-(ms.clientWidth-qw)/2);}ms.scrollTop=Math.max(0,cy-ms.clientHeight/2);
-    // then scroll the page so the device sits in the middle of what's visible between the header and the dock
-    const bar=document.querySelector('.bar'),top=bar&&getComputedStyle(bar).position==='sticky'?bar.offsetHeight:0,dk=document.querySelector('.dock'),bot=dk&&dk.offsetParent?dk.offsetHeight:0,
-      y=svg.getBoundingClientRect().top+window.scrollY+cy;
-    window.scrollTo(0,Math.max(0,y-top-(innerHeight-top-bot)/2));
-    // keep the controls pop-up clear of the header and the dock
-    lastQP='';renderQP();const q=$('qp');if(q&&!q.hidden&&!side){const qr=q.getBoundingClientRect();
-      if(qr.top<top+6)window.scrollBy(0,qr.top-top-6);else if(qr.bottom>innerHeight-bot-6)window.scrollBy(0,Math.min(qr.bottom-(innerHeight-bot-6),qr.top-top-6));}
-    const sb=$('selbox');if(sb)anim(sb,[{strokeWidth:9,opacity:.2},{strokeWidth:3,opacity:1}],{duration:500,iterations:2});});}
-// Phones: centre a point of the diagram (in its own units) in the visible part of the screen, zooming in first
-function zoomTo(sx,sy){if(!zoomed){zoomed=true;applyZoom();}hidePick();
-  requestAnimationFrame(()=>{const ms=$('mscroll'),svg=$('mimic'),r=svg.getBoundingClientRect(),vb=(svg.getAttribute('viewBox')||'0 0 1200 668').split(' ').map(Number),
-      sc=Math.min(r.width/vb[2],r.height/vb[3]),cx=(r.width-vb[2]*sc)/2+sx*sc,cy=(r.height-vb[3]*sc)/2+sy*sc;
-    ms.scrollLeft=Math.max(0,cx-ms.clientWidth/2);ms.scrollTop=Math.max(0,cy-ms.clientHeight/2);
-    const bar=document.querySelector('.bar'),top=bar&&getComputedStyle(bar).position==='sticky'?bar.offsetHeight:0,dk=document.querySelector('.dock'),bot=dk&&dk.offsetParent?dk.offsetHeight:0,
-      y=svg.getBoundingClientRect().top+window.scrollY+cy;
-    window.scrollTo({top:Math.max(0,y-top-(innerHeight-top-bot)/2),behavior:RMQ.matches?'auto':'smooth'});});}
+  const zs=zonesOfKey(k);if(zs.length&&!(zoomed&&zs.includes(subZone)))setZone(zs[0],true);else if(!zoomed){zoomed=true;applyZoom();}
+  select(k,isSw(k));S.qpSide=true;devIntoView(k);}
+function zoomTo(sx,sy){setZone(zoneAt(sx,sy),true);}
+// the tabs: which is showing, and a dot where something needs attention (red: a trip, an overload or customers off; amber: high load)
+function chipState(){const el=$('zChips');if(!el||!S)return;const lvl={};const up=(z,v)=>{lvl[z]=Math.max(lvl[z]||0,v);};
+  Object.values(S.alarms||{}).forEach(a=>{const v=a.ev==='trip'||a.lvl==='over'?2:1;alSubs(a).forEach(z=>up(z==='gsp'?'bc':z,v));});
+  PIDS.forEach(p=>{if(S.sup[p]==='off'||(S.lf[p]&&LF[p].some((v,i)=>secFeed(p,i,0)===null||secFeed(p,i,1)===null)))up(p,2);});
+  el.querySelectorAll('[data-zone]').forEach(b=>{const z=b.dataset.zone,on=z==='all'?!zoomed:zoomed&&z===subZone;setAttr(b,'aria-pressed',String(on));setAttr(b,'class','zchip'+(lvl[z]===2?' red':lvl[z]===1?' amber':''));});
+  const cur=zoomed?subZone:'all';if(el._cur!==cur){el._cur=cur;const ch=el.querySelector(`[data-zone="${cur}"]`);if(ch)el.scrollLeft=Math.max(0,ch.offsetLeft-el.offsetLeft-(el.clientWidth-ch.offsetWidth)/2);}}
+
 // Zoom buttons above the diagram: the whole network, Blackout Canyon, and each substation
 function zoneOf(z){if(z==='bc')return[TXX[1],120];const b=[SELBOX['prim:'+z],SELBOX['as:load_'+z]].filter(Boolean);if(!b.length)return null;
   const x0=Math.min(...b.map(v=>v[0])),y0=Math.min(...b.map(v=>v[1])),x1=Math.max(...b.map(v=>v[0]+v[2])),y1=Math.max(...b.map(v=>v[1]+v[3]));return[(x0+x1)/2,(y0+y1)/2];}
 function buildChips(){const el=$('zChips');if(!el)return;
-  el.innerHTML=`<button type="button" class="zchip" data-zone="all">Whole network</button><button type="button" class="zchip" data-zone="bc">Blackout Canyon</button>`+PIDS.map(p=>`<button type="button" class="zchip" data-zone="${p}">${esc(PR[p].name)}</button>`).join('');}
+  el.innerHTML=`<button type="button" class="zchip" data-zone="all">Whole</button><button type="button" class="zchip" data-zone="bc">Blackout Canyon</button>`+PIDS.map(p=>`<button type="button" class="zchip" data-zone="${p}">${esc(PR[p].name)}</button>`).join('');}
 // Phones: a tap that lands near more than one small switch asks which one was meant, rather than guessing
 const PICK_R=10;
 function hidePick(){const pk=$('pick');if(pk&&!pk.hidden){pk.hidden=true;pk.innerHTML='';}}
@@ -3938,7 +3984,7 @@ function render(force){
     if(S.split&&fs)fs+=' · split bus';txt('kFirm',fv);txt('kFirmSub',fs);setAttr($('kFirmBox'),'class','kpi kpi-firm'+(fc==='ok'?'':' '+fc)+(tipActive&&tipActive.el==='kFirmBox'?' hl':''));
     setAttr($('dPill'),'class','pill '+(fc==='ok'?'ok':fc==='warn'?'warn':'alarm'));txt('dPill',dt);}
   txt('kIns',S.insecureMin+' min');$('kIns').classList.toggle('bad',S.insecureMin>0);
-  seenAs(()=>{renderMimic();renderInsp();renderQP();gfxSubs();});renderComms();renderFlood();renderCalls();renderAlarms();renderLog();renderSky();gfxAll();tidyFindCta();if(GAME==='cr')renderPlan();
+  seenAs(()=>{renderMimic();renderInsp();renderQP();gfxSubs();});renderComms();renderFlood();renderCalls();renderAlarms();renderLog();renderSky();gfxAll();tidyFindCta();if(PHONE)chipState();if(GAME==='cr')renderPlan();
   const now=performance.now();if(force||now-lastChart>350){lastChart=now;drawChart();}
   renderSec();
   const pl=S.ended?'Shift over':!S.running?'Start':S.paused?'Resume':'Pause';txt('playBtn',pl);txt('dPlay',pl);txt('dClock',fmtT(S.t));
@@ -4485,8 +4531,11 @@ async function loadBoard(){
 /* ---------- Panels ---------- */
 let collapsed={};try{collapsed=JSON.parse(ls('col')||'null')||{pLog:true};}catch(e){collapsed={pLog:true};}
 function applyCollapsed(){Object.keys(collapsed).forEach(id=>{const p=$(id);if(p)p.classList.toggle('collapsed',!!collapsed[id]);});}
-function applyZoom(){const z=PHONE&&zoomed;$('mimic').classList.toggle('zoom',z);txt('zoomBtn',z?'Fit':'Zoom');setAttr($('zoomBtn'),'aria-pressed',String(z));
-  if(z){const sc=$('mscroll');sc.scrollLeft=Math.max(0,(sc.scrollWidth-sc.clientWidth)*.3);}}
+function applyZoom(){const svg=$('mimic');if(!svg)return;if(!svg.dataset.vb)svg.dataset.vb=svg.getAttribute('viewBox')||'0 0 1200 668';
+  const z=PHONE&&zoomed,b=z?zoneBox(subZone):null,wide=z&&(!b||subZone==='bc'),sub=z&&!!b&&subZone!=='bc';
+  setAttr(svg,'viewBox',b?b.map(v=>Math.round(v)).join(' '):svg.dataset.vb);svg.classList.toggle('zoom',wide);svg.classList.toggle('subv',sub);svg.style.width=wide&&b?Math.round(b[2]*.85)+'px':'';
+  txt('zoomBtn',z?'Fit':'Zoom');setAttr($('zoomBtn'),'aria-pressed',String(z));chipState();
+  const sc=$('mscroll');if(sc){if(wide)sc.scrollLeft=Math.max(0,(sc.scrollWidth-sc.clientWidth)*.3);else sc.scrollLeft=0;}}
 
 /* ---------- Events ---------- */
 function begin(){ls('played','1');$('overlay').hidden=true;hideHO();S.running=true;S.paused=false;acc=0;audio();if(MUS.on&&!MUS.timer)setMusic(true);track('shift_start',{scenario:S.key,mode:S.mode});render(true);}
@@ -4506,7 +4555,7 @@ document.addEventListener('click',e=>{
     restartCareer(k);mode='career';chosen=k;ls('mode',mode);ls('day',chosen);newGame(chosen);startSheet();if(rb.hasAttribute('data-go-now'))$('startBtn').click();else{const b=$('careerBox');if(b)b.scrollIntoView({behavior:'smooth',block:'start'});}return;}}
   {const gz=e.target.closest('[data-mgsz]');if(gz&&S){if(gz.disabled)return;const h=mgAt(gz.dataset.mgfor);S.mgPick=gz.dataset.mgsz;S.mgSwap=!!(h&&!h.conn&&!h.pend);issueOp('mg:'+gz.dataset.mgfor,'close');return;}}
   {const pb=e.target.closest('[data-pick]');if(pb&&S){const k=pb.dataset.pick;hidePick();select(k,true);return;}if(e.target.closest('[data-pick-x]')){hidePick();return;}}
-  {const zc=e.target.closest('[data-zone]');if(zc&&S){const z=zc.dataset.zone;if(z==='all'){hidePick();zoomed=false;applyZoom();const pm=$('pMimic'),bar=document.querySelector('.bar'),top=bar&&getComputedStyle(bar).position==='sticky'?bar.offsetHeight:0;if(pm)window.scrollTo({top:pm.getBoundingClientRect().top+window.scrollY-top-6,behavior:RMQ.matches?'auto':'smooth'});}else{const c=zoneOf(z);if(c)zoomTo(c[0],c[1]);}return;}}
+  {const zc=e.target.closest('[data-zone]');if(zc&&S){const z=zc.dataset.zone;if(z==='all'){hidePick();zoomed=false;applyZoom();const pm=$('pMimic'),bar=document.querySelector('.bar'),top=bar&&getComputedStyle(bar).position==='sticky'?bar.offsetHeight:0;if(pm)window.scrollTo({top:pm.getBoundingClientRect().top+window.scrollY-top-6,behavior:RMQ.matches?'auto':'smooth'});}else setZone(z);return;}}
   if(e.target.closest('#mimic')&&tapPick(e))return;
   if(!e.target.closest('#pick'))hidePick();
   if(e.target.closest('[data-letter-ok]')){closeLetter();return;}
@@ -4573,6 +4622,11 @@ document.addEventListener('keydown',e=>{
 document.addEventListener('fc:pause',()=>{if(S&&S.running&&!S.ended&&!S.paused){S.paused=true;acc=0;render(true);}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)humTo(0);});
 addEventListener('resize',()=>{if(S)renderQP();});
+// phones: swipe the diagram left or right for the next or previous substation (not on Blackout Canyon, which scrolls sideways)
+{const ms=$('mscroll');let t0=null;if(ms){ms.addEventListener('touchstart',e=>{t0=e.touches.length===1?{x:e.touches[0].clientX,y:e.touches[0].clientY,t:Date.now()}:null;},{passive:true});
+  ms.addEventListener('touchend',e=>{if(!t0||!S||!PHONE||!zoomed||subZone==='bc')return;const c=e.changedTouches[0],dx=c.clientX-t0.x,dy=c.clientY-t0.y;const ok=Math.abs(dx)>60&&Math.abs(dy)<50&&Date.now()-t0.t<700;t0=null;if(!ok)return;
+    const zs=ZONES(),i=zs.indexOf(subZone),j=i+(dx<0?1:-1);if(j<0||j>=zs.length)return;S.sel=null;S.qp=false;setZone(zs[j],true);render(true);
+    const ch=document.querySelector(`#zChips [data-zone="${zs[j]}"]`);if(ch&&ch.scrollIntoView)ch.scrollIntoView({block:'nearest',inline:'center'});},{passive:true});}}
 MQ.addEventListener('change',()=>{PHONE=MQ.matches;applyZoom();if(!PHONE)closeSheet();if(S)render(true);});
 
 if(!SCENARIOS[chosen])chosen=CFG.def;
