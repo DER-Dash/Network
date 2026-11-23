@@ -1032,3 +1032,7 @@ a.btn.fl-go{text-decoration:none;border-color:var(--zap);box-shadow:inset 4px 0 
 @media (max-width:700px){html.sheet-on body{padding-bottom:50vh}}
 @media (max-width:700px){.mimic-svg.subv{max-height:calc(100vh - 210px)}}
 @media (max-height:500px) and (orientation:landscape){.mimic-svg.subv{max-height:calc(100vh - 24px)}}
+
+/* "All games": back to the Watts Up home page, with the other links (in the menu on phones during a shift) */
+.links .home-btn::before{content:"";width:10px;height:10px;margin-right:2px;background:conic-gradient(currentColor 0 0) 0 0/4px 4px,conic-gradient(currentColor 0 0) 6px 0/4px 4px,conic-gradient(currentColor 0 0) 0 6px/4px 4px,conic-gradient(currentColor 0 0) 6px 6px/4px 4px;background-repeat:no-repeat}
+html.kiosk .home-btn{display:none!important}

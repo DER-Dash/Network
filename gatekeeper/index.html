@@ -312,6 +312,13 @@ a.btn{text-decoration:none;color:var(--ink)}
 .qpos{display:inline-grid;place-items:center;min-width:1.5em;height:1.5em;margin-right:6px;border-radius:4px;background:var(--sunk);border:1px solid var(--rule);font:600 11px var(--f-mono);color:var(--muted);vertical-align:1px}
 .ab .up{font:700 10px var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--ok);margin-left:4px}
 .pipe .dev{display:block;font-style:italic;color:var(--muted)}
+
+/* "All games": back to the Watts Up home page (stays on phones) */
+.bar-links{display:flex;align-items:center;gap:14px;flex:none}
+.bar-link.home{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid color-mix(in srgb,#FFD23F 55%,transparent);border-radius:999px;color:#fff}
+.bar-link.home::before{content:"";width:10px;height:10px;background:conic-gradient(currentColor 0 0) 0 0/4px 4px,conic-gradient(currentColor 0 0) 6px 0/4px 4px,conic-gradient(currentColor 0 0) 0 6px/4px 4px,conic-gradient(currentColor 0 0) 6px 6px/4px 4px;background-repeat:no-repeat}
+.bar-link.home:hover{background:#FFD23F;border-color:#FFD23F;color:#0B1F3A;text-decoration:none}
+@media (max-width:420px){.bar-link.home{display:inline-flex}}
 </style>
 </head>
 <body>
@@ -320,7 +327,7 @@ a.btn{text-decoration:none;color:var(--ink)}
     <span class="logo"><svg viewBox="0 0 100 100" role="img" aria-label="Watts Up"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg></span>
     <div><p class="co">Watts Up Electricity Distribution</p><h1>Gatekeeper <span class="mode-tag">Year <span id="yr">1</span> of 10</span><span class="mode-tag wk" id="wkTag" hidden></span></h1></div>
   </div>
-  <a class="bar-link" href="../control-room/">Losing Control →</a>
+  <nav class="bar-links" aria-label="Watts Up games"><a class="bar-link home" href="../" target="_top">All games</a><a class="bar-link" href="../control-room/">Losing Control →</a></nav>
 </header>
 
 <main class="wrap">

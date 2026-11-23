@@ -280,3 +280,11 @@ text.ar.c{fill:var(--panel)}text.ar.o{fill:var(--ink)}
 }
 
 .feeder-end{stroke:var(--ink);stroke-width:4;stroke-linecap:round}
+
+/* "All games": back to the Watts Up home page (stays on phones) */
+.bar-links{display:flex;align-items:center;gap:14px;flex:none}
+.bar-link.home{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid color-mix(in srgb,#FFD23F 55%,transparent);border-radius:999px;color:#fff}
+.bar-link.home::before{content:"";width:10px;height:10px;background:conic-gradient(currentColor 0 0) 0 0/4px 4px,conic-gradient(currentColor 0 0) 6px 0/4px 4px,conic-gradient(currentColor 0 0) 0 6px/4px 4px,conic-gradient(currentColor 0 0) 6px 6px/4px 4px;background-repeat:no-repeat}
+.bar-link.home:hover{background:#FFD23F;border-color:#FFD23F;color:#0B1F3A;text-decoration:none}
+@media (max-width:420px){.bar-link.home{display:inline-flex}}
+.bar-links[hidden]{display:none}

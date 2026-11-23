@@ -355,7 +355,8 @@ function render(){if(!P)return;const s=st;
   const daily=!!P.daily,car=P.career!=null,lc=!!P.lc,today=todayUK(),dl=LEVELS[dailyLevel(today)].name;
   $('modeName').textContent=daily?`Daily #${P.no}`:car?`Career ${P.career+1}/${CAREER.length}`:lc?'Losing Control':'Practice';
   $('lvl').textContent=car?CAREER[P.career].title:lc?'Find it yourself':LEVELS[P.level].name;
-  $('modes').hidden=lc;$('lcBar').hidden=!lc;if(lc)$('lcFeeder').textContent=`${P.feeder} feeder at ${P.primary}`;
+  $('modes').hidden=lc;$('lcBar').hidden=!lc;{const bl=document.querySelector('.bar-links');if(bl)bl.hidden=lc;}// inside a Losing Control shift: no links away from it
+  if(lc)$('lcFeeder').textContent=`${P.feeder} feeder at ${P.primary}`;
   $('carTag').textContent=`${rankOf(carPassed())} · ${carTotal()}★`;
   document.querySelectorAll('[data-level]').forEach(b=>b.setAttribute('aria-pressed',String(!daily&&b.dataset.level===P.level)));
   document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
