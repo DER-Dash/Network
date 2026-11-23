@@ -428,18 +428,18 @@ const SV0=Object.fromEntries(SERVICES.map(s=>[s.id,{cap:s.cap,name:s.name,allow:
 function applySvc(sc){SERVICES.forEach(s=>{const d=SV0[s.id],o=(sc&&sc.svc&&sc.svc[s.id])||{};s.cap=o.cap!=null?o.cap:d.cap;s.name=o.name||d.name;s.allow=o.allow!=null?o.allow:d.allow;});}
 const ASSETS=[
   {id:'load_hw',type:'load',prim:'hw',x:128,name:'Demand'},
-  {id:'batt',type:'batt',prim:'hw',x:215,name:'Battery',col:'var(--c-batt)'},
-  {id:'dsr',type:'dsr',prim:'hw',x:285,name:'DSR',col:'var(--c-dsr)'},
+  {id:'batt',type:'batt',prim:'hw',x:221,name:'Battery',col:'var(--c-batt)'},
+  {id:'dsr',type:'dsr',prim:'hw',x:289,name:'DSR',col:'var(--c-dsr)'},
   {id:'load_ml',type:'load',prim:'ml',x:432,name:'Demand'},
   {id:'solar',type:'solar',prim:'ml',x:505,name:'Solar',col:'var(--c-solar)'},
   {id:'load_rv',type:'load',prim:'rv',x:645,name:'Demand'},
-  {id:'chp',type:'chp',prim:'rv',x:710,name:'CHP',col:'var(--c-gas)'},
-  {id:'wind',type:'wind',prim:'rv',x:775,name:'Wind',col:'var(--c-wind)'},
+  {id:'chp',type:'chp',prim:'rv',x:716,name:'CHP',col:'var(--c-gas)'},
+  {id:'wind',type:'wind',prim:'rv',x:782,name:'Wind',col:'var(--c-wind)'},
   {id:'load_js',type:'load',prim:'js',x:935,name:'Demand'},
   {id:'load_kc',type:'load',prim:'kc',x:600,name:'Demand'}];
 const LF={hw:[.4,.35,.25],ml:[.45,.3,.25],rv:[.4,.35,.25],js:[.35,.35,.3],kc:[.5,.3,.2]};
 const LFN={hw:['Town Centre','Kings Hill','Hertz House Park'],ml:['Marsh Road','Station','Mill Lane'],rv:['Ohm Street','Resistor Row','Circuit Park'],js:['High Street','Joule Park','Watt Way'],kc:['Close North','Close South','Ampere Avenue']};
-const LDX=GAME==='cr'?[-26,0,26]:[-22,0,22],LVD=GAME==='cr'?18:0,TXD=58,lfOn=p=>S.lf[p].reduce((a,on,i)=>a+(on?LF[p][i]:0),0);
+const LDX=GAME==='cr'?[-32,0,32]:[-22,0,22],LVD=GAME==='cr'?18:0,TXD=58,lfOn=p=>S.lf[p].reduce((a,on,i)=>a+(on?LF[p][i]:0),0);
 function linkOf(p,i){for(const k of LKIDS){const L=LINKS[k];if(L.a[0]===p&&L.a[1]===i)return{k,q:L.b[0],j:L.b[1]};if(L.b[0]===p&&L.b[1]===i)return{k,q:L.a[0],j:L.a[1]};}return null;}
 const subOn=(p,sup)=>{const v=(sup||S.supNow||S.sup||{})[p];return !!v&&v!=='off';};
 // 33/11 kV transformer at each substation, fed through an automatic 33 kV breaker. With it open (or tripped)
@@ -1254,6 +1254,10 @@ function opLabel(k,act){const[type,id]=k.split(':');if(type==='ptw'){const[p,i]=
   if(type==='mg'){const u=mgAt(id);return act==='close'?`Connect a mobile generator to ${siteFn(id)}`:u&&!u.conn&&!u.pend?`Take the generator at ${siteFn(id)} back to the yard`:`Disconnect the ${devName(k)}`;}
   return `${act==='close'?'Close':'Open'} ${PR[ITS[id].a].name} – ${PR[ITS[id].b].name} interconnector`;}
 const crewAt=k=>S.crews.find(c=>c.at===k&&!c.to);
+// A crew at an 11 kV feeder's breaker, mid-point switch, permit or second-half generator stands in the gap beside that feeder,
+// on the side kept clear of the first-half generator icons (which sit in the gap to the left of their feeder). null: not a feeder device.
+function feederGap(k){const m=/^(lf|mid|ptw|mg):([a-z]{2})(\d)$/.exec(k||'');if(!m||!LV_ON)return null;const p=m[2],i=+m[3],hasN=j=>j>=0&&j<3&&!!mgAt(p+j+'n');
+  const right=!hasN(i+1),left=!hasN(i);const h=LDX[1]-LDX[0];return right||!left?h/2:-h/2;}
 const crewFor=k=>S.crews.find(c=>c.job&&c.job.k===k);
 function devXY(k){const b=SELBOX[k];return b?{x:b[0]+b[2]/2,y:b[1]+b[3]/2}:{x:DEPOT.x,y:DEPOT.y};}
 // towing once it has picked the generator up (past the yard or the old site)
@@ -1513,7 +1517,7 @@ function buildMimic(){gfxReset();
       if(VF_ON&&VFI.includes(i)){s+=LV_ON?`<rect class="hit" data-sel="nop:${a.prim}${i}" x="${x+dx-12}" y="${y+20}" width="24" height="22"/>`:`<rect class="hit" data-sel="nop:${a.prim}${i}" x="${x+dx-11}" y="${y+19}" width="22" height="22"/>`;SELBOX['nop:'+a.prim+i]=[x+dx-9,y+20,18,18];}});
     if(a.type!=='load')s+=adjBtn(a.id,x+19,y-4,1)+adjBtn(a.id,x+19,y+18,-1);
     if(a.type==='load')SELBOX['pt:'+a.prim]=[x-14,bY+2,28,TXD+8];
-    SELBOX['as:'+a.id]=[x-32,y-10,a.type==='load'?64:76,96];});
+    SELBOX['as:'+a.id]=a.type==='load'?[x+LDX[0]-12,y-10,LDX[2]-LDX[0]+24,96]:[x-32,y-10,76,96];});
   LKIDS.forEach(k=>{const L=LINKS[k],A=ASSETS.find(a=>a.id==='load_'+L.a[0]),B=ASSETS.find(a=>a.id==='load_'+L.b[0]);if(!A||!B)return;
     const y=pY(L.a[0])+TXD+48+LVD,xa=A.x+LDX[L.a[1]],xb=B.x+LDX[L.b[1]],oa=xa+(L.a[1]===2?22:-22),ob=xb+(L.b[1]===0?-22:22),yl=y+100,mx=(oa+ob)/2;
     s+=`<g id="lkg_${k}"><path id="lkl_${k}" class="lk-l" d="M${xa} ${y+17} V${y+22} H${oa} V${yl} H${ob} V${y+22} H${xb} V${y+17}"/>
@@ -1646,8 +1650,8 @@ function renderMimic(){
   if(CREW_ON){const tNow=S.t+(S.running&&!S.paused&&!S.ended?acc:0);S.crews.forEach((c,i)=>{const g=$('crew'+c.n);if(!g)return;const p=crewPos(c,tNow),same=S.crews.filter((d,j)=>j<i&&!d.to&&!c.to&&Math.abs(d.x-c.x)<1&&Math.abs(d.y-c.y)<1).length,
     off=c.to?(i-1)*7:(c.at==='depot'?(i-1)*16:14+same*12),
     // standing at a first-half generator: in the gap below its icon, clear of the feeder's breaker and mid-point switch
-    side=!c.to&&!!c.at&&/^mg:.*n$/.test(c.at);
-    setAttr(g,'transform',side?`translate(${(p.x-same*9).toFixed(1)} ${(p.y+41).toFixed(1)}) scale(1)`:`translate(${(p.x+off).toFixed(1)} ${(p.y+(c.at==='depot'&&!c.to?16:-4)+(c.to?(i-1)*5:0)).toFixed(1)}) scale(1.25)`);g.classList.toggle('walk',!!c.to&&S.running&&!S.paused);g.classList.toggle('drive',!!c.to);g.classList.toggle('tow',!!(c.to&&c.job&&c.job.k.startsWith('mg:')&&c.job.act==='close'&&(!c.via||crewPos(c,tNow).x!==c.via.x||crewPos(c,tNow).y!==c.via.y)&&passedVia(c,tNow)));{const v=$('van'+c.n);if(v)setAttr(v,'transform',c.to&&c.to.x<c.from.x-1?'scale(-1 1)':'');}g.classList.toggle('home',c.at==='depot'&&!c.to);g.classList.toggle('busy',!!c.job);{const r=$('crr'+c.n),j=c.job,f=j&&j.t0!=null&&j.at>j.t0?clamp((tNow-j.t0)/(j.at-j.t0),0,1):null;if(r){setAttr(r,'visibility',f==null?'hidden':'visible');if(f!=null)setAttr(r,'stroke-dasharray',`${(f*100).toFixed(1)} 100`);}}});if(LV_ON){const y=S.mgu.filter(u=>!u.site);txt('yardT',y.length?'Yard: '+y.map(u=>u.cap).join(' · ')+' MW':'Yard empty');}}
+    side=!c.to&&!!c.at&&/^mg:.*n$/.test(c.at),gap=!c.to&&!side?feederGap(c.at):null;
+    setAttr(g,'transform',gap!=null?`translate(${(p.x+gap+(gap>0?same*8:-same*8)).toFixed(1)} ${(p.y+2).toFixed(1)}) scale(1)`:side?`translate(${(p.x-same*9).toFixed(1)} ${(p.y+41).toFixed(1)}) scale(1)`:`translate(${(p.x+off).toFixed(1)} ${(p.y+(c.at==='depot'&&!c.to?16:-4)+(c.to?(i-1)*5:0)).toFixed(1)}) scale(1.25)`);g.classList.toggle('walk',!!c.to&&S.running&&!S.paused);g.classList.toggle('drive',!!c.to);g.classList.toggle('tow',!!(c.to&&c.job&&c.job.k.startsWith('mg:')&&c.job.act==='close'&&(!c.via||crewPos(c,tNow).x!==c.via.x||crewPos(c,tNow).y!==c.via.y)&&passedVia(c,tNow)));{const v=$('van'+c.n);if(v)setAttr(v,'transform',c.to&&c.to.x<c.from.x-1?'scale(-1 1)':'');}g.classList.toggle('home',c.at==='depot'&&!c.to);g.classList.toggle('busy',!!c.job);{const r=$('crr'+c.n),j=c.job,f=j&&j.t0!=null&&j.at>j.t0?clamp((tNow-j.t0)/(j.at-j.t0),0,1):null;if(r){setAttr(r,'visibility',f==null?'hidden':'visible');if(f!=null)setAttr(r,'stroke-dasharray',`${(f*100).toFixed(1)} 100`);}}});if(LV_ON){const y=S.mgu.filter(u=>!u.site);txt('yardT',y.length?'Yard: '+y.map(u=>u.cap).join(' · ')+' MW':'Yard empty');}}
   if(S.sc.gsp){const G=S.sc.gsp,on=S.t>=G.start&&S.t<G.end;txt('gspT',on?`LIMIT ${G.limit} MW · NOW ${Math.round(S.gspLoad)} MW`:S.t>=G.warn&&S.t<G.start?'SUPERGRID FAULT EXPECTED':'');setAttr($('gspT'),'class','gsp-t'+(on&&S.gspLoad>G.limit?' alarm':on?' ok':''));}
   const sb=$('selbox'),bx=S.sel&&SELBOX[S.sel];
   if(bx){setAttr(sb,'x',String(bx[0]));setAttr(sb,'y',String(bx[1]));setAttr(sb,'width',String(bx[2]));setAttr(sb,'height',String(bx[3]));setAttr(sb,'visibility','visible');}else setAttr(sb,'visibility','hidden');
