@@ -22,7 +22,10 @@ const X={v:1,at:Date.now(),year:6,grade:'B',mode:'free',kD:1.2,E:.2,gspF:150,sgt
    ok(!S.sc.noGen&&S.lff,'it is a control room shift: generation and flexibility as well as 11 kV faults and crews');
    F.run(600);ok(S.act.bdis<=18.001&&S.act.dsr<=12.001,'battery and demand response limited to what you connected');
    F.run(2000);ok(S.ended,'the shift runs to the end');
-   ok(d.querySelector('.gk-end')&&!d.getElementById('pName'),'end screen: back to Gatekeeper, no scoreboard entry');}
+   ok(d.querySelector('.gk-end')&&!d.getElementById('pName'),'end screen: back to Gatekeeper, no scoreboard entry');
+   const res=JSON.parse(w.localStorage.getItem('gk-result')||'null');
+   ok(res&&res.v===1&&res.year===X.year&&res.exportAt===X.at&&typeof res.score==='number','the result goes back to Gatekeeper: '+JSON.stringify(res&&{grade:res.grade,score:res.score,lost:res.lost}));
+   const car=JSON.parse(w.localStorage.getItem('fc4-career')||'{}');ok(res.lost?!(car.ach&&car.ach.planned):!!(car.ach&&car.ach.planned),'Planned it, ran it badge when the shift is finished');}
   {const X0={...X,dsr:{mw:0,names:[],n:0},batt:{mw:0,names:[],n:0},solar:{mw:0,names:[],n:0},kD:.9};
    const w=boot(cr,X0,'#gk');await wait(30);const S=w.__fc.S;ok(S.key==='gk','#gk opens straight on your network');
    w.document.getElementById('startBtn').click();w.__fc.run(900);ok(S.act.bdis===0&&S.act.bchg===0&&S.act.dsr===0,'no flexible customers: no battery or demand response to call');

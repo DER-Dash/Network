@@ -1805,6 +1805,7 @@ const ACH=[
   {id:'dry',name:'Dry feet',d:'On Christmas Day, make the Ohm No switchboard dead before the flood water reaches it.',cr:1},
   {id:'gsp',name:'Grid guardian',d:'Finish the Grid emergency without National Grid disconnecting a transformer.',cr:1},
   {id:'cheap',name:'Bargain hunter',d:'Finish a generation shift spending under £2,000.',fc:1},
+  {id:'planned',name:'Planned it, ran it',d:'Build a network in Gatekeeper, then run it here and finish the shift.',cr:1},
   {id:'textbook',name:'Textbook',d:'Grade A on every career shift.'}].filter(a=>GAME==='cr'?!a.fc:!a.cr);
 // Achievement badges: a round medal with an icon for each (24-unit icons)
 const BADGE={first:'<path d="M12 4 14.4 9l5.4.6-4 3.8 1.1 5.4L12 16.2 7.1 18.8l1.1-5.4-4-3.8L9.6 9z"/>',
@@ -1815,6 +1816,7 @@ const BADGE={first:'<path d="M12 4 14.4 9l5.4.6-4 3.8 1.1 5.4L12 16.2 7.1 18.8l1
   endure:'<path d="M7 16a4 4 0 0 1 .3-8A5.5 5.5 0 0 1 18 9.5a3.3 3.3 0 0 1 0 6.5H7z"/><path d="M9 19l-1 2M13 19l-1 2M17 19l-1 2"/>',
   dry:'<path d="M12 3.5c3.5 4.5 6 7.6 6 10.5a6 6 0 0 1-12 0c0-2.9 2.5-6 6-10.5z"/><path d="M5 5l14 14"/>',
   gsp:'<path d="M12 2 7.5 22M12 2l4.5 20M5 7h14M6.5 12h11"/>',cheap:'<path d="M15 6.5a4 4 0 0 0-7 2.5v9M6 13h7M6 18.5h11"/>',
+  planned:'<path d="M4 18h4l3-7 3 4 2-3h4"/><path d="M4 5h16v14H4z"/>',
   textbook:'<path d="M4 5h6a2 2 0 0 1 2 2v12a2 2 0 0 0-2-2H4zM20 5h-6a2 2 0 0 0-2 2v12a2 2 0 0 1 2-2h6z"/>'};
 const badge=(a,got)=>`<span class="badge${got?' got':''}" title="${esc(a.d)}"><svg class="bdg" viewBox="0 0 32 32" aria-hidden="true"><circle class="bdg-r" cx="16" cy="16" r="14.5"/><circle class="bdg-c" cx="16" cy="16" r="11.5"/><g transform="translate(4 4)" class="bdg-i">${BADGE[a.id]||BADGE.first}</g></svg>${esc(a.name)}</span>`;
 function career(){try{return JSON.parse(ls('career')||'null')||{stars:{},ach:{},best:{}};}catch(e){return{stars:{},ach:{},best:{}};}}
@@ -4348,10 +4350,13 @@ function endShift(){
   S.reg=GAME==='cr'&&!S.sacked?regOf():null;S.regLetter=null;
   if(S.reg&&S.mode==='career'&&!L){const c=career();c.reg=c.reg||{};c.reg[S.key]=S.reg;saveCareer(c);const W=regWeek(S.key);if(W&&W.last)S.regLetter={w:W.w,keys:W.keys,reg:c.reg};}
   if(sc.total>(+ls('best-'+S.key)||0))ls('best-'+S.key,String(sc.total));
+  // tell Gatekeeper how its network did (same site): shown back there, with the Planned it, ran it badge
+  if(S.key==='gk'&&S.sc.gk){try{localStorage.setItem('gk-result',JSON.stringify({v:1,at:Date.now(),exportAt:S.sc.gk.at,year:S.sc.gk.year,grade:L?'Lost':g,score:sc.total,lost:!!L,lostAt:L?L.m:null,
+    risk:S.insecureMin,cml:Math.round(S.cust.cml||0),ci:Math.round(S.cust.ci||0),incidents:S.incidents,overload:S.overloadMin||0}));}catch(e){}}
   if(S.sacked)S.careerRes=null;else{const c=career(),before=starsOf(c),done=!L,st=L?0:{A:3,B:2,C:1,D:1}[g]||0,newA=[];const prevUnl=CAREER.filter(k=>unlockedK(c,k));
    const award=(id,ok)=>{if(ok&&!c.ach[id]&&ACH.some(a=>a.id===id)){c.ach[id]=1;newA.push(ACH.find(a=>a.id===id));}};
    award('first',done);award('clean',done&&S.incidents===0);award('solid',done&&S.insecureMin===0);award('quick',done&&S.cust.ci===0&&S.cust.si>0);award('nobody',done&&S.cust.ci===0&&S.cust.si===0);
-   award('mbb',S.parOk>0);award('crews',S.crewJobs>=8);award('vf',S.vfPeak>=20);award('heat',done&&S.key==='heat'&&(g==='A'||g==='B'));award('gsp',done&&S.key==='gsp'&&S.gspTrips===0);award('dry',done&&S.key==='xmas'&&!!S.flood&&S.flood.arrived&&S.flood.live===false);award('endure',done&&S.key==='endure'&&(g==='A'||g==='B'));award('cheap',done&&GAME==='fc'&&sc.spend<2000);
+   award('planned',done&&S.key==='gk');award('mbb',S.parOk>0);award('crews',S.crewJobs>=8);award('vf',S.vfPeak>=20);award('heat',done&&S.key==='heat'&&(g==='A'||g==='B'));award('gsp',done&&S.key==='gsp'&&S.gspTrips===0);award('dry',done&&S.key==='xmas'&&!!S.flood&&S.flood.arrived&&S.flood.live===false);award('endure',done&&S.key==='endure'&&(g==='A'||g==='B'));award('cheap',done&&GAME==='fc'&&sc.spend<2000);
    let up=false;if(S.mode==='career'&&st>(c.stars[S.key]||0)){c.stars[S.key]=st;up=true;}
    let runEnd=false;if(S.mode==='career'&&runOn(c)&&st>=1){c.run.stars[S.key]=Math.max(c.run.stars[S.key]||0,st);c.run.t=Date.now();
      if(S.key===c.run.at){const ks=careerKeys(),j=ks.indexOf(S.key)+1;if(j<ks.length)c.run.at=ks[j];else{runEnd=true;c.run={end:true,t:Date.now()};}}}

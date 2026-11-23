@@ -57,6 +57,14 @@ what was connected (`sc.svc`, `applySvc`). Not on the scoreboard. Links: report,
   cost score also penalises leaving the allowance unspent while real projects wait. Curtailment and security weigh a
   little more. Bot runs: random play about 6,600 (C), sensible play about 8,500, careful planning about 8,700.
 
+## Easier to play (23 Nov 2026)
+- The application sheet has a "Your network now" summary (every substation and the grid supply point) and each offer
+  says what it does to headroom there, so the network tiles aren't needed on a phone.
+- `LESSONS`: short guided steps after the year 3 (Gate 2, milestones, curtailment rule) and year 6 (demand reform)
+  news, once per career; "Turn off tips" stops them (`gk-lessons`).
+- Back from Losing Control: its Your network shift writes `localStorage['gk-result']`; Gatekeeper shows it in the menu,
+  report and end screen with the **Planned it, ran it** badge (also a Losing Control achievement, `planned`).
+
 ## Next steps
 - Wire into `src/build.py` and publish at `/gatekeeper/`, link it from Losing Control and Fault Lines.
 - Redeploy `Code.gs` as a new version (version 23).

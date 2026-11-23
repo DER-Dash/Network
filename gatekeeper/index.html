@@ -319,6 +319,18 @@ a.btn{text-decoration:none;color:var(--ink)}
 .bar-link.home::before{content:"";width:10px;height:10px;background:conic-gradient(currentColor 0 0) 0 0/4px 4px,conic-gradient(currentColor 0 0) 6px 0/4px 4px,conic-gradient(currentColor 0 0) 0 6px/4px 4px,conic-gradient(currentColor 0 0) 6px 6px/4px 4px;background-repeat:no-repeat}
 .bar-link.home:hover{background:#FFD23F;border-color:#FFD23F;color:#0B1F3A;text-decoration:none}
 @media (max-width:420px){.bar-link.home{display:inline-flex}}
+/* the sheet's network summary and offer effects; back from Losing Control */
+.off .eff{color:var(--ink);font-size:12.5px;border-top:1px dashed var(--rule);padding-top:3px;margin-top:2px}
+.netsum{margin:10px 0 0;background:var(--sunk);border-radius:8px;padding:6px 10px}
+.netsum summary{cursor:pointer;font:700 12px var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);min-height:32px;display:flex;align-items:center}
+.netsum ul{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:3px}
+.netsum li{display:grid;grid-template-columns:1fr 5.5em 5.5em;gap:6px;font-size:13px;padding:2px 4px;border-radius:4px}
+.netsum li span{font:600 12.5px var(--f-mono);text-align:right}
+.netsum li.me{background:var(--warn-bg);font-weight:700}
+.lc-res{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:var(--sunk);border:1px solid var(--rule)}
+.lc-res p{margin:2px 0}
+.pbadge{display:inline-block;font:700 12px var(--f-display);letter-spacing:.1em;text-transform:uppercase;background:var(--zap);color:var(--wu-navy);border-radius:999px;padding:4px 10px}
+.off .eff b{display:inline;font-size:inherit;font-weight:700}
 </style>
 </head>
 <body>
@@ -838,7 +850,7 @@ function renderQueue(){const el=$('queue');
   $('qCount').textContent=`${S.queue.length} applications · ${S.reform?'Gate 2 projects first':'in the order they applied'}`;
   const b0=plan(S,[]);el.innerHTML=S.queue.map((a,i)=>{const A=assess(a,b0);
     return `<button type="button" class="app${a.choice?' chosen':''}${selApp===a.id?' sel':''}" data-a="${a.id}"><span class="ic" aria-hidden="true">${KINDS[a.kind].ic}</span>
-      <span class="ab"><b><span class="qpos">${i+1}</span>${esc(a.name)}${a.back?' <small class="back">back again</small>':''}${S.reform&&a.app&&a.app>i+1?' <small class="up">moved up: Gate 2</small>':''}</b><small>${kindLine(a)}</small>
+      <span class="ab"><b><span class="qpos">${i+1}</span>${esc(a.name)}${a.back?' <small class="back">back again</small>':''}${S.reform&&a.app&&a.app>i+1&&g2Applies(a)&&gate2(a)?' <small class="up">moved up: Gate 2</small>':''}</b><small>${kindLine(a)}</small>
       <span class="tags">${fitTag(A.cls)}${readyTags(a)}</span></span>
       <span class="chip${a.choice?'':' none'}">${a.choice?OFF_SHORT[a.choice]:'Choose'}</span></button>`;}).join('')||'<p class="tip">No applications this year.</p>';}
 const NOTES=['"Our planning appeal is decided next spring."','"The panels are on a ship. On site early next year."','"Finance closes in the new year, then we start."','"The contractor went bust; a new one starts in March."'];
@@ -873,12 +885,21 @@ function openApp(id){const a=S.queue.find(x=>x.id===id);if(!a)return;selApp=id;c
   if((D.d&&Math.abs(GW.dem-GG.dem)>.05&&GW.dem<10)||(D.g&&Math.abs(GW.gen-GG.gen)>.05&&GW.gen<10))g+=`<div class="g"><span>Grid supply point</span>${D.d?bar(GG.F-GG.dem,GG.F,GG.F-GW.dem):bar(GG.R-GG.gen,GG.R,GG.R-GW.gen)}<em class="${(D.d?GW.dem:GW.gen)<0?'neg':''}">${hr(D.d?GG.dem:GG.gen)} → ${hr(D.d?GW.dem:GW.gen)}</em></div>`;
   const why=A.cls==='green'?'Fits within firm capacity all year.':A.flBad?'Over the fault level limit at this substation.':`As a firm connection it would break firm limits about ${nf(A.d.h)} hours a year${A.d.gsp&&!A.d.prim?' at the grid supply point':''}${D.g&&!D.d?' (mostly sunny days)':D.d&&!D.g?' (mostly winter teatimes)':''}.`;
   const g2=g2Applies(a);
+  // what each offer does to firm headroom here, so the network tiles aren't needed on a phone
+  const eff=o=>{if(!o.avail)return '';if(o.type==='flex')return `Uses no firm headroom: curtailed instead.`;if(o.type==='hold'||o.type==='refuse')return 'No change to the network.';
+    let w=W,C=null;if(o.type==='timed')w=plan(S,pend(a).concat([mk(a,'timed')])).p[a.prim];
+    if(o.type==='reinf'&&o.r){C=cfg(S,o.r.builds,true);w=plan(S,pend(a).concat([mk(a,'firm')]),C).p[a.prim];}
+    const bits=[];if(D.d)bits.push(`demand ${hr(P.dem)} → <b class="${w.dem<0?'neg':''}">${hr(w.dem)}</b>`);if(D.g)bits.push(`export ${hr(P.gen)} → <b class="${w.gen<0?'neg':''}">${hr(w.gen)}</b>`);
+    return `${o.type==='reinf'?'After the upgrade, ':''}${esc(PRIMS[a.prim].name)} ${bits.join(', ')}.`;};
+  const strip=S.prims.map(p=>{const q=A.b.p[p],me=p===a.prim;return `<li class="${me?'me':''}"><b>${esc(PRIMS[p].name)}</b><span class="${q.dem<0?'neg':''}">D ${f1(q.dem)}</span><span class="${q.gen<0?'neg':''}">E ${f1(q.gen)}</span></li>`;}).join('')
+    +`<li><b>Grid supply</b><span class="${A.b.gsp.dem<0?'neg':''}">D ${f1(A.b.gsp.dem)}</span><span class="${A.b.gsp.gen<0?'neg':''}">E ${f1(A.b.gsp.gen)}</span></li>`;
   $('sheet').innerHTML=`<div class="sh-h"><div><b>${KINDS[a.kind].ic} ${esc(a.name)}</b><p class="sh-s">${kindLine(a)}</p></div><button type="button" class="sh-x" id="shX" aria-label="Close">×</button></div>
     <p class="tags">${fitTag(A.cls)}${readyTags(a)}</p>
     <p class="sh-n">Wants connecting this year. Will wait ${a.pat} year${a.pat===1?'':'s'}${a.back?' more':''}${K.noFlex?'':`, and put up with about ${f1(tolNow(a))}% curtailment`}.${g2&&!gate2(a)?` <b>Doesn't meet Gate 2</b> (no ${g2Why(a)}): no confirmed date under the new rules.`:''}</p>
     <div class="gauges">${g}</div><p class="sh-why c-${A.cls}">${why}</p>
+    <details class="netsum"><summary>Your network now: firm headroom in MW</summary><ul>${strip}</ul><p class="fine">D demand at winter peak, E export on sunny days, counting offers chosen above this one in the queue.</p></details>
     <h3>Your offer</h3><div class="offers">${O.list.map(o=>`<button type="button" class="off${a.choice===o.type?' on':''}" data-o="${o.type}" ${o.avail?'':'disabled'} aria-pressed="${a.choice===o.type}">
-      <b>${o.label}${o.cls&&o.cls!=='green'&&o.avail?` <i class="fit c-${o.cls}">${o.cls==='amber'?'some risk':'overloads'}</i>`:''}${o.g2?' <i class="fit c-red">breaks Gate 2</i>':''}</b><small>${o.line}</small></button>`).join('')}</div>`;
+      <b>${o.label}${o.cls&&o.cls!=='green'&&o.avail?` <i class="fit c-${o.cls}">${o.cls==='amber'?'some risk':'overloads'}</i>`:''}${o.g2?' <i class="fit c-red">breaks Gate 2</i>':''}</b><small>${o.line}</small>${eff(o)?`<small class="eff">${eff(o)}</small>`:''}</button>`).join('')}</div>`;
   $('sheet').hidden=false;$('sheet').scrollTop=0;tut('open');
   $('shX').onclick=closeSheet;
   $('sheet').querySelectorAll('.off').forEach(b=>b.onclick=()=>{a.choice=b.dataset.o;save();
@@ -969,7 +990,7 @@ function showReport(){const r=S.report;if(!r)return;const s=r.sc;
     <ul class="res">${rows.map(([k,n,d])=>`<li><span>${n}</span><b>${Math.round(s[k])}</b><i class="gbar"><s class="${s[k]>=70?'ok':s[k]>=40?'warn':'alarm'}" style="width:${s[k]}%"></s></i><em>${d}</em></li>`).join('')}</ul>
     <h3>From Ofgem</h3><blockquote class="letter">${esc(letter(r))}</blockquote>
     ${end?'':`<h3>Next year</h3><p>Underlying demand grows about ${f1(GROWTH[r.year+1]*100)}%.${nx?` <b>${nx.t}.</b>`:''}</p>`}
-    <p class="lc-hand"><a class="btn" id="repLC" href="${LC_URL}" target="_top">Run this network in Losing Control →</a><span class="fine">A control room shift on the network you've built, with switching, faults and crews: your flexible customers are the flexibility you can call.</span></p>
+    ${lcCard()}<p class="lc-hand"><a class="btn" id="repLC" href="${LC_URL}" target="_top">Run this network in Losing Control →</a><span class="fine">A control room shift on the network you've built, with switching, faults and crews: your flexible customers are the flexibility you can call.</span></p>
     <div class="row"><button type="button" class="btn" id="repClose">Back to the network</button><button type="button" class="btn primary" id="repGo">${end?'Ofgem verdict':`Start year ${r.year+1}`}</button></div>`);
   $('repClose').onclick=closeOv;$('repGo').onclick=()=>{if(end)showEnd();else{closeOv();startYear();render();maybeEvent();syncQuiet();}};
   {const lc=$('repLC');if(lc)lc.onclick=e=>{exportNet();};}
@@ -982,7 +1003,7 @@ function showEnd(){const h=S.hist,avg=h.reduce((t,x)=>t+x.avg,0)/h.length,g=grad
     <p class="fine">Connected over the decade: ${f1(S.cust.filter(c=>!c.gone&&c.built&&!c.existing).reduce((t,c)=>t+c.mw,0))} MW, ${S.cust.filter(c=>!c.gone&&c.built&&c.offer==='flex').length} of them flexible.</p>
     <p class="score-big"><small>Career score</small><b>${nf(careerScore())}</b><span class="fine">${S.mode==='week'?`The week's canyon, week of ${fmtDay(S.week)}`:'Free play'}</span></p>
     ${submitBox()}
-    <p class="lc-hand"><a class="btn" id="eLC" href="${LC_URL}" target="_top">Run your network in Losing Control →</a><span class="fine">Take the network you built into a control room shift, with switching, faults and field crews. The flexible customers you connected are the flexibility you can call, and any reinforcement you skipped is the overload you're fighting.</span></p>
+    ${lcCard()}<p class="lc-hand"><a class="btn" id="eLC" href="${LC_URL}" target="_top">Run your network in Losing Control →</a><span class="fine">Take the network you built into a control room shift, with switching, faults and field crews. The flexible customers you connected are the flexibility you can call, and any reinforcement you skipped is the overload you're fighting.</span></p>
     <div class="row"><button type="button" class="btn" id="eBack">Back to the network</button><button type="button" class="btn primary" id="eNew">New career</button></div>`);
   $('eBack').onclick=closeOv;$('eNew').onclick=()=>showNew();$('eLC').onclick=()=>{exportNet();};wireSubmit();
   const b=bestGet(),sc=careerScore();if(!b||sc>b.score)ls('best',JSON.stringify({score:sc,grade:g,stars}));}
@@ -997,10 +1018,10 @@ function showMenu(){const L=syncGet(),b=bestGet(),played=S.hist.length>0;
       <button type="button" class="btn" id="mNew">New career</button>
       ${played?`<a class="btn" id="mLC" href="${LC_URL}" target="_top">Run your network in Losing Control →</a>`:''}
     </div>
-    ${syncBox()}
+    ${lcCard()}${syncBox()}
     <div class="row"><button type="button" class="btn primary" id="mClose">Back to the game</button></div>`);
   $('mClose').onclick=closeOv;$('mHelp').onclick=showHelp;$('mBoard').onclick=()=>showBoard();$('mNew').onclick=()=>showNew();
-  $('mTut').onclick=()=>{ls('tut',null);closeOv();if(S.year===1&&S.phase==='queue'){tutI=0;renderTut();}else showNew(true);};
+  $('mTut').onclick=()=>{ls('tut',null);ls('lessons',null);closeOv();if(S.year===1&&S.phase==='queue'){tutI=0;renderTut();}else showNew(true);};
   {const l=$('mLC');if(l)l.onclick=()=>{exportNet();};}
   wireSync();}
 function showNew(fromTut){const wk=mondayOf(todayUK()),inProg=S&&S.year>1&&S.phase!=='end';
@@ -1113,6 +1134,16 @@ function exportNet(){const g=gspPeaks(S),b=gspPeaks(baseState()),flex=S.cust.fil
     flexBuy:Object.keys(S.flexBuy).length*FLEX_MW};
   ls('export',JSON.stringify(x));return x;}
 
+/* ---------- Back from Losing Control ----------
+   Losing Control writes localStorage 'gk-result' when a Your network shift ends. Finishing it earns the
+   Planned it, ran it badge (in Losing Control's achievements too). */
+const lcResult=()=>{try{const r=JSON.parse(ls('result')||'null');return r&&r.v===1?r:null;}catch(e){return null;}};
+function lcCard(){const r=lcResult();if(!r)return '';
+  return `<div class="lc-res"><p class="eyebrow">Your network in Losing Control</p><p><b>Year ${r.year} network: ${r.lost?'Blackout Canyon was lost':'grade '+esc(r.grade)}</b> · ${nf(r.score)} points · ${nf(r.cml||0)} customer minutes lost${r.risk?` · ${nf(r.risk)} min at risk`:''}</p>
+    ${r.lost?'<p class="fine">Finish the shift to earn the Planned it, ran it badge.</p>':'<p><span class="pbadge">★ Planned it, ran it</span></p>'}</div>`;}
+function lcBack(){const r=lcResult();if(!r||r.at<=+(ls('resultSeen')||0))return;ls('resultSeen',String(r.at));
+  toast(`Back from Losing Control: your year ${r.year} network ${r.lost?'was lost':'got a '+r.grade}${r.lost?'':'. Planned it, ran it!'}`);}
+
 /* ---------- First-year tutorial ---------- */
 const TUT=[
   {id:'queue',t:'Welcome to Gatekeeper. These are this year\'s applications to connect to your network. Tap one to study it.',el:'#queue',on:'open'},
@@ -1127,7 +1158,26 @@ const tutOn=()=>S&&S.year===1&&!ls('tut')&&!!ls('seen');
 function tut(ev,a){if(!tutOn())return;let st=TUT[tutI];if(!st)return;
   if(st.on===ev)tutNext();else renderTut();}
 function tutNext(){tutI++;while(TUT[tutI]&&TUT[tutI].skip&&TUT[tutI].skip())tutI++;if(!TUT[tutI]){ls('tut','done');}renderTut();}
+/* Short guided lessons when the rules change (year 3: Gate 2; year 6: demand reform), after the year's news card.
+   Shown once per career; "Turn off tips" stops them on this device. */
+const LESSONS={
+  3:[{t:'New rules: the queue is now in <b>Gate 2 order</b>. Projects that are ready and needed have moved ahead of earlier ones that aren\'t, and offers nearer the top use headroom first.',el:'#queue'},
+     {t:'Gate 2 needs three things: <b>land</b>, <b>planning</b> and a <b>need</b> in the regional plan. Give <b>Gate 1 only</b> projects no confirmed date: put them on the waiting list. That draws no complaint.',el:'.app .g2'},
+     {t:'Contracted projects that missed their milestone can now be <b>removed</b>. Read what the developer says: real projects usually explain why they\'re late; speculative ones mostly don\'t reply. Remove a real one and they\'ll complain.',el:'#pipe'},
+     {t:'Also new: on the <b>Reinforce</b> screen you choose who gets curtailed first, last in first off or pro rata.',el:'#reBtn'}],
+  6:[{t:'Demand projects now need <b>Gate 2</b> too. Data centres are only <b>needed</b> in the Hertz House growth zone (and Kilowatt Close, if you build it). Anywhere else they\'re Gate 1 only.',el:'#queue'},
+     {t:'Data centres are big and steady: 12 to 35 MW. A firm one can use up a substation on its own. Try a flexible offer, or plan a new primary or a fourth supergrid transformer.',el:'#tiles'}]};
+let lesI=0;
+const lesson=()=>{const L=LESSONS[S&&S.year];return L&&S.phase==='queue'&&!(S.lessons&&S.lessons[S.year])&&ls('lessons')!=='off'&&ls('seen')?L:null;};
+function renderLesson(el){const L=lesson();if(!L||!$('ov').hidden||!$('sheet').hidden){el.hidden=true;return;}
+  if(lesI>=L.length)lesI=0;const st=L[lesI],last=lesI===L.length-1,t=document.querySelector(st.el);if(t)t.classList.add('tut-hl');
+  el.innerHTML=`<p><span class="coach-n">Year ${S.year} · ${lesI+1}/${L.length}</span> ${st.t}</p><div class="coach-b"><button type="button" class="link" id="tSkip">Turn off tips</button><button type="button" class="btn sm primary" id="tOk">${last?'Got it':'Next'}</button></div>`;
+  el.classList.remove('low');el.hidden=false;
+  if(t&&t.scrollIntoView&&tutScrolled!==100+lesI){tutScrolled=100+lesI;t.scrollIntoView({block:'center',behavior:'smooth'});}
+  const done=()=>{(S.lessons=S.lessons||{})[S.year]=1;lesI=0;save();renderTut();};
+  $('tSkip').onclick=()=>{ls('lessons','off');done();};$('tOk').onclick=()=>{if(last)done();else{lesI++;renderTut();}};}
 function renderTut(){const el=$('coach');document.querySelectorAll('.tut-hl').forEach(x=>x.classList.remove('tut-hl'));
+  if(!(tutOn()&&TUT[tutI]))return renderLesson(el);
   const st=tutOn()&&TUT[tutI];if(!st||(st.when&&!st.when())||(!$('ov').hidden&&!st.when)||(st.id==='study'&&$('sheet').hidden)){el.hidden=true;return;}
   if(st.id==='send'&&S.phase!=='queue'){tutI++;return renderTut();}
   const t=document.querySelector(st.el);if(t)t.classList.add('tut-hl');
@@ -1154,8 +1204,9 @@ function init(){
   else if(S.phase==='report'&&S.report)showReport();
   else if(S.phase==='end')showEnd();
   else maybeEvent();
-  syncQuiet();}
-if(typeof window!=='undefined'&&window.__GK_TEST)window.__gk={get S(){return S;},set S(v){S=v;},newCareer,startYear,plan,simulate,assess,offers,reinfFor,flexEst,sendOffers,runYear,startBuild,render,devNote,gate2,g2Applies,PTS,unit,go,exportNet,gspPeaks,baseState,saveData,weekSeed,mondayOf,careerScore,showBoard,showMenu,syncGame,get tutI(){return tutI;}};
+  syncQuiet();lcBack();
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)lcBack();});addEventListener('focus',lcBack);}
+if(typeof window!=='undefined'&&window.__GK_TEST)window.__gk={get S(){return S;},set S(v){S=v;},newCareer,startYear,plan,simulate,assess,offers,reinfFor,flexEst,sendOffers,runYear,startBuild,render,devNote,lcResult,gate2,g2Applies,PTS,unit,go,exportNet,gspPeaks,baseState,saveData,weekSeed,mondayOf,careerScore,showBoard,showMenu,syncGame,get tutI(){return tutI;}};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 </script>
 <script>if('serviceWorker' in navigator&&/^https:/.test(location.protocol))addEventListener('load',function(){navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(function(){});});</script>

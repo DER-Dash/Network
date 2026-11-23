@@ -299,3 +299,15 @@ a.btn{text-decoration:none;color:var(--ink)}
 .bar-link.home::before{content:"";width:10px;height:10px;background:conic-gradient(currentColor 0 0) 0 0/4px 4px,conic-gradient(currentColor 0 0) 6px 0/4px 4px,conic-gradient(currentColor 0 0) 0 6px/4px 4px,conic-gradient(currentColor 0 0) 6px 6px/4px 4px;background-repeat:no-repeat}
 .bar-link.home:hover{background:#FFD23F;border-color:#FFD23F;color:#0B1F3A;text-decoration:none}
 @media (max-width:420px){.bar-link.home{display:inline-flex}}
+/* the sheet's network summary and offer effects; back from Losing Control */
+.off .eff{color:var(--ink);font-size:12.5px;border-top:1px dashed var(--rule);padding-top:3px;margin-top:2px}
+.netsum{margin:10px 0 0;background:var(--sunk);border-radius:8px;padding:6px 10px}
+.netsum summary{cursor:pointer;font:700 12px var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);min-height:32px;display:flex;align-items:center}
+.netsum ul{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:3px}
+.netsum li{display:grid;grid-template-columns:1fr 5.5em 5.5em;gap:6px;font-size:13px;padding:2px 4px;border-radius:4px}
+.netsum li span{font:600 12.5px var(--f-mono);text-align:right}
+.netsum li.me{background:var(--warn-bg);font-weight:700}
+.lc-res{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:var(--sunk);border:1px solid var(--rule)}
+.lc-res p{margin:2px 0}
+.pbadge{display:inline-block;font:700 12px var(--f-display);letter-spacing:.1em;text-transform:uppercase;background:var(--zap);color:var(--wu-navy);border-radius:999px;padding:4px 10px}
+.off .eff b{display:inline;font-size:inherit;font-weight:700}
