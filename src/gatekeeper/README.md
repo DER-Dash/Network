@@ -65,6 +65,14 @@ what was connected (`sc.svc`, `applySvc`). Not on the scoreboard. Links: report,
 - Back from Losing Control: its Your network shift writes `localStorage['gk-result']`; Gatekeeper shows it in the menu,
   report and end screen with the **Planned it, ran it** badge (also a Losing Control achievement, `planned`).
 
+## The network as built, in Losing Control (23 Nov 2026)
+`exportNet()` also sends `net` (v2): demand growth, the grid supply point rating, Kilowatt Close, and per substation its
+firm rating, fault level, finished upgrades and winter peak. Losing Control's Your network shift then rates T1–T3 from
+the grid supply point (a fourth supergrid transformer → 84 MVA each), each 33 kV feeder from its substation's uprates,
+adds Kilowatt Close (the interconnected layout) if built, splits demand by each substation's peak, and makes every switch
+remote where new switchgear was fitted (ties, mid-point switches, backfeeds, and interconnectors and 11 kV links with an
+end there; drawn square). Mobile generators still need a crew.
+
 ## Next steps
 - Wire into `src/build.py` and publish at `/gatekeeper/`, link it from Losing Control and Fault Lines.
 - Redeploy `Code.gs` as a new version (version 23).

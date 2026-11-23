@@ -1783,7 +1783,14 @@ const HINT_PRIO={hosp:'Estates manager at Kings Hill Hospital: we\'ve lost the m
 const EMERG=1.2,EMERG_MIN=30,SHORT=1.5,SHORT_MIN=5,PAR_MAX=30,OV_MIN=10,INCIDENT_PTS=500,AL_ON=.8,AL_OFF=.75;
 const RATE={0.5:CFG.rate/2,1:CFG.rate,2:CFG.rate*2,3:CFG.rate*3},spdTxt=v=>(v===.5?'½':v)+'×';
 const ISO_A=25;// easy shifts: minutes per fault that customers can be left off and still get an A
-const isManual=k=>CREW_ON&&(MANUAL.includes(k.split(':')[0])||commsOut(siteOf(k)));
+const isManual=k=>CREW_ON&&((MANUAL.includes(k.split(':')[0])&&!remoteSw(k))||commsOut(siteOf(k)));
+// Your Gatekeeper network: where the player fitted new switchgear (sc.remote, a list of substations), every switch there is
+// remote controlled: its tie, its 11 kV mid-point switches and backfeeds, and any interconnector or 11 kV link with an end
+// there. Mobile generators still need a crew to tow them.
+const remoteSw=k=>{const Rm=S&&S.sc&&S.sc.remote;if(!Rm||!Rm.length||!k)return false;const[t,id]=k.split(':');
+  if(t==='tie')return Rm.includes(id);if(t==='mid'||t==='nop')return Rm.includes(id.slice(0,2));
+  if(t==='it'){const I=ITS[id];return !!I&&(Rm.includes(I.a)||Rm.includes(I.b));}
+  if(t==='lk'){const L=LINKS[id];return !!L&&(Rm.includes(L.a[0])||Rm.includes(L.b[0]));}return false;};
 // Comms down: the substation a device is at (33 kV feeder breakers 'bc' are at Blackout Canyon, so they stay remote)
 const siteOf=k=>{const[t,id]=(k||'').split(':');return['in','pt'].includes(t)?id:['lf','mid','nop','mg'].includes(t)?id.slice(0,2):null;};
 const commsOut=p=>!!(p&&S&&S.comms&&S.comms[p]);
@@ -2021,12 +2028,24 @@ function gkScenario(){const X=gkExport();if(GAME!=='cr'||!X||!SCENARIOS.jan||!SC
     T=sunny?{...SCENARIOS.jan,color:M.color,when:M.when,soc0:M.soc0,nbShape:M.nbShape,blurb:M.blurb,demand:M.demand,solar:M.solar,wind:M.wind,faults:M.faults,causes:M.causes,build:M.build}:SCENARIOS.jan,kD=clamp(X.kD,.75,1.35),nm=g=>g.names&&g.names.length?g.names[0]+(g.n>1?` and ${g.n-1} more`:''):null;
   const dsr=Math.round(clamp((+X.dsr.mw||0)+(+X.flexBuy||0),0,40)),batt=Math.round(clamp(+X.batt.mw||0,0,40)),sol=+X.solar.mw||0;
   const can=[dsr?`${dsr} MW of demand turn-down (${nm(X.dsr)||'flexibility services'})`:'',batt?`${batt} MW of battery (${nm(X.batt)})`:'',sol?`${Math.round(sol)} MW of curtailable solar (${nm(X.solar)})`:''].filter(Boolean);
-  SCENARIOS.gk={...T,hidden:true,noBoard:true,gk:X,diff:kD>1.15?3:kD>.95?2:1,title:'Your network',when:`Year ${X.year} of Gatekeeper · ${T.when.split(' ')[0]}`,
+  // the network as built (exports from Gatekeeper since Nov 2026): demand grows as it did there, the grid supply point and
+  // each substation are rated from what was built, Kilowatt Close joins if it was built, and new switchgear makes switches remote
+  const N=X.net&&X.net.v===2?X.net:null,P=N?N.prims||{}:{},nmP={hw:'Hertz House',ml:'Shocking Place',rv:'Ohm No',js:'Joule Street',kc:'Kilowatt Close'};
+  const gR=N?clamp(N.gspF/(N.gspF0||150),1,1.6):1,dS=N?clamp(+N.dGrow||1,.8,1.6):kD,load=N?dS/gR:kD;
+  let net=null;
+  if(N){const ids=Object.keys(P).filter(p=>nmP[p]),tot=ids.reduce((t,p)=>t+(+P[p].peak||0),0);
+    const shares=tot>0?Object.fromEntries(ids.map(p=>[p,Math.round(P[p].peak/tot*1000)/1000])):null;
+    const prRate=Object.fromEntries(ids.filter(p=>p!=='kc'&&P[p].F0>0).map(p=>[p,clamp(P[p].F/P[p].F0,1,1.8)]));
+    const remote=ids.filter(p=>(P[p].fl||0)>0||P[p].FL>P[p].FL0);
+    const up=ids.filter(p=>(P[p].tx||0)>0||P[p].F>P[p].F0);
+    net={txR:Math.round(60*gR),prRate,remote,mesh:!!(N.kc&&P.kc&&shares&&shares.kc),shares:shares&&(N.kc&&shares.kc?shares:Object.fromEntries(Object.entries(shares).filter(([p])=>p!=='kc'))),
+      note:[gR>1?`a fourth supergrid transformer, so T1–T3 carry ${Math.round(60*gR)} MVA each`:'',up.length?`uprated transformers at ${up.map(p=>nmP[p]).join(', ')}`:'',N.kc?'the new Kilowatt Close primary, fed through Shocking Place with a backup from Ohm No':'',remote.length?`new switchgear at ${remote.map(p=>nmP[p]).join(', ')}, so every switch there is remote controlled`:''].filter(Boolean)};}
+  SCENARIOS.gk={...T,...(net?{txR:net.txR,prRate:net.prRate,remote:net.remote,mesh:net.mesh,shares:net.shares||T.shares}:{}),hidden:true,noBoard:true,gk:X,diff:load>1.15?3:load>.95?2:1,title:'Your network',when:`Year ${X.year} of Gatekeeper · ${T.when.split(' ')[0]}`,
     focus:sunny?'Your network on a sunny day':'Your network at winter peak',
-    demand:T.demand.map(([h,v])=>[h,Math.round(v*(sunny?Math.min(kD,1.1):kD)*10)/10]),
+    demand:T.demand.map(([h,v])=>[h,Math.round(v*(sunny?Math.min(N?dS:kD,1.1):N?dS:kD)*10)/10]),
     solar:sunny?{...T.solar,peak:Math.round(clamp(76+(+X.E)*120,90,220))}:T.solar,
     svc:{dsr:{cap:dsr,name:nm(X.dsr)},bchg:{cap:batt,name:nm(X.batt)},bdis:{cap:batt,name:nm(X.batt)},solar:{allow:Math.round(20+sol*4),name:nm(X.solar)}},  // no name: the usual one
-    blurb:`The network you built in Gatekeeper, after ${X.year} year${X.year===1?'':'s'}. ${sunny?`On sunny days export reaches ${Math.round(X.E*100)}% of the limit.`:`Peak demand on the grid supply point is ${Math.round(X.kD*100)}% of what you inherited${X.sgt?', even with the supergrid transformer you built':''}.`} The flexibility you can call is what you connected: ${can.length?can.join(', '):'none, so it\'s down to switching and the Ohm No CHP'}. ${T.blurb}`};}
+    blurb:`The network you built in Gatekeeper, after ${X.year} year${X.year===1?'':'s'}. ${sunny?`On sunny days export reaches ${Math.round(X.E*100)}% of the limit.`:N?`Peak demand is ${Math.round(dS*100)}% of what you inherited.`:`Peak demand on the grid supply point is ${Math.round(X.kD*100)}% of what you inherited${X.sgt?', even with the supergrid transformer you built':''}.`} ${net?(net.note.length?`You built ${net.note.join('; ')}. `:'You built no reinforcement, so this is the network you inherited, only busier. '):''}The flexibility you can call is what you connected: ${can.length?can.join(', '):'none, so it\'s down to switching and the Ohm No CHP'}. ${T.blurb}`};}
 gkScenario();
 // Handover notes: a short note from the engineer going off shift, shown before each career shift starts
 const HANDOVER=GAME==='cr'?{
@@ -2408,7 +2427,9 @@ function newGame(key){GFX.intro=false;
   PIDS=sc.mesh?['hw','ml','rv','js','kc']:['hw','ml','rv','js'];ITIDS=sc.mesh?['hm','mr','rj','mk','rk']:['hm','mr','rj'];LKIDS=GAME==='cr'&&sc.links?['hm','mr','rj']:[];VFI=sc.vfi||[1,2];
   const share=sc.shares||{hw:.30,ml:.20,rv:.25,js:.25};
   {const D=sc.derate||1;R=Math.round(60*D);Object.values(PR).forEach(P=>{if(P.fr0==null){P.fr0=P.fr;P.tie0=P.tie;}if(P.fr0!=null)P.fr=Math.round(P.fr0*D);if(P.tie0!=null)P.tie=Math.round(P.tie0*D);});
-   Object.values(ITS).forEach(t=>{if(t.r0==null)t.r0=t.r;t.r=Math.round(t.r0*D);});}
+   Object.values(ITS).forEach(t=>{if(t.r0==null)t.r0=t.r;t.r=Math.round(t.r0*D);});
+   // Your Gatekeeper network: transformers rated from what was built there
+   if(sc.txR)R=sc.txR;if(sc.prRate)Object.entries(sc.prRate).forEach(([p,m])=>{if(PR[p]&&PR[p].fr!=null)PR[p].fr=Math.round(PR[p].fr*m);});}
   const sched=genFaults(rng,sc,b.risk).concat(genLvFaults(seed,sc,b.risk),genPtFaults(seed,sc,b.risk),b.sched||[]).sort((a,b)=>a.m-b.m),dv=sc.demand.map(x=>x[1]);
   S={key,sc,mode,date,seed,surgeK,t:START-60,dmin:Math.min(...dv),dmax:Math.max(...dv),
     events:b.events.map(e=>({...e,fired:false,noticed:false})),cutout:b.cutout?{...b.cutout,fired:false,done:false}:null,
@@ -2429,7 +2450,7 @@ function newGame(key){GFX.intro=false;
   const c0=comps(S.t,false),L0=Math.abs(PIDS.reduce((a,p)=>a+netP(c0,p,zeroD()),0))/3/R;S.tx.forEach(t=>t.temp=20+100*L0*L0);
   if(sc.init)sc.init(S);
   if(S.rngE()<.4)S.falseAl={m:START+60+Math.floor(S.rngE()*Math.max(1,END-START-150)),done:false};// a false RTU trip alarm, on some shifts
-  buildMimic();
+  buildMimic();gkRemoteDraw();
   for(let i=0;i<60;i++)step();
   S.silent=false;S.alarms={};S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.peakL=0;S.ens=0;S.cust={ci:0,cml:0,si:0,off:{},pri:0,pmin:{}};S.loss=[];S.lossOpen={};S.cp={};S.crewJobs=0;S.trial=0;S.isoMin=0;S.recloses=0;S.parOk=0;S.calls=[];S.callQ=[];S.callN=0;S.tele={};S.polls=[];S.callRing=-99;S.vfPeak=0;S.gspOver=0;S.gspTrips=0;S.log=[];S.full=[];S.marks=[];S.chain=[];queued=[];
   logE(START,`Shift starts. ${sc.when}: ${sc.blurb}`,'info');
@@ -3085,6 +3106,10 @@ function setArw(id,v,axis){const e=$(id);if(!e)return;const on=Math.abs(v)>=.5;e
 const TIEARW={hw:[96,330,-1],ml:[300,603,-1],rv:[1000,633,1],js:[1085,330,1]};
 const ADJ_TIP={batt:['Discharge more: offsets Hertz House\'s load','Charge more: adds load at Hertz House'],dsr:['Reduce demand more','Reduce demand less'],chp:['Run the gas engine harder','Run the gas engine less'],solar:['Curtail less','Curtail more'],wind:['Curtail less','Curtail more']};
 function adjBtn(id,x,y,d){const up=d>0,tip=(ADJ_TIP[id]||['Turn up','Turn down'])[up?0:1];return `<g class="adj" id="adj_${id}_${up?'u':'d'}" data-adj="${id}" data-d="${d}" role="button" aria-label="${tip}"><title>${tip}</title><rect x="${x}" y="${y}" width="22" height="19" rx="4"/><path d="${up?`M${x+5} ${y+13.5}h12l-6-8z`:`M${x+5} ${y+5.5}h12l-6 8z`}"/></g>`;}
+// remote switches on the diagram are drawn square, like the remote breakers
+function gkRemoteDraw(){if(!S.sc.remote||!S.sc.remote.length)return;const sq=(id,k)=>{const e=$(id);if(e&&remoteSw(k))e.setAttribute('rx','1.5');};
+  PIDS.forEach(p=>{sq('tsw_'+p,'tie:'+p);(LF[p]||[]).forEach((_,i)=>{sq('midb_'+p+i,'mid:'+p+i);sq('nopb_'+p+i,'nop:'+p+i);});});
+  ITIDS.forEach(k=>sq('itsw_'+k,'it:'+k));LKIDS.forEach(k=>sq('lksw_'+k,'lk:'+k));}
 function buildMimic(){gfxReset();
   const ng=S&&NOGEN();
   let s=`<text id="snm_gsp" class="t-bus snm" x="400" y="26">STEVE TOWERS GSP · 132 kV</text><line class="bus hv" x1="400" y1="40" x2="800" y2="40"/>`;

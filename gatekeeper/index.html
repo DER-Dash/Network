@@ -990,7 +990,7 @@ function showReport(){const r=S.report;if(!r)return;const s=r.sc;
     <ul class="res">${rows.map(([k,n,d])=>`<li><span>${n}</span><b>${Math.round(s[k])}</b><i class="gbar"><s class="${s[k]>=70?'ok':s[k]>=40?'warn':'alarm'}" style="width:${s[k]}%"></s></i><em>${d}</em></li>`).join('')}</ul>
     <h3>From Ofgem</h3><blockquote class="letter">${esc(letter(r))}</blockquote>
     ${end?'':`<h3>Next year</h3><p>Underlying demand grows about ${f1(GROWTH[r.year+1]*100)}%.${nx?` <b>${nx.t}.</b>`:''}</p>`}
-    ${lcCard()}<p class="lc-hand"><a class="btn" id="repLC" href="${LC_URL}" target="_top">Run this network in Losing Control →</a><span class="fine">A control room shift on the network you've built, with switching, faults and crews: your flexible customers are the flexibility you can call.</span></p>
+    ${lcCard()}<p class="lc-hand"><a class="btn" id="repLC" href="${LC_URL}" target="_top">Run this network in Losing Control →</a><span class="fine">A control room shift on the network you've built: your uprated transformers, any new primary, and remote switches wherever you fitted new switchgear. Your flexible customers are the flexibility you can call.</span></p>
     <div class="row"><button type="button" class="btn" id="repClose">Back to the network</button><button type="button" class="btn primary" id="repGo">${end?'Ofgem verdict':`Start year ${r.year+1}`}</button></div>`);
   $('repClose').onclick=closeOv;$('repGo').onclick=()=>{if(end)showEnd();else{closeOv();startYear();render();maybeEvent();syncQuiet();}};
   {const lc=$('repLC');if(lc)lc.onclick=e=>{exportNet();};}
@@ -1003,7 +1003,7 @@ function showEnd(){const h=S.hist,avg=h.reduce((t,x)=>t+x.avg,0)/h.length,g=grad
     <p class="fine">Connected over the decade: ${f1(S.cust.filter(c=>!c.gone&&c.built&&!c.existing).reduce((t,c)=>t+c.mw,0))} MW, ${S.cust.filter(c=>!c.gone&&c.built&&c.offer==='flex').length} of them flexible.</p>
     <p class="score-big"><small>Career score</small><b>${nf(careerScore())}</b><span class="fine">${S.mode==='week'?`The week's canyon, week of ${fmtDay(S.week)}`:'Free play'}</span></p>
     ${submitBox()}
-    ${lcCard()}<p class="lc-hand"><a class="btn" id="eLC" href="${LC_URL}" target="_top">Run your network in Losing Control →</a><span class="fine">Take the network you built into a control room shift, with switching, faults and field crews. The flexible customers you connected are the flexibility you can call, and any reinforcement you skipped is the overload you're fighting.</span></p>
+    ${lcCard()}<p class="lc-hand"><a class="btn" id="eLC" href="${LC_URL}" target="_top">Run your network in Losing Control →</a><span class="fine">Take the network you built into a control room shift: the transformers you uprated, Kilowatt Close if you built it, and remote-controlled switches wherever you fitted new switchgear. The flexible customers you connected are the flexibility you can call, and any reinforcement you skipped is the overload you're fighting.</span></p>
     <div class="row"><button type="button" class="btn" id="eBack">Back to the network</button><button type="button" class="btn primary" id="eNew">New career</button></div>`);
   $('eBack').onclick=closeOv;$('eNew').onclick=()=>showNew();$('eLC').onclick=()=>{exportNet();};wireSubmit();
   const b=bestGet(),sc=careerScore();if(!b||sc>b.score)ls('best',JSON.stringify({score:sc,grade:g,stars}));}
@@ -1126,12 +1126,19 @@ function gspPeaks(st){const C=cfg(st),list=st.cust.filter(c=>!c.gone&&c.built&&C
 function baseState(){const s={cap:{},gsp:{...GSP0},peak:{},prims:['hw','ml','rv','js'],kc:false,builds:[],flexBuy:{},weather:1,
   cust:[{kind:'solar',mw:10,prim:'ml',offer:'firm',built:true},{kind:'wind',mw:12,prim:'rv',offer:'firm',built:true},{kind:'chp',mw:8,prim:'rv',offer:'firm',built:true}]};
   Object.keys(PRIMS).forEach(p=>{s.cap[p]={F:PRIMS[p].F,R:PRIMS[p].R,FL:PRIMS[p].FL};s.peak[p]=PRIMS[p].peak;});return s;}
+// a substation's demand at its winter peak: underlying demand plus every connected demand customer, flexible ones too
+function primPeak(p){const list=S.cust.filter(c=>!c.gone&&c.built&&c.prim===p&&KINDS[c.kind].dem).map(c=>[c.mw,U(c).act]);let m=0;
+  for(let i=0;i<NP;i++){let d=S.peak[p]*P_BASE[i];for(const [w,a] of list)if(a[i]>0)d+=w*a[i];if(d>m)m=d;}return m;}
 function exportNet(){const g=gspPeaks(S),b=gspPeaks(baseState()),flex=S.cust.filter(c=>!c.gone&&c.built&&c.offer==='flex');
   const grp=f=>{const l=flex.filter(f).sort((a,b)=>b.mw-a.mw);return{mw:Math.round(l.reduce((t,c)=>t+c.mw,0)*10)/10,names:l.map(c=>c.name).slice(0,3),n:l.length};};
   const done=S.hist.length,last=S.hist[done-1];
   const x={v:1,at:Date.now(),year:done,grade:last?last.grade:'',mode:S.mode,kD:Math.round(g.D/b.D*1000)/1000,E:Math.round(g.E*1000)/1000,
     gspF:S.gsp.F,sgt:S.gsp.F>GSP0.F,dsr:grp(c=>!KINDS[c.kind].gen),batt:grp(c=>c.kind==='batt'),solar:grp(c=>c.kind==='solar'),
-    flexBuy:Object.keys(S.flexBuy).length*FLEX_MW};
+    flexBuy:Object.keys(S.flexBuy).length*FLEX_MW,
+    // the network as built (finished upgrades only): Losing Control rates its transformers, feeders and switches from this
+    net:{v:2,dGrow:Math.round(g.D*g.F/(b.D*b.F)*1000)/1000,gspF:S.gsp.F,gspF0:GSP0.F,kc:!!S.kc,
+      prims:Object.fromEntries(S.prims.map(p=>[p,{F:S.cap[p].F,F0:PRIMS[p].F,FL:S.cap[p].FL,FL0:PRIMS[p].FL,
+        tx:S.builds.filter(x=>x.applied&&x.kind==='tx'&&x.prim===p).length,fl:S.builds.filter(x=>x.applied&&x.kind==='fl'&&x.prim===p).length,peak:Math.round(primPeak(p)*10)/10}]))}};
   ls('export',JSON.stringify(x));return x;}
 
 /* ---------- Back from Losing Control ----------
