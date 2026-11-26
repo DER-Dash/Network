@@ -2429,10 +2429,10 @@ function kioskLayout(on){const h=document.documentElement;h.classList.toggle('ki
 addEventListener('resize',()=>{if(document.documentElement.classList.contains('kiosk'))kioskLayout(true);});
 async function keepAwake(on){try{if(on&&'wakeLock' in navigator&&!wakeLock){wakeLock=await navigator.wakeLock.request('screen');wakeLock.addEventListener('release',()=>{wakeLock=null;});}else if(!on&&wakeLock){await wakeLock.release();wakeLock=null;}}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S&&S.tut&&S.tut.kiosk)keepAwake(true);});
-function tutStart(auto,kiosk){speed=1;document.querySelectorAll('[data-speed]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.speed==='1'));txt('dSpeed','1×');
+function tutStart(auto,kiosk,watch){speed=1;document.querySelectorAll('[data-speed]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.speed==='1'));txt('dSpeed','1×');
   const m0=mode;mode='free';newGame('tut');mode=m0;
   S.silent=true;while(S.t<930)step();S.silent=false;S.log=[];S.full=[];S.marks=[];S.alarms={};S.cust={ci:0,cml:0,si:0,off:{},pri:0,pmin:{}};S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.ens=0;S.peakL=0;queued=[];
-  logE(S.t,'Tutorial: Cold Thursday, 15:30. The evening peak is building.','info');S.tut={i:-1,auto:!!auto||!!kiosk,kiosk:!!kiosk,shown:0,acted:false,doneAt:0};kioskLayout(!!kiosk);if(kiosk){tutRepeat=true;keepAwake(true);const ck=$('cookie');if(ck)ck.hidden=true;}hideTip();begin();tutGo(0);track('tutorial_start',{auto:!!auto,kiosk:!!kiosk});}
+  logE(S.t,'Tutorial: Cold Thursday, 15:30. The evening peak is building.','info');S.tut={i:-1,auto:!!auto||!!kiosk,kiosk:!!kiosk,watch:!!watch&&!kiosk,shown:0,acted:false,doneAt:0};kioskLayout(!!kiosk);if(kiosk){tutRepeat=true;keepAwake(true);const ck=$('cookie');if(ck)ck.hidden=true;}hideTip();begin();tutGo(0);track('tutorial_start',{auto:!!auto,kiosk:!!kiosk});}
 // Demo and display mode: at the end of each loop, a slide each for Fault Lines and Gatekeeper ("Also from Watts Up"), then on
 let kgTimer=0,kgI=-1,kgThen=null;
 function kgShow(then){kgThen=then;kgGo(0);}
@@ -2482,6 +2482,8 @@ function tutTick(now){const T=S&&S.tut;if(!T||S.ended)return;const st=TUT[T.i];i
     else if(T.auto&&!T.acted&&now-T.shown>PACE().wait)tutAct();
     else if(T.acted&&!st.press&&!S.op&&!crewFor(st.k)&&now-(T.actAt||0)>PACE().op+2500&&!st.done())T.acted=false;}
   else if(T.auto&&T.i<TUT.length-1&&now-T.shown>readMs(st))tutGo(T.i+1);
+  // a shared demo link (?watch): plays once, shows the other two games, then the end screen
+  else if(T.watch&&T.i===TUT.length-1&&now-T.shown>Math.max(9000,readMs(st))){if(!T.intro){T.intro=true;kgShow(()=>{if(S&&S.tut)tutDone();});}return;}
   else if(T.auto&&T.i===TUT.length-1&&tutRepeat&&now-T.shown>Math.max(9000,readMs(st))){if(!T.intro){T.intro=true;kgShow(T.kiosk?kioskIntro:()=>{if(S&&S.tut&&S.tut.auto)tutStart(true,false);});}return;}
   renderCoach(false);}
 let lastCoach='';
@@ -2493,11 +2495,11 @@ function renderCoach(force){const el=$('coach');if(!el)return;const T=S&&S.tut;
     wait=act&&(S.op&&S.op.k===st.k||crewFor(st.k)),j=act&&crewFor(st.k),
     showMe=act&&!T.auto&&!wait&&!done&&performance.now()-T.shown>SHOW_AFTER;
   const stTxt=!act?'':done?(T.auto?'✓ Done':'✓ Done. Press Next when you\'re ready.'):wait?(j?`Crew ${j.n} ${j.to?'walking there, arrives '+fmtT(j.arr):'on site'}…`:'Operating…'):T.auto?'Watch: the demo does this for you.':st.hint?st.hint():'Your turn: do this on the diagram.';
-  const h=`<div class="coach-top"><span class="coach-n">${T.kiosk?'Demonstration':'Tutorial'} · ${T.i+1} of ${TUT.length}</span><button type="button" class="coach-x" data-tut="exit" aria-label="Exit the tutorial">×</button></div>
+  const h=`<div class="coach-top"><span class="coach-n">${T.kiosk?'Demonstration':T.watch?'Demo':'Tutorial'} · ${T.i+1} of ${TUT.length}</span><button type="button" class="coach-x" data-tut="exit" aria-label="Exit the tutorial">×</button></div>
     <h3>${esc(st.h)}</h3><p>${esc(b)}</p>
     ${act?`<p class="coach-st${done?' ok':''}">${esc(stTxt)}</p>`:''}
-    ${T.auto&&last&&tutRepeat?`<p class="coach-st">Starting again in a few seconds…</p>`:''}
-    <div class="coach-row">${T.auto?`<button type="button" class="btn${tutRepeat?' on':''}" data-tut="repeat" aria-pressed="${tutRepeat}">↻ Repeat: ${tutRepeat?'on':'off'}</button>`:''}${T.kiosk?'':last?`<button type="button" class="btn primary" data-tut="career">Start my career</button><button type="button" class="btn" data-tut="menu">Start screen</button><button type="button" class="btn" data-tut="again">Replay demo</button>`
+    ${T.auto&&last&&tutRepeat&&!T.watch?`<p class="coach-st">Starting again in a few seconds…</p>`:''}
+    <div class="coach-row">${T.auto&&!T.watch?`<button type="button" class="btn${tutRepeat?' on':''}" data-tut="repeat" aria-pressed="${tutRepeat}">↻ Repeat: ${tutRepeat?'on':'off'}</button>`:''}${T.kiosk?'':last?`<button type="button" class="btn primary" data-tut="career">Start my career</button><button type="button" class="btn" data-tut="menu">Start screen</button><button type="button" class="btn" data-tut="again">Replay demo</button>`
       :`<button type="button" class="btn" data-tut="mode">${T.auto?'Let me do it':'Auto-play'}</button>${showMe?'<button type="button" class="btn" data-tut="show">Stuck? Show me</button>':''}${st.t==='next'||done?`<button type="button" class="btn primary" data-tut="next">${T.auto?'Next now':'Next'}</button>`:''}`}</div>`;
   if(force||h!==lastCoach){el.innerHTML=h;lastCoach=h;}
   const fresh=el.hidden;el.hidden=false;
@@ -2992,7 +2994,8 @@ if(!CALLS_ON){const l=$('pCalls');if(l)l.remove();}if(!VF_ON){const l=$('lgVF');
 txt('clock',fmtT(START));txt('dClock',fmtT(START));
 setSound(SND.on);applyCollapsed();{const b=$('musicBtn');if(b){b.setAttribute('aria-pressed',String(MUS.on));b.classList.toggle('on',MUS.on);}}
 txt('kTitle',GAME==='cr'?'Losing Control · Control room':'Losing Control · Generation');
-if(GAME==='cr'&&/(^|[?&#])demo\b/.test(location.search+location.hash))setTimeout(()=>tutStart(true,true),300);else splash();
+if(GAME==='cr'&&/(^|[?&#])watch\b/.test(location.search+location.hash))setTimeout(()=>tutStart(true,false,true),300);
+else if(GAME==='cr'&&/(^|[?&#])demo\b/.test(location.search+location.hash))setTimeout(()=>tutStart(true,true),300);else splash();
 newGame(chosen);startSheet();initConsent();requestAnimationFrame(frame);
 {const c=career();if(c.run&&!c.run.t){c.run.t=Date.now();saveCareer(c);}}// a restart made before runs were time-stamped
 if(syncGet())syncQuiet().then(r=>{if(r)refreshStart(false);});
