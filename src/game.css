@@ -1036,3 +1036,49 @@ a.btn.fl-go{text-decoration:none;border-color:var(--zap);box-shadow:inset 4px 0 
 /* "All games": back to the Watts Up home page, with the other links (in the menu on phones during a shift) */
 .links .home-btn::before{content:"";width:10px;height:10px;margin-right:2px;background:conic-gradient(currentColor 0 0) 0 0/4px 4px,conic-gradient(currentColor 0 0) 6px 0/4px 4px,conic-gradient(currentColor 0 0) 0 6px/4px 4px,conic-gradient(currentColor 0 0) 6px 6px/4px 4px;background-repeat:no-repeat}
 html.kiosk .home-btn{display:none!important}
+
+/* ---------- Demo and display mode: "Also from Watts Up" slides for Fault Lines and Gatekeeper, at the end of each loop ---------- */
+.k-games{position:fixed;inset:0;z-index:60;cursor:pointer;color:#fff;background:radial-gradient(circle at 30% 40%,color-mix(in srgb,var(--wu-navy) 72%,#fff),var(--wu-navy) 70%);
+  --kg-sky:#cfe7f7;--kg-grass:#8fc27f;display:grid;place-items:center;padding:clamp(16px,4vw,56px);overflow:auto}
+.k-games[hidden]{display:none}
+.kg-s{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:clamp(20px,4vw,64px);align-items:center;width:min(1400px,100%)}
+.kg-s[hidden]{display:none}
+.kg-art svg{width:100%;height:auto;display:block;border-radius:28px;border:5px solid #FFD23F;box-shadow:0 20px 60px rgba(0,0,0,.35);background:var(--kg-sky)}
+.kg-eb{margin:0;font:700 clamp(13px,1.4vw,20px) var(--f-display);letter-spacing:.22em;text-transform:uppercase;color:#FFD23F}
+.kg-kind{margin:10px 0 0;font:700 clamp(14px,1.5vw,22px) var(--f-display);letter-spacing:.16em;text-transform:uppercase;color:var(--kg-c)}
+.kg-fl{--kg-c:#ff8a55}.kg-gk{--kg-c:#52b886}
+.kg-h{margin:4px 0 0;font:700 clamp(44px,7vw,110px)/.9 var(--f-display);text-transform:uppercase;letter-spacing:.01em;color:#fff}
+.kg-d{margin:clamp(12px,2vh,22px) 0 0;font-size:clamp(16px,1.6vw,24px);line-height:1.45;color:#d6deea;max-width:34em}
+.kg-f{margin:clamp(12px,2vh,22px) 0 0;padding:0;list-style:none;display:grid;gap:10px;font-size:clamp(15px,1.45vw,22px);color:#fff}
+.kg-f li{display:flex;gap:10px;align-items:flex-start}
+.kg-f li::before{content:"";flex:none;width:.8em;height:.8em;margin-top:.3em;border-radius:3px;background:var(--kg-c)}
+.kg-url{margin:clamp(14px,2.4vh,28px) 0 0;font:700 clamp(18px,2vw,30px) var(--f-display);letter-spacing:.02em;color:#c9d3e0}
+.kg-url b{color:#FFD23F}
+.kg-qr{position:fixed;right:clamp(12px,2.5vw,36px);bottom:clamp(14px,3vh,36px);display:flex;flex-direction:column;align-items:center;gap:6px;background:#fff;color:#0B1F3A;border:4px solid #FFD23F;border-radius:18px;padding:10px 10px 8px;font:700 13px var(--f-display);letter-spacing:.08em;text-transform:uppercase}
+.kg-qr img{width:clamp(90px,10vw,160px);height:auto;display:block}
+.kg-bar{position:fixed;left:0;right:0;bottom:0;height:5px;background:rgba(255,255,255,.12)}
+.kg-bar::after{content:"";position:absolute;inset:0;background:#FFD23F;transform-origin:left;transform:scaleX(0)}
+.k-games.kg-go .kg-bar::after{animation:kLoad var(--kg-ms,10000ms) linear both}
+.k-games.kg-go .kg-art{animation:kPop .8s cubic-bezier(.2,1.2,.4,1) both}
+.k-games.kg-go .kg-txt>*{animation:kUp .7s both}
+.k-games.kg-go .kg-txt>:nth-child(2){animation-delay:.1s}.k-games.kg-go .kg-txt>:nth-child(3){animation-delay:.2s}.k-games.kg-go .kg-txt>:nth-child(4){animation-delay:.35s}.k-games.kg-go .kg-txt>:nth-child(5){animation-delay:.5s}.k-games.kg-go .kg-txt>:nth-child(6){animation-delay:.65s}
+.kg-ol{stroke:#0B1F3A;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.kg-spin{animation:kgSpin 4.5s linear infinite}
+@keyframes kgSpin{to{transform:rotate(360deg)}}
+.kg-blink{animation:kgBlink 1.4s steps(2,jump-none) infinite}
+@keyframes kgBlink{50%{opacity:.25}}
+.kg-spark{transform-box:fill-box;transform-origin:center;animation:kgSpark 1.6s ease-in-out infinite}
+@keyframes kgSpark{0%,100%{transform:scale(.85)}50%{transform:scale(1.15)}}
+.kg-bob{animation:kgBob 3s ease-in-out infinite}
+@keyframes kgBob{50%{transform:translateY(-4px)}}
+@media (max-width:860px){.kg-s{grid-template-columns:1fr;gap:18px}.kg-art{max-width:520px}.kg-qr{display:none}}
+@media (prefers-reduced-motion:reduce){.k-games *{animation:none!important}.k-games .kg-bar::after{transform:none}}
+/* end of the tutorial: the other two games */
+.kg-more{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 4px}
+.kg-more .eyebrow{grid-column:1/-1;margin:0}
+.kg-m{display:flex;flex-direction:column;gap:3px;padding:12px 14px;border:1px solid var(--rule);border-radius:10px;background:var(--sunk);text-decoration:none;color:var(--ink)}
+.kg-m b{display:flex;align-items:center;gap:8px}.kg-m b::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--kg-c)}
+.kg-m b{font:700 19px var(--f-display);text-transform:uppercase;letter-spacing:.03em}
+.kg-m span{font-size:13.5px;color:var(--muted);line-height:1.35}
+.kg-m:hover{border-color:var(--kg-c)}
+@media (max-width:520px){.kg-more{grid-template-columns:1fr}}

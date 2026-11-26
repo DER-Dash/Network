@@ -1512,6 +1512,52 @@ a.btn.fl-go{text-decoration:none;border-color:var(--zap);box-shadow:inset 4px 0 
 /* "All games": back to the Watts Up home page, with the other links (in the menu on phones during a shift) */
 .links .home-btn::before{content:"";width:10px;height:10px;margin-right:2px;background:conic-gradient(currentColor 0 0) 0 0/4px 4px,conic-gradient(currentColor 0 0) 6px 0/4px 4px,conic-gradient(currentColor 0 0) 0 6px/4px 4px,conic-gradient(currentColor 0 0) 6px 6px/4px 4px;background-repeat:no-repeat}
 html.kiosk .home-btn{display:none!important}
+
+/* ---------- Demo and display mode: "Also from Watts Up" slides for Fault Lines and Gatekeeper, at the end of each loop ---------- */
+.k-games{position:fixed;inset:0;z-index:60;cursor:pointer;color:#fff;background:radial-gradient(circle at 30% 40%,color-mix(in srgb,var(--wu-navy) 72%,#fff),var(--wu-navy) 70%);
+  --kg-sky:#cfe7f7;--kg-grass:#8fc27f;display:grid;place-items:center;padding:clamp(16px,4vw,56px);overflow:auto}
+.k-games[hidden]{display:none}
+.kg-s{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:clamp(20px,4vw,64px);align-items:center;width:min(1400px,100%)}
+.kg-s[hidden]{display:none}
+.kg-art svg{width:100%;height:auto;display:block;border-radius:28px;border:5px solid #FFD23F;box-shadow:0 20px 60px rgba(0,0,0,.35);background:var(--kg-sky)}
+.kg-eb{margin:0;font:700 clamp(13px,1.4vw,20px) var(--f-display);letter-spacing:.22em;text-transform:uppercase;color:#FFD23F}
+.kg-kind{margin:10px 0 0;font:700 clamp(14px,1.5vw,22px) var(--f-display);letter-spacing:.16em;text-transform:uppercase;color:var(--kg-c)}
+.kg-fl{--kg-c:#ff8a55}.kg-gk{--kg-c:#52b886}
+.kg-h{margin:4px 0 0;font:700 clamp(44px,7vw,110px)/.9 var(--f-display);text-transform:uppercase;letter-spacing:.01em;color:#fff}
+.kg-d{margin:clamp(12px,2vh,22px) 0 0;font-size:clamp(16px,1.6vw,24px);line-height:1.45;color:#d6deea;max-width:34em}
+.kg-f{margin:clamp(12px,2vh,22px) 0 0;padding:0;list-style:none;display:grid;gap:10px;font-size:clamp(15px,1.45vw,22px);color:#fff}
+.kg-f li{display:flex;gap:10px;align-items:flex-start}
+.kg-f li::before{content:"";flex:none;width:.8em;height:.8em;margin-top:.3em;border-radius:3px;background:var(--kg-c)}
+.kg-url{margin:clamp(14px,2.4vh,28px) 0 0;font:700 clamp(18px,2vw,30px) var(--f-display);letter-spacing:.02em;color:#c9d3e0}
+.kg-url b{color:#FFD23F}
+.kg-qr{position:fixed;right:clamp(12px,2.5vw,36px);bottom:clamp(14px,3vh,36px);display:flex;flex-direction:column;align-items:center;gap:6px;background:#fff;color:#0B1F3A;border:4px solid #FFD23F;border-radius:18px;padding:10px 10px 8px;font:700 13px var(--f-display);letter-spacing:.08em;text-transform:uppercase}
+.kg-qr img{width:clamp(90px,10vw,160px);height:auto;display:block}
+.kg-bar{position:fixed;left:0;right:0;bottom:0;height:5px;background:rgba(255,255,255,.12)}
+.kg-bar::after{content:"";position:absolute;inset:0;background:#FFD23F;transform-origin:left;transform:scaleX(0)}
+.k-games.kg-go .kg-bar::after{animation:kLoad var(--kg-ms,10000ms) linear both}
+.k-games.kg-go .kg-art{animation:kPop .8s cubic-bezier(.2,1.2,.4,1) both}
+.k-games.kg-go .kg-txt>*{animation:kUp .7s both}
+.k-games.kg-go .kg-txt>:nth-child(2){animation-delay:.1s}.k-games.kg-go .kg-txt>:nth-child(3){animation-delay:.2s}.k-games.kg-go .kg-txt>:nth-child(4){animation-delay:.35s}.k-games.kg-go .kg-txt>:nth-child(5){animation-delay:.5s}.k-games.kg-go .kg-txt>:nth-child(6){animation-delay:.65s}
+.kg-ol{stroke:#0B1F3A;stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+.kg-spin{animation:kgSpin 4.5s linear infinite}
+@keyframes kgSpin{to{transform:rotate(360deg)}}
+.kg-blink{animation:kgBlink 1.4s steps(2,jump-none) infinite}
+@keyframes kgBlink{50%{opacity:.25}}
+.kg-spark{transform-box:fill-box;transform-origin:center;animation:kgSpark 1.6s ease-in-out infinite}
+@keyframes kgSpark{0%,100%{transform:scale(.85)}50%{transform:scale(1.15)}}
+.kg-bob{animation:kgBob 3s ease-in-out infinite}
+@keyframes kgBob{50%{transform:translateY(-4px)}}
+@media (max-width:860px){.kg-s{grid-template-columns:1fr;gap:18px}.kg-art{max-width:520px}.kg-qr{display:none}}
+@media (prefers-reduced-motion:reduce){.k-games *{animation:none!important}.k-games .kg-bar::after{transform:none}}
+/* end of the tutorial: the other two games */
+.kg-more{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 4px}
+.kg-more .eyebrow{grid-column:1/-1;margin:0}
+.kg-m{display:flex;flex-direction:column;gap:3px;padding:12px 14px;border:1px solid var(--rule);border-radius:10px;background:var(--sunk);text-decoration:none;color:var(--ink)}
+.kg-m b{display:flex;align-items:center;gap:8px}.kg-m b::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--kg-c)}
+.kg-m b{font:700 19px var(--f-display);text-transform:uppercase;letter-spacing:.03em}
+.kg-m span{font-size:13.5px;color:var(--muted);line-height:1.35}
+.kg-m:hover{border-color:var(--kg-c)}
+@media (max-width:520px){.kg-more{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1638,6 +1684,110 @@ html.kiosk .home-btn{display:none!important}
 <div id="kIntro" class="k-intro" hidden><div class="k-in"><div class="wu-lock"><svg viewBox="0 0 100 100" role="img" aria-label="Watts Up"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg><div><b>Watts <span>Up</span></b></div></div><p class="k-t" id="kTitle"></p><p class="k-q">Can you keep the lights on?</p><i class="k-bar" aria-hidden="true"></i></div></div>
 <div id="tip" class="tip" role="dialog" aria-live="polite" hidden><span class="tk" id="tipK">Tip</span><p id="tipP"></p><div class="row"><button type="button" class="btn" id="tipSkip">Turn off tips</button><button type="button" class="btn primary" id="tipOk">Got it</button></div></div>
 
+<div id="kGames" class="k-games" hidden aria-live="polite"><section class="kg-s kg-fl" data-kg="fl" hidden><div class="kg-art"><svg viewBox="0 0 400 240" aria-hidden="true">
+            <rect width="400" height="240" fill="var(--kg-sky)"/>
+            <circle cx="60" cy="48" r="22" fill="#FFD23F" class="kg-ol"/>
+            <g class="kg-bob"><path d="M268 54c-2-14 18-20 26-10 6-12 26-10 28 4 12-2 16 14 4 16h-50c-9 0-12-6-8-10z" fill="#fff" class="kg-ol"/></g>
+            <!-- hills -->
+            <path d="M0 170 C80 150 140 160 200 166 C270 172 330 150 400 156 V240 H0Z" fill="var(--kg-grass)" class="kg-ol"/>
+            <path d="M0 200 C90 186 180 196 260 204 C320 210 360 198 400 200 V240 H0Z" fill="#6fae63"/>
+            <!-- line + poles -->
+            <path d="M0 84 Q50 96 100 86 Q170 76 220 88 Q280 100 330 86 Q370 78 400 84" fill="none" stroke="#0B1F3A" stroke-width="3"/>
+            <g class="kg-ol" fill="#9a6a45">
+              <rect x="94" y="80" width="10" height="92"/><rect x="214" y="84" width="10" height="88"/><rect x="324" y="80" width="10" height="84"/>
+            </g>
+            <g class="kg-ol"><path d="M82 84 H116 M202 88 H236 M312 84 H346"/></g>
+            <!-- section switch on a pole (square = remote) -->
+            <rect x="207" y="104" width="24" height="18" rx="3" fill="#fff" class="kg-ol"/>
+            <!-- FPI -->
+            <circle cx="99" cy="128" r="9" fill="#FFD23F" class="kg-ol kg-blink"/>
+            <!-- fault spark between poles -->
+            <g transform="translate(276 94)"><path class="kg-spark" d="M0 -26 L8 -6 L26 -10 L10 4 L20 22 L0 10 L-20 22 L-10 4 L-26 -10 L-8 -6Z" fill="#FFD23F" stroke="#dc5a24" stroke-width="3" stroke-linejoin="round"/></g>
+            <!-- crew van -->
+            <g transform="translate(20 170)">
+              <path d="M0 10 h92 l20 18 v20 h-112z" fill="#fff" class="kg-ol"/>
+              <rect x="0" y="30" width="112" height="8" fill="#FFD23F"/>
+              <path d="M92 10 l20 18 h-20z" fill="#bcdcf3" class="kg-ol"/>
+              <rect x="6" y="2" width="22" height="8" rx="3" fill="#FFC928" class="kg-ol"/>
+              <rect x="10" y="4" width="14" height="4" fill="#ff8a55" class="kg-blink"/>
+              <text x="42" y="26" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="12" fill="#0B1F3A" style="fill:#0B1F3A" letter-spacing=".5" textLength="46" lengthAdjust="spacingAndGlyphs">WATTS UP</text>
+              <circle cx="24" cy="50" r="10" fill="#0B1F3A" class="kg-ol"/><circle cx="90" cy="50" r="10" fill="#0B1F3A" class="kg-ol"/>
+              <circle cx="24" cy="50" r="4" fill="#ccd"/><circle cx="90" cy="50" r="4" fill="#ccd"/>
+            </g>
+            <!-- engineer pointing -->
+            <g transform="translate(300 150)">
+              <path d="M-16 66 v-34 c0-12 8-18 16-18 s16 6 16 18 v34z" fill="#ff8a55" class="kg-ol"/>
+              <path d="M-16 40 h32" stroke="#FFD23F" stroke-width="5"/>
+              <circle cx="0" cy="0" r="15" fill="#f2c39c" class="kg-ol"/>
+              <path d="M-18 -4 a18 16 0 0 1 36 0 h4 v5 h-44 v-5z" fill="#FFD23F" class="kg-ol"/>
+              <circle cx="-5" cy="4" r="2.5" fill="#0B1F3A"/><circle cx="5" cy="4" r="2.5" fill="#0B1F3A"/>
+              <path d="M-5 9 q5 4 10 0" fill="none" class="kg-ol" stroke-width="2"/>
+              <path d="M12 24 L34 -4" stroke="#ff8a55" stroke-width="10" stroke-linecap="round"/>
+              <path d="M12 24 L34 -4" class="kg-ol" stroke-width="2"/>
+              <circle cx="36" cy="-7" r="6" fill="#f2c39c" class="kg-ol"/>
+            </g>
+            <!-- clue bubble -->
+            <g transform="translate(130 22)">
+              <path d="M0 0 h84 a8 8 0 0 1 8 8 v20 a8 8 0 0 1 -8 8 h-50 l-10 10 v-10 h-24 a8 8 0 0 1 -8 -8 v-20 a8 8 0 0 1 8 -8z" fill="#fff" class="kg-ol"/>
+              <text x="42" y="24" text-anchor="middle" font-family="Barlow, sans-serif" font-weight="700" font-size="13" fill="#0B1F3A" style="fill:#0B1F3A">☎ No power!</text>
+            </g>
+          </svg></div><div class="kg-txt"><p class="kg-eb">Also from Watts Up</p><p class="kg-kind">Fault-finding puzzle</p><h2 class="kg-h">Fault Lines</h2><p class="kg-d">An 11 kV feeder has tripped and locked out. Read the clues (protection flags, fault passage indicators and customer calls), then open and close switches to find the faulted section in as few steps as you can.</p><ul class="kg-f"><li>A new puzzle every day, the same for everyone</li><li>A 30-puzzle career, from trainee to senior control engineer</li><li>Unlimited practice at easy, medium and hard</li></ul><p class="kg-url">wattsupelectricity.co.uk<b>/fault-lines</b></p></div></section><section class="kg-s kg-gk" data-kg="gk" hidden><div class="kg-art"><svg viewBox="0 0 400 240" aria-hidden="true">
+            <rect width="400" height="240" fill="var(--kg-sky)"/>
+            <circle cx="350" cy="44" r="20" fill="#FFD23F" class="kg-ol"/>
+            <path d="M0 176 C100 166 180 172 260 168 C320 165 360 170 400 168 V240 H0Z" fill="var(--kg-grass)" class="kg-ol"/>
+            <!-- the gate -->
+            <g>
+              <rect x="40" y="70" width="14" height="112" fill="#9a6a45" class="kg-ol"/>
+              <rect x="126" y="70" width="14" height="112" fill="#9a6a45" class="kg-ol"/>
+              <rect x="30" y="40" width="120" height="30" rx="6" fill="#0B1F3A" class="kg-ol"/>
+              <text x="90" y="61" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="17" fill="#FFD23F" style="fill:#FFD23F" letter-spacing="1.5" textLength="104" lengthAdjust="spacingAndGlyphs">CONNECTIONS</text>
+              <g class="kg-ol" fill="none"><path d="M54 92 H126 M54 120 H126 M54 148 H126 M64 92 V170 M90 92 V170 M116 92 V170"/></g>
+              <circle cx="122" cy="132" r="5" fill="#FFD23F" class="kg-ol"/>
+            </g>
+            <!-- gatekeeper with clipboard -->
+            <g transform="translate(24 132)"><g class="kg-bob">
+              <circle cx="0" cy="0" r="12" fill="#c98f66" class="kg-ol"/>
+              <path d="M-14 -3 a14 12 0 0 1 28 0 h3 v4 h-34 v-4z" fill="#fff" class="kg-ol"/>
+              <path d="M-12 46 v-26 c0-8 6-12 12-12 s12 4 12 12 v26z" fill="#2c8a57" class="kg-ol"/>
+              <rect x="6" y="18" width="14" height="18" rx="2" fill="#fff" class="kg-ol"/>
+            </g></g>
+            <!-- queue -->
+            <!-- solar panel -->
+            <g transform="translate(160 136)">
+              <path d="M0 22 l12 -22 h40 l-12 22z" fill="#2f5fa8" class="kg-ol"/>
+              <path d="M6 11 h40 M25 0 l-12 22 M39 0 l-12 22" stroke="#9cc3f0" stroke-width="2"/>
+              <path d="M16 22 v12 M36 22 v12" class="kg-ol"/>
+              <circle cx="20" cy="28" r="0"/>
+            </g>
+            <!-- wind turbine -->
+            <g transform="translate(236 72)">
+              <path d="M-3 100 L0 22 L3 100Z" fill="#fff" class="kg-ol"/>
+              <g transform="translate(0 22)"><g class="kg-spin kg-s3"><path d="M0 0 L-3 -30 Q0 -33 3 -30Z M0 0 L27 14 Q27 18 23 18Z M0 0 L-24 18 Q-27 15 -25 12Z" fill="#fff" class="kg-ol"/></g><circle r="5" fill="#FFD23F" class="kg-ol"/></g>
+            </g>
+            <!-- battery -->
+            <g transform="translate(262 130)">
+              <rect x="0" y="6" width="36" height="46" rx="6" fill="#a68bff" class="kg-ol"/>
+              <rect x="11" y="0" width="14" height="8" rx="2" fill="#a68bff" class="kg-ol"/>
+              <path d="M20 14 l-8 16 h7 l-3 14 10 -18 h-7z" fill="#FFD23F" class="kg-ol" stroke-width="2"/>
+            </g>
+            <!-- EV charger -->
+            <g transform="translate(308 124)">
+              <rect x="0" y="0" width="26" height="58" rx="6" fill="#e9eef7" class="kg-ol"/>
+              <rect x="5" y="8" width="16" height="12" rx="2" fill="#52b886" class="kg-ol"/>
+              <path d="M26 30 q14 0 14 14 v10" fill="none" class="kg-ol"/>
+            </g>
+            <!-- data centre -->
+            <g transform="translate(350 104)">
+              <rect x="0" y="0" width="44" height="78" rx="4" fill="#3a4a66" class="kg-ol"/>
+              <g fill="#52b886"><rect x="8" y="10" width="28" height="5" class="kg-blink"/><rect x="8" y="24" width="28" height="5"/><rect x="8" y="38" width="28" height="5" class="kg-blink"/><rect x="8" y="52" width="28" height="5"/></g>
+            </g>
+            <!-- waiting dots -->
+            <g fill="#0B1F3A"><circle cx="188" cy="128" r="3"/><circle cx="182" cy="121" r="3.5"/></g>
+            <g transform="translate(140 84)">
+              <path d="M0 0 h64 a6 6 0 0 1 6 6 v14 a6 6 0 0 1 -6 6 h-64 a6 6 0 0 1 -6 -6 v-14 a6 6 0 0 1 6 -6z" fill="#fff" class="kg-ol"/>
+              <text x="32" y="18" text-anchor="middle" font-family="Barlow, sans-serif" font-weight="700" font-size="12" fill="#0B1F3A" style="fill:#0B1F3A">Me next?</text>
+            </g>
+          </svg></div><div class="kg-txt"><p class="kg-eb">Also from Watts Up</p><p class="kg-kind">Ten-year planning game</p><h2 class="kg-h">Gatekeeper</h2><p class="kg-d">Ten years as Blackout Canyon's connections and planning engineer. Solar farms, batteries, EV hubs and data centres all want a connection. Offer firm or flexible terms, reinforce the network or say not yet.</p><ul class="kg-f"><li>A report card each year on connections, security, curtailment and cost</li><li>Queue reform, cold winters, storms and a big customer who pulls out</li><li>Build a network, then run it in Losing Control</li></ul><p class="kg-url">wattsupelectricity.co.uk<b>/gatekeeper</b></p></div></section><aside class="kg-qr"><img src="../brand/watts-up-qr.svg" alt="QR code for wattsupelectricity.co.uk" width="160" height="160"><span>Scan to play all three</span></aside><i class="kg-bar" aria-hidden="true"></i></div>
 <div id="cookie" class="cookie" role="dialog" aria-label="Cookies" hidden><p>Can we use Google Analytics cookies to count how many people play and how games go? Nothing is used for advertising.</p><div class="row"><button type="button" class="btn" id="cookieNo">No thanks</button><button type="button" class="btn primary" id="cookieYes">Accept</button></div></div>
 
 <div id="overlay" class="overlay"><div class="sheet" id="sheet"></div></div>
@@ -4128,6 +4278,13 @@ function tutStart(auto,kiosk){speed=1;document.querySelectorAll('[data-speed]').
   const m0=mode;mode='free';newGame('tut');mode=m0;
   S.silent=true;while(S.t<930)step();S.silent=false;S.log=[];S.full=[];S.marks=[];S.alarms={};S.cust={ci:0,cml:0,si:0,off:{},pri:0,pmin:{}};S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.ens=0;S.peakL=0;queued=[];
   logE(S.t,'Tutorial: Cold Thursday, 15:30. The evening peak is building.','info');S.tut={i:-1,auto:!!auto||!!kiosk,kiosk:!!kiosk,shown:0,acted:false,doneAt:0};kioskLayout(!!kiosk);if(kiosk){tutRepeat=true;keepAwake(true);const ck=$('cookie');if(ck)ck.hidden=true;}hideTip();begin();tutGo(0);track('tutorial_start',{auto:!!auto,kiosk:!!kiosk});}
+// Demo and display mode: at the end of each loop, a slide each for Fault Lines and Gatekeeper ("Also from Watts Up"), then on
+let kgTimer=0,kgI=-1,kgThen=null;
+function kgShow(then){kgThen=then;kgGo(0);}
+function kgGo(i){const el=$('kGames');if(!el){kgEnd();return;}const ss=[...el.querySelectorAll('.kg-s')];if(i>=ss.length){kgEnd();return;}
+  kgI=i;el.hidden=false;ss.forEach((x,j)=>{x.hidden=j!==i;});el.classList.remove('kg-go');void el.offsetWidth;el.classList.add('kg-go');
+  const ms=KIOSK()?13000:10000;el.style.setProperty('--kg-ms',ms+'ms');clearTimeout(kgTimer);kgTimer=setTimeout(()=>kgGo(i+1),ms);}
+function kgEnd(){clearTimeout(kgTimer);const el=$('kGames');if(el){el.hidden=true;el.classList.remove('kg-go');}const t=kgThen;kgThen=null;kgI=-1;if(t)t();}
 // Display mode: brand card between demo loops
 let introTimer=0;
 function kioskIntro(){const el=$('kIntro');el.classList.remove('splash','out');el.hidden=false;el.classList.remove('go');void el.offsetWidth;el.classList.add('go');
@@ -4170,7 +4327,7 @@ function tutTick(now){const T=S&&S.tut;if(!T||S.ended)return;const st=TUT[T.i];i
     else if(T.auto&&!T.acted&&now-T.shown>PACE().wait)tutAct();
     else if(T.acted&&!st.press&&!S.op&&!crewFor(st.k)&&now-(T.actAt||0)>PACE().op+2500&&!st.done())T.acted=false;}
   else if(T.auto&&T.i<TUT.length-1&&now-T.shown>readMs(st))tutGo(T.i+1);
-  else if(T.auto&&T.i===TUT.length-1&&tutRepeat&&now-T.shown>Math.max(9000,readMs(st))){if(T.kiosk){if(!T.intro){T.intro=true;kioskIntro();}}else tutStart(true,false);return;}
+  else if(T.auto&&T.i===TUT.length-1&&tutRepeat&&now-T.shown>Math.max(9000,readMs(st))){if(!T.intro){T.intro=true;kgShow(T.kiosk?kioskIntro:()=>{if(S&&S.tut&&S.tut.auto)tutStart(true,false);});}return;}
   renderCoach(false);}
 let lastCoach='';
 let coachStep=-1,coachPos=-1,coachIn=0;
@@ -4214,6 +4371,7 @@ function placeCoach(el,st,fresh){const W=innerWidth,H=innerHeight,w=el.offsetWid
 function tutDone(){if(!S)return;S.tut=null;S.ended=true;S.running=false;S.paused=true;renderCoach(true);track('tutorial_done',{});
   $('sheet').innerHTML=`${BAND}<p class="eyebrow">Tutorial</p><h2>You're ready for the control room</h2>
     <ul class="rules"><li>▲ ▼ turn generation and flexibility up or down now; arming it makes it switch in by itself when a transformer overloads.</li><li>Remote breakers (squares) operate in a minute; manual switches (circles) need a field crew.</li><li>Different grid supply (Watts This, Volt Face): open the old route first, then close the new one.</li><li>Same grid supply (Ampy Place): close the new route, then open the old one within ${PAR_MAX} minutes.</li><li>Restore customers inside 3 minutes and it only counts as a short interruption.</li><li>Keep the next-loss check green before things go wrong.</li></ul>
+    <div class="kg-more"><p class="eyebrow">Also from Watts Up</p><a class="kg-m kg-fl" href="../fault-lines/" target="_top"><b>Fault Lines</b><span>Find the fault on an 11 kV feeder. A new puzzle every day.</span></a><a class="kg-m kg-gk" href="../gatekeeper/" target="_top"><b>Gatekeeper</b><span>Ten years deciding who gets connected to Blackout Canyon.</span></a></div>
     <div class="go"><button type="button" class="btn" data-tut="again">Replay the demo</button><span style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" data-tut="menu">Start screen</button><button type="button" class="btn primary big" data-tut="career">Start my career</button></span></div>`;
   $('overlay').hidden=false;}
 function tutClick(a){
@@ -4224,7 +4382,7 @@ function tutClick(a){
   if(a==='next'&&S.tut){tutGo(S.tut.i+1);return;}
   if(a==='show'&&S.tut){tutAct();return;}
   if(a==='mode'&&S.tut){const T=S.tut,st=TUT[T.i];T.auto=!T.auto;T.shown=performance.now();T.acted=false;T.pressing=false;if(st&&st.t==='act'&&st.done()){T.doneAt=performance.now();S.paused=!T.auto;}renderCoach(true);return;}
-  if(a==='exit'||a==='menu'){keepAwake(false);kioskLayout(false);S.tut=null;renderCoach(true);S.running=false;S.paused=true;newGame(chosen);startSheet();return;}
+  if(a==='exit'||a==='menu'){kgThen=null;kgEnd();keepAwake(false);kioskLayout(false);S.tut=null;renderCoach(true);S.running=false;S.paused=true;newGame(chosen);startSheet();return;}
   if(a==='career'){kioskLayout(false);S.tut=null;renderCoach(true);mode='career';ls('mode',mode);const c=career();chosen=CAREER.find(k=>unlockedK(c,k)&&!(c.stars[k]>=1))||CAREER[0];ls('day',chosen);newGame(chosen);startSheet();return;}}
 
 /* ---------- Start sheet ---------- */
@@ -4580,6 +4738,7 @@ function applyZoom(){const svg=$('mimic');if(!svg)return;if(!svg.dataset.vb)svg.
 function begin(){ls('played','1');$('overlay').hidden=true;hideHO();S.running=true;S.paused=false;acc=0;audio();if(MUS.on&&!MUS.timer)setMusic(true);track('shift_start',{scenario:S.key,mode:S.mode});render(true);}
 document.addEventListener('click',e=>{
   if(e.target.closest('#kIntro')){endIntro();return;}
+  if(e.target.closest('#kGames')){kgGo(kgI+1);return;}
   {const fd=e.target.closest('[data-find]');if(fd){openFind(fd.dataset.find);return;}if(e.target.id==='findClose'){closeFind(null);return;}}
   const adj=e.target.closest('[data-adj]');if(adj){nudge(adj.dataset.adj,+adj.dataset.d);return;}
   {const nb=e.target.closest('[data-noop]');if(nb){const s=nb.closest('.qp')&&nb.closest('.qp').querySelector('.qp-s');if(s){s.classList.add('noop-msg');const st=s.querySelector('.qp-st');if(st)st.textContent=`Already ${nb.dataset.noop}: no change`;}else{const o=nb.textContent;nb.textContent=`Already ${nb.dataset.noop}`;nb.classList.add('noop-now');setTimeout(()=>{if(nb.isConnected){nb.textContent=o;nb.classList.remove('noop-now');}},1600);}play('click');return;}}

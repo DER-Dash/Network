@@ -2433,6 +2433,13 @@ function tutStart(auto,kiosk){speed=1;document.querySelectorAll('[data-speed]').
   const m0=mode;mode='free';newGame('tut');mode=m0;
   S.silent=true;while(S.t<930)step();S.silent=false;S.log=[];S.full=[];S.marks=[];S.alarms={};S.cust={ci:0,cml:0,si:0,off:{},pri:0,pmin:{}};S.cost={arm:0,use:0,short:0,curt:0,gen:0};S.insecureMin=0;S.overloadMin=0;S.ens=0;S.peakL=0;queued=[];
   logE(S.t,'Tutorial: Cold Thursday, 15:30. The evening peak is building.','info');S.tut={i:-1,auto:!!auto||!!kiosk,kiosk:!!kiosk,shown:0,acted:false,doneAt:0};kioskLayout(!!kiosk);if(kiosk){tutRepeat=true;keepAwake(true);const ck=$('cookie');if(ck)ck.hidden=true;}hideTip();begin();tutGo(0);track('tutorial_start',{auto:!!auto,kiosk:!!kiosk});}
+// Demo and display mode: at the end of each loop, a slide each for Fault Lines and Gatekeeper ("Also from Watts Up"), then on
+let kgTimer=0,kgI=-1,kgThen=null;
+function kgShow(then){kgThen=then;kgGo(0);}
+function kgGo(i){const el=$('kGames');if(!el){kgEnd();return;}const ss=[...el.querySelectorAll('.kg-s')];if(i>=ss.length){kgEnd();return;}
+  kgI=i;el.hidden=false;ss.forEach((x,j)=>{x.hidden=j!==i;});el.classList.remove('kg-go');void el.offsetWidth;el.classList.add('kg-go');
+  const ms=KIOSK()?13000:10000;el.style.setProperty('--kg-ms',ms+'ms');clearTimeout(kgTimer);kgTimer=setTimeout(()=>kgGo(i+1),ms);}
+function kgEnd(){clearTimeout(kgTimer);const el=$('kGames');if(el){el.hidden=true;el.classList.remove('kg-go');}const t=kgThen;kgThen=null;kgI=-1;if(t)t();}
 // Display mode: brand card between demo loops
 let introTimer=0;
 function kioskIntro(){const el=$('kIntro');el.classList.remove('splash','out');el.hidden=false;el.classList.remove('go');void el.offsetWidth;el.classList.add('go');
@@ -2475,7 +2482,7 @@ function tutTick(now){const T=S&&S.tut;if(!T||S.ended)return;const st=TUT[T.i];i
     else if(T.auto&&!T.acted&&now-T.shown>PACE().wait)tutAct();
     else if(T.acted&&!st.press&&!S.op&&!crewFor(st.k)&&now-(T.actAt||0)>PACE().op+2500&&!st.done())T.acted=false;}
   else if(T.auto&&T.i<TUT.length-1&&now-T.shown>readMs(st))tutGo(T.i+1);
-  else if(T.auto&&T.i===TUT.length-1&&tutRepeat&&now-T.shown>Math.max(9000,readMs(st))){if(T.kiosk){if(!T.intro){T.intro=true;kioskIntro();}}else tutStart(true,false);return;}
+  else if(T.auto&&T.i===TUT.length-1&&tutRepeat&&now-T.shown>Math.max(9000,readMs(st))){if(!T.intro){T.intro=true;kgShow(T.kiosk?kioskIntro:()=>{if(S&&S.tut&&S.tut.auto)tutStart(true,false);});}return;}
   renderCoach(false);}
 let lastCoach='';
 let coachStep=-1,coachPos=-1,coachIn=0;
@@ -2519,6 +2526,7 @@ function placeCoach(el,st,fresh){const W=innerWidth,H=innerHeight,w=el.offsetWid
 function tutDone(){if(!S)return;S.tut=null;S.ended=true;S.running=false;S.paused=true;renderCoach(true);track('tutorial_done',{});
   $('sheet').innerHTML=`${BAND}<p class="eyebrow">Tutorial</p><h2>You're ready for the control room</h2>
     <ul class="rules"><li>▲ ▼ turn generation and flexibility up or down now; arming it makes it switch in by itself when a transformer overloads.</li><li>Remote breakers (squares) operate in a minute; manual switches (circles) need a field crew.</li><li>Different grid supply (Watts This, Volt Face): open the old route first, then close the new one.</li><li>Same grid supply (Ampy Place): close the new route, then open the old one within ${PAR_MAX} minutes.</li><li>Restore customers inside 3 minutes and it only counts as a short interruption.</li><li>Keep the next-loss check green before things go wrong.</li></ul>
+    <div class="kg-more"><p class="eyebrow">Also from Watts Up</p><a class="kg-m kg-fl" href="../fault-lines/" target="_top"><b>Fault Lines</b><span>Find the fault on an 11 kV feeder. A new puzzle every day.</span></a><a class="kg-m kg-gk" href="../gatekeeper/" target="_top"><b>Gatekeeper</b><span>Ten years deciding who gets connected to Blackout Canyon.</span></a></div>
     <div class="go"><button type="button" class="btn" data-tut="again">Replay the demo</button><span style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" data-tut="menu">Start screen</button><button type="button" class="btn primary big" data-tut="career">Start my career</button></span></div>`;
   $('overlay').hidden=false;}
 function tutClick(a){
@@ -2529,7 +2537,7 @@ function tutClick(a){
   if(a==='next'&&S.tut){tutGo(S.tut.i+1);return;}
   if(a==='show'&&S.tut){tutAct();return;}
   if(a==='mode'&&S.tut){const T=S.tut,st=TUT[T.i];T.auto=!T.auto;T.shown=performance.now();T.acted=false;T.pressing=false;if(st&&st.t==='act'&&st.done()){T.doneAt=performance.now();S.paused=!T.auto;}renderCoach(true);return;}
-  if(a==='exit'||a==='menu'){keepAwake(false);kioskLayout(false);S.tut=null;renderCoach(true);S.running=false;S.paused=true;newGame(chosen);startSheet();return;}
+  if(a==='exit'||a==='menu'){kgThen=null;kgEnd();keepAwake(false);kioskLayout(false);S.tut=null;renderCoach(true);S.running=false;S.paused=true;newGame(chosen);startSheet();return;}
   if(a==='career'){kioskLayout(false);S.tut=null;renderCoach(true);mode='career';ls('mode',mode);const c=career();chosen=CAREER.find(k=>unlockedK(c,k)&&!(c.stars[k]>=1))||CAREER[0];ls('day',chosen);newGame(chosen);startSheet();return;}}
 
 /* ---------- Start sheet ---------- */
@@ -2885,6 +2893,7 @@ function applyZoom(){const svg=$('mimic');if(!svg)return;if(!svg.dataset.vb)svg.
 function begin(){ls('played','1');$('overlay').hidden=true;hideHO();S.running=true;S.paused=false;acc=0;audio();if(MUS.on&&!MUS.timer)setMusic(true);track('shift_start',{scenario:S.key,mode:S.mode});render(true);}
 document.addEventListener('click',e=>{
   if(e.target.closest('#kIntro')){endIntro();return;}
+  if(e.target.closest('#kGames')){kgGo(kgI+1);return;}
   {const fd=e.target.closest('[data-find]');if(fd){openFind(fd.dataset.find);return;}if(e.target.id==='findClose'){closeFind(null);return;}}
   const adj=e.target.closest('[data-adj]');if(adj){nudge(adj.dataset.adj,+adj.dataset.d);return;}
   {const nb=e.target.closest('[data-noop]');if(nb){const s=nb.closest('.qp')&&nb.closest('.qp').querySelector('.qp-s');if(s){s.classList.add('noop-msg');const st=s.querySelector('.qp-st');if(st)st.textContent=`Already ${nb.dataset.noop}: no change`;}else{const o=nb.textContent;nb.textContent=`Already ${nb.dataset.noop}`;nb.classList.add('noop-now');setTimeout(()=>{if(nb.isConnected){nb.textContent=o;nb.classList.remove('noop-now');}},1600);}play('click');return;}}

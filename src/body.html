@@ -121,6 +121,110 @@
 <div id="kIntro" class="k-intro" hidden><div class="k-in"><div class="wu-lock"><svg viewBox="0 0 100 100" role="img" aria-label="Watts Up"><rect width="100" height="100" rx="22" fill="#0B1F3A"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg><div><b>Watts <span>Up</span></b></div></div><p class="k-t" id="kTitle"></p><p class="k-q">Can you keep the lights on?</p><i class="k-bar" aria-hidden="true"></i></div></div>
 <div id="tip" class="tip" role="dialog" aria-live="polite" hidden><span class="tk" id="tipK">Tip</span><p id="tipP"></p><div class="row"><button type="button" class="btn" id="tipSkip">Turn off tips</button><button type="button" class="btn primary" id="tipOk">Got it</button></div></div>
 
+<div id="kGames" class="k-games" hidden aria-live="polite"><section class="kg-s kg-fl" data-kg="fl" hidden><div class="kg-art"><svg viewBox="0 0 400 240" aria-hidden="true">
+            <rect width="400" height="240" fill="var(--kg-sky)"/>
+            <circle cx="60" cy="48" r="22" fill="#FFD23F" class="kg-ol"/>
+            <g class="kg-bob"><path d="M268 54c-2-14 18-20 26-10 6-12 26-10 28 4 12-2 16 14 4 16h-50c-9 0-12-6-8-10z" fill="#fff" class="kg-ol"/></g>
+            <!-- hills -->
+            <path d="M0 170 C80 150 140 160 200 166 C270 172 330 150 400 156 V240 H0Z" fill="var(--kg-grass)" class="kg-ol"/>
+            <path d="M0 200 C90 186 180 196 260 204 C320 210 360 198 400 200 V240 H0Z" fill="#6fae63"/>
+            <!-- line + poles -->
+            <path d="M0 84 Q50 96 100 86 Q170 76 220 88 Q280 100 330 86 Q370 78 400 84" fill="none" stroke="#0B1F3A" stroke-width="3"/>
+            <g class="kg-ol" fill="#9a6a45">
+              <rect x="94" y="80" width="10" height="92"/><rect x="214" y="84" width="10" height="88"/><rect x="324" y="80" width="10" height="84"/>
+            </g>
+            <g class="kg-ol"><path d="M82 84 H116 M202 88 H236 M312 84 H346"/></g>
+            <!-- section switch on a pole (square = remote) -->
+            <rect x="207" y="104" width="24" height="18" rx="3" fill="#fff" class="kg-ol"/>
+            <!-- FPI -->
+            <circle cx="99" cy="128" r="9" fill="#FFD23F" class="kg-ol kg-blink"/>
+            <!-- fault spark between poles -->
+            <g transform="translate(276 94)"><path class="kg-spark" d="M0 -26 L8 -6 L26 -10 L10 4 L20 22 L0 10 L-20 22 L-10 4 L-26 -10 L-8 -6Z" fill="#FFD23F" stroke="#dc5a24" stroke-width="3" stroke-linejoin="round"/></g>
+            <!-- crew van -->
+            <g transform="translate(20 170)">
+              <path d="M0 10 h92 l20 18 v20 h-112z" fill="#fff" class="kg-ol"/>
+              <rect x="0" y="30" width="112" height="8" fill="#FFD23F"/>
+              <path d="M92 10 l20 18 h-20z" fill="#bcdcf3" class="kg-ol"/>
+              <rect x="6" y="2" width="22" height="8" rx="3" fill="#FFC928" class="kg-ol"/>
+              <rect x="10" y="4" width="14" height="4" fill="#ff8a55" class="kg-blink"/>
+              <text x="42" y="26" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="12" fill="#0B1F3A" style="fill:#0B1F3A" letter-spacing=".5" textLength="46" lengthAdjust="spacingAndGlyphs">WATTS UP</text>
+              <circle cx="24" cy="50" r="10" fill="#0B1F3A" class="kg-ol"/><circle cx="90" cy="50" r="10" fill="#0B1F3A" class="kg-ol"/>
+              <circle cx="24" cy="50" r="4" fill="#ccd"/><circle cx="90" cy="50" r="4" fill="#ccd"/>
+            </g>
+            <!-- engineer pointing -->
+            <g transform="translate(300 150)">
+              <path d="M-16 66 v-34 c0-12 8-18 16-18 s16 6 16 18 v34z" fill="#ff8a55" class="kg-ol"/>
+              <path d="M-16 40 h32" stroke="#FFD23F" stroke-width="5"/>
+              <circle cx="0" cy="0" r="15" fill="#f2c39c" class="kg-ol"/>
+              <path d="M-18 -4 a18 16 0 0 1 36 0 h4 v5 h-44 v-5z" fill="#FFD23F" class="kg-ol"/>
+              <circle cx="-5" cy="4" r="2.5" fill="#0B1F3A"/><circle cx="5" cy="4" r="2.5" fill="#0B1F3A"/>
+              <path d="M-5 9 q5 4 10 0" fill="none" class="kg-ol" stroke-width="2"/>
+              <path d="M12 24 L34 -4" stroke="#ff8a55" stroke-width="10" stroke-linecap="round"/>
+              <path d="M12 24 L34 -4" class="kg-ol" stroke-width="2"/>
+              <circle cx="36" cy="-7" r="6" fill="#f2c39c" class="kg-ol"/>
+            </g>
+            <!-- clue bubble -->
+            <g transform="translate(130 22)">
+              <path d="M0 0 h84 a8 8 0 0 1 8 8 v20 a8 8 0 0 1 -8 8 h-50 l-10 10 v-10 h-24 a8 8 0 0 1 -8 -8 v-20 a8 8 0 0 1 8 -8z" fill="#fff" class="kg-ol"/>
+              <text x="42" y="24" text-anchor="middle" font-family="Barlow, sans-serif" font-weight="700" font-size="13" fill="#0B1F3A" style="fill:#0B1F3A">☎ No power!</text>
+            </g>
+          </svg></div><div class="kg-txt"><p class="kg-eb">Also from Watts Up</p><p class="kg-kind">Fault-finding puzzle</p><h2 class="kg-h">Fault Lines</h2><p class="kg-d">An 11 kV feeder has tripped and locked out. Read the clues (protection flags, fault passage indicators and customer calls), then open and close switches to find the faulted section in as few steps as you can.</p><ul class="kg-f"><li>A new puzzle every day, the same for everyone</li><li>A 30-puzzle career, from trainee to senior control engineer</li><li>Unlimited practice at easy, medium and hard</li></ul><p class="kg-url">wattsupelectricity.co.uk<b>/fault-lines</b></p></div></section><section class="kg-s kg-gk" data-kg="gk" hidden><div class="kg-art"><svg viewBox="0 0 400 240" aria-hidden="true">
+            <rect width="400" height="240" fill="var(--kg-sky)"/>
+            <circle cx="350" cy="44" r="20" fill="#FFD23F" class="kg-ol"/>
+            <path d="M0 176 C100 166 180 172 260 168 C320 165 360 170 400 168 V240 H0Z" fill="var(--kg-grass)" class="kg-ol"/>
+            <!-- the gate -->
+            <g>
+              <rect x="40" y="70" width="14" height="112" fill="#9a6a45" class="kg-ol"/>
+              <rect x="126" y="70" width="14" height="112" fill="#9a6a45" class="kg-ol"/>
+              <rect x="30" y="40" width="120" height="30" rx="6" fill="#0B1F3A" class="kg-ol"/>
+              <text x="90" y="61" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="17" fill="#FFD23F" style="fill:#FFD23F" letter-spacing="1.5" textLength="104" lengthAdjust="spacingAndGlyphs">CONNECTIONS</text>
+              <g class="kg-ol" fill="none"><path d="M54 92 H126 M54 120 H126 M54 148 H126 M64 92 V170 M90 92 V170 M116 92 V170"/></g>
+              <circle cx="122" cy="132" r="5" fill="#FFD23F" class="kg-ol"/>
+            </g>
+            <!-- gatekeeper with clipboard -->
+            <g transform="translate(24 132)"><g class="kg-bob">
+              <circle cx="0" cy="0" r="12" fill="#c98f66" class="kg-ol"/>
+              <path d="M-14 -3 a14 12 0 0 1 28 0 h3 v4 h-34 v-4z" fill="#fff" class="kg-ol"/>
+              <path d="M-12 46 v-26 c0-8 6-12 12-12 s12 4 12 12 v26z" fill="#2c8a57" class="kg-ol"/>
+              <rect x="6" y="18" width="14" height="18" rx="2" fill="#fff" class="kg-ol"/>
+            </g></g>
+            <!-- queue -->
+            <!-- solar panel -->
+            <g transform="translate(160 136)">
+              <path d="M0 22 l12 -22 h40 l-12 22z" fill="#2f5fa8" class="kg-ol"/>
+              <path d="M6 11 h40 M25 0 l-12 22 M39 0 l-12 22" stroke="#9cc3f0" stroke-width="2"/>
+              <path d="M16 22 v12 M36 22 v12" class="kg-ol"/>
+              <circle cx="20" cy="28" r="0"/>
+            </g>
+            <!-- wind turbine -->
+            <g transform="translate(236 72)">
+              <path d="M-3 100 L0 22 L3 100Z" fill="#fff" class="kg-ol"/>
+              <g transform="translate(0 22)"><g class="kg-spin kg-s3"><path d="M0 0 L-3 -30 Q0 -33 3 -30Z M0 0 L27 14 Q27 18 23 18Z M0 0 L-24 18 Q-27 15 -25 12Z" fill="#fff" class="kg-ol"/></g><circle r="5" fill="#FFD23F" class="kg-ol"/></g>
+            </g>
+            <!-- battery -->
+            <g transform="translate(262 130)">
+              <rect x="0" y="6" width="36" height="46" rx="6" fill="#a68bff" class="kg-ol"/>
+              <rect x="11" y="0" width="14" height="8" rx="2" fill="#a68bff" class="kg-ol"/>
+              <path d="M20 14 l-8 16 h7 l-3 14 10 -18 h-7z" fill="#FFD23F" class="kg-ol" stroke-width="2"/>
+            </g>
+            <!-- EV charger -->
+            <g transform="translate(308 124)">
+              <rect x="0" y="0" width="26" height="58" rx="6" fill="#e9eef7" class="kg-ol"/>
+              <rect x="5" y="8" width="16" height="12" rx="2" fill="#52b886" class="kg-ol"/>
+              <path d="M26 30 q14 0 14 14 v10" fill="none" class="kg-ol"/>
+            </g>
+            <!-- data centre -->
+            <g transform="translate(350 104)">
+              <rect x="0" y="0" width="44" height="78" rx="4" fill="#3a4a66" class="kg-ol"/>
+              <g fill="#52b886"><rect x="8" y="10" width="28" height="5" class="kg-blink"/><rect x="8" y="24" width="28" height="5"/><rect x="8" y="38" width="28" height="5" class="kg-blink"/><rect x="8" y="52" width="28" height="5"/></g>
+            </g>
+            <!-- waiting dots -->
+            <g fill="#0B1F3A"><circle cx="188" cy="128" r="3"/><circle cx="182" cy="121" r="3.5"/></g>
+            <g transform="translate(140 84)">
+              <path d="M0 0 h64 a6 6 0 0 1 6 6 v14 a6 6 0 0 1 -6 6 h-64 a6 6 0 0 1 -6 -6 v-14 a6 6 0 0 1 6 -6z" fill="#fff" class="kg-ol"/>
+              <text x="32" y="18" text-anchor="middle" font-family="Barlow, sans-serif" font-weight="700" font-size="12" fill="#0B1F3A" style="fill:#0B1F3A">Me next?</text>
+            </g>
+          </svg></div><div class="kg-txt"><p class="kg-eb">Also from Watts Up</p><p class="kg-kind">Ten-year planning game</p><h2 class="kg-h">Gatekeeper</h2><p class="kg-d">Ten years as Blackout Canyon's connections and planning engineer. Solar farms, batteries, EV hubs and data centres all want a connection. Offer firm or flexible terms, reinforce the network or say not yet.</p><ul class="kg-f"><li>A report card each year on connections, security, curtailment and cost</li><li>Queue reform, cold winters, storms and a big customer who pulls out</li><li>Build a network, then run it in Losing Control</li></ul><p class="kg-url">wattsupelectricity.co.uk<b>/gatekeeper</b></p></div></section><aside class="kg-qr"><img src="../brand/watts-up-qr.svg" alt="QR code for wattsupelectricity.co.uk" width="160" height="160"><span>Scan to play all three</span></aside><i class="kg-bar" aria-hidden="true"></i></div>
 <div id="cookie" class="cookie" role="dialog" aria-label="Cookies" hidden><p>Can we use Google Analytics cookies to count how many people play and how games go? Nothing is used for advertising.</p><div class="row"><button type="button" class="btn" id="cookieNo">No thanks</button><button type="button" class="btn primary" id="cookieYes">Accept</button></div></div>
 
 <div id="overlay" class="overlay"><div class="sheet" id="sheet"></div></div>
