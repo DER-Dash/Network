@@ -64,7 +64,7 @@ def bundle():
         f=os.path.join(ROOT,'build',src)
         if not os.path.exists(f):print('skip',src,'(run src/build.py)');continue
         t=open(f,encoding='utf-8').read()
-        old="const modeHref=g=>location.pathname+(g==='fc'?'?mode=gen':'');"
+        old="const modeHref=g=>g==='fc'?'../generation/':location.pathname;"
         assert old in t;t=t.replace(old,"const modeHref=g=>g==='fc'?'generation.html':'index.html';")
         t=t.replace("const GK_URL='../gatekeeper/';","const GK_URL='../index.html';").replace('href="../fault-lines/"','href="https://www.wattsupelectricity.co.uk/fault-lines/"')
         open(os.path.join(P,'control-room',dst),'w',encoding='utf-8').write(t)

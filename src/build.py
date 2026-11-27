@@ -5,10 +5,9 @@
 
 Writes, relative to the repository root:
   control-room/index.html   the game (GitHub Pages): control room shifts, and the
-                            generation shifts at control-room/?mode=gen
-  index.html                redirect: the main address opens the game
-  generation/index.html     redirect: old generation links and installed apps open
-                            the generation shifts
+                            generation shifts link to /generation/ (src/gen)
+  index.html                the Watts Up games home page
+  generation/index.html     the generation shifts (src/gen, built by gen/build.py)
   build/control-room.html   standalone copies with the test hook window.__fc,
   build/generation.html     used by the tests in src/tests and for previews
 
@@ -120,7 +119,8 @@ def redirect(target,title):
 wr('index.html',rd(os.path.join('home','home.html')))
 # The demo to send to people: /demo/ opens Losing Control's demo once (?watch), then the Fault Lines and Gatekeeper slides
 wr('demo/index.html',rd(os.path.join('home','demo.html')))
-wr('generation/index.html',redirect('../control-room/?mode=gen','Losing Control · Generation'))
+# The generation shifts: their own page at /generation/ (src/gen), on the Storm Day screen. ?mode=gen on the game redirects there.
+exec(open(os.path.join(HERE,'gen','build.py'),encoding='utf-8').read(),{'__file__':os.path.join(HERE,'gen','build.py'),'__name__':'gen_build'})
 
 # ---- Fault Lines: the fault-finding puzzle, its own page at /fault-lines/ (sources in src/fault-lines) ----
 def fault_lines(test):

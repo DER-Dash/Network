@@ -1855,7 +1855,10 @@ const FORCE_GAME='';
 const GAME=FORCE_GAME||(/[?&]mode=gen(&|$)/.test(location.search)?'fc':'cr');
 const CR_URL='https://www.wattsupelectricity.co.uk/control-room/',FC_URL=CR_URL+'?mode=gen';
 // switching between control room and generation shifts stays on this page (same address, works offline too)
-const modeHref=g=>location.pathname+(g==='fc'?'?mode=gen':'');
+// Since Nov 2026 the generation shifts are their own page at /generation/ (src/gen), played on the Storm Day screen.
+// ?mode=gen still opens them (old links and installed apps); the 'fc' code here is kept for the test copies only.
+const modeHref=g=>g==='fc'?'../generation/':location.pathname;
+if(GAME==='fc'&&!FORCE_GAME){location.replace(/(^|#)gk\b/.test(location.hash)?location.pathname+'#gk':'../generation/');return;}
 const CFG=GAME==='fc'?{start:300,end:1380,rate:2.25,pre:'fcg-',salt:'fcg1',def:'may',tag:'Generation',docTitle:'Losing Control · Generation',site:FC_URL,
     band:'Generation · keeping Blackout Canyon inside firm capacity. Mostly.',eyebrow:'Generation · Blackout Canyon 33 kV',h2:'Keep Blackout Canyon inside firm capacity',
     board:'Generation',share:'Losing Control',other:{url:CR_URL,hdr:'Control room shifts →',foot:'Play the control room shifts',

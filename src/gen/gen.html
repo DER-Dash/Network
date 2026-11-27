@@ -1,0 +1,788 @@
+<!doctype html>
+<!-- © 2026 Steve Backhouse. All rights reserved. Not open source: see https://github.com/DER-Dash/Network/blob/main/LICENSE -->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Losing Control · Generation</title>
+<meta name="theme-color" content="#0B1F3A">
+%%META%%<style>
+%%FONTS%%
+%%STORMCSS%%
+/* ---------- Generation shifts (the web edition): the Storm Day screen, plus a menu with three days, career, today's challenge and free play ---------- */
+:root{--c-cold:#2f7fd6}
+#chart .riskbar{fill:var(--rc,var(--c-storm))}
+#chart .riskband{fill:var(--rc,var(--c-storm));opacity:.06}
+.screen{align-items:flex-start}
+.mn{max-width:1380px;width:100%;margin:auto 0}
+.mn-top{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:18px}
+.mn-top .att-logo svg{width:64px;height:64px}.mn-top .att-logo .wu{font-size:42px}
+.gmodes{display:flex;gap:6px;margin-left:auto;background:var(--navy-2);border:1px solid var(--navy-line);border-radius:12px;padding:5px}
+.gmode{display:flex;flex-direction:column;padding:8px 16px;border-radius:8px;color:#fff;text-decoration:none;line-height:1.15}
+.gmode b{font:700 18px var(--f-display);letter-spacing:.06em;text-transform:uppercase}
+.gmode span{font-size:13px;color:var(--navy-muted)}
+.gmode[aria-current="page"]{background:var(--zap);color:var(--navy)}.gmode[aria-current="page"] span{color:var(--navy)}
+.mn-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:36px;align-items:start}
+.mn h1{margin:0;font:700 clamp(46px,5.6vw,84px)/.92 var(--f-display);letter-spacing:.02em;text-transform:uppercase}
+.mn h1 span{color:var(--zap)}
+.mn .eyebrow{margin:0 0 6px}
+.mn .lede{font-size:20px;margin:12px 0 16px}
+.mn .how{margin-bottom:16px;gap:8px}.mn .how li{font-size:16px;grid-template-columns:40px 1fr}.mn .how li i{width:40px;height:40px;font-size:22px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.tab{flex:1 1 0;min-width:150px;text-align:left;background:var(--navy-2);border:2px solid var(--navy-line);border-radius:12px;padding:10px 14px;color:#fff;line-height:1.2}
+.tab b{display:block;font:700 18px var(--f-display);letter-spacing:.06em;text-transform:uppercase}
+.tab span{font-size:13px;color:var(--navy-muted)}
+.tab[aria-pressed="true"]{border-color:var(--zap);background:#1f3b63}.tab[aria-pressed="true"] b{color:var(--zap)}
+.days{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 18px}
+.day{--dc:var(--zap);text-align:left;background:rgba(255,255,255,.05);border:2px solid var(--navy-line);border-top:6px solid var(--dc);border-radius:12px;padding:12px 14px;color:#fff;display:flex;flex-direction:column;gap:4px;min-height:132px}
+.day b{font:700 24px/1 var(--f-display);letter-spacing:.03em;text-transform:uppercase}
+.day .w{font-size:14px;color:var(--navy-muted)}
+.day .f{font:700 13px var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--dc);filter:brightness(1.35)}
+.day .st{margin-top:auto;font-size:20px;letter-spacing:.1em;color:var(--zap)}
+.day .lk{margin-top:auto;font-size:14px;color:var(--navy-muted)}
+.day[aria-pressed="true"]{border-color:var(--zap);background:rgba(255,201,40,.12);border-top-color:var(--dc)}
+.day:disabled{opacity:.45;cursor:not-allowed}
+.rank{font-size:15px;color:var(--navy-muted);margin:-4px 0 14px}.rank b{color:#fff}
+.mn .go{font-size:28px;padding:18px 34px;animation:none}
+.mn .demo-btn{font-size:20px;padding:16px 20px}
+.mn .board h2{font-size:20px;flex-wrap:wrap;gap:4px 12px}
+.mn .board li,.res .board li{font-size:18px;grid-template-columns:36px 1fr auto auto;padding:6px 4px}
+.board .nm{font:700 18px var(--f-body);letter-spacing:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.board .sc{font-size:20px}.board .fz{font-size:14px}
+.mn-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.lnk{font:700 16px var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:#fff;background:transparent;border:2px solid var(--navy-line);border-radius:10px;padding:9px 14px;text-decoration:none}
+.res{max-width:1300px;margin:auto 0}
+.res .bbtn{font-size:22px;padding:14px 26px}
+.namebox{display:flex;flex-direction:column;gap:10px;align-items:center;margin:8px 0 14px}
+.namebox input{width:min(100%,360px);font:700 26px var(--f-body);text-align:center;padding:12px 14px;border-radius:12px;border:2px solid var(--navy-line);background:#fff;color:var(--navy);-webkit-user-select:text;user-select:text}
+.namebox .err{min-height:20px;color:var(--alarm-on-navy);font-size:15px;margin:0}
+.cbox{background:var(--navy-2);border:1px solid var(--navy-line);border-left:6px solid var(--zap);border-radius:10px;padding:12px 16px;margin:0 0 16px;font-size:17px;line-height:1.35}
+.cbox .stars{font-size:30px;color:var(--zap);letter-spacing:.12em;display:block;line-height:1.1}
+.rank-res{margin:0 0 14px;text-align:center;color:var(--navy-muted);font-size:16px}
+.dlg{position:fixed;inset:0;z-index:40;background:rgba(8,10,20,.7);display:grid;place-items:center;padding:16px}
+.dlg[hidden]{display:none}
+.dlg form{background:var(--panel);color:var(--ink);border-radius:14px;padding:20px 22px;width:min(100%,520px);display:grid;gap:10px;border-top:6px solid var(--zap)}
+.dlg h2{margin:0;font:700 26px var(--f-display);letter-spacing:.06em;text-transform:uppercase}
+.dlg p{margin:0;color:var(--muted);font-size:15px}
+.dlg label{font:600 13px var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.dlg textarea,.dlg input{font:16px var(--f-body);padding:10px 12px;border:1px solid var(--rule);border-radius:8px;width:100%;-webkit-user-select:text;user-select:text}
+.dlg textarea{min-height:120px;resize:vertical}
+.dlg .row{justify-content:flex-end}.dlg .bbtn{font-size:18px;padding:10px 20px}
+.dlg .bbtn:not(.pri){background:var(--sunk);color:var(--ink);border-color:var(--rule)}
+.dlg .hp{position:absolute;left:-9999px}
+.bar .back{color:var(--navy-muted);font:600 13px var(--f-body);text-decoration:none}
+@media (max-width:1150px){.mn-grid{grid-template-columns:1fr;gap:22px}}
+@media (max-width:760px){.days{grid-template-columns:1fr}.day{min-height:0}.gmodes{margin-left:0;width:100%}.gmode{flex:1}.mn-top .att-logo .wu{font-size:34px}
+  .mn .lede{font-size:17px}.mn .how{display:none}.tab{min-width:0}.mn .go{font-size:22px;padding:14px 22px}.screen{padding:16px}
+  .grade b{width:100px;height:100px;font-size:78px}.grade h2{font-size:40px}.bigscore b{font-size:64px}.stats dd{font-size:22px}}
+@media (max-width:900px),(max-height:620px){.cards{grid-template-columns:repeat(2,1fr)}.cards .card:last-child:nth-child(odd){grid-column:span 2}}
+/* Phones: a taller chart, compact header, and card footers that wrap */
+@media (max-width:600px){.p-chart{height:auto;min-height:0;grid-template-rows:auto auto 340px}.status{gap:6px 10px}.advice{flex-basis:100%;order:3;font-size:15px}
+  .bar{padding:8px 10px}.brand h1{font-size:18px;white-space:normal}.clock b{font-size:26px}.kpi .v{font-size:20px}.tools{margin-left:auto}.ibtn{width:40px;height:40px}
+  .dock{padding:0 10px}.main{padding:0 10px}.dock-h{display:block}.dock-h p{font-size:13px}.cards{gap:8px}.card{padding:8px 10px}.c-name{font-size:16px}.c-kind{display:none}
+  .c-val b{font-size:26px}.c-cost{flex-wrap:wrap;gap:0 8px;font-size:12px}.c-sub{font-size:12px}.adj{min-height:60px}.adj b{font-size:28px}
+  .news{font-size:14px;min-height:0}.tab span{font-size:12px}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="bar">
+    <div class="brand"><svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="22" fill="#0B1F3A" stroke="#475a75" stroke-width="2"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg>
+      <div><p class="co">Watts Up Electricity Distribution</p><h1>Losing Control · <span id="hTitle">Generation</span></h1></div></div>
+    <div class="clock"><b id="clock" class="num">05:00</b><small id="hWhen"></small><div class="prog"><i id="prog"></i></div></div>
+    <div class="kpis">
+      <div class="kpi firm" id="kFirmBox"><span class="k">In firm zone</span><span class="v" id="kFirm">–</span></div>
+      <div class="kpi hide-s"><span class="k">Flex spend</span><span class="v" id="kSpend">£0</span></div>
+      <div class="kpi hide-s" id="kOffBox"><span class="k">Customers off</span><span class="v" id="kOff">0</span></div>
+      <div class="kpi score"><span class="k">Score</span><span class="v" id="kScore">0</span></div>
+    </div>
+    <div class="tools">
+      <button class="ibtn" id="muteBtn" type="button" aria-label="Sound" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+      <button class="ibtn" id="fsBtn" type="button" aria-label="Full screen"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button class="ibtn" id="quitBtn" type="button" aria-label="End this shift"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+  </header>
+
+  <div class="main">
+    <section class="panel p-chart" aria-label="Demand on Blackout Canyon against the firm zone">
+      <div class="status">
+        <span class="pill ok" id="pill">In the firm zone</span>
+        <p class="advice" id="advice"></p>
+        <div class="netbig"><b class="num" id="netNow">0 MW</b><span id="netLbl">Demand on Blackout Canyon</span></div>
+      </div>
+      <div class="news" id="news" aria-live="polite"><span class="news-t num" id="newsT"></span><span class="news-m" id="newsM">Shift starting.</span></div>
+      <div class="chartbox" id="chartbox"><svg id="chart" role="img" aria-label="Demand line, firm zone and forecast for the shift"></svg><div class="flash" id="flash"></div></div>
+    </section>
+    <aside class="side">
+      <section class="panel" style="--pc:var(--navy)"><h2 class="ph">Grid transformers</h2><div id="txList"></div>
+        <dl class="facts" style="margin-top:10px"><div><dt>Firm zone</dt><dd id="fFirm">±120 MW</dd></div><div><dt>Headroom</dt><dd id="fHead">–</dd></div></dl></section>
+      <section class="panel" id="wxPanel" style="--pc:var(--c-storm)"><h2 class="ph">Weather and work</h2><div class="wx" id="wx"></div></section>
+      <section class="panel" style="--pc:var(--c-solar)"><h2 class="ph">Right now</h2>
+        <dl class="facts"><div><dt>Demand</dt><dd id="fDem">–</dd></div><div><dt>Local generation</dt><dd id="fGen">–</dd></div><div><dt>Flex helping</dt><dd id="fFlex">–</dd></div><div><dt>Battery</dt><dd id="fSoc">–</dd></div></dl></section>
+    </aside>
+  </div>
+
+  <section class="dock" aria-label="Generation and flexibility">
+    <div class="dock-h"><h2>Your flexibility providers</h2><p><b>+</b> pushes the demand line down · <b>−</b> pushes it up. Every MW costs money, so use only what you need.</p></div>
+    <div class="cards" id="cards"></div>
+  </section>
+</div>
+
+<div class="screen" id="menu">
+  <div class="mn">
+    <div class="mn-top">
+      <div class="att-logo"><svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="22" fill="#0B1F3A" stroke="#FFD23F" stroke-width="2"/><circle cx="50" cy="50" r="38" fill="none" stroke="#FFD23F" stroke-width="5"/><path d="M56 20 L32 55 H47 L42 80 L68 45 H53 L60 20 Z" fill="#FFD23F"/></svg><div class="wu">Watts <span>Up</span></div></div>
+      <nav class="gmodes" aria-label="Kind of shift"><a class="gmode" href="../control-room/" target="_top" aria-current="false"><b>Control room</b><span>Switching, faults and field crews</span></a><a class="gmode" href="./" target="_top" aria-current="page"><b>Generation</b><span>Generation, batteries and flexibility</span></a></nav>
+    </div>
+    <div class="mn-grid">
+      <div>
+        <p class="eyebrow">Losing Control · Generation shifts</p>
+        <h1>Keep it in<br>the <span>green</span></h1>
+        <p class="lede">You're the DSO on shift at Blackout Canyon. Keep the demand line inside the firm zone, so the network can lose a transformer and still keep the lights on.</p>
+        <div class="tabs" role="group" aria-label="Mode" id="tabs">
+          <button type="button" class="tab" data-mode="career"><b>Career</b><span id="tabCareer">Play the days in order</span></button>
+          <button type="button" class="tab" data-mode="daily"><b>Today's challenge</b><span id="tabDaily">Same faults for everyone today</span></button>
+          <button type="button" class="tab" data-mode="free"><b>Free play</b><span>Any day, new faults every game</span></button>
+        </div>
+        <p class="rank" id="rankTxt"></p>
+        <div class="days" id="days" role="group" aria-label="Day"></div>
+        <div class="go-row"><button class="go" id="goBtn" type="button">Start shift <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <button class="demo-btn" id="demoBtn" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Watch how it's done</button></div>
+      </div>
+      <div>
+        <ul class="how">
+          <li><i>1</i><span>Watch the <b>demand line</b>. The green band is the <b>firm zone</b>: what the network can carry if one transformer trips.</span></li>
+          <li><i>2</i><span>Use your <b>flexibility providers</b>: battery, gas engine, demand response, and curtailing solar and wind.</span></li>
+          <li><i>3</i><span>Faults and planned work take transformers out and <b>shrink the firm zone</b>. Lose all three and it's <b>game over</b>.</span></li>
+        </ul>
+        <div class="ho" id="ho"></div>
+        <div class="board"><h2><span id="bdTitle">Top 10</span> <small id="bdDate"></small></h2><ol id="boardA"></ol></div>
+        <div class="mn-links"><button type="button" class="lnk" id="fbBtn">Send feedback</button><a class="lnk" href="../" target="_top">More Watts Up games</a></div>
+        <p class="fine">© 2026 Steve Backhouse. All rights reserved. Blackout Canyon and every site in this game are made up.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="results" hidden>
+  <div class="res">
+    <div>
+      <div class="grade"><b id="rGrade">A</b><div><h2 id="rHead">Lights on</h2><p id="rSub"></p></div></div>
+      <p class="bigscore">Score<b id="rScore">0</b></p>
+      <dl class="stats" id="rStats"></dl>
+      <p class="lesson" id="rLesson"></p>
+    </div>
+    <div>
+      <div class="cbox" id="cBox" hidden></div>
+      <div id="saveBox">
+        <p class="save-h">Put your name on the board</p>
+        <p class="save-p" id="saveP"></p>
+        <div class="namebox"><input id="nameIn" type="text" maxlength="20" autocomplete="nickname" placeholder="Your name" aria-label="Your name"><p class="err" id="nameErr"></p></div>
+        <div class="row"><button class="bbtn pri" id="saveBtn" type="button">Save score</button><button class="bbtn" id="skipBtn" type="button">Skip</button></div>
+      </div>
+      <div id="boardBox" hidden>
+        <div class="board"><h2><span id="bdTitle2">Top 10</span> <small id="bdDate2"></small></h2><ol id="boardR"></ol></div>
+      </div>
+      <div class="row" style="margin-top:18px"><button class="bbtn pri" id="nextBtn" type="button" hidden>Next shift</button><button class="bbtn" id="againBtn" type="button">Play again</button><button class="bbtn" id="menuBtn" type="button">Menu</button></div>
+    </div>
+  </div>
+</div>
+<div class="gameover" id="gameover" hidden role="alert"><div class="go-band"><p class="go-k">All three transformers have tripped</p><h2>Game over</h2><p class="go-s" id="goSub"></p></div></div>
+<div class="demo-bar" id="demoBar" hidden><span class="demo-tag">Demo</span><span class="demo-cap" id="demoCap">Watch how a DSO keeps Blackout Canyon in the firm zone.</span><span class="demo-tap">Tap anywhere to play</span></div>
+<div class="count" id="count" hidden><b id="countN">3</b></div>
+<div class="dlg" id="fbDlg" hidden><form id="fbForm">
+  <h2>Feedback</h2><p>Ideas, bugs, anything. It goes straight to the Watts Up team.</p>
+  <label for="fbMsg">Your feedback</label><textarea id="fbMsg" maxlength="2000" required></textarea>
+  <label for="fbName">Name (optional)</label><input id="fbName" maxlength="60">
+  <label for="fbContact">Email, if you'd like a reply (optional)</label><input id="fbContact" type="email" maxlength="100">
+  <input class="hp" id="fbHp" tabindex="-1" autocomplete="off" aria-hidden="true">
+  <p id="fbMsgOut" aria-live="polite"></p>
+  <div class="row"><button type="button" class="bbtn" id="fbCancel">Close</button><button type="submit" class="bbtn pri" id="fbSend">Send</button></div>
+</form></div>
+
+<script>
+/*! Losing Control · Generation shifts
+ * © 2026 Steve Backhouse. All rights reserved.
+ * Not open source: copying, re-hosting or reuse of this code or content without
+ * written permission is prohibited. See https://github.com/DER-Dash/Network/blob/main/LICENSE */
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtT=m=>{m=Math.round(m);return String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(m%60).padStart(2,'0');};
+const nf=n=>Math.round(n).toLocaleString('en-GB');
+const money=n=>'£'+nf(n);
+function rngFrom(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h|0;}
+function makeNoise(rng,step){const n=Math.ceil(1500/step)+3;const p=Array.from({length:n},()=>rng()*2-1);return m=>{const x=Math.max(0,m)/step,i=Math.floor(x),f=x-i,w=(1-Math.cos(Math.PI*f))/2;return p[i]*(1-w)+p[i+1]*w;};}
+function interp(k,h){for(let i=1;i<k.length;i++){if(h<=k[i][0]){const[h0,v0]=k[i-1],[h1,v1]=k[i];return v0+(v1-v0)*(h-h0)/(h1-h0);}}return k[k.length-1][1];}
+const pick=(r,a)=>a[Math.floor(r()*a.length)];
+function todayUK(){try{return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}catch(e){return new Date().toISOString().slice(0,10);}}
+const fmtDate=d=>{const[y,mo,da]=d.split('-').map(Number);return new Date(Date.UTC(y,mo-1,da)).toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'UTC'});};
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
+
+/* ---------- The three generation days ---------- */
+// The same days as Losing Control's generation shifts had on the network diagram (demand, sun, wind, faults, planned work),
+// played on the Storm Day screen. Storm day is the exhibition version: the sunny break, the paper mill and set faults.
+// Every shift runs 05:00 to 23:00 at RATE game minutes a second (four and a half minutes a shift).
+const Q=new URLSearchParams(location.search);
+const START=300,END=1380,SHIFT=END-START,RATE=+Q.get('rate')||4,R=60,SOC_MAX=60,CUST_TOTAL=60000,Y=200;
+const EMERG=1.2,EMERG_MIN=30,SHORT=1.5,SHORT_MIN=5,TRIP_OUT=90;
+const COLD_EVE=[[0,80],[4,72],[6,78],[7.5,106],[9,116],[11,112],[13,110],[15,114],[16.5,134],[17.5,150],[18.5,146],[20,130],[21.5,112],[23,94],[24,84]];
+const DAYS={
+  may:{title:'Sunny Sunday',when:'Sunday 17 May',diff:1,focus:'Reverse power flow',color:'var(--c-solar)',soc0:20,
+    blurb:'Low demand and strong sun push power back up into the grid, with T2 out for maintenance through the middle of the day.',
+    handover:'Clear skies and low demand: solar will push power back up into the grid from mid-morning. T2 is out for planned maintenance from 10:00 to 15:00, right through the export peak, so the firm zone halves then. Thunderstorms may build in the afternoon. The battery is a third full.',
+    demand:[[0,50],[4,45],[6,47],[8,58],[10,68],[12,74],[14,73],[16,76],[18,92],[19.5,104],[21,98],[22.5,78],[24,56]],
+    solar:{peak:165,start:5.5,end:20.5,cloud:.07},wind:{mean:32,var:12},faults:1.5,allow:{solar:220,wind:80},
+    causes:['Lightning strike on the overhead line','Tree contact on the overhead line','Bird strike on the overhead line','Insulator flashover'],
+    build(r){const s=780+Math.round(r()*180);return{planned:[{tx:1,start:600,end:900}],cutouts:[],risk:[{start:s,end:s+180,mult:4,label:'Thunderstorm risk',c:'var(--c-storm)'}]};},
+    intro:S=>`Sunday 17 May, 05:00. Strong sun today, and T2 is out for maintenance 10:00–15:00. Thunderstorm risk ${fmtT(S.risk[0].start)}–${fmtT(S.risk[0].end)}.`},
+  storm:{title:'Storm day',when:'Monday 2 November',diff:2,focus:'Faults and swings',color:'var(--c-storm)',soc0:30,pre:930,
+    blurb:'Two bands of severe gale trip transformers, a sunny break pushes power back up, and the wind farm cuts out in the gusts.',
+    handover:'Two bands of severe gale are on the way, the first soon after the morning peak starts, with a sunny, gusty break around midday. Spinney Windy Things may cut out in the gusts, so don\'t count on the wind farm. The evening peak will be well over firm capacity.',
+    demand:[[0,72],[4,64],[6,70],[7.5,98],[9,112],[12,102],[15,106],[16.5,124],[17.5,142],[18.5,140],[20,124],[22,96],[24,74]],
+    solar:{peak:90,start:6.9,end:17.1,cloud:.35},wind:{mean:48,var:14},faults:3,allow:{solar:90,wind:50},
+    causes:['Wind-borne debris on the overhead line','Tree contact on the overhead line','Conductor clash in high wind','Lightning strike on the overhead line'],
+    // as in Storm Day: the morning gale, a sunny, gusty break with a big customer knocked off by the storm, two wind cut-outs
+    build(r){const a=465+Math.round(r()*10),b=900+Math.round(r()*120),s=1005+Math.round(r()*105),w=a+25+Math.round(r()*10),B=660+Math.round(r()*20);
+      return{planned:[],sunny:{start:B,end:B+150},loss:{start:B+20,end:B+135,mw:30,fired:false,done:false,who:'Volta Paper Mill',why:'storm damage to its roof'},mid:{m:B+30,dur:95+Math.round(r()*10)},
+        cutouts:[{start:w,end:w+70},{start:s,end:s+75}],early:{m:a+10+Math.round(r()*10),dur:140+Math.round(r()*30)},
+        risk:[{start:a,end:a+180,mult:3,label:'Severe gale',c:'var(--c-storm)'},{start:b,end:b+180,mult:3,label:'Severe gale',c:'var(--c-storm)'}]};},
+    intro:S=>`Monday 2 November, 05:00. Two bands of severe gale today (${S.risk.map(r=>fmtT(r.start)+'–'+fmtT(r.end)).join(' and ')}), with a sunny break in between.`},
+  jan:{title:'Cold Thursday',when:'Thursday 14 January',diff:3,focus:'Peak demand',color:'var(--c-cold)',soc0:45,pre:930,
+    blurb:'A cold, still evening peak pulls hard on the transformers, and T1 is out for maintenance in the morning.',
+    handover:'Cold and still: hardly any wind, and not much sun. Ice and snow until 09:00 make line faults more likely. T1 is out for planned maintenance from 09:30 to 12:30. The evening peak goes over firm capacity even with all three transformers in, so keep the battery charge for it.',
+    demand:COLD_EVE,solar:{peak:35,start:7.8,end:16.2,cloud:.2},wind:{mean:22,var:12},faults:1.5,allow:{solar:90,wind:50},
+    causes:['Ice build-up on the overhead line','Conductor clash in icy wind','Cable joint failure','Insulator flashover'],
+    build(r){return{planned:[{tx:0,start:570,end:750}],cutouts:[],risk:[{start:360,end:540,mult:3,label:'Ice and snow',c:'var(--c-cold)'}]};},
+    intro:S=>'Thursday 14 January, 05:00. Ice and snow until 09:00, T1 out for maintenance 09:30–12:30, and a cold evening peak.'}};
+const ORDER=['may','storm','jan'];
+const RANKS=[[0,'Trainee flexibility analyst'],[2,'Flexibility analyst'],[4,'Flexibility engineer'],[6,'Senior flexibility engineer'],[9,'DSO manager']];
+
+// Flexibility and generation. 'val' is what the player sets: for solar and wind the MW they let run (curtailment is the
+// rest), for the battery discharge (+) or charge (-), for the gas engine and demand response the MW called.
+// Prices (£/MWh) and response rates as in Storm Day. 'fail' is the chance a provider doesn't respond when first called.
+const ICON={solar:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+  wind:'<path d="M12 11v11M12 11V2.5M12 11l8.2 4.8M12 11l-8.2 4.8M9 22h6"/>',
+  batt:'<rect x="2.5" y="7" width="17" height="10" rx="2"/><path d="M21.5 10.5v3M7 12h4M9 10v4"/>',
+  chp:'<path d="M12 2.5c2.5 3.5 6.5 6 6.5 11a6.5 6.5 0 0 1-13 0c0-3 1.8-4.6 3-6.5.8 1.8 1.6 2.8 3 3.2-.4-2.6-.2-5 .5-7.7z"/>',
+  dsr:'<path d="M3 21V10l5 3v-3l5 3V7l8 4v10zM3 21h18M8 17h2M13 17h2"/>'};
+const PROV=[
+  {id:'batt',name:'Kings Hill Battery',kind:'Battery storage · 30 MW',tc:'var(--c-batt)',min:-30,max:30,ramp:30,price:{dis:90,chg:35},fail:0},
+  {id:'chp',name:'Ohm No CHP',kind:'Gas engine · 25 MW · slow to start',tc:'var(--c-gas)',min:0,max:25,ramp:8,price:140,fail:.10},
+  {id:'dsr',name:'Hertz House Industrial Estate',kind:'Demand response · 25 MW',tc:'var(--c-dsr)',min:0,max:25,ramp:5,price:200,fail:.12},
+  {id:'solar',name:'Shocking Place Solar Farm',kind:'Solar farm · curtailable',tc:'var(--c-solar)',gen:true,ramp:15,price:60,fail:.05},
+  {id:'wind',name:'Spinney Windy Things',kind:'Wind farm · curtailable',tc:'var(--c-wind)',gen:true,ramp:10,price:85,fail:.05}];
+const PV=Object.fromEntries(PROV.map(p=>[p.id,p]));
+const STEP=5;
+
+let S=null,mode='menu',speedAcc=0,lastFrame=0,SC=DAYS.may;
+let gmode='career',dayK=null;
+
+function comps(m,fc){
+  const h=m/60,sc=SC,N=S.N;
+  let demand=interp(sc.demand,clamp(h,0,24));if(!fc)demand*=1+.025*N.d(m);
+  let solar=0;const f=(h-sc.solar.start)/(sc.solar.end-sc.solar.start);
+  if(f>0&&f<1){const clear=sc.solar.peak*Math.pow(Math.sin(Math.PI*f),1.4);const red=sc.solar.cloud*(fc?1:1+.7*N.c1(m)+.3*N.c2(m));solar=Math.max(0,clear*(1-red));}
+  const edge=(w,m,r)=>clamp(Math.min((m-w.start)/r,(w.end-m)/r),0,1);
+  const sb=S.sunny&&m>=S.sunny.start&&m<S.sunny.end?edge(S.sunny,m,20):0;// sunny break: clear sky and stronger gusts
+  if(sb)solar=Math.max(solar,sc.solar.peak*Math.pow(Math.sin(Math.PI*clamp(f,0,1)),1.4)*(1-.05)*sb+solar*(1-sb));
+  let wind=sc.wind.mean+sc.wind.var*N.w1(m)+16*sb;if(!fc)wind+=4*N.w2(m);wind=clamp(wind,0,60);
+  const L=S.loss;if(L&&m>=L.start&&m<L.end&&(!fc||L.fired))demand-=L.mw*edge(L,m,8);
+  if(!fc)S.cutouts.forEach(C=>{if(m>=C.start&&m<C.end){const k=Math.min(1,(m-C.start)/4,(C.end-m)/10);wind*=1-clamp(k,0,1);}});
+  return{demand,solar,wind};
+}
+// Transformer faults: Losing Control's fault model (the day's expected number over the shift, more likely in its risk
+// windows), with the Storm Day rules for a fair game: never two transformers out at once (planned work included).
+// Storm day uses its exhibition set faults: morning gale, the midday export squeeze, the afternoon ramp, the evening gale.
+const overlap=(a,b,g)=>a.m<b.m+b.dur+g&&b.m<a.m+a.dur+g;
+function genFaults(rng,b){
+  const risk=S.risk,mult=m=>{let k=1;risk.forEach(w=>{if(m>=w.start&&m<w.end)k=Math.max(k,w.mult);});return k;};
+  const planned=S.planned.map(p=>({m:p.start,dur:p.end-p.start}));
+  if(b.early){
+    const F=(m,dur)=>({tx:Math.floor(rng()*3),m,dur,cause:pick(rng,SC.causes),done:false});
+    const set=[F(b.early.m,b.early.dur),F(b.mid.m,b.mid.dur)];
+    const aft=F(825+Math.round(rng()*45),90+Math.round(rng()*40));set.push(aft);
+    const g=risk[1],e0=Math.max(g.start+15,aft.m+aft.dur+30);set.push(F(e0+Math.round(rng()*Math.max(0,g.end-60-e0)),90+Math.round(rng()*120)));
+    return set.sort((a,b)=>a.m-b.m);}
+  let integ=0;for(let m=START+20;m<END;m++)integ+=mult(m);
+  const base=SC.faults/(3*integ),out=[];
+  [0,1,2].forEach(i=>{for(let m=START+20;m<END-30;m++){if(rng()<base*mult(m)){const dur=Math.round(90+rng()*150);out.push({tx:i,m,dur,cause:pick(rng,SC.causes),done:false});m+=dur;}}});
+  out.sort((a,b)=>a.m-b.m);const keep=[];
+  out.forEach(f=>{if(!keep.some(k=>overlap(f,k,20))&&!planned.some(p=>overlap(f,p,20)))keep.push(f);});
+  // a fault never hits the transformer that's out for planned work (it can't: it's already out), so pick another
+  keep.forEach(f=>{const p=S.planned.find(p=>p.tx===f.tx);if(p&&f.m>=p.start-30&&f.m<p.end+30)f.tx=(f.tx+1)%3;});
+  return keep;
+}
+// Always winnable: at every minute, the gas engine and demand response at full output (with the battery empty) must be
+// able to bring demand back inside the firm zone. A wind cut-out only lands while a transformer is out if that's winnable,
+// and a fault that would still be impossible is cut short or moved to the nearest time it can be won, inside its risk
+// window where possible. Too much generation can always be curtailed, so only demand is checked.
+const SURE_FLEX=25+25,SURE_MARGIN=3;
+function firmOf(n){return Math.max(0,n-1)*R;}
+function slack(m,n){const c=comps(m,false);return firmOf(n)-SURE_MARGIN-(c.demand*1.01-c.solar-c.wind-SURE_FLEX);}
+function okFault(f){for(let m=f.m;m<f.m+f.dur;m++)if(m<END&&slack(m,2)<0)return false;return true;}
+const outAt=m=>S.faults.some(f=>m>=f.m&&m<f.m+f.dur)||S.planned.some(p=>m>=p.start&&m<p.end);
+function makeWinnable(){
+  const blocked=S.planned.map(p=>({m:p.start,dur:p.end-p.start}));
+  const cutOk=C=>{for(let m=C.start;m<C.end+10&&m<END;m++){if(outAt(m)&&slack(m,2)<0)return false;}return true;};
+  for(let k=0;k<10;k++){let moved=false;S.cutouts.slice().forEach(C=>{if(cutOk(C))return;const f=S.faults.find(f=>C.start<f.m+f.dur+10&&f.m<C.end+10);if(!f)return;
+      const len=C.end-C.start;C.start=f.m+f.dur+15;C.end=C.start+len;moved=true;if(C.start>=END-20)S.cutouts.splice(S.cutouts.indexOf(C),1);});if(!moved)break;}
+  S.faults.slice().forEach(f=>{if(okFault(f))return;
+    let m=f.m;while(m<f.m+f.dur&&slack(m,2)>=0)m++;if(m-12-f.m>=75){f.dur=m-12-f.m;return;}
+    const others=S.faults.filter(o=>o!==f).concat(blocked),g=S.risk.find(r=>f.m>=r.start&&f.m<r.end);let best=null;
+    for(let d=10;d<=300&&!best;d+=10)for(const sg of[-1,1]){const t={m:f.m+sg*d,dur:Math.max(90,Math.min(f.dur,140))};
+      if(t.m<START+20||t.m+t.dur>END-10||others.some(o=>overlap(o,t,20))||!okFault(t))continue;
+      if(!best||(g&&t.m>=g.start&&t.m<g.end))best=t;}
+    if(best){f.m=best.m;f.dur=best.dur;}else S.faults.splice(S.faults.indexOf(f),1);});
+  S.faults.sort((a,b)=>a.m-b.m);}
+
+function newGame(k,gm){
+  SC=DAYS[k];const date=todayUK();
+  const seed=gm==='daily'?hashStr(date+'|'+k+'|gen1'):Q.has('seed')?+Q.get('seed'):((Math.random()*2**31)|0);
+  const rng=rngFrom(seed),b=SC.build(rng);
+  S={key:k,gm,t:START,seed,date,N:{d:makeNoise(rng,15),c1:makeNoise(rng,25),c2:makeNoise(rng,6),w1:makeNoise(rng,40),w2:makeNoise(rng,5)},
+    risk:b.risk,sunny:b.sunny||null,loss:b.loss||null,planned:b.planned.map(p=>({...p,fired:false})),cutouts:b.cutouts.map(c=>({...c,fired:false,done:false})),rngF:rngFrom(seed^0x5bd1e995),
+    tx:[0,1,2].map(()=>({out:null})),em:0,sh:0,soc:SC.soc0,
+    val:{batt:0,chp:0,dsr:0,solar:null,wind:null},act:{batt:0,chp:0,dsr:0,curtS:0,curtW:0},
+    called:{},failUntil:{},failed:{},allow:{solar:SC.allow.solar,wind:SC.allow.wind},allowGone:{},
+    spend:{batt:0,chp:0,dsr:0,solar:0,wind:0},pts:0,min:{firm:0,risk:0,over:0,dark:0},
+    hist:[],marks:[],zone:'ok',ended:false,c:null,net:0,n:3};
+  S.faults=genFaults(rng,b);
+  makeWinnable();
+  // planned work is known in advance: it's on the chart from the start
+  S.planned.forEach(p=>{S.marks.push({m:p.start,label:`T${p.tx+1} maintenance`});S.marks.push({m:p.end,label:`T${p.tx+1} back`});});
+  // the shift starts in the state the night shift left: everything in service, nothing called
+  S.planned.forEach(p=>{if(p.start<=START){S.tx[p.tx].out={kind:'planned',until:p.end,label:'Planned maintenance'};p.fired=true;}});
+  S.c=comps(START,false);
+  calc(START);
+  buildCards();lastChart='';
+  setTxt('hTitle',SC.title);setTxt('hWhen',SC.when);document.title='Losing Control · '+SC.title;
+}
+
+/* ---------- Simulation: one game minute ---------- */
+const windOff=()=>S.cutouts.some(C=>C.fired&&!C.done);
+function nIn(){return S.tx.filter(t=>!t.out).length;}
+function avail(id,m){if(S.failUntil[id]>m)return 0;const c=S.c;
+  if(id==='solar')return S.allow.solar>0?c.solar:0;if(id==='wind')return c.wind;return null;}
+function target(id,m){const c=S.c;
+  if(id==='curtS'){if(S.allow.solar<=0||S.val.solar===null)return 0;return clamp(c.solar-S.val.solar,0,c.solar);}
+  if(id==='curtW'){if(S.allow.wind<=0||S.val.wind===null)return 0;return clamp(c.wind-S.val.wind,0,c.wind);}
+  if(S.failUntil[id]>m)return 0;
+  if(id==='batt'){let v=S.val.batt;if(v>0&&S.soc<=.3)v=0;if(v>0)v=Math.min(v,S.soc*60);if(v<0&&S.soc>=SOC_MAX-.3)v=0;return v;}
+  return S.val[id];}
+function calc(m){const c=S.c,a=S.act;
+  S.gen=(c.solar-a.curtS)+(c.wind-a.curtW);
+  S.flex=a.chp+a.dsr+a.batt;
+  S.net=c.demand-S.gen-S.flex;S.n=nIn();
+  S.firm=firmOf(S.n);S.cap=S.n*R;}
+function zoneOf(net,n){if(n===0)return'dark';const a=Math.abs(net);return a<=firmOf(n)+.01?'ok':a<=n*R+.01?'warn':'alarm';}
+
+function step(){
+  const m=S.t;
+  S.risk.forEach(w=>{if(m===w.start){toast(`${w.label} now, until ${fmtT(w.end)}. Transformer faults are ${w.mult===4?'four':w.mult===3?'three':w.mult} times as likely.`,'warn');play('warn');}
+    if(m===w.end)toast(`The ${w.label.toLowerCase().replace(/ risk$/,'')} has eased.`,'ok');});
+  S.tx.forEach((t,i)=>{if(t.out&&m>=t.out.until){const pl=t.out.kind==='planned';t.out=null;if(!pl)S.marks.push({m,label:`T${i+1} back`});
+    toast(`T${i+1} is back in service${pl?' after its maintenance':''}. Firm zone back to ±${firmOf(nIn())} MW.`,'ok');play('ok');}});
+  // planned work: known all day, it starts on time
+  S.planned.forEach(p=>{if(p.fired||m<p.start)return;p.fired=true;const t=S.tx[p.tx];if(t.out)return;
+    t.out={kind:'planned',until:p.end,label:'Planned maintenance'};
+    toast(`T${p.tx+1} is switched out for planned maintenance until ${fmtT(p.end)}. The firm zone shrinks to ±${firmOf(nIn())} MW.`,'warn');play('warn');});
+  S.faults.forEach(f=>{if(f.done||m<f.m)return;f.done=true;const t=S.tx[f.tx];if(t.out)return;
+    t.out={kind:'fault',until:m+f.dur,label:f.cause};S.marks.push({m,label:`⚡ T${f.tx+1} fault`});
+    toast(`⚡ T${f.tx+1} tripped: ${f.cause.toLowerCase()}. The firm zone shrinks to ±${firmOf(nIn())} MW until about ${fmtT(m+f.dur)}.`,'alarm');play('fault');strike();});
+  if(S.sunny){if(m===S.sunny.start){toast(`A sunny break between the gales: clear skies and strong gusts until about ${fmtT(S.sunny.end)}. Solar and wind will push power back up into the grid.`,'warn');play('warn');}
+    if(m===S.sunny.end)toast('Cloud is building again. The sunny break is over.','ok');}
+  const Ls=S.loss;if(Ls){if(!Ls.fired&&m>=Ls.start){Ls.fired=true;S.marks.push({m,label:'Paper mill off'});toast(`${Ls.who} has shut down after ${Ls.why}: ${Ls.mw} MW of demand gone until about ${fmtT(Ls.end)}. Too much generation? Curtail solar or wind, or charge the battery.`,'alarm');play('warn');}
+    if(Ls.fired&&!Ls.done&&m>=Ls.end){Ls.done=true;S.marks.push({m,label:'Mill back'});toast(`${Ls.who} is back up and running.`,'ok');}}
+  S.cutouts.forEach(C=>{
+  if(!C.fired&&m>=C.start){C.fired=true;S.marks.push({m,label:'Wind stops'});toast(`Spinney Windy Things has shut down in the gusts. Its wind power is gone until about ${fmtT(C.end)}.`,'alarm');play('warn');}
+  if(C.fired&&!C.done&&m>=C.end){C.done=true;S.marks.push({m,label:'Wind back'});toast('Spinney Windy Things is restarting.','ok');}});
+
+  S.c=comps(m,false);
+  ['chp','dsr','batt'].forEach(id=>{const p=PV[id],on=S.val[id]!==0;
+    if(on&&!S.called[id]){S.called[id]=true;if(p.fail&&!S.failed[id]&&S.rngF()<p.fail){S.failed[id]=true;S.failUntil[id]=m+30;S.val[id]=0;
+      toast(`${p.name} didn't ${id==='chp'?'start':'respond'}. It's unavailable until ${fmtT(m+30)}.`,'alarm');play('warn');}}
+    if(!on)S.called[id]=false;});
+  [['batt','batt'],['chp','chp'],['dsr','dsr'],['curtS','solar'],['curtW','wind']].forEach(([k,id])=>{const tg=target(k,m),a=S.act[k],r=PV[id].ramp;
+    S.act[k]=tg>a?Math.min(tg,a+r):Math.max(tg,a-r);});
+  S.act.curtS=Math.min(S.act.curtS,S.c.solar);S.act.curtW=Math.min(S.act.curtW,S.c.wind);
+  calc(m);
+  // transformer protection: over 150% trips at once, over 120% for 5 minutes, over 100% for 30
+  const n=S.n,L=n?Math.abs(S.net)/n/R:0;let why=null;
+  if(n){if(L>SHORT)why='instantaneous overcurrent';else{S.sh=L>EMERG?S.sh+1:0;S.em=L>1.0001?S.em+1:Math.max(0,S.em-1);
+    if(S.sh>=SHORT_MIN)why='overcurrent';else if(S.em>=EMERG_MIN)why='overload, with its emergency rating used up';}}
+  if(why){const i=S.tx.findIndex(t=>!t.out);S.tx[i].out={kind:'trip',until:m+TRIP_OUT,label:'Overload trip'};S.sh=0;S.em=0;
+    S.marks.push({m,label:`T${i+1} overload trip`});const left=nIn();
+    if(left){toast(`Overload! T${i+1} tripped on ${why}. Its load jumps onto the ${left===1?'last transformer':'other two'}.`,'alarm');play('trip');strike();calc(m);}
+    else{calc(m);S.hist.push({m,net:0,n:0,z:'dark'});S.t=m+1;gameOver(m,i);return;}}
+  const b=S.act.batt;S.soc=clamp(S.soc+(b<0?-b*.92:-b)/60,0,SOC_MAX);
+  [['solar','curtS'],['wind','curtW']].forEach(([id,k])=>{if(S.allow[id]<=0)return;S.allow[id]=Math.max(0,S.allow[id]-S.act[k]/60);
+    if(S.allow[id]<=0&&!S.allowGone[id]){S.allowGone[id]=true;toast(`${PV[id].name} has used its curtailment allowance. It can't be turned down again today.`,'warn');}});
+  S.spend.batt+=(b>0?b*PV.batt.price.dis:-b*PV.batt.price.chg)/60;
+  S.spend.chp+=S.act.chp*PV.chp.price/60;S.spend.dsr+=S.act.dsr*PV.dsr.price/60;
+  S.spend.solar+=S.act.curtS*PV.solar.price/60;S.spend.wind+=S.act.curtW*PV.wind.price/60;
+  // score: 10 points a minute in the firm zone, -10 at risk, -20 overloaded, -50 in a blackout
+  const z=zoneOf(S.net,S.n);
+  if(z==='ok'){S.pts+=10;S.min.firm++;}else if(z==='warn'){S.pts-=10;S.min.risk++;}else if(z==='alarm'){S.pts-=20;S.min.over++;}else{S.pts-=50;S.min.dark++;}
+  if(z!==S.zone){if(z==='warn'&&S.zone==='ok'){play('warn');}if(z==='alarm')play('emerg');if(z==='ok'&&S.zone!=='ok')play('ok');S.zone=z;}
+  S.hist.push({m,net:z==='dark'?0:S.net,n:S.n,z});
+  S.t++;
+  if(S.t>=END)endGame();
+}
+const spendTot=()=>Object.values(S.spend).reduce((a,v)=>a+v,0);
+// minutes lost when the game ends early count as blackout (the scoreboard does the same sum)
+const scoreNow=()=>Math.max(0,Math.round(S.pts-Math.round(spendTot())/25-(S.over?2000:0)));
+
+/* ---------- Forecast: the shift ahead with today's settings ---------- */
+// The transformers in service at each minute ahead: outages already happening, plus planned work. Faults are never forecast.
+function nAt(m){let k=0;S.tx.forEach((t,i)=>{if(t.out&&t.out.until>m)k++;else if(!t.out&&S.planned.some(p=>p.tx===i&&!p.fired&&m>=p.start&&m<p.end))k++;});return 3-k;}
+function forecast(){const pts=[];let soc=S.soc;
+  for(let m=S.t;m<=END;m+=5){const c=comps(m,true),n=nAt(m);if(S.cutouts.some(C=>C.fired&&!C.done&&m<C.end))c.wind=0;
+    const sol=S.allow.solar>0&&S.val.solar!==null?Math.min(c.solar,S.val.solar):c.solar,wi=S.allow.wind>0&&S.val.wind!==null?Math.min(c.wind,S.val.wind):c.wind;
+    let b=S.failUntil.batt>m?0:S.val.batt;if(b>0&&soc<=.3)b=0;if(b<0&&soc>=SOC_MAX-.3)b=0;soc=clamp(soc+(b<0?-b*.92:-b)*5/60,0,SOC_MAX);
+    const fl=(S.failUntil.chp>m?0:S.val.chp)+(S.failUntil.dsr>m?0:S.val.dsr)+b;
+    pts.push({m,net:c.demand-sol-wi-fl,n});}
+  return pts;}
+
+/* ---------- Chart ---------- */
+let lastChart='';
+function drawChart(force){
+  const box=$('chartbox'),W=Math.max(300,box.clientWidth),H=Math.max(200,box.clientHeight),key=S.t+'|'+W+'|'+H+'|'+JSON.stringify(S.val);
+  if(!force&&key===lastChart)return;lastChart=key;
+  const L=W<560?44:58,Rr=W<560?10:18,T=34,B=30,span=END-START;
+  const X=m=>L+(clamp(m,START,END)-START)/span*(W-L-Rr),Yv=v=>T+(Y-clamp(v,-Y,Y))/(2*Y)*(H-T-B);
+  const fc=forecast();let s='';
+  const runs=[];const push=(m,n)=>{const r=runs[runs.length-1];if(r&&r.n===n)r.b=m;else runs.push({a:m,b:m,n});};
+  S.hist.forEach(h=>push(h.m,h.n));fc.forEach(p=>push(p.m,p.n));
+  runs.forEach((r,i)=>{const nx=runs[i+1],a=X(r.a),b=X(nx?nx.a:END+1),w=Math.max(0,b-a)+.6;
+    s+=`<rect class="b-red" x="${a.toFixed(1)}" y="${T}" width="${w.toFixed(1)}" height="${H-T-B}"/>`;
+    if(r.n)s+=`<rect class="b-amb" x="${a.toFixed(1)}" y="${Yv(r.n*R).toFixed(1)}" width="${w.toFixed(1)}" height="${(Yv(-r.n*R)-Yv(r.n*R)).toFixed(1)}"/>`;
+    if(r.n>1)s+=`<rect class="b-grn" x="${a.toFixed(1)}" y="${Yv(firmOf(r.n)).toFixed(1)}" width="${w.toFixed(1)}" height="${(Yv(-firmOf(r.n))-Yv(firmOf(r.n))).toFixed(1)}"/>`;});
+  // the day's weather: sunny break and risk windows, labelled along the top
+  if(S.sunny){const r=S.sunny,a=X(r.start),b=X(r.end);s+=`<rect class="sunny" x="${a}" y="${T}" width="${b-a}" height="${H-T-B}"/><svg x="${a}" y="6" width="${b-a}" height="22"><rect class="sunnybar" width="100%" height="22" rx="4"/><text class="galetxt" x="8" y="16">SUNNY BREAK</text></svg>`;}
+  S.risk.forEach(r=>{const a=X(r.start),b=X(r.end),lb=r.label.toUpperCase(),full=`${lb} ${fmtT(r.start)}–${fmtT(r.end)}`,txt=b-a>full.length*7.6+16?full:b-a>lb.length*7.6+16?lb:'';
+    s+=`<g style="--rc:${r.c}"><rect class="riskband" x="${a}" y="${T}" width="${b-a}" height="${H-T-B}"/><svg x="${a}" y="6" width="${b-a}" height="22"><rect class="riskbar" width="100%" height="22" rx="4"/><text class="galetxt" x="8" y="16">${txt}</text></svg></g>`;});
+  [-180,-120,-60,0,60,120,180].forEach(v=>{s+=`<line class="${v?'gl':'g0'}" x1="${L}" x2="${W-Rr}" y1="${Yv(v)}" y2="${Yv(v)}"/><text class="ax" x="${L-8}" y="${Yv(v)+4}" text-anchor="end">${v<0?'−':''}${Math.abs(v)}</text>`;});
+  for(let h=START;h<=END;h+=W<560?240:120){const x=X(h);s+=`<line class="gl" x1="${x}" x2="${x}" y1="${H-B}" y2="${H-B+5}"/><text class="ax" x="${x}" y="${H-9}" text-anchor="middle">${fmtT(h)}</text>`;}
+  s+=`<text class="ax" x="${L-8}" y="${T-6}" text-anchor="end">MW</text>`;
+  const n0=(S.hist[0]||{n:nIn()}).n;if(n0>1){s+=`<text class="zl" x="${L+8}" y="${Yv(firmOf(n0))+20}" style="fill:var(--ok)">FIRM ZONE</text>`;}
+  s+=`<text class="zl" x="${L+8}" y="${Yv(n0*R)+20}" style="fill:var(--warn)">AT RISK</text><text class="zl" x="${L+8}" y="${T+18}" style="fill:var(--alarm)">OVERLOAD</text>`;
+  s+=`<text class="zl" x="${W-Rr-8}" y="${T+18}" text-anchor="end" style="fill:var(--muted)">DEMAND ▲</text><text class="zl" x="${W-Rr-8}" y="${H-B-8}" text-anchor="end" style="fill:var(--muted)">EXPORT ▼</text>`;
+  const narrow=W<560;S.marks.forEach((k,i)=>{const x=X(k.m),y=T+40+(i%3)*18,lb=narrow&&(k.m>S.t||k.m<S.t-120)?'':esc(k.label);s+=`<line class="mkl" x1="${x}" x2="${x}" y1="${y+4}" y2="${H-B}"/>${lb?`<text class="mk" x="${x+4}" y="${y}">${lb}</text>`:''}`;});
+  if(fc.length>1){s+=`<path class="fc" d="${fc.map((p,i)=>(i?'L':'M')+X(p.m).toFixed(1)+' '+Yv(p.net).toFixed(1)).join(' ')}"/>`;
+    const ex=fc.find(p=>p.m>S.t+10&&zoneOf(p.net,p.n)!=='ok');
+    if(ex&&S.zone==='ok'){const x=X(ex.m),y=Yv(ex.net);s+=`<circle class="exit" cx="${x}" cy="${y}" r="7"/><text class="exittxt" x="${x>W-130?x+8:x<L+130?x-8:x}" y="${y+(ex.net>0?-14:26)}" text-anchor="${x>W-130?'end':x<L+130?'start':'middle'}">leaves the firm zone ~${fmtT(ex.m)}</text>`;}}
+  let seg=null;const segs=[];S.hist.forEach(h=>{const z=h.z;if(!seg||seg.z!==z){const prev=seg&&seg.p[seg.p.length-1];seg={z,p:prev?[prev]:[]};segs.push(seg);}seg.p.push([X(h.m),Yv(h.net)]);});
+  segs.forEach(g=>{if(g.p.length>1)s+=`<path class="h h-${g.z}" d="${g.p.map((q,i)=>(i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)).join(' ')}"/>`;});
+  const xn=X(S.t),yn=Yv(S.n?S.net:0),col=S.zone==='ok'?'var(--ok)':S.zone==='warn'?'var(--warn)':'var(--alarm)';
+  s+=`<line class="nowl" x1="${xn}" x2="${xn}" y1="${T}" y2="${H-B}"/>`;
+  s+=`<circle class="dot" cx="${xn}" cy="${yn}" r="11" fill="${col}"/><text class="dotlbl" x="${xn+(xn>W-160?-18:18)}" y="${yn+6}" text-anchor="${xn>W-160?'end':'start'}">${S.n?Math.round(S.net)+' MW':'OFF'}</text>`;
+  const ch=$('chart');ch.setAttribute('viewBox',`0 0 ${W} ${H}`);ch.innerHTML=s;
+}
+
+/* ---------- Controls ---------- */
+function buildCards(){
+  $('cards').innerHTML=PROV.map(p=>`<article class="card" id="card_${p.id}" style="--tc:${p.tc}">
+    <div class="c-top"><span class="ico"><svg viewBox="0 0 24 24">${ICON[p.id]}</svg></span><div><div class="c-name">${esc(p.name)}</div><div class="c-kind">${esc(p.kind)}</div></div></div>
+    <div class="c-val"><b class="num" id="v_${p.id}">0</b><span id="u_${p.id}">MW</span></div>
+    <div class="c-sub" id="s_${p.id}"></div>
+    <div class="meter"><i id="m_${p.id}"></i></div>
+    <div class="btns"><button type="button" class="adj minus" data-id="${p.id}" data-d="-1" id="dn_${p.id}"><b>−</b><small id="dl_${p.id}"></small></button><button type="button" class="adj plus" data-id="${p.id}" data-d="1" id="up_${p.id}"><b>+</b><small id="ul_${p.id}"></small></button></div>
+    <div class="c-cost"><span>${p.id==='batt'?'£90/MWh out · £35 in':'£'+p.price+'/MWh'}</span><span>spent <b id="c_${p.id}">£0</b></span></div></article>`).join('');
+  const LBL={batt:['Charge','Discharge'],chp:['Less','More'],dsr:['Less','More'],solar:['Curtail','Release'],wind:['Curtail','Release']};
+  PROV.forEach(p=>{$('dl_'+p.id).textContent=LBL[p.id][0];$('ul_'+p.id).textContent=LBL[p.id][1];});
+}
+function adjust(id,d){if(!S||S.ended||mode!=='play')return false;const p=PV[id];let v=S.val[id];
+  if(p.gen){const av=avail(id,S.t)||0;if(S.allow[id]<=0)return false;
+    let nv;if(d>0){if(v===null)return false;nv=v+STEP>=av?null:v+STEP;}else{if(av<=0)return false;const base=Math.min(v===null?av:v,av);nv=Math.max(0,Math.ceil(base/STEP)*STEP-STEP);}
+    if(nv===S.val[id])return false;S.val[id]=nv;}
+  else{const nv=clamp(v+d*STEP,p.min,p.max);if(nv===v)return false;if(S.failUntil[id]>S.t&&nv!==0&&d>0)return false;S.val[id]=nv;}
+  click();render(true);return true;}
+function bindHold(){let tm=null,iv=null,cur=null;const stop=()=>{clearTimeout(tm);clearInterval(iv);tm=iv=null;if(cur)cur.classList.remove('press');cur=null;};
+  $('cards').addEventListener('pointerdown',e=>{const b=e.target.closest('.adj');if(!b||b.disabled)return;e.preventDefault();stop();cur=b;b.classList.add('press');
+    const go=()=>adjust(b.dataset.id,+b.dataset.d);go();tm=setTimeout(()=>{iv=setInterval(()=>{if(!go())stop();},140);},380);});
+  ['pointerup','pointercancel','pointerleave'].forEach(t=>$('cards').addEventListener(t,stop));
+  window.addEventListener('blur',stop);}
+
+/* ---------- Render ---------- */
+function setTxt(id,v){const e=$(id);if(e&&e.textContent!==v)e.textContent=v;}
+function render(force){if(!S)return;
+  setTxt('clock',fmtT(S.t));$('prog').style.width=((S.t-START)/SHIFT*100).toFixed(1)+'%';
+  const done=Math.max(1,S.hist.length),fp=Math.round(S.min.firm/done*100);
+  setTxt('kFirm',S.hist.length?fp+'%':'–');$('kFirmBox').className='kpi firm'+(S.hist.length&&fp<70?' bad':'');
+  setTxt('kSpend',money(spendTot()));setTxt('kScore',nf(scoreNow()));
+  const off=S.n?0:CUST_TOTAL;setTxt('kOff',nf(off));$('kOffBox').className='kpi hide-s'+(off?' bad':'');
+  const z=zoneOf(S.net,S.n),pill=$('pill');
+  const PL={ok:['ok','In the firm zone'],warn:['warn','At risk'],alarm:['alarm','Overload!'],dark:['alarm','Blackout']};
+  pill.className='pill '+PL[z][0];setTxt('pill',PL[z][1]);
+  setTxt('netNow',S.n?Math.round(S.net)+' MW':'OFF');$('netNow').style.color=z==='ok'?'var(--ok)':z==='warn'?'var(--warn)':'var(--alarm)';
+  setTxt('netLbl',S.net<0&&S.n?'Exporting to the grid':'Demand on Blackout Canyon');
+  $('advice').innerHTML=adviceHtml(z);
+  const L=S.n?Math.abs(S.net)/S.n/R:0;
+  const OUT={fault:'Fault',trip:'Overload trip',planned:'Planned maintenance'};
+  $('txList').innerHTML=S.tx.map((t,i)=>{const pc=t.out?0:L*100,cl=pc>100?'alarm':pc>100*firmOf(S.n)/Math.max(1,S.n*R)?'warn':'';
+    return `<div class="tx${t.out?' out':''}"><b>T${i+1}</b><span class="st">${t.out?OUT[t.out.kind]+` · back ~${fmtT(t.out.until)}`:`In service · ${Math.round(pc)}% loaded`}</span><div class="ld ${cl}"><i style="width:${clamp(pc,0,100)}%"></i></div></div>`;}).join('');
+  setTxt('fFirm',S.n>1?'±'+S.firm+' MW':'none');
+  const head=S.firm-Math.abs(S.net);setTxt('fHead',S.n>1?(head>=0?Math.round(head)+' MW':'−'+Math.round(-head)+' MW'):'–');$('fHead').style.color=head>=0?'var(--ok)':'var(--alarm)';
+  setTxt('fDem',Math.round(S.c.demand)+' MW');setTxt('fGen',Math.round(S.gen)+' MW');setTxt('fFlex',Math.round(S.flex)+' MW');setTxt('fSoc',Math.round(S.soc)+' of '+SOC_MAX+' MWh');
+  const wx=wxHtml();if($('wx').innerHTML!==wx)$('wx').innerHTML=wx;
+  PROV.forEach(p=>{const id=p.id,c=S.c,fail=S.failUntil[id]>S.t;let v,u='MW',sub='',pct=0,dn=true,up=true;
+    if(p.gen){const av=avail(id,S.t)||0,cut=S.act[id==='solar'?'curtS':'curtW'],out=Math.max(0,(id==='solar'?c.solar:c.wind)-cut),set=S.val[id];
+      v=Math.round(out);u=`MW of ${Math.round(id==='solar'?c.solar:c.wind)}`;
+      const al=S.allow[id];pct=al/SC.allow[id]*100;
+      if(id==='wind'&&windOff())sub='<span class="bad">Shut down in the gusts</span>';
+      else if(id==='solar'&&c.solar<.5)sub='Dark: no solar output';
+      else sub=(cut>=.5?`Curtailed ${Math.round(cut)} MW · `:'Running free · ')+`allowance ${Math.round(al)} MWh`;
+      if(al<=0){sub='<span class="bad">Allowance used up</span>';dn=up=false;}
+      else{dn=av>0&&(set===null||set>0);up=set!==null;}}
+    else if(id==='batt'){const a=S.act.batt;v=Math.abs(Math.round(a));u=a>.5?'MW discharging':a<-.5?'MW charging':'MW · idle';
+      pct=S.soc/SOC_MAX*100;sub=`Charge ${Math.round(S.soc)} of ${SOC_MAX} MWh`+(S.val.batt>0&&S.soc<=.3?' · <span class="bad">empty</span>':S.val.batt<0&&S.soc>=SOC_MAX-.3?' · full':'');
+      dn=S.val.batt>p.min;up=S.val.batt<p.max;}
+    else{const a=S.act[id];v=Math.round(a);u=`of ${p.max} MW`;pct=a/p.max*100;
+      sub=fail?`<span class="bad">Not responding until ${fmtT(S.failUntil[id])}</span>`:S.val[id]>a+.5?`Ramping up to ${S.val[id]} MW`:S.val[id]<a-.5?`Ramping down to ${S.val[id]} MW`:a>.5?'Running':'Standing by';
+      dn=S.val[id]>0;up=!fail&&S.val[id]<p.max;}
+    setTxt('v_'+id,String(v));setTxt('u_'+id,u);const se=$('s_'+id);if(se.innerHTML!==sub)se.innerHTML=sub;$('m_'+id).style.width=clamp(pct,0,100).toFixed(1)+'%';
+    $('dn_'+id).disabled=!dn;$('up_'+id).disabled=!up;setTxt('c_'+id,money(S.spend[id]));
+    $('card_'+id).classList.toggle('off',!!(fail||(p.gen&&S.allow[id]<=0)));});
+  drawChart(force);
+}
+function wxHtml(){const t=S.t,g=S.risk.find(w=>t>=w.start&&t<w.end),nx=S.risk.find(w=>w.start>t),sun=S.sunny&&t>=S.sunny.start&&t<S.sunny.end;
+  const x=w=>`${w.mult===4?'four':w.mult===3?'three':w.mult} times`;let h='';
+  h+=`<p>${g?`<b style="color:${g.c}">${esc(g.label)}</b> until ${fmtT(g.end)}: faults ${x(g)} as likely.`:sun?`<b style="color:var(--c-solar)">Sunny break</b> until ${fmtT(S.sunny.end)}: lots of solar and wind.`:esc(S.key==='may'?'Clear and sunny, light winds.':S.key==='jan'?'Cold and still, with little sun.':'Strong wind and showers.')}</p>`;
+  if(S.sunny&&t<S.sunny.start)h+=`<p>Sunny break: <b style="color:var(--c-solar)">${fmtT(S.sunny.start)}–${fmtT(S.sunny.end)}</b></p>`;
+  if(nx)h+=`<p>Next ${esc(nx.label.toLowerCase())}: <b style="color:${nx.c}">${fmtT(nx.start)}–${fmtT(nx.end)}</b></p>`;
+  S.planned.forEach(p=>{if(t<p.end)h+=`<p>T${p.tx+1} maintenance: <b style="color:var(--ink)">${fmtT(p.start)}–${fmtT(p.end)}</b>${t>=p.start?' (out now)':''}</p>`;});
+  if(S.key==='storm')h+=`<p>Wind farm: ${windOff()?'<b>shut down</b> in the gusts':'running, but it may cut out'}.</p>`;
+  return h;}
+function adviceHtml(z){if(z==='dark')return'Lights out. Bring demand right down so the transformers can come back.<small>Every minute in the dark costs 50 points.</small>';
+  if(z==='alarm')return`Over what the transformers can carry! ${S.net>0?'Cut demand now: battery, CHP and demand response.':'Curtail solar and wind, or charge the battery, now.'}<small>Overloaded transformers trip.</small>`;
+  if(z==='warn')return`${S.net>0?'Too much demand':'Too much generation'}: if another transformer trips, the rest overload.<small>${S.net>0?'Press + on the battery, CHP or demand response.':'Curtail solar or wind, or charge the battery.'}</small>`;
+  const fc=forecast(),ex=fc.find(p=>p.m>S.t+10&&zoneOf(p.net,p.n)!=='ok');
+  if(ex)return`Safe for now. The forecast leaves the firm zone at ${fmtT(ex.m)}.<small>${ex.net>0?'Charge the battery and get flexibility ready.':'Empty the battery so it can charge, and plan to curtail generation.'}</small>`;
+  return'Safe: one transformer could trip and the others would cope.<small>Keep spend down, and watch the dotted forecast.</small>';}
+
+/* ---------- Messages, flash and sound ---------- */
+let newsTimer=null;
+function toast(text,lvl){if(!S||mode!=='play')return;const n=$('news');n.className='news '+(lvl||'');void n.offsetWidth;n.classList.add('fresh');
+  $('newsT').textContent=fmtT(S.t);$('newsM').textContent=text;n.title=text;clearTimeout(newsTimer);newsTimer=setTimeout(()=>{n.className='news';},lvl==='alarm'?9000:6000);}
+function strike(){const f=$('flash');f.classList.remove('go');void f.offsetWidth;f.classList.add('go');}
+const SND={on:ls('fc-gen-sound')!=='off',ctx:null};
+function audio(){if(!SND.on)return null;try{if(!SND.ctx){const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;SND.ctx=new A();}if(SND.ctx.state==='suspended')SND.ctx.resume();return SND.ctx;}catch(e){return null;}}
+function tone(f,dur,when,type,vol,f2){const a=audio();if(!a)return;const t=a.currentTime+(when||0),o=a.createOscillator(),g=a.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol||.15,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+dur+.05);}
+const sfx={warn:()=>{tone(660,.14,0,'square',.07);tone(520,.2,.16,'square',.07);},fault:()=>{tone(180,.5,0,'sawtooth',.14,60);tone(880,.12,.05,'square',.06);},
+  trip:()=>{for(let i=0;i<3;i++)tone(980,.12,i*.18,'square',.09);},emerg:()=>{tone(760,.18,0,'triangle',.12);tone(760,.18,.25,'triangle',.12);},ok:()=>{tone(523,.12,0,'sine',.12);tone(784,.2,.12,'sine',.12);},
+  start:()=>{tone(392,.12,0,'triangle',.12);tone(523,.12,.12,'triangle',.12);tone(784,.25,.24,'triangle',.14);},count:()=>tone(440,.15,0,'triangle',.12),
+  over:()=>{tone(220,.5,0,'sawtooth',.14,110);tone(165,.9,.5,'sawtooth',.14,55);},
+  end:()=>{tone(523,.15,0,'triangle',.12);tone(659,.15,.16,'triangle',.12);tone(784,.15,.32,'triangle',.12);tone(1047,.4,.48,'triangle',.14);}};
+function play(k){try{sfx[k]&&sfx[k]();}catch(e){}}
+function click(){tone(1400,.03,0,'square',.03);}
+
+/* ---------- Career: stars per day, unlocking the next (kept with Losing Control's generation career) ---------- */
+const CK='fcg-career';
+function career(){try{const c=JSON.parse(ls(CK)||'null');return c&&c.stars?c:{stars:{},ach:{},best:{}};}catch(e){return{stars:{},ach:{},best:{}};}}
+function saveCareer(c){ls(CK,JSON.stringify(c));}
+const starsOf=c=>ORDER.reduce((a,k)=>a+(c.stars[k]||0),0);
+const rankOf=n=>{let r=RANKS[0][1];RANKS.forEach(([t,nm])=>{if(n>=t)r=nm;});return r;};
+const nextRank=n=>RANKS.find(([t])=>t>n);
+const unlocked=(c,k)=>{const i=ORDER.indexOf(k);return i<=0||(c.stars[ORDER[i-1]]||0)>=1;};
+const careerNext=()=>{const c=career();return ORDER.find(k=>unlocked(c,k)&&!(c.stars[k]>=1))||ORDER[ORDER.length-1];};
+const starStr=n=>'★'.repeat(n)+'☆'.repeat(3-n);
+const STARS={A:3,B:2,C:1,D:1,E:0};
+
+/* ---------- Menu ---------- */
+function show(id){['menu','results'].forEach(k=>{$(k).hidden=k!==id;});}
+function renderMenu(){const c=career(),n=starsOf(c),nr=nextRank(n),d=todayUK();
+  if(!dayK||(gmode==='career'&&!unlocked(c,dayK)))dayK=gmode==='career'?careerNext():(dayK||'may');
+  document.querySelectorAll('#tabs .tab').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===gmode)));
+  setTxt('tabCareer',`${rankOf(n)} · ${n} of 9 ★`);setTxt('tabDaily',`${fmtDate(d)} · same faults for everyone`);
+  $('rankTxt').innerHTML=gmode==='career'?`Rank: <b>${esc(rankOf(n))}</b> · ${n} of 9 stars${nr?` · ${nr[0]-n} more for ${esc(nr[1])}`:''}. Finish a day to unlock the next. Grade A earns 3 stars, B 2, C or D 1.`:
+    gmode==='daily'?`Today's challenge: the same weather and fault times for everyone today, for each day. Try again as often as you like.`:'Free play: any day, with new fault times every game.';
+  $('days').innerHTML=ORDER.map(k=>{const D=DAYS[k],lock=gmode==='career'&&!unlocked(c,k);
+    return `<button type="button" class="day" data-day="${k}" style="--dc:${D.color}" aria-pressed="${k===dayK}"${lock?' disabled':''}><b>${esc(D.title)}</b><span class="w">${esc(D.when)}</span><span class="f">${esc(D.focus)}</span>${lock?`<span class="lk">🔒 Finish ${esc(DAYS[ORDER[ORDER.indexOf(k)-1]].title)} to unlock</span>`:`<span class="st" aria-label="${c.stars[k]||0} stars">${starStr(c.stars[k]||0)}</span>`}</button>`;}).join('');
+  const D=DAYS[dayK];$('ho').innerHTML=`<small>Handover from Sam, night shift · ${esc(D.title)}</small>${esc(D.handover)}`;$('ho').style.borderLeftColor=D.color;
+  renderBoard('boardA');fetchBoard();}
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(!b)return;gmode=b.dataset.mode;if(gmode==='career')dayK=careerNext();ls('fc-gen-mode',gmode);renderMenu();});
+$('days').addEventListener('click',e=>{const b=e.target.closest('.day');if(!b||b.disabled)return;dayK=b.dataset.day;renderMenu();});
+function toMenu(){stopDemo();mode='menu';S=null;show('menu');renderMenu();}
+
+/* ---------- Game flow ---------- */
+function startGame(){if(mode==='count'||(mode==='play'&&!(S&&S.demo)))return;stopDemo();audio();newGame(dayK,gmode);clearTimeout(newsTimer);$('news').className='news';$('newsT').textContent='';$('newsM').textContent='Shift starting.';show(null);mode='count';render(true);
+  let n=3;const c=$('count'),b=$('countN');c.hidden=false;const tick=()=>{if(n===0){c.hidden=true;mode='play';lastFrame=performance.now();speedAcc=0;play('start');toast(SC.intro(S),'warn');return;}
+    b.textContent=n;b.style.animation='none';void b.offsetWidth;b.style.animation='';play('count');n--;setTimeout(tick,700);};tick();}
+function gameOver(m,i){if(S.ended)return;S.ended=true;S.over={m,tx:i};
+  mode='ending';strike();play('trip');setTimeout(()=>play('over'),450);
+  setTxt('goSub',`T${i+1} was the last to trip at ${fmtT(m)}. All three transformers are out and Blackout Canyon is in the dark: ${nf(CUST_TOTAL)} customers off.`);
+  const g=$('gameover');g.hidden=false;g.classList.remove('in');void g.offsetWidth;g.classList.add('in');render(true);
+  setTimeout(()=>{g.hidden=true;showResults();},S.demo?2500:4500);}
+function endGame(){if(S.ended)return;S.ended=true;mode='ending';play('end');if(S.demo)demoCap('hold');setTimeout(showResults,600);}
+
+/* ---------- Demo: the game plays itself, explaining each move ---------- */
+// As in Storm Day: cheapest first, a short look ahead with the forecast, and the battery charged cheaply in quiet spells for
+// the evening peak (sc.pre). On a day with an export problem it also empties the battery beforehand, so it can soak up the sun.
+const DEMO_CAP={start:'Watch how a DSO keeps Blackout Canyon in the firm zone.',
+  battUp:'Too much demand ahead: discharging the battery first. It\'s the cheapest way to bring the line down (£90/MWh).',
+  chp:'The battery isn\'t enough, so the gas engine starts too. It\'s slow to ramp up, so call it early.',
+  dsr:'Still above the green: Hertz House demand response. It\'s the dearest (£200/MWh), so it comes last.',
+  battDn:'Too much generation: charging the battery soaks it up, and stores it for the evening peak (£35/MWh).',
+  solar:'Battery charging flat out, so the solar farm is curtailed to cut the export.',
+  wind:'Still exporting too much: curtailing the wind farm as well.',
+  relax:'Back in the green with room to spare: turning flexibility down to save money.',
+  pre:'A quiet spell: charging the battery cheaply now, ready for the evening peak.',
+  dump:'Export is coming: emptying the battery first, so it has room to soak up the sun.',
+  hold:'Inside the firm zone, with nothing to do but watch the forecast.'};
+let demoCapK='',demoCapT=0;
+function demoCap(k){if(k===demoCapK&&k!=='start')return;const now=performance.now();if(k==='hold'&&now-demoCapT<4000)return;demoCapK=k;demoCapT=now;
+  const c=$('demoCap');c.textContent=DEMO_CAP[k];c.classList.remove('fresh');void c.offsetWidth;c.classList.add('fresh');}
+function demoPress(id,d){if(!adjust(id,d))return false;const b=$((d>0?'up_':'dn_')+id);if(b){b.classList.add('demo-press');setTimeout(()=>b.classList.remove('demo-press'),260);}return true;}
+function demoAct(){if(!S||S.ended)return;const v=S.val,fc=forecast().slice(0,4),nets=[S.net,...fc.map(p=>p.net)],fa=fc[fc.length-1]||{n:S.n};
+  const nn=Math.min(S.n,fa.n),fm=firmOf(nn),hi=fm-8,lo=-fm+8,up=Math.max(...nets),dn=Math.min(...nets),fail=id=>S.failUntil[id]>S.t,cur=id=>id==='solar'?S.c.solar:S.c.wind;
+  if(S.n<2)return;
+  if(up>hi){
+    if(v.solar!==null&&demoPress('solar',1))return demoCap('relax');if(v.wind!==null&&demoPress('wind',1))return demoCap('relax');
+    if(v.batt<30&&S.soc>3&&!fail('batt')&&demoPress('batt',1))return demoCap('battUp');
+    if(v.chp<25&&!fail('chp')&&demoPress('chp',1))return demoCap('chp');
+    if(v.dsr<25&&!fail('dsr')&&demoPress('dsr',1))return demoCap('dsr');return;}
+  if(dn<lo){
+    if(v.dsr>0&&demoPress('dsr',-1))return demoCap('relax');if(v.chp>0&&demoPress('chp',-1))return demoCap('relax');
+    if(v.batt>-30&&S.soc<SOC_MAX-2&&demoPress('batt',-1))return demoCap('battDn');
+    if(cur('solar')>1&&S.allow.solar>0&&demoPress('solar',-1))return demoCap('solar');
+    if(cur('wind')>1&&S.allow.wind>0&&demoPress('wind',-1))return demoCap('wind');return;}
+  const room=hi-up>15&&dn-lo>15;
+  if(room){if(v.dsr>0&&demoPress('dsr',-1))return demoCap('relax');if(v.chp>0&&demoPress('chp',-1))return demoCap('relax');
+    if(v.wind!==null&&demoPress('wind',1))return demoCap('relax');if(v.solar!==null&&demoPress('solar',1))return demoCap('relax');
+    // export ahead (the whole forecast): empty the battery while there's room below
+    const exp=forecast().find(p=>p.m<S.t+240&&p.net<-firmOf(p.n)+8);
+    if(exp&&S.soc>8&&dn-lo>35){if(v.batt<15&&demoPress('batt',1))return demoCap('dump');return demoCap('dump');}
+    if(v.batt>0&&demoPress('batt',-1))return demoCap('relax');
+    const pre=SC.pre&&S.t<SC.pre&&S.soc<SOC_MAX-6&&hi-up>30;
+    if(pre&&v.batt>-15&&demoPress('batt',-1))return demoCap('pre');
+    if(!pre&&v.batt<0&&(S.soc>=SOC_MAX-2||!SC.pre||S.t>=SC.pre)&&demoPress('batt',1))return demoCap('relax');}
+  demoCap('hold');}
+function startDemo(){if(mode==='count'||mode==='play')return;audio();newGame(dayK,'demo');S.demo=true;clearTimeout(newsTimer);$('news').className='news';$('newsT').textContent='';$('newsM').textContent='Demo shift starting.';
+  show(null);document.documentElement.classList.add('demo');$('demoBar').hidden=false;demoCapK='';demoCap('start');mode='play';lastFrame=performance.now();speedAcc=0;render(true);
+  toast('Demo · '+SC.intro(S),'warn');}
+function stopDemo(){document.documentElement.classList.remove('demo');$('demoBar').hidden=true;}
+function quit(){if(mode!=='play'||!S)return;if(S.demo||S.hist.length<30){toMenu();return;}S.ended=true;mode='ending';showResults(true);}
+
+/* ---------- Results ---------- */
+const GR=[[97,'A','Rock solid','Inside the firm zone almost all shift. The network was ready for anything.'],[90,'B','Steady hands','A few wobbles, but Blackout Canyon stayed secure for most of the shift.'],
+  [80,'C','Weathered it','You were pushed out of the firm zone for a while. Plan ahead with the dotted forecast.'],[65,'D','Blown about','Too long outside the firm zone. One more trip and customers would have gone off.'],[0,'E','Losing control','The day won this one. Try getting flexibility in before the line leaves the green.']];
+const LESSON={may:'On a sunny, quiet day the problem runs the other way: power flows back up into the grid. Charging the battery and curtailing solar keeps the export inside firm capacity while a transformer is out.',
+  storm:'Flexibility you can call on in minutes is what keeps a network firm through a storm without building new transformers.',
+  jan:'A cold evening peak is where firm capacity runs short. A battery charged earlier in the day, plus generation and demand response, covers it without new transformers.'};
+function showResults(early){const tot=S.over?SHIFT:Math.max(1,S.hist.length),fp=Math.round(S.min.firm/tot*100),sc=scoreNow();let g=S.over?GR[4]:GR.find(x=>fp>=x[0]);
+  S.final={score:sc,firm:fp,grade:g[1]};
+  $('rGrade').textContent=g[1];setTxt('rHead',S.over?'Game over':g[2]);setTxt('rSub',early?'Shift ended early.':S.over?`All three transformers tripped at ${fmtT(S.over.m)}, ${Math.floor((END-S.over.m)/60)} h ${(END-S.over.m)%60} min before the end of the shift.`:g[3]);setTxt('rScore',nf(sc));
+  const sp=spendTot();
+  $('rStats').innerHTML=[['In the firm zone',fp+'%'],['Minutes at risk',nf(S.min.risk)],['Minutes overloaded',nf(S.min.over)],['Shift survived',S.over?fmtT(START)+'–'+fmtT(S.over.m):early?fmtT(START)+'–'+fmtT(S.t):'Whole shift'],['Flexibility spend',money(sp)],S.over?['Game over penalty','−2,000']:['Transformer trips',String(S.marks.filter(k=>/overload trip/.test(k.label)).length)]]
+    .map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+  const used=PROV.filter(p=>S.spend[p.id]>1).sort((a,b)=>S.spend[b.id]-S.spend[a.id]);
+  $('rLesson').innerHTML=S.over?'Overloaded transformers trip, and the load lands on the ones left. That is how one fault becomes a blackout, and why DSOs keep demand inside firm capacity.':
+    used.length?`Your biggest spend was <b>${esc(used[0].name)}</b> (${money(S.spend[used[0].id])}). ${LESSON[S.key]}`:
+    'You used no flexibility at all. Without it, one more fault at the wrong moment would overload the network.';
+  // career: stars and the next day
+  const cb=$('cBox');cb.hidden=true;$('nextBtn').hidden=true;
+  if(!S.demo&&!early&&S.gm==='career'){const c=career(),before=starsOf(c),st=S.over?0:STARS[g[1]],old=c.stars[S.key]||0;
+    if(st>old){c.stars[S.key]=st;saveCareer(c);}
+    const n=starsOf(c),i=ORDER.indexOf(S.key),nk=ORDER[i+1],unl=nk&&st>=1&&!(old>=1)&&unlocked(c,nk);
+    cb.innerHTML=`<span class="stars">${starStr(st)}</span>${st>old?`New best on ${esc(SC.title)}.`:st?`Your best here is ${starStr(Math.max(st,old))}.`:'No stars this time: finish the shift with grade D or better.'}${unl?` <b>${esc(DAYS[nk].title)} is unlocked.</b>`:''}${rankOf(n)!==rankOf(before)?` Promoted to <b>${esc(rankOf(n))}</b>!`:''}<br><small>Rank: ${esc(rankOf(n))} · ${n} of 9 stars</small>`;cb.hidden=false;
+    if(nk&&unlocked(c,nk)){$('nextBtn').hidden=false;$('nextBtn').dataset.day=nk;setTxt('nextBtn',`Next: ${DAYS[nk].title}`);}}
+  const noSave=early||sc<=0||S.demo;$('saveBox').hidden=noSave;$('boardBox').hidden=!noSave;
+  $('nameIn').value=ls('fc-name')||'';setTxt('nameErr','');
+  if(noSave){renderBoard('boardR');fetchBoard();}
+  setTxt('againBtn',S.demo?'Your turn: play now':'Play again');
+  if(S.demo){setTxt('rHead','Demo complete');setTxt('rSub','That\'s how it\'s done: act early, cheapest flexibility first, and turn it off when you don\'t need it.');stopDemo();}
+  setTxt('saveP',`${SC.title} · score ${nf(sc)} · ${fp}% in the firm zone`);show('results');mode='results';}
+
+/* ---------- Scoreboard: shared online through the Losing Control scoreboard (game 'gn'), kept on this device too ---------- */
+// Boards: one per day, for today's challenge (mode gn-daily-YYYY-MM-DD) and free play (gn-free, career scores too).
+// A score saves on this device first and is sent to the scoreboard; anything that couldn't be sent is tried again later.
+// The scoreboard works the score out again from the minutes in each zone and the spend.
+const SCORE_URL='https://script.google.com/macros/s/AKfycbx_0hkrfzn5_ApQWr3UwqT-p7SuOf8ubJHBLxNGGQECIbDEJzfIRNRsWquE--FUOhmMNg/exec';
+const BK='fcg-gen-board';
+const bMode=(gm,d)=>gm==='daily'?'gn-daily-'+d:'gn-free';
+let remote={},netState='';
+function board(){try{return JSON.parse(ls(BK)||'[]');}catch(e){return[];}}
+function setBoard(b){ls(BK,JSON.stringify(b.slice(-300)));}
+async function withTimeout(p,ms){let t;return Promise.race([p,new Promise((_,rej)=>{t=setTimeout(()=>rej(new Error('timeout')),ms);})]).finally(()=>clearTimeout(t));}
+async function sendScore(r){
+  const body={game:'gn',site:location.hostname||'file',id:r.id,name:r.n,day:r.k,mode:r.mode,firm:r.firm,risk:r.risk,over:r.over,dark:r.dark,spend:r.spend,gameover:!!r.go,t:r.t};
+  try{const res=await withTimeout(fetch(SCORE_URL,{method:'POST',body:JSON.stringify(body)}),10000);const j=await res.json();
+    if(j&&j.ok){const b=board(),x=b.find(y=>y.id===r.id);if(x){x.sent=true;x.rank=j.rank;setBoard(b);}netState='online';return j;}
+    if(j&&j.error==='name'){const b=board().filter(y=>y.id!==r.id);setBoard(b);return j;}
+  }catch(e){netState='offline';}return null;}
+let sending=false;
+async function sendPending(){if(sending)return;sending=true;try{for(const r of board().filter(r=>!r.sent&&r.id&&(Date.now()-r.t)<2*86400000)){if(!await sendScore(r))break;}}finally{sending=false;}}
+const boardKey=()=>{const R=mode==='results'&&S?{k:S.key,gm:S.gm==='daily'?'daily':'free'}:{k:dayK,gm:gmode==='daily'?'daily':'free'};return{...R,mode:bMode(R.gm,todayUK())};};
+async function fetchBoard(){const B=boardKey();
+  try{const res=await withTimeout(fetch(SCORE_URL+'?game=gn&day='+B.k+'&mode='+encodeURIComponent(B.mode)),10000);const j=await res.json();
+    if(j&&j.ok&&Array.isArray(j.scores)){remote[B.k+'|'+B.mode]=j.scores;netState='online';}else netState='offline';}
+  catch(e){netState='offline';}
+  try{['boardA','boardR'].forEach(id=>{const el=$(id);if(el&&el.offsetParent)renderBoard(id);});}catch(e){}}
+let myRow=null;
+function renderBoard(id){const B=boardKey(),me=(ls('fc-name')||'').toLowerCase();
+  const mine=board().filter(r=>r.k===B.k&&r.mode===B.mode).map(r=>({id:r.id,n:r.n,s:r.s,f:r.f,t:r.t}));
+  const online=(remote[B.k+'|'+B.mode]||[]).map(r=>({id:r.id,n:r.name,s:r.score,f:r.firm,t:r.t||0}));
+  const seen=new Set(online.map(r=>r.id)),all=online.concat(mine.filter(r=>!seen.has(r.id))).sort((a,b)=>b.s-a.s||a.t-b.t);
+  // each player's best score only
+  const names=new Set(),rows=[];all.forEach(r=>{const k=String(r.n).toLowerCase();if(names.has(k)&&r.id!==myRow)return;names.add(k);rows.push(r);});
+  const title=`${DAYS[B.k].title} · ${B.gm==='daily'?"today's challenge":'free play'}`;
+  const st=netState==='online'?'shared online':netState==='offline'?'this device (offline)':'';
+  ['bdTitle','bdTitle2'].forEach(i=>setTxt(i,title));['bdDate','bdDate2'].forEach(i=>setTxt(i,(B.gm==='daily'?fmtDate(todayUK())+(st?' · ':''):'')+st));
+  $(id).innerHTML=rows.length?rows.slice(0,10).map(r=>`<li class="${r.id===myRow||(!myRow&&me&&String(r.n).toLowerCase()===me)?'me':''}"><span class="nm">${esc(r.n)}</span><span class="fz">${r.f}% firm</span><span class="sc">${nf(r.s)}</span></li>`).join(''):'<li class="empty">No scores yet. Be the first!</li>';}
+function saveScore(){const nm=$('nameIn').value.replace(/[^\p{L}\p{N} '_.-]/gu,'').replace(/\s+/g,' ').trim().slice(0,20);
+  if(!nm){setTxt('nameErr','Type a name for the board.');$('nameIn').focus();return;}
+  ls('fc-name',nm);const F=S.final,gm=S.gm==='daily'?'daily':'free';
+  const row={id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),n:nm,k:S.key,mode:bMode(gm,S.date),s:F.score,f:F.firm,t:Date.now(),
+    firm:S.min.firm,risk:S.min.risk,over:S.min.over,dark:S.min.dark,spend:Math.round(spendTot()),go:!!S.over,sent:false};
+  const b=board();b.push(row);setBoard(b);
+  myRow=row.id;$('saveBox').hidden=true;$('boardBox').hidden=false;renderBoard('boardR');play('ok');sendPending().then(fetchBoard);}
+
+/* ---------- Feedback: emailed to Watts Up through the scoreboard ---------- */
+$('fbBtn').addEventListener('click',()=>{$('fbDlg').hidden=false;setTxt('fbMsgOut','');$('fbName').value=ls('fc-name')||'';$('fbMsg').focus();});
+$('fbCancel').addEventListener('click',()=>{$('fbDlg').hidden=true;});
+$('fbForm').addEventListener('submit',async e=>{e.preventDefault();const msg=$('fbMsg').value.trim();if(msg.length<3){setTxt('fbMsgOut','Write a little more first.');return;}
+  $('fbSend').disabled=true;setTxt('fbMsgOut','Sending…');
+  try{const r=await withTimeout(fetch(SCORE_URL,{method:'POST',body:JSON.stringify({type:'feedback',game:'gn',message:msg,name:$('fbName').value,contact:$('fbContact').value,hp:$('fbHp').value,context:`Generation shifts · ${navigator.userAgent.slice(0,120)}`})}),12000);const j=await r.json();
+    if(j&&j.ok){setTxt('fbMsgOut','Thanks! Your feedback has been sent.');$('fbMsg').value='';setTimeout(()=>{$('fbDlg').hidden=true;},1600);}else setTxt('fbMsgOut',j&&j.error==='busy'?'Lots of feedback right now. Please try again in a few minutes.':'Couldn\'t send that. Please try again.');}
+  catch(err){setTxt('fbMsgOut','Couldn\'t send that: check your connection and try again.');}
+  $('fbSend').disabled=false;});
+
+/* ---------- Main loop ---------- */
+function frame(now){const dt=Math.min(.25,(now-lastFrame)/1000||0);lastFrame=now;
+  if(mode==='play'&&S&&!S.ended){speedAcc+=dt*RATE;let k=0;while(speedAcc>=1&&k<12&&!S.ended){if(S.demo)demoAct();step();speedAcc-=1;k++;}render(false);}
+  requestAnimationFrame(frame);}
+
+$('goBtn').addEventListener('click',startGame);
+$('demoBtn').addEventListener('click',e=>{e.stopPropagation();startDemo();});
+document.addEventListener('pointerdown',e=>{if(mode==='play'&&S&&S.demo&&!e.target.closest('.tools')){e.preventDefault();e.stopPropagation();S=null;mode='menu';startGame();}},true);
+document.addEventListener('keydown',e=>{if(!$('fbDlg').hidden){if(e.key==='Escape')$('fbDlg').hidden=true;return;}
+  if(mode==='results'&&!$('saveBox').hidden&&e.key==='Enter'&&document.activeElement===$('nameIn')){saveScore();return;}
+  if(mode==='play'&&e.key==='Escape')quit();});
+$('saveBtn').addEventListener('click',saveScore);
+$('skipBtn').addEventListener('click',()=>{$('saveBox').hidden=true;$('boardBox').hidden=false;myRow=null;renderBoard('boardR');fetchBoard();});
+$('againBtn').addEventListener('click',()=>{const k=S?S.key:dayK;if(S&&S.demo){gmode=gmode||'free';}dayK=k;S=null;mode='results-x';myRow=null;startGame();});
+$('nextBtn').addEventListener('click',()=>{dayK=$('nextBtn').dataset.day;S=null;mode='results-x';myRow=null;startGame();});
+$('menuBtn').addEventListener('click',()=>{myRow=null;toMenu();});
+$('quitBtn').addEventListener('click',()=>{if(S&&S.demo){toMenu();return;}if(confirm('End this shift?'))quit();});
+$('muteBtn').addEventListener('click',()=>{SND.on=!SND.on;ls('fc-gen-sound',SND.on?'on':'off');$('muteBtn').setAttribute('aria-pressed',String(SND.on));});
+$('muteBtn').setAttribute('aria-pressed',String(SND.on));
+$('fsBtn').addEventListener('click',()=>{const d=document;if(!d.fullscreenElement)(d.documentElement.requestFullscreen||d.documentElement.webkitRequestFullscreen||(()=>{})).call(d.documentElement);else(d.exitFullscreen||d.webkitExitFullscreen).call(d);});
+window.addEventListener('resize',()=>{lastChart='';if(S)drawChart(true);});
+window.addEventListener('online',()=>sendPending());
+// opening the page: ?day=storm picks a day, ?mode=daily|free|career a mode, ?watch starts the demo
+{const m=Q.get('play')||ls('fc-gen-mode');if(['career','daily','free'].includes(m))gmode=m;const d=Q.get('day');if(DAYS[d]){dayK=d;if(gmode==='career'&&!unlocked(career(),d))gmode='free';}}
+bindHold();toMenu();sendPending();requestAnimationFrame(t=>{lastFrame=t;requestAnimationFrame(frame);});
+if(Q.has('watch'))setTimeout(startDemo,300);
+// test hook
+window.__gen={DAYS,startDemo,demoAct,get S(){return S;},newGame:(k,gm)=>{dayK=k;newGame(k,gm||'free');mode='play';show(null);render(true);},step:n=>{for(let i=0;i<n&&S&&!S.ended;i++)step();render(true);},adjust,set:(id,v)=>{S.val[id]=v;},score:scoreNow,forecast,mode:()=>mode,
+  demo:k=>{dayK=k;newGame(k,'free');S.demo=true;mode='play';show(null);},showResults,career,toMenu};
+})();
+</script>
+%%PWA%%
+</body>
+</html>

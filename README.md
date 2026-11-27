@@ -6,8 +6,9 @@ https://www.wattsupelectricity.co.uk/control-room/
 It has two kinds of shift, chosen on the start screen:
 
 - **Control room**: switch, transfer and restore supply through faults and planned work.
-- **Generation**: balance generation, batteries and flexibility to stay inside firm capacity
-  (also at https://www.wattsupelectricity.co.uk/control-room/?mode=gen).
+- **Generation**: balance generation, batteries and flexibility to stay inside firm capacity, on three days
+  (Sunny Sunday, Storm day, Cold Thursday). Since Nov 2026 these play on the Storm Day screen, on their own page at
+  https://www.wattsupelectricity.co.uk/generation/ (`?mode=gen` on the game still goes there).
 
 Also on the site, built from the same `src/` folder:
 
@@ -15,8 +16,7 @@ Also on the site, built from the same `src/` folder:
 - **Gatekeeper** (https://www.wattsupelectricity.co.uk/gatekeeper/): a ten-year connections planning game. The
   network you build there can be played as a Losing Control generation shift ("Run your network").
 
-The main address (https://www.wattsupelectricity.co.uk/) and the old `/generation/` address
-redirect to the game. Old links to https://der-dash.github.io/Network/ forward to the new domain.
+The main address (https://www.wattsupelectricity.co.uk/) is the Watts Up games home page. Old links to https://der-dash.github.io/Network/ forward to the new domain.
 
 © 2026 Steve Backhouse. All rights reserved. This repository is published so the
 games can be hosted on GitHub Pages; it is **not** open source. You may play and

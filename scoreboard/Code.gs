@@ -1,5 +1,9 @@
 /**
  * Losing Control scoreboard and feedback (Watts Up), version 7.
+ * Version 25: Losing Control's generation shifts on the Storm Day screen ('gn') at /generation/. Scores go on a
+ *   'Generation shift scores' tab, a board per day (may, storm, jan) and mode ('gn-free', or 'gn-daily-YYYY-MM-DD' for
+ *   today's challenge). Names as in the other games; the score is worked out here from the minutes in each zone and
+ *   the spend, as for Storm Day. Each player's best score shows on the board. See gnPost_.
  * Version 24: Storm Day, the exhibition edition ('se') at /storm/. Arcade-style scores (three initials) go on a
  *   'Storm Day exhibition scores' tab, one board a day (mode 'se-daily-YYYY-MM-DD'); the score is worked out here from
  *   the minutes in each zone and the spend. Also accepted from the standalone file run at a stand. See sePost_.
@@ -53,7 +57,7 @@
  * formula as the game, so the sheet never trusts a score sent by the browser.
  * Rows saved before version 2 have no mode and count as free play.
  */
-const VERSION = 24;
+const VERSION = 25;
 // Scores are only accepted from the games on these sites. Apps Script can't see the request's
 // origin, so the games send their hostname; copies of the game hosted elsewhere send theirs.
 const HOME_SITES = ['der-dash.github.io', 'www.wattsupelectricity.co.uk', 'wattsupelectricity.co.uk'];
@@ -341,12 +345,67 @@ function sePost_(d) {
   return json_({ ok: true, version: VERSION, name: name, score: score, rank: rank, total: board.length, repeat: !!dup });
 }
 
+/* ---------- Generation shifts ('gn', version 25): the Storm Day screen, 05:00 to 23:00, three days ---------- */
+const GN_SHEET_NAME = 'Generation shift scores';
+const GN_HEADERS = ['Submitted', 'Name', 'Day', 'Mode', 'Score', 'Grade', 'In firm zone %', 'Firm minutes', 'At risk minutes',
+  'Overloaded minutes', 'Dark minutes', 'Spend (£)', 'Game over', 'Id', 'Time', 'Site'];
+const GN_SHIFT = 1080;
+const gnModeOk_ = mode => mode === 'gn-free' || (/^gn-daily-\d{4}-\d{2}-\d{2}$/.test(mode) && modeOk_(mode.slice(3), 'fc'));
+function gnSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(GN_SHEET_NAME);
+  if (!sh) {
+    sh = ss.insertSheet(GN_SHEET_NAME);
+    sh.getRange('B:B').setNumberFormat('@');
+    sh.appendRow(GN_HEADERS);
+    sh.setFrozenRows(1);
+    sh.getRange(1, 1, 1, GN_HEADERS.length).setFontWeight('bold');
+  }
+  return sh;
+}
+function gnRows_(day, mode) {
+  const sh = gnSheet_();
+  if (sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, GN_HEADERS.length).getValues()
+    .filter(r => String(r[2]) === day && String(r[3]) === mode)
+    .map(r => ({ id: String(r[13]), name: String(r[1]), score: Number(r[4]), grade: String(r[5]), firm: Number(r[6]),
+      t: Number(r[14]) || (r[0] instanceof Date ? r[0].getTime() : 0) }));
+}
+// each player's best score, highest first (the earlier score wins a tie)
+function gnBoard_(rows) {
+  const best = {};
+  rows.forEach(r => { const k = r.name.toLowerCase(), b = best[k]; if (!b || r.score > b.score || (r.score === b.score && r.t < b.t)) best[k] = r; });
+  return Object.keys(best).map(k => best[k]).sort((a, b) => b.score - a.score || a.t - b.t);
+}
+function gnPost_(d, name) {
+  const day = DAYS.indexOf(d.day) >= 0 ? d.day : null, mode = String(d.mode || ''), id = String(d.id || '');
+  if (!name || !day || !gnModeOk_(mode) || !/^[a-z0-9]{6,20}$/.test(id)) return json_({ ok: false, error: 'Invalid score' });
+  const int = v => { const n = Math.round(Number(v)); return isFinite(n) && n >= 0 ? n : -1; };
+  const firm = int(d.firm), risk = int(d.risk), over = int(d.over), dark = int(d.dark), spend = int(d.spend), go = d.gameover === true;
+  const mins = firm + risk + over + dark;
+  const valid = [firm, risk, over, dark, spend].every(n => n >= 0) && spend < 1000000 &&
+    (go ? mins > 0 && mins <= GN_SHIFT : mins === GN_SHIFT);
+  if (!valid) return json_({ ok: false, error: 'Invalid score' });
+  const rows = gnRows_(day, mode), dup = rows.find(r => r.id === id);
+  const score = dup ? dup.score : Math.max(0, Math.round(firm * 10 - risk * 10 - over * 20 - dark * 50 - spend / 25 - (go ? 2000 : 0)));
+  const pct = Math.round(firm / (go ? GN_SHIFT : mins) * 100), t = Math.round(Number(d.t)) || Date.now();
+  if (!dup) gnSheet_().appendRow([new Date(), name, day, mode, score, seGrade_(pct, go), pct, firm, risk, over, dark, spend, go ? 'yes' : 'no', id, t,
+    String(d.site || '').toLowerCase()]);
+  const board = gnBoard_(dup ? rows : rows.concat([{ id, name, score, t }])), rank = board.findIndex(r => r.name.toLowerCase() === name.toLowerCase()) + 1;
+  return json_({ ok: true, version: VERSION, name: name, score: score, rank: rank, total: board.length, repeat: !!dup });
+}
+
 function doGet(e) {
   const p = (e && e.parameter) || {};
   if (p.game === 'se') {
     const mode = String(p.mode || '');
     if (!/^se-daily-\d{4}-\d{2}-\d{2}$/.test(mode)) return json_({ ok: false, error: 'mode' });
     return json_({ ok: true, version: VERSION, scores: seBoard_(seRows_(mode)).slice(0, 50) });
+  }
+  if (p.game === 'gn') {
+    const day = String(p.day || ''), mode = String(p.mode || 'gn-free');
+    if (DAYS.indexOf(day) < 0 || !(mode === 'gn-free' || /^gn-daily-\d{4}-\d{2}-\d{2}$/.test(mode))) return json_({ ok: false, error: 'mode' });
+    return json_({ ok: true, version: VERSION, scores: gnBoard_(gnRows_(day, mode)).slice(0, 50) });
   }
   if (p.game === 'gk') {
     const mode = String(p.mode || 'gk-free');
@@ -554,6 +613,7 @@ function doPost(e) {
     if (name && rude_(name)) return json_({ ok: false, error: 'name' });
     if (d.game === 'fl') return flPost_(d, name);
     if (d.game === 'gk') return gkPost_(d, name);
+    if (d.game === 'gn') return gnPost_(d, name);
     const game = d.game === 'cr' ? 'cr' : 'fc';
     const day = (game === 'cr' ? CR_DAYS : DAYS).indexOf(d.day) >= 0 ? d.day : null;
     const rawMode = String(d.mode || (game === 'cr' ? 'cr-free' : 'free'));

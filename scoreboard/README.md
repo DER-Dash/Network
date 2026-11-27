@@ -198,3 +198,15 @@ score after its connection drops only saves it once. Scores are also accepted fr
 To remove a score for everyone, delete its row on that tab. Replace the code with the new `Code.gs`, save, then
 **Deploy → Manage deployments → pencil → Version: New version → Deploy** (same URL). Until it is deployed, the game
 keeps scores on the device that played them and sends them once the new version is live.
+
+## Updating to version 25 (generation shifts on the Storm Day screen)
+
+Version 25 adds the boards for Losing Control's **generation shifts** (Sunny Sunday, Storm day, Cold Thursday), which
+now play on the Storm Day screen at `/generation/`. Scores go on a new **Generation shift scores** tab, created
+automatically with the first score: one board per day for free play (`gn-free`, career scores too) and one per day for
+today's challenge (`gn-daily-YYYY-MM-DD`). Names follow the same rules as Losing Control, and each player's best score
+shows on the board. The script works the score out itself from the minutes in each zone and the spend, as for Storm Day.
+
+Replace the code with the new `Code.gs`, save, then **Deploy → Manage deployments → pencil → Version: New version →
+Deploy** (same URL). Until it is deployed, the game keeps scores on the device that played them and sends them once
+the new version is live.

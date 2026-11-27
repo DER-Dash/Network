@@ -1,0 +1,21 @@
+// The generation shifts' scoreboard ('gn', scoreboard version 25), run against the in-memory Apps Script stand-in.
+const {makeAppsScript}=require('./appscript-mock');
+let fails=0;const ok=(c,m)=>{if(!c)fails++;console.log((c?'ok ':'FAIL ')+m);};
+const A=makeAppsScript(),site='www.wattsupelectricity.co.uk';
+const d=new Date().toISOString().slice(0,10),daily='gn-daily-'+d;
+const post=o=>A.post({game:'gn',site,id:Math.random().toString(36).slice(2,10),day:'storm',mode:'gn-free',firm:1000,risk:60,over:20,dark:0,spend:20000,t:Date.now(),...o});
+let r=post({name:'Sparky Sue'});
+ok(r.ok&&r.version===25&&r.score===1000*10-600-400-800&&r.rank===1,'score saved and worked out on the server');
+r=post({name:'Sparky Sue',firm:1080,risk:0,over:0});ok(r.ok&&r.score===10800-800,'a better score');
+r=post({name:'Volt Val',firm:900,risk:180,over:0});ok(r.ok&&r.rank===2,'second player ranked');
+r=post({name:'Short',firm:500,risk:0,over:0});ok(!r.ok,'a shift that is too short is refused');
+r=post({name:'Gone',firm:300,risk:0,over:0,dark:5,gameover:true});ok(r.ok&&r.score===Math.max(0,3000-250-800-2000),'game over: partial shift with the penalty');
+r=post({name:'Sparky Sue',day:'black'});ok(!r.ok,'unknown day refused');
+r=post({name:'Sparky Sue',mode:'gn-daily-2001-01-01'});ok(!r.ok,'old daily board refused');
+r=post({name:'Sparky Sue',mode:daily,day:'may'});ok(r.ok,'today\'s challenge saved');
+r=post({name:'Hacker',site:'evil.example'});ok(!r.ok&&r.error==='site','other sites refused');
+let g=A.get({game:'gn',day:'storm',mode:'gn-free'});ok(g.ok&&g.scores.length===3&&g.scores[0].name==='Sparky Sue'&&g.scores[0].score===10000,'board: each player once, best first');
+g=A.get({game:'gn',day:'may',mode:daily});ok(g.ok&&g.scores.length===1,'daily board per day');
+g=A.get({game:'gn',day:'jan',mode:'gn-free'});ok(g.ok&&g.scores.length===0,'empty board');
+ok(A.sheets['Generation shift scores']&&A.sheets['Generation shift scores'].rows[0][0]==='Submitted','own tab with headers');
+console.log(fails?fails+' FAILED':'gen scoreboard ok');process.exit(fails?1:0);
