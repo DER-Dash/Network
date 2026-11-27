@@ -1,5 +1,8 @@
 /**
  * Losing Control scoreboard and feedback (Watts Up), version 7.
+ * Version 24: Storm Day, the exhibition edition ('se') at /storm/. Arcade-style scores (three initials) go on a
+ *   'Storm Day exhibition scores' tab, one board a day (mode 'se-daily-YYYY-MM-DD'); the score is worked out here from
+ *   the minutes in each zone and the spend. Also accepted from the standalone file run at a stand. See sePost_.
  * Version 23: Gatekeeper ('gk'), the connections planning game. Career scores go on a 'Gatekeeper scores' tab
  *   (mode 'gk-free' or 'gk-week-YYYY-MM-DD' for the week's canyon, Monday's date): the score is worked out here from
  *   the ten yearly report cards. Career saves (the game in progress) go in two new columns on the Careers tab,
@@ -50,7 +53,7 @@
  * formula as the game, so the sheet never trusts a score sent by the browser.
  * Rows saved before version 2 have no mode and count as free play.
  */
-const VERSION = 23;
+const VERSION = 24;
 // Scores are only accepted from the games on these sites. Apps Script can't see the request's
 // origin, so the games send their hostname; copies of the game hosted elsewhere send theirs.
 const HOME_SITES = ['der-dash.github.io', 'www.wattsupelectricity.co.uk', 'wattsupelectricity.co.uk'];
@@ -283,8 +286,68 @@ function gkPost_(d, name) {
   return json_({ ok: true, version: VERSION, name: name, score: score, grade: grade, stars: stars, best: board[i].score, rank: i + 1, total: board.length });
 }
 
+/* ---------- Storm Day, exhibition edition (version 24) ----------
+ * One 15-hour shift (07:00 to 22:00, 900 minutes). The game sends the minutes spent in each zone and the spend;
+ * the score is worked out here: 10 points a minute in the firm zone, -10 at risk, -20 overloaded, -50 in the dark,
+ * less spend / 25, and -2,000 if all three transformers tripped (game over, which ends the shift early).
+ * Every score counts (it's an arcade board: three initials, and people share them), but each one is sent
+ * with an id, so a score the stand sends twice (a retry after the connection dropped) is only saved once.
+ * The stand can run the game from a file with no website, so 'file' is accepted as its site.
+ */
+const SE_SHEET_NAME = 'Storm Day exhibition scores';
+const SE_HEADERS = ['Submitted', 'Initials', 'Mode', 'Score', 'Grade', 'In firm zone %', 'Firm minutes', 'At risk minutes',
+  'Overloaded minutes', 'Dark minutes', 'Spend (£)', 'Game over', 'Id', 'Played at', 'Site'];
+const SE_SHIFT = 900;
+const SE_SITES = HOME_SITES.concat(['file', 'localhost']);
+const seGrade_ = (pct, over) => over ? 'E' : pct >= 97 ? 'A' : pct >= 90 ? 'B' : pct >= 80 ? 'C' : pct >= 65 ? 'D' : 'E';
+const seModeOk_ = mode => /^se-daily-\d{4}-\d{2}-\d{2}$/.test(mode) && modeOk_(mode.slice(3), 'fc');
+function seSheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(SE_SHEET_NAME);
+  if (!sh) {
+    sh = ss.insertSheet(SE_SHEET_NAME);
+    sh.appendRow(SE_HEADERS);
+    sh.setFrozenRows(1);
+    sh.getRange(1, 1, 1, SE_HEADERS.length).setFontWeight('bold');
+  }
+  return sh;
+}
+function seRows_(mode) {
+  const sh = seSheet_();
+  if (sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, SE_HEADERS.length).getValues()
+    .filter(r => String(r[2]) === mode)
+    .map(r => ({ id: String(r[12]), name: String(r[1]), score: Number(r[3]), grade: String(r[4]), firm: Number(r[5]),
+      t: Number(r[13]) || (r[0] instanceof Date ? r[0].getTime() : 0) }));
+}
+const seBoard_ = rows => rows.slice().sort((a, b) => b.score - a.score || a.t - b.t);
+function sePost_(d) {
+  if (SE_SITES.indexOf(String(d.site || '').toLowerCase()) < 0) return json_({ ok: false, error: 'site' });
+  const name = String(d.name || '').toUpperCase();
+  const mode = String(d.mode || ''), id = String(d.id || '');
+  if (!/^[A-Z]{3}$/.test(name) || rude_(name) || !seModeOk_(mode) || !/^[a-z0-9]{6,20}$/.test(id)) return json_({ ok: false, error: 'Invalid score' });
+  const int = v => { const n = Math.round(Number(v)); return isFinite(n) && n >= 0 ? n : -1; };
+  const firm = int(d.firm), risk = int(d.risk), over = int(d.over), dark = int(d.dark), spend = int(d.spend), go = d.gameover === true;
+  const mins = firm + risk + over + dark;
+  const valid = [firm, risk, over, dark, spend].every(n => n >= 0) && spend < 1000000 &&
+    (go ? mins > 0 && mins <= SE_SHIFT : mins === SE_SHIFT);
+  if (!valid) return json_({ ok: false, error: 'Invalid score' });
+  const rows = seRows_(mode), dup = rows.find(r => r.id === id);
+  const score = dup ? dup.score : Math.max(0, Math.round(firm * 10 - risk * 10 - over * 20 - dark * 50 - spend / 25 - (go ? 2000 : 0)));
+  const pct = Math.round(firm / (go ? SE_SHIFT : mins) * 100), t = Math.round(Number(d.t)) || Date.now();
+  if (!dup) seSheet_().appendRow([new Date(), name, mode, score, seGrade_(pct, go), pct, firm, risk, over, dark, spend, go ? 'yes' : 'no', id, t,
+    String(d.site || '').toLowerCase()]);
+  const board = seBoard_(dup ? rows : rows.concat([{ id, score, t }])), rank = board.findIndex(r => r.id === id) + 1;
+  return json_({ ok: true, version: VERSION, name: name, score: score, rank: rank, total: board.length, repeat: !!dup });
+}
+
 function doGet(e) {
   const p = (e && e.parameter) || {};
+  if (p.game === 'se') {
+    const mode = String(p.mode || '');
+    if (!/^se-daily-\d{4}-\d{2}-\d{2}$/.test(mode)) return json_({ ok: false, error: 'mode' });
+    return json_({ ok: true, version: VERSION, scores: seBoard_(seRows_(mode)).slice(0, 50) });
+  }
   if (p.game === 'gk') {
     const mode = String(p.mode || 'gk-free');
     if (!/^gk-(free|week-\d{4}-\d{2}-\d{2})$/.test(mode)) return json_({ ok: false, error: 'mode' });
@@ -482,6 +545,7 @@ function doPost(e) {
   try {
     const d = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     if (d.type === 'feedback') return feedback_(d);
+    if (d.game === 'se') return sePost_(d);
     if (HOME_SITES.indexOf(String(d.site || '').toLowerCase()) < 0) return json_({ ok: false, error: 'site' });
     if (d.type === 'career') return careerSync_(d);
     // Letters, numbers, spaces and a little punctuation only. This also stops

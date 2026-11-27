@@ -168,3 +168,6 @@ wr('fault-lines/index.html',fault_lines(False))
 
 # ---- Gatekeeper: the connections planning game, its own page at /gatekeeper/ (sources in src/gatekeeper) ----
 exec(compile(open(os.path.join(HERE,'gatekeeper','build.py'),encoding='utf-8').read(),os.path.join(HERE,'gatekeeper','build.py'),'exec'),{'__file__':os.path.join(HERE,'gatekeeper','build.py'),'__name__':'gk_build'})
+
+# ---- Storm Day, exhibition edition: its own page at /storm/ (sources in src/storm) ----
+exec(compile(open(os.path.join(HERE,'storm','build.py'),encoding='utf-8').read(),os.path.join(HERE,'storm','build.py'),'exec'),{'__file__':os.path.join(HERE,'storm','build.py'),'__name__':'storm_build'})

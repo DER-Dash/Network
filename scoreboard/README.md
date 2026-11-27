@@ -186,3 +186,15 @@ Version 23 adds **Gatekeeper**, the connections planning game at `/gatekeeper/`:
 Replace the code with the new `Code.gs`, save, then **Deploy → Manage deployments → pencil → Version: New version →
 Deploy** (same URL). Losing Control and Fault Lines are unaffected. Until it is deployed, Gatekeeper plays normally
 and its scoreboard says "coming soon".
+
+## Updating to version 24 (Storm Day, exhibition edition)
+
+Version 24 adds the shared leaderboard for **Storm Day**, the exhibition edition at `/storm/` (also run as a
+standalone file at a stand). Scores go on a new **Storm Day exhibition scores** tab, created automatically with the
+first score: three initials, one board a day, and every score counts (it's an arcade board). The script works the
+score out itself from the minutes in each zone and the spend. Each score carries an id, so a stand that resends a
+score after its connection drops only saves it once. Scores are also accepted from the standalone file (site `file`).
+
+To remove a score for everyone, delete its row on that tab. Replace the code with the new `Code.gs`, save, then
+**Deploy → Manage deployments → pencil → Version: New version → Deploy** (same URL). Until it is deployed, the game
+keeps scores on the device that played them and sends them once the new version is live.
