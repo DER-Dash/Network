@@ -32,7 +32,7 @@ LIVE_META=f'''<link rel="canonical" href="{URL}">
 <link rel="apple-touch-icon" href="../icons/cr-apple-180.png">
 '''
 def page(live):
-    qr=rd('qr.svg').replace('<svg ','<svg aria-label="QR code for wattsupelectricity.co.uk" role="img" ',1)
+    qr=rd('qr.svg').replace('<svg ','<svg aria-label="QR code for Storm Day at wattsupelectricity.co.uk/storm" role="img" ',1)
     return rd('storm.html').replace('%%META%%',LIVE_META if live else '').replace('%%FONTS%%',fonts()).replace('%%QR%%',qr)
 def wr(p,s):
     p=os.path.join(ROOT,p);os.makedirs(os.path.dirname(p),exist_ok=True);open(p,'w',encoding='utf-8').write(s);print('built',os.path.relpath(p,ROOT),len(s))
