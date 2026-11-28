@@ -1,5 +1,7 @@
 /**
  * Losing Control scoreboard and feedback (Watts Up), version 7.
+ * Version 26: two more generation shift days, Heatwave ('heat') and EV evening ('ev'), on the 'gn' boards and in
+ *   generation careers.
  * Version 25: Losing Control's generation shifts on the Storm Day screen ('gn') at /generation/. Scores go on a
  *   'Generation shift scores' tab, a board per day (may, storm, jan) and mode ('gn-free', or 'gn-daily-YYYY-MM-DD' for
  *   today's challenge). Names as in the other games; the score is worked out here from the minutes in each zone and
@@ -57,7 +59,7 @@
  * formula as the game, so the sheet never trusts a score sent by the browser.
  * Rows saved before version 2 have no mode and count as free play.
  */
-const VERSION = 25;
+const VERSION = 26;
 // Scores are only accepted from the games on these sites. Apps Script can't see the request's
 // origin, so the games send their hostname; copies of the game hosted elsewhere send theirs.
 const HOME_SITES = ['der-dash.github.io', 'www.wattsupelectricity.co.uk', 'wattsupelectricity.co.uk'];
@@ -66,7 +68,7 @@ const FEEDBACK_HEADERS = ['Received', 'Game', 'Name', 'Reply to', 'Feedback', 'C
 const SHEET_NAME = 'Scores';
 const CR_SHEET_NAME = 'Control room scores';
 const sheetFor_ = game => game === 'cr' ? CR_SHEET_NAME : SHEET_NAME;
-const DAYS = ['may', 'jan', 'storm'];
+const DAYS = ['may', 'jan', 'storm', 'heat', 'ev']; // generation days: heat and ev since version 26
 const CR_DAYS = ['quiet', 'jan', 'storm', 'grid', 'mesh', 'heat', 'gsp', 'snow', 'endure', 'ev', 'xmas', 'morning', 'black', 'comms', 'busbar'];
 const SHIFT_MINUTES = 1080; // generation game: 05:00 to 23:00
 const CR_SHIFT_MINUTES = 720; // control room game: 08:00 to 20:00

@@ -317,13 +317,13 @@ html.demo .app{padding-bottom:78px}
 .tab b{display:block;font:700 18px var(--f-display);letter-spacing:.06em;text-transform:uppercase}
 .tab span{font-size:13px;color:var(--navy-muted)}
 .tab[aria-pressed="true"]{border-color:var(--zap);background:#1f3b63}.tab[aria-pressed="true"] b{color:var(--zap)}
-.days{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 18px}
-.day{--dc:var(--zap);text-align:left;background:rgba(255,255,255,.05);border:2px solid var(--navy-line);border-top:6px solid var(--dc);border-radius:12px;padding:12px 14px;color:#fff;display:flex;flex-direction:column;gap:4px;min-height:132px}
-.day b{font:700 24px/1 var(--f-display);letter-spacing:.03em;text-transform:uppercase}
-.day .w{font-size:14px;color:var(--navy-muted)}
-.day .f{font:700 13px var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--dc);filter:brightness(1.35)}
+.days{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:0 0 16px}
+.day{--dc:var(--zap);text-align:left;background:rgba(255,255,255,.05);border:2px solid var(--navy-line);border-top:6px solid var(--dc);border-radius:12px;padding:10px 10px;color:#fff;display:flex;flex-direction:column;gap:3px;min-height:118px}
+.day b{font:700 19px/1 var(--f-display);letter-spacing:.02em;text-transform:uppercase}
+.day .w{font-size:12px;color:var(--navy-muted)}
+.day .f{font:700 11px/1.2 var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--dc);filter:brightness(1.35)}
 .day .st{margin-top:auto;font-size:20px;letter-spacing:.1em;color:var(--zap)}
-.day .lk{margin-top:auto;font-size:14px;color:var(--navy-muted)}
+.day .lk{margin-top:auto;font-size:12px;color:var(--navy-muted)}
 .day[aria-pressed="true"]{border-color:var(--zap);background:rgba(255,201,40,.12);border-top-color:var(--dc)}
 .day:disabled{opacity:.45;cursor:not-allowed}
 .rank{font-size:15px;color:var(--navy-muted);margin:-4px 0 14px}.rank b{color:#fff}
@@ -356,7 +356,7 @@ html.demo .app{padding-bottom:78px}
 .dlg .hp{position:absolute;left:-9999px}
 .bar .back{color:var(--navy-muted);font:600 13px var(--f-body);text-decoration:none}
 @media (max-width:1150px){.mn-grid{grid-template-columns:1fr;gap:22px}}
-@media (max-width:760px){.days{grid-template-columns:1fr}.day{min-height:0}.gmodes{margin-left:0;width:100%}.gmode{flex:1}.mn-top .att-logo .wu{font-size:34px}
+@media (max-width:760px){.days{grid-template-columns:1fr 1fr}.day{min-height:0}.gmodes{margin-left:0;width:100%}.gmode{flex:1}.mn-top .att-logo .wu{font-size:34px}
   .mn .lede{font-size:17px}.mn .how{display:none}.tab{min-width:0}.mn .go{font-size:22px;padding:14px 22px}.screen{padding:16px}
   .grade b{width:100px;height:100px;font-size:78px}.grade h2{font-size:40px}.bigscore b{font-size:64px}.stats dd{font-size:22px}}
 @media (max-width:900px),(max-height:620px){.cards{grid-template-columns:repeat(2,1fr)}.cards .card:last-child:nth-child(odd){grid-column:span 2}}
@@ -366,6 +366,63 @@ html.demo .app{padding-bottom:78px}
   .dock{padding:0 10px}.main{padding:0 10px}.dock-h{display:block}.dock-h p{font-size:13px}.cards{gap:8px}.card{padding:8px 10px}.c-name{font-size:16px}.c-kind{display:none}
   .c-val b{font-size:26px}.c-cost{flex-wrap:wrap;gap:0 8px;font-size:12px}.c-sub{font-size:12px}.adj{min-height:60px}.adj b{font-size:28px}
   .news{font-size:14px;min-height:0}.tab span{font-size:12px}}
+/* Armed flexibility, pause and speed, tutorial coach, achievements, sync, debrief */
+.arm{min-height:36px;border-radius:8px;border:2px dashed var(--tc);background:transparent;font:700 13px var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--ink);display:flex;align-items:center;justify-content:center;gap:6px;padding:4px 6px}
+.arm[aria-pressed="true"]{border-style:solid;background:color-mix(in srgb,var(--tc) 16%,#fff);color:var(--tc)}
+.arm[aria-pressed="true"]::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--tc);box-shadow:0 0 0 3px color-mix(in srgb,var(--tc) 30%,transparent);animation:blink 1.4s steps(2) infinite}
+.arm:disabled{opacity:.35}
+.pill.cov{color:#0d6b5f;background:#d4efe9;border-color:#1f9a8a}
+#chart .b-cov,#dbChart .b-cov{fill:#d4efe9}
+#chart .h-cov,#dbChart .h-cov{stroke:#1f9a8a}
+#chart .covtxt{font:700 12px var(--f-display);letter-spacing:.1em;fill:#1f9a8a}
+.ibtn.txt{font:700 16px var(--f-mono);width:auto;min-width:48px;padding:0 8px}
+.ibtn[aria-pressed="true"].pz{background:var(--zap);color:var(--navy);border-color:var(--zap)}
+.pausedov{position:fixed;inset:0;z-index:18;display:grid;place-items:center;background:rgba(11,31,58,.45);cursor:pointer}
+.pausedov[hidden]{display:none}
+.pausedov b{font:700 clamp(48px,8vw,110px)/1 var(--f-display);letter-spacing:.1em;text-transform:uppercase;color:#fff;text-shadow:0 6px 30px rgba(0,0,0,.4)}
+.pausedov small{display:block;text-align:center;font:600 18px var(--f-body);color:#fff;letter-spacing:0;text-transform:none;margin-top:8px}
+.coach{position:fixed;z-index:19;left:50%;top:110px;transform:translateX(-50%);width:min(640px,calc(100% - 24px));background:var(--navy);color:#fff;border:3px solid var(--zap);border-radius:14px;padding:16px 18px;box-shadow:0 14px 40px rgba(0,0,0,.35);font-size:18px;line-height:1.35}
+.coach[hidden]{display:none}
+.coach .ck{font:700 13px var(--f-display);letter-spacing:.16em;text-transform:uppercase;color:var(--zap);margin-bottom:4px;display:flex;justify-content:space-between}
+.coach .cdo{margin-top:8px;font-weight:700;color:var(--zap)}
+.coach .row{justify-content:flex-end;margin-top:10px}.coach .bbtn{font-size:18px;padding:8px 18px}
+.coach .skip{background:transparent;border:0;color:var(--navy-muted);font:600 14px var(--f-body);text-decoration:underline}
+.hi{outline:5px solid var(--zap)!important;outline-offset:3px;border-radius:10px;position:relative;z-index:17;animation:hipulse 1.2s ease-in-out infinite}
+@keyframes hipulse{50%{outline-color:rgba(255,201,40,.35)}}
+.learn{display:inline-flex;align-items:center;gap:8px;margin:0 0 14px;font:700 18px var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--navy);background:#fff;border:0;border-radius:10px;padding:10px 16px}
+.learn[hidden]{display:none}
+.achs{display:flex;flex-wrap:wrap;gap:5px;margin:-6px 0 12px}
+.stats dd small{font:600 15px var(--f-body);color:var(--navy-muted)}
+@media (max-width:1150px){.days{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.ach{display:inline-flex;align-items:center;gap:4px;font:600 12px var(--f-body);padding:2px 8px;border-radius:999px;border:1px solid var(--navy-line);color:var(--navy-muted)}
+.ach.got{background:rgba(255,201,40,.15);border-color:var(--zap);color:#fff}
+.ach.got::before{content:"★";color:var(--zap)}
+.sync{background:rgba(255,255,255,.05);border:1px solid var(--navy-line);border-radius:12px;padding:12px 14px;margin-top:14px;font-size:15px;line-height:1.35}
+.sync[hidden]{display:none}
+.sync h3{margin:0 0 6px;font:700 16px var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--zap)}
+.sync p{margin:0 0 8px;color:var(--navy-muted)}.sync p b{color:#fff}
+.sync .fr{display:flex;gap:8px;flex-wrap:wrap}
+.sync input{font:600 16px var(--f-body);padding:8px 10px;border-radius:8px;border:1px solid var(--navy-line);background:#fff;color:var(--navy);min-width:0;-webkit-user-select:text;user-select:text}
+.sync input#syName{flex:2 1 140px}.sync input#syPin{flex:1 1 80px;font-family:var(--f-mono);letter-spacing:.2em}
+.sync button{font:700 14px var(--f-display);letter-spacing:.06em;text-transform:uppercase;border-radius:8px;padding:8px 12px;border:2px solid var(--navy-line);background:var(--navy-2);color:#fff}
+.sync button.pri{background:var(--zap);border-color:var(--zap);color:var(--navy)}
+.sync .msg{margin:8px 0 0;min-height:18px;color:var(--zap)}
+.streak{color:var(--zap);font-weight:700}
+.debrief{grid-column:1/-1;background:var(--panel);color:var(--ink);border-radius:12px;padding:12px 14px 6px}
+.debrief h3{margin:0 0 4px;font:700 18px var(--f-display);letter-spacing:.12em;text-transform:uppercase}
+.debrief p{margin:0 0 6px;font-size:15px;color:var(--muted)}.debrief p b{color:var(--ink)}
+#dbChart{width:100%;height:240px;display:block}
+#dbChart text{font-family:var(--f-mono);font-size:12px;fill:var(--muted)}
+#dbChart .gl{stroke:var(--rule)}#dbChart .g0{stroke:var(--muted);stroke-width:1.5}
+#dbChart .b-red{fill:#f6d6d1}#dbChart .b-amb{fill:#f7ead0}#dbChart .b-grn{fill:#c6e8d0}
+#dbChart .h{fill:none;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
+#dbChart .h-ok{stroke:var(--ok)}#dbChart .h-warn{stroke:var(--warn)}#dbChart .h-alarm{stroke:var(--alarm)}#dbChart .h-dark{stroke:#555}
+#dbChart .mk{font:700 11px var(--f-display);fill:var(--ink)}#dbChart .mkl{stroke:var(--ink);stroke-width:1;stroke-dasharray:2 3}
+#dbChart .exc{fill:var(--alarm);opacity:.14}#dbChart .exctxt{font:700 12px var(--f-display);fill:var(--alarm)}
+#dbChart .riskband{fill:var(--rc,var(--c-storm));opacity:.07}#dbChart .sunny{fill:var(--c-solar);opacity:.08}
+@media (max-height:900px){.arm{min-height:30px;font-size:12px}}
+@media (max-height:780px){.arm{min-height:26px;font-size:11px}}
+@media (max-width:600px){.coach{top:auto;bottom:12px;font-size:16px}#dbChart{height:200px}.ibtn.txt{min-width:40px;font-size:14px}}
 </style>
 </head>
 <body>
@@ -381,7 +438,9 @@ html.demo .app{padding-bottom:78px}
       <div class="kpi score"><span class="k">Score</span><span class="v" id="kScore">0</span></div>
     </div>
     <div class="tools">
-      <button class="ibtn" id="muteBtn" type="button" aria-label="Sound" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+      <button class="ibtn pz" id="pauseBtn" type="button" aria-label="Pause" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg></button>
+      <button class="ibtn txt" id="spdBtn" type="button" aria-label="Game speed">1×</button>
+      <button class="ibtn" id="muteBtn" type="button" aria-label="Sound and vibration" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
       <button class="ibtn" id="fsBtn" type="button" aria-label="Full screen"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
       <button class="ibtn" id="quitBtn" type="button" aria-label="End this shift"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
@@ -428,7 +487,9 @@ html.demo .app{padding-bottom:78px}
           <button type="button" class="tab" data-mode="daily"><b>Today's challenge</b><span id="tabDaily">Same faults for everyone today</span></button>
           <button type="button" class="tab" data-mode="free"><b>Free play</b><span>Any day, new faults every game</span></button>
         </div>
+        <button type="button" class="learn" id="learnBtn">▶ New here? Learn to play (2 min)</button>
         <p class="rank" id="rankTxt"></p>
+        <div class="achs" id="achs"></div>
         <div class="days" id="days" role="group" aria-label="Day"></div>
         <div class="go-row"><button class="go" id="goBtn" type="button">Start shift <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         <button class="demo-btn" id="demoBtn" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Watch how it's done</button></div>
@@ -441,7 +502,8 @@ html.demo .app{padding-bottom:78px}
         </ul>
         <div class="ho" id="ho"></div>
         <div class="board"><h2><span id="bdTitle">Top 10</span> <small id="bdDate"></small></h2><ol id="boardA"></ol></div>
-        <div class="mn-links"><button type="button" class="lnk" id="fbBtn">Send feedback</button><a class="lnk" href="../" target="_top">More Watts Up games</a></div>
+        <div class="sync" id="syncBox" hidden></div>
+        <div class="mn-links"><button type="button" class="lnk" id="fbBtn">Send feedback</button><button type="button" class="lnk" id="tutBtn2">Tutorial</button><a class="lnk" href="../" target="_top">More Watts Up games</a></div>
         <p class="fine">© 2026 Steve Backhouse. All rights reserved. Blackout Canyon and every site in this game are made up.</p>
       </div>
     </div>
@@ -469,8 +531,11 @@ html.demo .app{padding-bottom:78px}
       </div>
       <div class="row" style="margin-top:18px"><button class="bbtn pri" id="nextBtn" type="button" hidden>Next shift</button><button class="bbtn" id="againBtn" type="button">Play again</button><button class="bbtn" id="menuBtn" type="button">Menu</button></div>
     </div>
+    <section class="debrief" id="debrief"><h3>Your shift</h3><p id="dbNote"></p><svg id="dbChart" role="img" aria-label="The whole shift: the demand line against the firm zone"></svg></section>
   </div>
 </div>
+<div class="pausedov" id="pausedOv" hidden><div><b>Paused</b><small>Tap anywhere, or press space, to carry on</small></div></div>
+<div class="coach" id="coach" hidden role="dialog" aria-live="polite"><div class="ck"><span>Tutorial · <span id="coachN"></span></span><button type="button" class="skip" id="coachSkip">Skip tutorial</button></div><div id="coachT"></div><div class="cdo" id="coachDo"></div><div class="row"><button type="button" class="bbtn pri" id="coachNext">Next</button></div></div>
 <div class="gameover" id="gameover" hidden role="alert"><div class="go-band"><p class="go-k">All three transformers have tripped</p><h2>Game over</h2><p class="go-s" id="goSub"></p></div></div>
 <div class="demo-bar" id="demoBar" hidden><span class="demo-tag">Demo</span><span class="demo-cap" id="demoCap">Watch how a DSO keeps Blackout Canyon in the firm zone.</span><span class="demo-tap">Tap anywhere to play</span></div>
 <div class="count" id="count" hidden><b id="countN">3</b></div>
@@ -511,7 +576,8 @@ function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorag
 // played on the Storm Day screen. Storm day is the exhibition version: the sunny break, the paper mill and set faults.
 // Every shift runs 05:00 to 23:00 at RATE game minutes a second (four and a half minutes a shift).
 const Q=new URLSearchParams(location.search);
-const START=300,END=1380,SHIFT=END-START,RATE=+Q.get('rate')||4,R=60,SOC_MAX=60,CUST_TOTAL=60000,Y=200;
+const START=300,END=1380,SHIFT=END-START,RATE=+Q.get('rate')||4,SOC_MAX=60,CUST_TOTAL=60000,Y=200;
+let R=60;// each transformer's rating (MW): 51 on the Heatwave, when everything is derated by 15%
 const EMERG=1.2,EMERG_MIN=30,SHORT=1.5,SHORT_MIN=5,TRIP_OUT=90;
 const COLD_EVE=[[0,80],[4,72],[6,78],[7.5,106],[9,116],[11,112],[13,110],[15,114],[16.5,134],[17.5,150],[18.5,146],[20,130],[21.5,112],[23,94],[24,84]];
 const DAYS={
@@ -519,10 +585,10 @@ const DAYS={
     blurb:'Low demand and strong sun push power back up into the grid, with T2 out for maintenance through the middle of the day.',
     handover:'Clear skies and low demand: solar will push power back up into the grid from mid-morning. T2 is out for planned maintenance from 10:00 to 15:00, right through the export peak, so the firm zone halves then. Thunderstorms may build in the afternoon. The battery is a third full.',
     demand:[[0,50],[4,45],[6,47],[8,58],[10,68],[12,74],[14,73],[16,76],[18,92],[19.5,104],[21,98],[22.5,78],[24,56]],
-    solar:{peak:165,start:5.5,end:20.5,cloud:.07},wind:{mean:32,var:12},faults:1.5,allow:{solar:220,wind:80},
+    solar:{peak:165,start:5.5,end:20.5,cloud:.07},wind:{mean:32,var:12},faults:1.5,allow:{solar:90,wind:50},
     causes:['Lightning strike on the overhead line','Tree contact on the overhead line','Bird strike on the overhead line','Insulator flashover'],
     build(r){const s=780+Math.round(r()*180);return{planned:[{tx:1,start:600,end:900}],cutouts:[],risk:[{start:s,end:s+180,mult:4,label:'Thunderstorm risk',c:'var(--c-storm)'}]};},
-    intro:S=>`Sunday 17 May, 05:00. Strong sun today, and T2 is out for maintenance 10:00–15:00. Thunderstorm risk ${fmtT(S.risk[0].start)}–${fmtT(S.risk[0].end)}.`},
+    intro:S=>`Sunday 17 May, 05:00. Strong sun today, and T2 is out for maintenance 10:00–15:00. ${S.risk[0]?`Thunderstorm risk ${fmtT(S.risk[0].start)}–${fmtT(S.risk[0].end)}.`:''}`},
   storm:{title:'Storm day',when:'Monday 2 November',diff:2,focus:'Faults and swings',color:'var(--c-storm)',soc0:30,pre:930,
     blurb:'Two bands of severe gale trip transformers, a sunny break pushes power back up, and the wind farm cuts out in the gusts.',
     handover:'Two bands of severe gale are on the way, the first soon after the morning peak starts, with a sunny, gusty break around midday. Spinney Windy Things may cut out in the gusts, so don\'t count on the wind farm. The evening peak will be well over firm capacity.',
@@ -541,9 +607,26 @@ const DAYS={
     demand:COLD_EVE,solar:{peak:35,start:7.8,end:16.2,cloud:.2},wind:{mean:22,var:12},faults:1.5,allow:{solar:90,wind:50},
     causes:['Ice build-up on the overhead line','Conductor clash in icy wind','Cable joint failure','Insulator flashover'],
     build(r){return{planned:[{tx:0,start:570,end:750}],cutouts:[],risk:[{start:360,end:540,mult:3,label:'Ice and snow',c:'var(--c-cold)'}]};},
-    intro:S=>'Thursday 14 January, 05:00. Ice and snow until 09:00, T1 out for maintenance 09:30–12:30, and a cold evening peak.'}};
-const ORDER=['may','storm','jan'];
-const RANKS=[[0,'Trainee flexibility analyst'],[2,'Flexibility analyst'],[4,'Flexibility engineer'],[6,'Senior flexibility engineer'],[9,'DSO manager']];
+    intro:S=>'Thursday 14 January, 05:00. Ice and snow until 09:00, T1 out for maintenance 09:30–12:30, and a cold evening peak.'},
+  // Heatwave and EV evening: from the control room shifts of the same names, with generation added
+  heat:{title:'Heatwave',when:'Thursday 17 July',diff:4,focus:'Derated network',color:'var(--c-gas)',soc0:20,pre:1000,derate:.85,
+    blurb:'Every rating is down 15% in the heat. Air conditioning drives an afternoon peak just as the sun fades, and hot cable joints fail.',
+    handover:'It never cooled down overnight. Every transformer rating is down 15%: 51 MW each, so the firm zone is only ±102 MW. Air conditioning pushes demand up all afternoon, and the hazy sun fades just as the evening peak arrives. Hot cable joints fail most between 12:00 and 17:00. The battery is a third full.',
+    demand:[[0,74],[4,66],[6,70],[8,90],[10,108],[12,124],[14,138],[15.5,146],[17,148],[18.5,144],[20,130],[22,104],[24,80]],
+    solar:{peak:100,start:5,end:21,cloud:.25},wind:{mean:10,var:6},faults:2.5,allow:{solar:90,wind:50},
+    causes:['Cable joint failure in hot ground','Overheated cable termination','Insulator flashover','Digger strike on the underground cable'],
+    build(r){return{planned:[],cutouts:[],risk:[{start:720,end:1020,mult:2.5,label:'Extreme heat',c:'var(--c-gas)'}]};},
+    intro:S=>'Thursday 17 July, 05:00. Ratings down 15% in the heat (firm zone ±102 MW). Extreme heat 12:00–17:00, then a late peak.'},
+  ev:{title:'EV evening',when:'Monday 7 December',diff:5,focus:'Late surge',color:'var(--c-batt)',soc0:45,pre:1000,
+    blurb:'Half of Blackout Canyon has an electric car now. They all plug in after 17:00, and the forecast only knows the chargers it has seen before.',
+    handover:'Feels like a normal cold Monday, but there are far more electric cars about than last winter. T3 is out for maintenance from 14:00 to 17:15. Last Monday the forecast said 18:00 would be fine, and it wasn\'t: it only knows about the chargers it has seen before. Don\'t trust it after 17:00.',
+    demand:COLD_EVE,surge:{start:17,peak:18.75,end:21.75,mw:24,seen:.35},
+    solar:{peak:35,start:7.8,end:16.2,cloud:.2},wind:{mean:22,var:12},faults:1.5,allow:{solar:90,wind:50},
+    causes:['Ice build-up on the overhead line','Overheated cable joint under EV load','Cable joint failure','Insulator flashover'],
+    build(r){return{planned:[{tx:2,start:840,end:1035}],cutouts:[],risk:[{start:1020,end:1200,mult:2,label:'Hard frost',c:'var(--c-cold)'}]};},
+    intro:S=>'Monday 7 December, 05:00. T3 out for maintenance 14:00–17:15, and an EV surge after 17:00 that the forecast under-reads.'}};
+const ORDER=['may','storm','jan','heat','ev'];
+const RANKS=[[0,'Trainee flexibility analyst'],[2,'Flexibility analyst'],[4,'Flexibility engineer'],[7,'Senior flexibility engineer'],[10,'DSO manager'],[13,'Head of DSO']];
 
 // Flexibility and generation. 'val' is what the player sets: for solar and wind the MW they let run (curtailment is the
 // rest), for the battery discharge (+) or charge (-), for the gas engine and demand response the MW called.
@@ -554,11 +637,14 @@ const ICON={solar:'<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h
   chp:'<path d="M12 2.5c2.5 3.5 6.5 6 6.5 11a6.5 6.5 0 0 1-13 0c0-3 1.8-4.6 3-6.5.8 1.8 1.6 2.8 3 3.2-.4-2.6-.2-5 .5-7.7z"/>',
   dsr:'<path d="M3 21V10l5 3v-3l5 3V7l8 4v10zM3 21h18M8 17h2M13 17h2"/>'};
 const PROV=[
-  {id:'batt',name:'Kings Hill Battery',kind:'Battery storage · 30 MW',tc:'var(--c-batt)',min:-30,max:30,ramp:30,price:{dis:90,chg:35},fail:0},
-  {id:'chp',name:'Ohm No CHP',kind:'Gas engine · 25 MW · slow to start',tc:'var(--c-gas)',min:0,max:25,ramp:8,price:140,fail:.10},
-  {id:'dsr',name:'Hertz House Industrial Estate',kind:'Demand response · 25 MW',tc:'var(--c-dsr)',min:0,max:25,ramp:5,price:200,fail:.12},
-  {id:'solar',name:'Shocking Place Solar Farm',kind:'Solar farm · curtailable',tc:'var(--c-solar)',gen:true,ramp:15,price:60,fail:.05},
-  {id:'wind',name:'Spinney Windy Things',kind:'Wind farm · curtailable',tc:'var(--c-wind)',gen:true,ramp:10,price:85,fail:.05}];
+  {id:'batt',name:'Kings Hill Battery',kind:'Battery storage · 30 MW',tc:'var(--c-batt)',min:-30,max:30,ramp:30,price:{dis:90,chg:35},fail:0,arm:6,armFail:.03},
+  {id:'chp',name:'Ohm No CHP',kind:'Gas engine · 25 MW · slow to start',tc:'var(--c-gas)',min:0,max:25,ramp:8,price:140,fail:.10,arm:8,armFail:.10},
+  {id:'dsr',name:'Hertz House Industrial Estate',kind:'Demand response · 25 MW',tc:'var(--c-dsr)',min:0,max:25,ramp:5,price:200,fail:.12,arm:5,armFail:.12},
+  {id:'solar',name:'Shocking Place Solar Farm',kind:'Solar farm · curtailable',tc:'var(--c-solar)',gen:true,ramp:15,price:60,fail:.05,arm:2,armFail:.05},
+  {id:'wind',name:'Spinney Windy Things',kind:'Wind farm · curtailable',tc:'var(--c-wind)',gen:true,ramp:10,price:85,fail:.05,arm:2,armFail:.05}];
+// Armed flexibility: paid by the hour to stand ready, it switches in by itself the moment a transformer trips. While what
+// is armed would keep the other transformers inside their protection limits after a trip (under 150% at once, 120% after
+// 4 minutes of ramping, 100% once it's all in), the network is secure: 'covered', which scores like the firm zone.
 const PV=Object.fromEntries(PROV.map(p=>[p.id,p]));
 const STEP=5;
 
@@ -575,6 +661,8 @@ function comps(m,fc){
   if(sb)solar=Math.max(solar,sc.solar.peak*Math.pow(Math.sin(Math.PI*clamp(f,0,1)),1.4)*(1-.05)*sb+solar*(1-sb));
   let wind=sc.wind.mean+sc.wind.var*N.w1(m)+16*sb;if(!fc)wind+=4*N.w2(m);wind=clamp(wind,0,60);
   const L=S.loss;if(L&&m>=L.start&&m<L.end&&(!fc||L.fired))demand-=L.mw*edge(L,m,8);
+  // EV evening: a late surge of car charging on top of demand. The forecast only sees part of it.
+  const sg=sc.surge;if(sg&&h>sg.start&&h<sg.end){const k=h<sg.peak?Math.sin(Math.PI/2*(h-sg.start)/(sg.peak-sg.start)):Math.cos(Math.PI/2*(h-sg.peak)/(sg.end-sg.peak));demand+=sg.mw*k*(fc?sg.seen:1);}
   if(!fc)S.cutouts.forEach(C=>{if(m>=C.start&&m<C.end){const k=Math.min(1,(m-C.start)/4,(C.end-m)/10);wind*=1-clamp(k,0,1);}});
   return{demand,solar,wind};
 }
@@ -624,27 +712,31 @@ function makeWinnable(){
   S.faults.sort((a,b)=>a.m-b.m);}
 
 function newGame(k,gm){
-  SC=DAYS[k];const date=todayUK();
-  const seed=gm==='daily'?hashStr(date+'|'+k+'|gen1'):Q.has('seed')?+Q.get('seed'):((Math.random()*2**31)|0);
+  SC=DAYS[k];R=Math.round(60*(SC.derate||1));const date=todayUK();
+  const seed=gm==='daily'?hashStr(date+'|'+k+'|gen1'):gm==='tut'?4242:Q.has('seed')?+Q.get('seed'):((Math.random()*2**31)|0);
   const rng=rngFrom(seed),b=SC.build(rng);
   S={key:k,gm,t:START,seed,date,N:{d:makeNoise(rng,15),c1:makeNoise(rng,25),c2:makeNoise(rng,6),w1:makeNoise(rng,40),w2:makeNoise(rng,5)},
     risk:b.risk,sunny:b.sunny||null,loss:b.loss||null,planned:b.planned.map(p=>({...p,fired:false})),cutouts:b.cutouts.map(c=>({...c,fired:false,done:false})),rngF:rngFrom(seed^0x5bd1e995),
     tx:[0,1,2].map(()=>({out:null})),em:0,sh:0,soc:SC.soc0,
     val:{batt:0,chp:0,dsr:0,solar:null,wind:null},act:{batt:0,chp:0,dsr:0,curtS:0,curtW:0},
+    armed:{batt:false,chp:false,dsr:false,solar:false,wind:false},armSpend:0,catches:[],
     called:{},failUntil:{},failed:{},allow:{solar:SC.allow.solar,wind:SC.allow.wind},allowGone:{},
-    spend:{batt:0,chp:0,dsr:0,solar:0,wind:0},pts:0,min:{firm:0,risk:0,over:0,dark:0},
-    hist:[],marks:[],zone:'ok',ended:false,c:null,net:0,n:3};
-  S.faults=genFaults(rng,b);
+    spend:{batt:0,chp:0,dsr:0,solar:0,wind:0},pts:0,min:{firm:0,cov:0,risk:0,over:0,dark:0},
+    hist:[],marks:[],zone:'ok',ended:false,c:null,net:0,n:3,paused:false};
+  S.faults=gm==='tut'?[]:genFaults(rng,b);
+  if(gm==='tut')S.risk=[];
   makeWinnable();
-  // planned work is known in advance: it's on the chart from the start
+  // Protection alarms: most faults give a warning a few minutes before they trip (the same ones for everyone on the daily)
+  const rw=rngFrom(seed^0x2c1b3c6d);
+  S.faults.forEach(f=>{if(rw()<.6)f.warn=f.m-(6+Math.round(rw()*10));f.hint=pick(rw,WARN_HINTS);});
   S.planned.forEach(p=>{S.marks.push({m:p.start,label:`T${p.tx+1} maintenance`});S.marks.push({m:p.end,label:`T${p.tx+1} back`});});
-  // the shift starts in the state the night shift left: everything in service, nothing called
   S.planned.forEach(p=>{if(p.start<=START){S.tx[p.tx].out={kind:'planned',until:p.end,label:'Planned maintenance'};p.fired=true;}});
   S.c=comps(START,false);
   calc(START);
-  buildCards();lastChart='';
+  buildCards();lastChart='';speedMul=1;setTxt('spdBtn','1×');setPaused(false);
   setTxt('hTitle',SC.title);setTxt('hWhen',SC.when);document.title='Losing Control · '+SC.title;
 }
+const WARN_HINTS=['partial discharge in its cable box','a Buchholz gas alarm','high winding temperature','a tap-changer fault alarm','an earth fault flicker on its incoming circuit'];
 
 /* ---------- Simulation: one game minute ---------- */
 const windOff=()=>S.cutouts.some(C=>C.fired&&!C.done);
@@ -662,21 +754,48 @@ function calc(m){const c=S.c,a=S.act;
   S.flex=a.chp+a.dsr+a.batt;
   S.net=c.demand-S.gen-S.flex;S.n=nIn();
   S.firm=firmOf(S.n);S.cap=S.n*R;}
-function zoneOf(net,n){if(n===0)return'dark';const a=Math.abs(net);return a<=firmOf(n)+.01?'ok':a<=n*R+.01?'warn':'alarm';}
+
+/* ---------- Armed flexibility ---------- */
+// What each armed provider could add if a transformer tripped now, in each direction: 'up' brings demand down (too much
+// demand), 'dn' brings it up (too much export). 'all' is everything it can do; 'fast' what it gets to in 4 minutes.
+function cover(dir){let all=0,fast=0;const a=S.act,c=S.c,f=id=>S.failUntil[id]>S.t,add=(v,r)=>{v=Math.max(0,v);all+=v;fast+=Math.min(v,r*4);};
+  if(dir==='up'){if(S.armed.batt&&!f('batt')&&S.soc>5)add(30-a.batt,30);if(S.armed.chp&&!f('chp'))add(25-a.chp,8);if(S.armed.dsr&&!f('dsr'))add(25-a.dsr,5);}
+  else{if(S.armed.batt&&S.soc<SOC_MAX-5)add(30+a.batt,30);
+    if(S.armed.solar&&S.allow.solar>0)add(c.solar-a.curtS,15);if(S.armed.wind&&S.allow.wind>0&&!windOff())add(c.wind-a.curtW,10);}
+  return{all,fast};}
+// The furthest the line can be from zero and still be secure with n transformers: the firm zone, stretched by what's armed.
+function limit(n,dir){if(n<2)return 0;const n1=n-1,fz=firmOf(n),cv=cover(dir);if(!cv.all)return fz;
+  return Math.max(fz,Math.min(1.5*R*n1,1.2*R*n1+cv.fast,R*n1+cv.all));}
+function zoneOf(net,n){if(n===0)return'dark';const a=Math.abs(net);if(a<=firmOf(n)+.01)return'ok';
+  if(a<=limit(n,net>0?'up':'dn')+.01)return'cov';return a<=n*R+.01?'warn':'alarm';}
+const zoneOk=z=>z==='ok'||z==='cov';
+function armFee(id){const p=PV[id];if(id==='solar')return p.arm*Math.max(0,S.c.solar-S.act.curtS);if(id==='wind')return p.arm*Math.max(0,S.c.wind-S.act.curtW);return p.arm*(id==='batt'?30:25);}
+function toggleArm(id){if(!S||S.ended||mode!=='play')return;S.armed[id]=!S.armed[id];click();render(true);}
+// A transformer has just gone: everything armed that helps switches in by itself.
+function armedRespond(m){calc(m);if(S.n===0)return;const dir=S.net>0?'up':'dn',went=[],no=[];
+  ['batt','chp','dsr','solar','wind'].forEach(id=>{if(!S.armed[id])return;const p=PV[id];
+    const helps=dir==='up'?['batt','chp','dsr'].includes(id):['batt','solar','wind'].includes(id);if(!helps)return;
+    if(S.failUntil[id]>m)return;S.armed[id]=false;
+    if(S.rngF()<p.armFail){no.push(p.name);return;}
+    if(id==='batt')S.val.batt=dir==='up'?30:-30;else if(id==='chp'||id==='dsr')S.val[id]=p.max;else{S.val[id]=0;}
+    S.called[id]=true;went.push(p.name);});
+  if(went.length){S.catches.push(m);toast(`Armed flexibility switched in: ${went.join(', ')}.${no.length?` ${no.join(', ')} didn't respond.`:''}`,'ok');}
+  else if(no.length)toast(`Armed flexibility failed: ${no.join(', ')} didn't respond.`,'alarm');}
 
 function step(){
-  const m=S.t;
+  const m=S.t;let lost=false;
   S.risk.forEach(w=>{if(m===w.start){toast(`${w.label} now, until ${fmtT(w.end)}. Transformer faults are ${w.mult===4?'four':w.mult===3?'three':w.mult} times as likely.`,'warn');play('warn');}
     if(m===w.end)toast(`The ${w.label.toLowerCase().replace(/ risk$/,'')} has eased.`,'ok');});
   S.tx.forEach((t,i)=>{if(t.out&&m>=t.out.until){const pl=t.out.kind==='planned';t.out=null;if(!pl)S.marks.push({m,label:`T${i+1} back`});
     toast(`T${i+1} is back in service${pl?' after its maintenance':''}. Firm zone back to ±${firmOf(nIn())} MW.`,'ok');play('ok');}});
-  // planned work: known all day, it starts on time
   S.planned.forEach(p=>{if(p.fired||m<p.start)return;p.fired=true;const t=S.tx[p.tx];if(t.out)return;
     t.out={kind:'planned',until:p.end,label:'Planned maintenance'};
     toast(`T${p.tx+1} is switched out for planned maintenance until ${fmtT(p.end)}. The firm zone shrinks to ±${firmOf(nIn())} MW.`,'warn');play('warn');});
-  S.faults.forEach(f=>{if(f.done||m<f.m)return;f.done=true;const t=S.tx[f.tx];if(t.out)return;
-    t.out={kind:'fault',until:m+f.dur,label:f.cause};S.marks.push({m,label:`⚡ T${f.tx+1} fault`});
-    toast(`⚡ T${f.tx+1} tripped: ${f.cause.toLowerCase()}. The firm zone shrinks to ±${firmOf(nIn())} MW until about ${fmtT(m+f.dur)}.`,'alarm');play('fault');strike();});
+  S.faults.forEach(f=>{if(f.warn&&m===f.warn&&!S.tx[f.tx].out){S.marks.push({m,label:`⚠ T${f.tx+1} alarm`});
+      toast(`⚠ T${f.tx+1} protection alarm: ${f.hint}. It could trip in the next few minutes. Get ready, or arm flexibility.`,'warn');play('warn');buzz([120,60,120]);}
+    if(f.done||m<f.m)return;f.done=true;const t=S.tx[f.tx];if(t.out)return;
+    t.out={kind:'fault',until:m+f.dur,label:f.cause};S.marks.push({m,label:`⚡ T${f.tx+1} fault`});lost=true;
+    toast(`⚡ T${f.tx+1} tripped: ${f.cause.toLowerCase()}. The firm zone shrinks to ±${firmOf(nIn())} MW until about ${fmtT(m+f.dur)}.`,'alarm');play('fault');strike();buzz([220,80,220]);});
   if(S.sunny){if(m===S.sunny.start){toast(`A sunny break between the gales: clear skies and strong gusts until about ${fmtT(S.sunny.end)}. Solar and wind will push power back up into the grid.`,'warn');play('warn');}
     if(m===S.sunny.end)toast('Cloud is building again. The sunny break is over.','ok');}
   const Ls=S.loss;if(Ls){if(!Ls.fired&&m>=Ls.start){Ls.fired=true;S.marks.push({m,label:'Paper mill off'});toast(`${Ls.who} has shut down after ${Ls.why}: ${Ls.mw} MW of demand gone until about ${fmtT(Ls.end)}. Too much generation? Curtail solar or wind, or charge the battery.`,'alarm');play('warn');}
@@ -684,8 +803,10 @@ function step(){
   S.cutouts.forEach(C=>{
   if(!C.fired&&m>=C.start){C.fired=true;S.marks.push({m,label:'Wind stops'});toast(`Spinney Windy Things has shut down in the gusts. Its wind power is gone until about ${fmtT(C.end)}.`,'alarm');play('warn');}
   if(C.fired&&!C.done&&m>=C.end){C.done=true;S.marks.push({m,label:'Wind back'});toast('Spinney Windy Things is restarting.','ok');}});
+  if(S.key==='ev'&&m===1020)toast('17:00: people are getting home and plugging in their cars. The forecast only sees part of this surge.','warn');
 
   S.c=comps(m,false);
+  if(lost)armedRespond(m);
   ['chp','dsr','batt'].forEach(id=>{const p=PV[id],on=S.val[id]!==0;
     if(on&&!S.called[id]){S.called[id]=true;if(p.fail&&!S.failed[id]&&S.rngF()<p.fail){S.failed[id]=true;S.failUntil[id]=m+30;S.val[id]=0;
       toast(`${p.name} didn't ${id==='chp'?'start':'respond'}. It's unavailable until ${fmtT(m+30)}.`,'alarm');play('warn');}}
@@ -699,29 +820,29 @@ function step(){
   if(n){if(L>SHORT)why='instantaneous overcurrent';else{S.sh=L>EMERG?S.sh+1:0;S.em=L>1.0001?S.em+1:Math.max(0,S.em-1);
     if(S.sh>=SHORT_MIN)why='overcurrent';else if(S.em>=EMERG_MIN)why='overload, with its emergency rating used up';}}
   if(why){const i=S.tx.findIndex(t=>!t.out);S.tx[i].out={kind:'trip',until:m+TRIP_OUT,label:'Overload trip'};S.sh=0;S.em=0;
-    S.marks.push({m,label:`T${i+1} overload trip`});const left=nIn();
-    if(left){toast(`Overload! T${i+1} tripped on ${why}. Its load jumps onto the ${left===1?'last transformer':'other two'}.`,'alarm');play('trip');strike();calc(m);}
+    S.marks.push({m,label:`T${i+1} overload trip`});S.trips=(S.trips||0)+1;const left=nIn();
+    if(left){toast(`Overload! T${i+1} tripped on ${why}. Its load jumps onto the ${left===1?'last transformer':'other two'}.`,'alarm');play('trip');strike();buzz([400]);armedRespond(m);calc(m);}
     else{calc(m);S.hist.push({m,net:0,n:0,z:'dark'});S.t=m+1;gameOver(m,i);return;}}
   const b=S.act.batt;S.soc=clamp(S.soc+(b<0?-b*.92:-b)/60,0,SOC_MAX);
   [['solar','curtS'],['wind','curtW']].forEach(([id,k])=>{if(S.allow[id]<=0)return;S.allow[id]=Math.max(0,S.allow[id]-S.act[k]/60);
-    if(S.allow[id]<=0&&!S.allowGone[id]){S.allowGone[id]=true;toast(`${PV[id].name} has used its curtailment allowance. It can't be turned down again today.`,'warn');}});
+    if(S.allow[id]<=0&&!S.allowGone[id]){S.allowGone[id]=true;S.armed[id]=false;toast(`${PV[id].name} has used its curtailment allowance. It can't be turned down again today.`,'warn');}});
   S.spend.batt+=(b>0?b*PV.batt.price.dis:-b*PV.batt.price.chg)/60;
   S.spend.chp+=S.act.chp*PV.chp.price/60;S.spend.dsr+=S.act.dsr*PV.dsr.price/60;
   S.spend.solar+=S.act.curtS*PV.solar.price/60;S.spend.wind+=S.act.curtW*PV.wind.price/60;
-  // score: 10 points a minute in the firm zone, -10 at risk, -20 overloaded, -50 in a blackout
+  PROV.forEach(p=>{if(S.armed[p.id]){const f=armFee(p.id)/60;S.spend[p.id]+=f;S.armSpend+=f;}});
+  // score: 10 points a minute secure (firm zone, or covered by armed flexibility), -10 at risk, -20 overloaded, -50 in a blackout
   const z=zoneOf(S.net,S.n);
-  if(z==='ok'){S.pts+=10;S.min.firm++;}else if(z==='warn'){S.pts-=10;S.min.risk++;}else if(z==='alarm'){S.pts-=20;S.min.over++;}else{S.pts-=50;S.min.dark++;}
-  if(z!==S.zone){if(z==='warn'&&S.zone==='ok'){play('warn');}if(z==='alarm')play('emerg');if(z==='ok'&&S.zone!=='ok')play('ok');S.zone=z;}
+  if(z==='ok'||z==='cov'){S.pts+=10;S.min.firm++;if(z==='cov')S.min.cov++;}else if(z==='warn'){S.pts-=10;S.min.risk++;}else if(z==='alarm'){S.pts-=20;S.min.over++;}else{S.pts-=50;S.min.dark++;}
+  if(z!==S.zone){if(z==='warn'&&zoneOk(S.zone)){play('warn');}if(z==='alarm')play('emerg');if(zoneOk(z)&&!zoneOk(S.zone))play('ok');S.zone=z;}
   S.hist.push({m,net:z==='dark'?0:S.net,n:S.n,z});
   S.t++;
   if(S.t>=END)endGame();
 }
 const spendTot=()=>Object.values(S.spend).reduce((a,v)=>a+v,0);
-// minutes lost when the game ends early count as blackout (the scoreboard does the same sum)
+// the scoreboard does the same sum
 const scoreNow=()=>Math.max(0,Math.round(S.pts-Math.round(spendTot())/25-(S.over?2000:0)));
 
 /* ---------- Forecast: the shift ahead with today's settings ---------- */
-// The transformers in service at each minute ahead: outages already happening, plus planned work. Faults are never forecast.
 function nAt(m){let k=0;S.tx.forEach((t,i)=>{if(t.out&&t.out.until>m)k++;else if(!t.out&&S.planned.some(p=>p.tx===i&&!p.fired&&m>=p.start&&m<p.end))k++;});return 3-k;}
 function forecast(){const pts=[];let soc=S.soc;
   for(let m=S.t;m<=END;m+=5){const c=comps(m,true),n=nAt(m);if(S.cutouts.some(C=>C.fired&&!C.done&&m<C.end))c.wind=0;
@@ -731,41 +852,59 @@ function forecast(){const pts=[];let soc=S.soc;
     pts.push({m,net:c.demand-sol-wi-fl,n});}
   return pts;}
 
-/* ---------- Chart ---------- */
+/* ---------- Chart: the live chart, and the whole-shift debrief on the results screen ---------- */
 let lastChart='';
-function drawChart(force){
-  const box=$('chartbox'),W=Math.max(300,box.clientWidth),H=Math.max(200,box.clientHeight),key=S.t+'|'+W+'|'+H+'|'+JSON.stringify(S.val);
-  if(!force&&key===lastChart)return;lastChart=key;
-  const L=W<560?44:58,Rr=W<560?10:18,T=34,B=30,span=END-START;
+function chartSvg(W,H,live){
+  const L=W<560?44:58,Rr=W<560?10:18,T=live?34:28,B=live?30:24,span=END-START;
   const X=m=>L+(clamp(m,START,END)-START)/span*(W-L-Rr),Yv=v=>T+(Y-clamp(v,-Y,Y))/(2*Y)*(H-T-B);
-  const fc=forecast();let s='';
+  const fc=live?forecast():[];let s='';
   const runs=[];const push=(m,n)=>{const r=runs[runs.length-1];if(r&&r.n===n)r.b=m;else runs.push({a:m,b:m,n});};
   S.hist.forEach(h=>push(h.m,h.n));fc.forEach(p=>push(p.m,p.n));
+  const rect=(c,a,y1,w,y2)=>`<rect class="${c}" x="${a.toFixed(1)}" y="${y1.toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(0,y2-y1).toFixed(1)}"/>`;
   runs.forEach((r,i)=>{const nx=runs[i+1],a=X(r.a),b=X(nx?nx.a:END+1),w=Math.max(0,b-a)+.6;
-    s+=`<rect class="b-red" x="${a.toFixed(1)}" y="${T}" width="${w.toFixed(1)}" height="${H-T-B}"/>`;
-    if(r.n)s+=`<rect class="b-amb" x="${a.toFixed(1)}" y="${Yv(r.n*R).toFixed(1)}" width="${w.toFixed(1)}" height="${(Yv(-r.n*R)-Yv(r.n*R)).toFixed(1)}"/>`;
-    if(r.n>1)s+=`<rect class="b-grn" x="${a.toFixed(1)}" y="${Yv(firmOf(r.n)).toFixed(1)}" width="${w.toFixed(1)}" height="${(Yv(-firmOf(r.n))-Yv(firmOf(r.n))).toFixed(1)}"/>`;});
-  // the day's weather: sunny break and risk windows, labelled along the top
-  if(S.sunny){const r=S.sunny,a=X(r.start),b=X(r.end);s+=`<rect class="sunny" x="${a}" y="${T}" width="${b-a}" height="${H-T-B}"/><svg x="${a}" y="6" width="${b-a}" height="22"><rect class="sunnybar" width="100%" height="22" rx="4"/><text class="galetxt" x="8" y="16">SUNNY BREAK</text></svg>`;}
+    s+=rect('b-red',a,T,w,H-B);
+    if(r.n)s+=rect('b-amb',a,Yv(r.n*R),w,Yv(-r.n*R));
+    if(r.n>1){
+      // armed cover, from now on: how far past the firm zone the line can go and still be secure
+      if(live){const a2=Math.max(a,X(S.t)),w2=Math.max(0,b-a2)+.6,u=limit(r.n,'up'),d=limit(r.n,'dn'),fz=firmOf(r.n);
+        if(w2>1&&u>fz+.5)s+=rect('b-cov',a2,Yv(u),w2,Yv(fz));if(w2>1&&d>fz+.5)s+=rect('b-cov',a2,Yv(-fz),w2,Yv(-d));}
+      s+=rect('b-grn',a,Yv(firmOf(r.n)),w,Yv(-firmOf(r.n)));}});
+  if(S.sunny){const r=S.sunny,a=X(r.start),b=X(r.end);s+=`<rect class="sunny" x="${a}" y="${T}" width="${b-a}" height="${H-T-B}"/>`+(live?`<svg x="${a}" y="6" width="${b-a}" height="22"><rect class="sunnybar" width="100%" height="22" rx="4"/><text class="galetxt" x="8" y="16">SUNNY BREAK</text></svg>`:'');}
   S.risk.forEach(r=>{const a=X(r.start),b=X(r.end),lb=r.label.toUpperCase(),full=`${lb} ${fmtT(r.start)}–${fmtT(r.end)}`,txt=b-a>full.length*7.6+16?full:b-a>lb.length*7.6+16?lb:'';
-    s+=`<g style="--rc:${r.c}"><rect class="riskband" x="${a}" y="${T}" width="${b-a}" height="${H-T-B}"/><svg x="${a}" y="6" width="${b-a}" height="22"><rect class="riskbar" width="100%" height="22" rx="4"/><text class="galetxt" x="8" y="16">${txt}</text></svg></g>`;});
-  [-180,-120,-60,0,60,120,180].forEach(v=>{s+=`<line class="${v?'gl':'g0'}" x1="${L}" x2="${W-Rr}" y1="${Yv(v)}" y2="${Yv(v)}"/><text class="ax" x="${L-8}" y="${Yv(v)+4}" text-anchor="end">${v<0?'−':''}${Math.abs(v)}</text>`;});
-  for(let h=START;h<=END;h+=W<560?240:120){const x=X(h);s+=`<line class="gl" x1="${x}" x2="${x}" y1="${H-B}" y2="${H-B+5}"/><text class="ax" x="${x}" y="${H-9}" text-anchor="middle">${fmtT(h)}</text>`;}
-  s+=`<text class="ax" x="${L-8}" y="${T-6}" text-anchor="end">MW</text>`;
-  const n0=(S.hist[0]||{n:nIn()}).n;if(n0>1){s+=`<text class="zl" x="${L+8}" y="${Yv(firmOf(n0))+20}" style="fill:var(--ok)">FIRM ZONE</text>`;}
-  s+=`<text class="zl" x="${L+8}" y="${Yv(n0*R)+20}" style="fill:var(--warn)">AT RISK</text><text class="zl" x="${L+8}" y="${T+18}" style="fill:var(--alarm)">OVERLOAD</text>`;
-  s+=`<text class="zl" x="${W-Rr-8}" y="${T+18}" text-anchor="end" style="fill:var(--muted)">DEMAND ▲</text><text class="zl" x="${W-Rr-8}" y="${H-B-8}" text-anchor="end" style="fill:var(--muted)">EXPORT ▼</text>`;
-  const narrow=W<560;S.marks.forEach((k,i)=>{const x=X(k.m),y=T+40+(i%3)*18,lb=narrow&&(k.m>S.t||k.m<S.t-120)?'':esc(k.label);s+=`<line class="mkl" x1="${x}" x2="${x}" y1="${y+4}" y2="${H-B}"/>${lb?`<text class="mk" x="${x+4}" y="${y}">${lb}</text>`:''}`;});
+    s+=`<g style="--rc:${r.c}"><rect class="riskband" x="${a}" y="${T}" width="${b-a}" height="${H-T-B}"/>${live?`<svg x="${a}" y="6" width="${b-a}" height="22"><rect class="riskbar" width="100%" height="22" rx="4"/><text class="galetxt" x="8" y="16">${txt}</text></svg>`:''}</g>`;});
+  (live?[-180,-120,-60,0,60,120,180]:[-120,0,120]).forEach(v=>{s+=`<line class="${v?'gl':'g0'}" x1="${L}" x2="${W-Rr}" y1="${Yv(v)}" y2="${Yv(v)}"/><text class="ax" x="${L-8}" y="${Yv(v)+4}" text-anchor="end">${v<0?'−':''}${Math.abs(v)}</text>`;});
+  for(let h=START;h<=END;h+=W<560?240:120){const x=X(h);s+=`<line class="gl" x1="${x}" x2="${x}" y1="${H-B}" y2="${H-B+5}"/><text class="ax" x="${x}" y="${H-(live?9:6)}" text-anchor="middle">${fmtT(h)}</text>`;}
+  if(live){s+=`<text class="ax" x="${L-8}" y="${T-6}" text-anchor="end">MW</text>`;
+    const n0=(S.hist[0]||{n:nIn()}).n;if(n0>1){s+=`<text class="zl" x="${L+8}" y="${Yv(firmOf(n0))+20}" style="fill:var(--ok)">FIRM ZONE</text>`;}
+    s+=`<text class="zl" x="${L+8}" y="${Yv(n0*R)+20}" style="fill:var(--warn)">AT RISK</text><text class="zl" x="${L+8}" y="${T+18}" style="fill:var(--alarm)">OVERLOAD</text>`;
+    s+=`<text class="zl" x="${W-Rr-8}" y="${T+18}" text-anchor="end" style="fill:var(--muted)">DEMAND ▲</text><text class="zl" x="${W-Rr-8}" y="${H-B-8}" text-anchor="end" style="fill:var(--muted)">EXPORT ▼</text>`;
+    if(PROV.some(p=>S.armed[p.id]))s+=`<text class="covtxt" x="${Math.min(W-Rr-90,X(S.t)+8)}" y="${H-B-26}">ARMED COVER</text>`;}
+  else{// the debrief: shade every spell outside the green, and label the longest
+    exc().slice(0,4).forEach(e=>{const a=X(e.a),b=X(e.b+1);s+=`<rect class="exc" x="${a}" y="${T}" width="${Math.max(2,b-a)}" height="${H-T-B}"/>`;});
+    exc().slice(0,3).forEach((e,i)=>{s+=`<text class="exctxt" x="${X(e.a)+3}" y="${T+12+i*13}">${fmtT(e.a)} · ${e.b-e.a+1} min</text>`;});}
+  const narrow=W<560;S.marks.forEach((k,i)=>{const x=X(k.m),y=T+(live?40:30)+(i%3)*(live?18:14),lb=(!live&&!/fault|trip/.test(k.label))||(narrow&&(k.m>S.t||k.m<S.t-120))?'':esc(k.label);
+    s+=`<line class="mkl" x1="${x}" x2="${x}" y1="${y+4}" y2="${H-B}"/>${lb?`<text class="mk" x="${x+4}" y="${y}">${lb}</text>`:''}`;});
   if(fc.length>1){s+=`<path class="fc" d="${fc.map((p,i)=>(i?'L':'M')+X(p.m).toFixed(1)+' '+Yv(p.net).toFixed(1)).join(' ')}"/>`;
-    const ex=fc.find(p=>p.m>S.t+10&&zoneOf(p.net,p.n)!=='ok');
-    if(ex&&S.zone==='ok'){const x=X(ex.m),y=Yv(ex.net);s+=`<circle class="exit" cx="${x}" cy="${y}" r="7"/><text class="exittxt" x="${x>W-130?x+8:x<L+130?x-8:x}" y="${y+(ex.net>0?-14:26)}" text-anchor="${x>W-130?'end':x<L+130?'start':'middle'}">leaves the firm zone ~${fmtT(ex.m)}</text>`;}}
+    const ex=fc.find(p=>p.m>S.t+10&&!zoneOk(zoneOf(p.net,p.n)));
+    if(ex&&zoneOk(S.zone)){const x=X(ex.m),y=Yv(ex.net);s+=`<circle class="exit" cx="${x}" cy="${y}" r="7"/><text class="exittxt" x="${x>W-130?x+8:x<L+130?x-8:x}" y="${y+(ex.net>0?-14:26)}" text-anchor="${x>W-130?'end':x<L+130?'start':'middle'}">leaves the firm zone ~${fmtT(ex.m)}</text>`;}}
   let seg=null;const segs=[];S.hist.forEach(h=>{const z=h.z;if(!seg||seg.z!==z){const prev=seg&&seg.p[seg.p.length-1];seg={z,p:prev?[prev]:[]};segs.push(seg);}seg.p.push([X(h.m),Yv(h.net)]);});
   segs.forEach(g=>{if(g.p.length>1)s+=`<path class="h h-${g.z}" d="${g.p.map((q,i)=>(i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)).join(' ')}"/>`;});
-  const xn=X(S.t),yn=Yv(S.n?S.net:0),col=S.zone==='ok'?'var(--ok)':S.zone==='warn'?'var(--warn)':'var(--alarm)';
-  s+=`<line class="nowl" x1="${xn}" x2="${xn}" y1="${T}" y2="${H-B}"/>`;
-  s+=`<circle class="dot" cx="${xn}" cy="${yn}" r="11" fill="${col}"/><text class="dotlbl" x="${xn+(xn>W-160?-18:18)}" y="${yn+6}" text-anchor="${xn>W-160?'end':'start'}">${S.n?Math.round(S.net)+' MW':'OFF'}</text>`;
-  const ch=$('chart');ch.setAttribute('viewBox',`0 0 ${W} ${H}`);ch.innerHTML=s;
-}
+  if(live){const xn=X(S.t),yn=Yv(S.n?S.net:0),col=S.zone==='ok'?'var(--ok)':S.zone==='cov'?'#1f9a8a':S.zone==='warn'?'var(--warn)':'var(--alarm)';
+    s+=`<line class="nowl" x1="${xn}" x2="${xn}" y1="${T}" y2="${H-B}"/>`;
+    s+=`<circle class="dot" cx="${xn}" cy="${yn}" r="11" fill="${col}"/><text class="dotlbl" x="${xn+(xn>W-160?-18:18)}" y="${yn+6}" text-anchor="${xn>W-160?'end':'start'}">${S.n?Math.round(S.net)+' MW':'OFF'}</text>`;}
+  return s;}
+// spells outside the green (at risk, overloaded or dark), longest first
+function exc(){const out=[];let cur=null;S.hist.forEach(h=>{if(!zoneOk(h.z)){if(cur&&cur.b===h.m-1){cur.b=h.m;cur.worst=h.z==='dark'||cur.worst==='dark'?'dark':h.z==='alarm'||cur.worst==='alarm'?'alarm':'warn';}else{cur={a:h.m,b:h.m,worst:h.z,dir:h.net>0?'up':'dn'};out.push(cur);}}});
+  return out.sort((a,b)=>(b.b-b.a)-(a.b-a.a));}
+function drawChart(force){
+  const box=$('chartbox'),W=Math.max(300,box.clientWidth),H=Math.max(200,box.clientHeight),key=S.t+'|'+W+'|'+H+'|'+JSON.stringify(S.val)+JSON.stringify(S.armed);
+  if(!force&&key===lastChart)return;lastChart=key;
+  const ch=$('chart');ch.setAttribute('viewBox',`0 0 ${W} ${H}`);ch.innerHTML=chartSvg(W,H,true);}
+function drawDebrief(){const el=$('dbChart'),W=Math.max(300,el.clientWidth||900),H=Math.max(160,el.clientHeight||240);el.setAttribute('viewBox',`0 0 ${W} ${H}`);el.innerHTML=chartSvg(W,H,false);
+  const E=exc(),tot=E.reduce((a,e)=>a+e.b-e.a+1,0);
+  $('dbNote').innerHTML=!S.hist.length?'':!E.length?'<b>You never left the green.</b> Every minute of the shift was secure.':
+    `You were outside the green for <b>${tot} min</b> in ${E.length} spell${E.length>1?'s':''}. The longest: `+E.slice(0,3).map(e=>`<b>${fmtT(e.a)}</b> (${e.b-e.a+1} min, ${e.worst==='dark'?'blackout':e.worst==='alarm'?'overloaded':e.dir==='up'?'too much demand':'too much export'})`).join(', ')+'.'+
+    (S.min.cov?` Armed flexibility kept you secure for ${S.min.cov} min.`:'');}
 
 /* ---------- Controls ---------- */
 function buildCards(){
@@ -775,6 +914,7 @@ function buildCards(){
     <div class="c-sub" id="s_${p.id}"></div>
     <div class="meter"><i id="m_${p.id}"></i></div>
     <div class="btns"><button type="button" class="adj minus" data-id="${p.id}" data-d="-1" id="dn_${p.id}"><b>−</b><small id="dl_${p.id}"></small></button><button type="button" class="adj plus" data-id="${p.id}" data-d="1" id="up_${p.id}"><b>+</b><small id="ul_${p.id}"></small></button></div>
+    <button type="button" class="arm" id="arm_${p.id}" data-arm="${p.id}" aria-pressed="false">Arm for a trip</button>
     <div class="c-cost"><span>${p.id==='batt'?'£90/MWh out · £35 in':'£'+p.price+'/MWh'}</span><span>spent <b id="c_${p.id}">£0</b></span></div></article>`).join('');
   const LBL={batt:['Charge','Discharge'],chp:['Less','More'],dsr:['Less','More'],solar:['Curtail','Release'],wind:['Curtail','Release']};
   PROV.forEach(p=>{$('dl_'+p.id).textContent=LBL[p.id][0];$('ul_'+p.id).textContent=LBL[p.id][1];});
@@ -786,8 +926,11 @@ function adjust(id,d){if(!S||S.ended||mode!=='play')return false;const p=PV[id];
   else{const nv=clamp(v+d*STEP,p.min,p.max);if(nv===v)return false;if(S.failUntil[id]>S.t&&nv!==0&&d>0)return false;S.val[id]=nv;}
   click();render(true);return true;}
 function bindHold(){let tm=null,iv=null,cur=null;const stop=()=>{clearTimeout(tm);clearInterval(iv);tm=iv=null;if(cur)cur.classList.remove('press');cur=null;};
-  $('cards').addEventListener('pointerdown',e=>{const b=e.target.closest('.adj');if(!b||b.disabled)return;e.preventDefault();stop();cur=b;b.classList.add('press');
+  $('cards').addEventListener('pointerdown',e=>{const a=e.target.closest('.arm');if(a&&!a.disabled){e.preventDefault();toggleArm(a.dataset.arm);return;}
+    const b=e.target.closest('.adj');if(!b||b.disabled)return;e.preventDefault();stop();cur=b;b.classList.add('press');
     const go=()=>adjust(b.dataset.id,+b.dataset.d);go();tm=setTimeout(()=>{iv=setInterval(()=>{if(!go())stop();},140);},380);});
+  // keyboard users: Enter or space on the Arm button
+  $('cards').addEventListener('keydown',e=>{const a=e.target.closest('.arm');if(a&&(e.key==='Enter'||e.key===' ')){e.preventDefault();toggleArm(a.dataset.arm);}});
   ['pointerup','pointercancel','pointerleave'].forEach(t=>$('cards').addEventListener(t,stop));
   window.addEventListener('blur',stop);}
 
@@ -800,15 +943,15 @@ function render(force){if(!S)return;
   setTxt('kSpend',money(spendTot()));setTxt('kScore',nf(scoreNow()));
   const off=S.n?0:CUST_TOTAL;setTxt('kOff',nf(off));$('kOffBox').className='kpi hide-s'+(off?' bad':'');
   const z=zoneOf(S.net,S.n),pill=$('pill');
-  const PL={ok:['ok','In the firm zone'],warn:['warn','At risk'],alarm:['alarm','Overload!'],dark:['alarm','Blackout']};
+  const PL={ok:['ok','In the firm zone'],cov:['cov','Covered by armed flex'],warn:['warn','At risk'],alarm:['alarm','Overload!'],dark:['alarm','Blackout']};
   pill.className='pill '+PL[z][0];setTxt('pill',PL[z][1]);
-  setTxt('netNow',S.n?Math.round(S.net)+' MW':'OFF');$('netNow').style.color=z==='ok'?'var(--ok)':z==='warn'?'var(--warn)':'var(--alarm)';
+  setTxt('netNow',S.n?Math.round(S.net)+' MW':'OFF');$('netNow').style.color=z==='ok'?'var(--ok)':z==='cov'?'#1f9a8a':z==='warn'?'var(--warn)':'var(--alarm)';
   setTxt('netLbl',S.net<0&&S.n?'Exporting to the grid':'Demand on Blackout Canyon');
   $('advice').innerHTML=adviceHtml(z);
   const L=S.n?Math.abs(S.net)/S.n/R:0;
   const OUT={fault:'Fault',trip:'Overload trip',planned:'Planned maintenance'};
   $('txList').innerHTML=S.tx.map((t,i)=>{const pc=t.out?0:L*100,cl=pc>100?'alarm':pc>100*firmOf(S.n)/Math.max(1,S.n*R)?'warn':'';
-    return `<div class="tx${t.out?' out':''}"><b>T${i+1}</b><span class="st">${t.out?OUT[t.out.kind]+` · back ~${fmtT(t.out.until)}`:`In service · ${Math.round(pc)}% loaded`}</span><div class="ld ${cl}"><i style="width:${clamp(pc,0,100)}%"></i></div></div>`;}).join('');
+    return `<div class="tx${t.out?' out':''}"><b>T${i+1}</b><span class="st">${t.out?OUT[t.out.kind]+` · back ~${fmtT(t.out.until)}`:`In service · ${Math.round(pc)}% of ${R} MW`}</span><div class="ld ${cl}"><i style="width:${clamp(pc,0,100)}%"></i></div></div>`;}).join('');
   setTxt('fFirm',S.n>1?'±'+S.firm+' MW':'none');
   const head=S.firm-Math.abs(S.net);setTxt('fHead',S.n>1?(head>=0?Math.round(head)+' MW':'−'+Math.round(-head)+' MW'):'–');$('fHead').style.color=head>=0?'var(--ok)':'var(--alarm)';
   setTxt('fDem',Math.round(S.c.demand)+' MW');setTxt('fGen',Math.round(S.gen)+' MW');setTxt('fFlex',Math.round(S.flex)+' MW');setTxt('fSoc',Math.round(S.soc)+' of '+SOC_MAX+' MWh');
@@ -830,25 +973,30 @@ function render(force){if(!S)return;
       dn=S.val[id]>0;up=!fail&&S.val[id]<p.max;}
     setTxt('v_'+id,String(v));setTxt('u_'+id,u);const se=$('s_'+id);if(se.innerHTML!==sub)se.innerHTML=sub;$('m_'+id).style.width=clamp(pct,0,100).toFixed(1)+'%';
     $('dn_'+id).disabled=!dn;$('up_'+id).disabled=!up;setTxt('c_'+id,money(S.spend[id]));
+    const ab=$('arm_'+id),on=S.armed[id];ab.setAttribute('aria-pressed',String(on));ab.disabled=!!(p.gen&&S.allow[id]<=0);
+    setTxt('arm_'+id,on?`Armed · £${nf(armFee(id))}/h`:p.gen?'Arm to curtail on a trip':'Arm for a trip');
     $('card_'+id).classList.toggle('off',!!(fail||(p.gen&&S.allow[id]<=0)));});
   drawChart(force);
 }
 function wxHtml(){const t=S.t,g=S.risk.find(w=>t>=w.start&&t<w.end),nx=S.risk.find(w=>w.start>t),sun=S.sunny&&t>=S.sunny.start&&t<S.sunny.end;
   const x=w=>`${w.mult===4?'four':w.mult===3?'three':w.mult} times`;let h='';
-  h+=`<p>${g?`<b style="color:${g.c}">${esc(g.label)}</b> until ${fmtT(g.end)}: faults ${x(g)} as likely.`:sun?`<b style="color:var(--c-solar)">Sunny break</b> until ${fmtT(S.sunny.end)}: lots of solar and wind.`:esc(S.key==='may'?'Clear and sunny, light winds.':S.key==='jan'?'Cold and still, with little sun.':'Strong wind and showers.')}</p>`;
+  const calm={may:'Clear and sunny, light winds.',jan:'Cold and still, with little sun.',heat:'Hot and hazy. Every rating is down 15%.',ev:'Cold and still. A hard frost tonight.'}[S.key]||'Strong wind and showers.';
+  h+=`<p>${g?`<b style="color:${g.c}">${esc(g.label)}</b> until ${fmtT(g.end)}: faults ${x(g)} as likely.`:sun?`<b style="color:var(--c-solar)">Sunny break</b> until ${fmtT(S.sunny.end)}: lots of solar and wind.`:esc(calm)}</p>`;
   if(S.sunny&&t<S.sunny.start)h+=`<p>Sunny break: <b style="color:var(--c-solar)">${fmtT(S.sunny.start)}–${fmtT(S.sunny.end)}</b></p>`;
   if(nx)h+=`<p>Next ${esc(nx.label.toLowerCase())}: <b style="color:${nx.c}">${fmtT(nx.start)}–${fmtT(nx.end)}</b></p>`;
   S.planned.forEach(p=>{if(t<p.end)h+=`<p>T${p.tx+1} maintenance: <b style="color:var(--ink)">${fmtT(p.start)}–${fmtT(p.end)}</b>${t>=p.start?' (out now)':''}</p>`;});
   if(S.key==='storm')h+=`<p>Wind farm: ${windOff()?'<b>shut down</b> in the gusts':'running, but it may cut out'}.</p>`;
+  if(S.key==='ev')h+=`<p>EV charging: ${t<1020?'surge expected after 17:00, bigger than the forecast shows':t<1305?'<b style="color:var(--c-batt)">surging now</b>':'easing off'}.</p>`;
   return h;}
 function adviceHtml(z){if(z==='dark')return'Lights out. Bring demand right down so the transformers can come back.<small>Every minute in the dark costs 50 points.</small>';
   if(z==='alarm')return`Over what the transformers can carry! ${S.net>0?'Cut demand now: battery, CHP and demand response.':'Curtail solar and wind, or charge the battery, now.'}<small>Overloaded transformers trip.</small>`;
-  if(z==='warn')return`${S.net>0?'Too much demand':'Too much generation'}: if another transformer trips, the rest overload.<small>${S.net>0?'Press + on the battery, CHP or demand response.':'Curtail solar or wind, or charge the battery.'}</small>`;
-  const fc=forecast(),ex=fc.find(p=>p.m>S.t+10&&zoneOf(p.net,p.n)!=='ok');
-  if(ex)return`Safe for now. The forecast leaves the firm zone at ${fmtT(ex.m)}.<small>${ex.net>0?'Charge the battery and get flexibility ready.':'Empty the battery so it can charge, and plan to curtail generation.'}</small>`;
+  if(z==='warn')return`${S.net>0?'Too much demand':'Too much generation'}: if another transformer trips, the rest overload.<small>${S.net>0?'Press + on the battery, CHP or demand response, or arm them for a trip.':'Curtail solar or wind, or charge the battery, or arm them for a trip.'}</small>`;
+  if(z==='cov')return'Secure: outside the firm zone, but your armed flexibility would catch a trip.<small>Arming costs less than running flexibility. Keep it armed while the line is outside the green.</small>';
+  const fc=forecast(),ex=fc.find(p=>p.m>S.t+10&&!zoneOk(zoneOf(p.net,p.n)));
+  if(ex)return`Safe for now. The forecast leaves the firm zone at ${fmtT(ex.m)}.<small>${ex.net>0?'Charge the battery, and arm or call flexibility before then.':'Empty the battery so it can charge, and arm or curtail generation.'}</small>`;
   return'Safe: one transformer could trip and the others would cope.<small>Keep spend down, and watch the dotted forecast.</small>';}
 
-/* ---------- Messages, flash and sound ---------- */
+/* ---------- Messages, flash, sound and vibration ---------- */
 let newsTimer=null;
 function toast(text,lvl){if(!S||mode!=='play')return;const n=$('news');n.className='news '+(lvl||'');void n.offsetWidth;n.classList.add('fresh');
   $('newsT').textContent=fmtT(S.t);$('newsM').textContent=text;n.title=text;clearTimeout(newsTimer);newsTimer=setTimeout(()=>{n.className='news';},lvl==='alarm'?9000:6000);}
@@ -864,10 +1012,21 @@ const sfx={warn:()=>{tone(660,.14,0,'square',.07);tone(520,.2,.16,'square',.07);
   end:()=>{tone(523,.15,0,'triangle',.12);tone(659,.15,.16,'triangle',.12);tone(784,.15,.32,'triangle',.12);tone(1047,.4,.48,'triangle',.14);}};
 function play(k){try{sfx[k]&&sfx[k]();}catch(e){}}
 function click(){tone(1400,.03,0,'square',.03);}
+// phones: a buzz on faults and trips (off with the sound button)
+function buzz(p){try{if(SND.on&&S&&!S.demo&&navigator.vibrate)navigator.vibrate(p);}catch(e){}}
 
-/* ---------- Career: stars per day, unlocking the next (kept with Losing Control's generation career) ---------- */
+/* ---------- Pause and speed ---------- */
+let speedMul=1;
+function setPaused(on){if(S)S.paused=on;$('pauseBtn').setAttribute('aria-pressed',String(!!on));$('pausedOv').hidden=!(on&&!tut.on);if(!on)lastFrame=performance.now();}
+function togglePause(){if(mode!=='play'||!S||S.demo||tut.on)return;setPaused(!S.paused);}
+$('pauseBtn').addEventListener('click',togglePause);
+$('pausedOv').addEventListener('click',()=>{if(S&&S.paused&&!tut.on)setPaused(false);});
+$('spdBtn').addEventListener('click',()=>{speedMul=speedMul===1?2:1;setTxt('spdBtn',speedMul+'×');});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&mode==='play'&&S&&!S.demo&&!S.paused&&!tut.on)setPaused(true);});
+
+/* ---------- Career: stars per day, unlocking the next (Losing Control's generation career, synced online) ---------- */
 const CK='fcg-career';
-function career(){try{const c=JSON.parse(ls(CK)||'null');return c&&c.stars?c:{stars:{},ach:{},best:{}};}catch(e){return{stars:{},ach:{},best:{}};}}
+function career(){try{const c=JSON.parse(ls(CK)||'null');return c&&c.stars?{ach:{},best:{},...c}:{stars:{},ach:{},best:{}};}catch(e){return{stars:{},ach:{},best:{}};}}
 function saveCareer(c){ls(CK,JSON.stringify(c));}
 const starsOf=c=>ORDER.reduce((a,k)=>a+(c.stars[k]||0),0);
 const rankOf=n=>{let r=RANKS[0][1];RANKS.forEach(([t,nm])=>{if(n>=t)r=nm;});return r;};
@@ -876,37 +1035,117 @@ const unlocked=(c,k)=>{const i=ORDER.indexOf(k);return i<=0||(c.stars[ORDER[i-1]
 const careerNext=()=>{const c=career();return ORDER.find(k=>unlocked(c,k)&&!(c.stars[k]>=1))||ORDER[ORDER.length-1];};
 const starStr=n=>'★'.repeat(n)+'☆'.repeat(3-n);
 const STARS={A:3,B:2,C:1,D:1,E:0};
+// Achievements: earned in any mode (not the demo or tutorial), kept in the career and synced with it
+const ACH=[{id:'first',name:'First shift',d:'Finish any shift.'},{id:'solid',name:'Rock solid',d:'Finish a shift with no minutes at risk or overloaded.'},
+  {id:'nobody',name:'Nobody noticed',d:'Finish a shift with no customers off.'},{id:'notrip',name:'No trips',d:'Finish a shift without an overload trip.'},
+  {id:'green',name:'Never left the green',d:'Finish a shift 100% secure.'},{id:'armed',name:'Safety net',d:'Have armed flexibility catch a transformer trip, with no overload trip in the 30 minutes after.'},
+  {id:'cheap',name:'Bargain hunter',d:'Finish a shift with grade C or better, spending under £5,000.'},{id:'regular',name:'Regular',d:'Play today\'s challenge three days in a row.'},
+  {id:'rota',name:'Full rota',d:'Finish all five days.'},{id:'textbook',name:'Textbook',d:'Grade A on every career day.'}];
+
+/* ---------- Daily streak ---------- */
+const STK='fcg-streak';
+function streak(){try{const v=JSON.parse(ls(STK)||'null');return v&&v.last?v:{last:'',n:0};}catch(e){return{last:'',n:0};}}
+const dayBefore=d=>{const[y,m,dd]=d.split('-').map(Number);return new Date(Date.UTC(y,m-1,dd-1)).toISOString().slice(0,10);};
+function streakNow(){const s=streak(),d=todayUK();return s.last===d||s.last===dayBefore(d)?s.n:0;}
+function bumpStreak(){const s=streak(),d=todayUK();if(s.last===d)return s.n;const n=s.last===dayBefore(d)?s.n+1:1;ls(STK,JSON.stringify({last:d,n}));return n;}
+
+/* ---------- Career sync: the same career on any device, under a name and a 4-digit PIN ---------- */
+// Shared with Losing Control's control room shifts: one name and PIN for both (fc-sync), each game its own career.
+const SYNC_KEY='fc-sync';
+function syncGet(){try{const v=JSON.parse(ls(SYNC_KEY)||'null');return v&&v.name&&/^\d{4}$/.test(v.pin)?v:null;}catch(e){return null;}}
+function syncSet(v){try{if(v)localStorage.setItem(SYNC_KEY,JSON.stringify(v));else localStorage.removeItem(SYNC_KEY);}catch(e){}}
+function mergeCareer(a,b){if(!b)return a;const o={...b,...a,stars:{...(a.stars||{})},ach:{...(a.ach||{})},best:{...(b.best||{}),...(a.best||{})}};o.gen=Math.max(+a.gen||0,+b.gen||0);
+  Object.entries(b.stars||{}).forEach(([k,v])=>{v=Math.round(+v||0);if(v>=1&&v<=3&&v>(o.stars[k]||0))o.stars[k]=v;});
+  Object.keys(b.ach||{}).forEach(k=>{if(b.ach[k])o.ach[k]=1;});return o;}
+const SYNC_ERR={name:'Please choose a different name: 2 to 20 letters or numbers, nothing rude.',pin_format:'The PIN must be 4 digits.',
+  pin:'That name is already saved with a different PIN. If it\'s yours, check the PIN. If not, pick another name.',locked:'Too many wrong PINs for that name. Try again in 15 minutes.',
+  site:'Career saving only works on the game\'s own website.',net:'Couldn\'t reach the scoreboard. Check your connection and try again.',
+  none:'No career is saved under that name. Check the spelling, or choose Save to start one.',old:'The scoreboard hasn\'t been updated for this yet. Try again later.',busy:'Still syncing…'};
+let syncBusy=false,syncNote='';
+async function syncCareer(name,pin,intent){if(syncBusy)return{ok:false,error:'busy'};syncBusy=true;
+  try{const r=await withTimeout(fetch(SCORE_URL,{method:'POST',body:JSON.stringify({type:'career',intent:intent||'sync',game:'fc',site:location.hostname,name,pin,career:career()})}),12000);const j=await r.json();
+    if(!j||!j.ok){const e=(j&&j.error)||'net';return{ok:false,error:SYNC_ERR[e]?e:'old'};}
+    saveCareer(mergeCareer(career(),j.career));syncSet({name:j.name,pin,at:Date.now()});return{ok:true,created:!!j.created,name:j.name};}
+  catch(e){return{ok:false,error:'net'};}finally{syncBusy=false;}}
+async function syncQuiet(){const L=syncGet();if(!L)return;const r=await syncCareer(L.name,L.pin);
+  if(r.ok)syncNote='';else if(r.error==='pin'||r.error==='name'){syncSet(null);syncNote=`Your career stopped syncing: the saved PIN no longer matches ${L.name}. Save it again below.`;}
+  else if(r.error!=='busy')syncNote=r.error==='net'?'Not synced just now. It will try again after your next shift.':SYNC_ERR[r.error]||'';
+  if(mode==='menu')renderMenu(true);}
+function renderSync(){const b=$('syncBox');b.hidden=gmode!=='career';if(b.hidden)return;const L=syncGet();
+  if(L){const t=L.at?new Date(L.at):null,w=t?(t.toDateString()===new Date().toDateString()?t.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):t.toLocaleDateString('en-GB',{day:'numeric',month:'short'})):'';
+    b.innerHTML=`<h3>Saved online</h3><p>As <b>${esc(L.name)}</b>${w?` · synced ${w}`:''}. It syncs after every career shift, and the same name and PIN work in the control room shifts.</p><div class="fr"><button type="button" id="syNow">Sync now</button><button type="button" id="syOff">Stop syncing here</button></div><p class="msg" id="syMsg">${esc(syncNote)}</p>`;}
+  else b.innerHTML=`<h3>Play on any device</h3><p>Save your career online with a name and a 4-digit PIN, or load one you saved on another device.</p><div class="fr"><input id="syName" maxlength="20" placeholder="Name" aria-label="Name" value="${esc(ls('fc-name')||'')}"><input id="syPin" maxlength="4" inputmode="numeric" placeholder="PIN" aria-label="4-digit PIN"></div>
+    <div class="fr" style="margin-top:8px"><button type="button" class="pri" id="sySave">Save</button><button type="button" id="syLoad">Load</button></div><p class="msg" id="syMsg">${esc(syncNote)}</p>`;}
+$('syncBox').addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;const msg=t=>setTxt('syMsg',t);
+  if(b.id==='syOff'){syncSet(null);syncNote='';renderMenu(true);return;}
+  if(b.id==='syNow'){msg('Syncing…');await syncQuiet();msg(syncNote||'Synced.');return;}
+  const name=($('syName').value||'').trim(),pin=($('syPin').value||'').trim();
+  if(name.length<2){msg(SYNC_ERR.name);return;}if(!/^\d{4}$/.test(pin)){msg(SYNC_ERR.pin_format);return;}
+  msg(b.id==='syLoad'?'Loading…':'Saving…');const r=await syncCareer(name,pin,b.id==='syLoad'?'load':'sync');
+  if(r.ok){syncNote=r.created?'Saved. Use the same name and PIN on any other device.':'Synced: your career is up to date.';ls('fc-name',r.name);renderMenu(true);}else msg(SYNC_ERR[r.error]||SYNC_ERR.old);});
 
 /* ---------- Menu ---------- */
 function show(id){['menu','results'].forEach(k=>{$(k).hidden=k!==id;});}
-function renderMenu(){const c=career(),n=starsOf(c),nr=nextRank(n),d=todayUK();
+function renderMenu(keepBoard){const c=career(),n=starsOf(c),nr=nextRank(n),d=todayUK(),mx=ORDER.length*3,st=streakNow();
   if(!dayK||(gmode==='career'&&!unlocked(c,dayK)))dayK=gmode==='career'?careerNext():(dayK||'may');
   document.querySelectorAll('#tabs .tab').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===gmode)));
-  setTxt('tabCareer',`${rankOf(n)} · ${n} of 9 ★`);setTxt('tabDaily',`${fmtDate(d)} · same faults for everyone`);
-  $('rankTxt').innerHTML=gmode==='career'?`Rank: <b>${esc(rankOf(n))}</b> · ${n} of 9 stars${nr?` · ${nr[0]-n} more for ${esc(nr[1])}`:''}. Finish a day to unlock the next. Grade A earns 3 stars, B 2, C or D 1.`:
-    gmode==='daily'?`Today's challenge: the same weather and fault times for everyone today, for each day. Try again as often as you like.`:'Free play: any day, with new fault times every game.';
+  setTxt('tabCareer',`${rankOf(n)} · ${n} of ${mx} ★`);
+  $('tabDaily').innerHTML=`${fmtDate(d)} · same faults for everyone${st>=2?` · <span class="streak">🔥 ${st}-day streak</span>`:''}`;
+  $('rankTxt').innerHTML=gmode==='career'?`Rank: <b>${esc(rankOf(n))}</b> · ${n} of ${mx} stars${nr?` · ${nr[0]-n} more for ${esc(nr[1])}`:''}. Grade A: 3 stars, B: 2, C or D: 1.`:
+    gmode==='daily'?`Today's challenge: the same weather and fault times for everyone today, for each day. Try again as often as you like.${st?` You're on a <span class="streak">${st}-day streak</span>: play today to keep it.`:''}`:'Free play: any day, with new fault times every game.';
+  $('achs').innerHTML=gmode==='career'?ACH.map(a=>`<span class="ach${c.ach[a.id]?' got':''}" title="${esc(a.d)}">${esc(a.name)}</span>`).join(''):'';
+  $('learnBtn').hidden=!!ls('fcg-tut-done')||n>0;
   $('days').innerHTML=ORDER.map(k=>{const D=DAYS[k],lock=gmode==='career'&&!unlocked(c,k);
-    return `<button type="button" class="day" data-day="${k}" style="--dc:${D.color}" aria-pressed="${k===dayK}"${lock?' disabled':''}><b>${esc(D.title)}</b><span class="w">${esc(D.when)}</span><span class="f">${esc(D.focus)}</span>${lock?`<span class="lk">🔒 Finish ${esc(DAYS[ORDER[ORDER.indexOf(k)-1]].title)} to unlock</span>`:`<span class="st" aria-label="${c.stars[k]||0} stars">${starStr(c.stars[k]||0)}</span>`}</button>`;}).join('');
-  const D=DAYS[dayK];$('ho').innerHTML=`<small>Handover from Sam, night shift · ${esc(D.title)}</small>${esc(D.handover)}`;$('ho').style.borderLeftColor=D.color;
-  renderBoard('boardA');fetchBoard();}
+    return `<button type="button" class="day" data-day="${k}" style="--dc:${D.color}" aria-pressed="${k===dayK}"${lock?' disabled':''}><b>${esc(D.title)}</b><span class="w">${esc(D.when)}</span><span class="f">${esc(D.focus)}</span>${lock?`<span class="lk">🔒 Finish ${esc(DAYS[ORDER[ORDER.indexOf(k)-1]].title)}</span>`:`<span class="st" aria-label="${c.stars[k]||0} stars">${starStr(c.stars[k]||0)}</span>`}</button>`;}).join('');
+  const D=DAYS[dayK];$('ho').innerHTML=`<small>Handover · ${esc(D.title)}</small>${esc(D.handover)}`;$('ho').style.borderLeftColor=D.color;
+  renderSync();
+  renderBoard('boardA');if(!keepBoard)fetchBoard();}
 $('tabs').addEventListener('click',e=>{const b=e.target.closest('.tab');if(!b)return;gmode=b.dataset.mode;if(gmode==='career')dayK=careerNext();ls('fc-gen-mode',gmode);renderMenu();});
 $('days').addEventListener('click',e=>{const b=e.target.closest('.day');if(!b||b.disabled)return;dayK=b.dataset.day;renderMenu();});
-function toMenu(){stopDemo();mode='menu';S=null;show('menu');renderMenu();}
+function toMenu(){stopDemo();tutEnd();mode='menu';S=null;$('pausedOv').hidden=true;show('menu');renderMenu();}
 
 /* ---------- Game flow ---------- */
-function startGame(){if(mode==='count'||(mode==='play'&&!(S&&S.demo)))return;stopDemo();audio();newGame(dayK,gmode);clearTimeout(newsTimer);$('news').className='news';$('newsT').textContent='';$('newsM').textContent='Shift starting.';show(null);mode='count';render(true);
-  let n=3;const c=$('count'),b=$('countN');c.hidden=false;const tick=()=>{if(n===0){c.hidden=true;mode='play';lastFrame=performance.now();speedAcc=0;play('start');toast(SC.intro(S),'warn');return;}
+function startGame(gmOver){if(mode==='count'||(mode==='play'&&!(S&&S.demo)))return;stopDemo();tutEnd();audio();const gm=gmOver||gmode;if(gm==='tut')dayK='may';
+  newGame(dayK,gm);clearTimeout(newsTimer);$('news').className='news';$('newsT').textContent='';$('newsM').textContent='Shift starting.';show(null);mode='count';render(true);
+  let n=3;const c=$('count'),b=$('countN');c.hidden=false;const tick=()=>{if(n===0){c.hidden=true;mode='play';lastFrame=performance.now();speedAcc=0;play('start');if(gm==='tut')tutStart();toast(gm==='tut'?'Tutorial · Sunday 17 May, 05:00. No faults today: just learn the controls.':SC.intro(S),'warn');return;}
     b.textContent=n;b.style.animation='none';void b.offsetWidth;b.style.animation='';play('count');n--;setTimeout(tick,700);};tick();}
 function gameOver(m,i){if(S.ended)return;S.ended=true;S.over={m,tx:i};
-  mode='ending';strike();play('trip');setTimeout(()=>play('over'),450);
+  mode='ending';strike();play('trip');setTimeout(()=>play('over'),450);buzz([600,120,600]);
   setTxt('goSub',`T${i+1} was the last to trip at ${fmtT(m)}. All three transformers are out and Blackout Canyon is in the dark: ${nf(CUST_TOTAL)} customers off.`);
   const g=$('gameover');g.hidden=false;g.classList.remove('in');void g.offsetWidth;g.classList.add('in');render(true);
   setTimeout(()=>{g.hidden=true;showResults();},S.demo?2500:4500);}
-function endGame(){if(S.ended)return;S.ended=true;mode='ending';play('end');if(S.demo)demoCap('hold');setTimeout(showResults,600);}
+function endGame(){if(S.ended)return;S.ended=true;mode='ending';play('end');if(S.demo)demoCap('hold');tutEnd();setTimeout(showResults,600);}
+
+/* ---------- Tutorial: a guided Sunny Sunday, no faults ---------- */
+// Each step pauses the game (or keeps it running, for steps that need the line to move) until its action is done.
+const tut={on:false,i:0,ok:0};
+const TUT=[
+  {at:300,hi:'chartbox',t:'Welcome to the control room. The thick line is the power through Blackout Canyon\'s three grid transformers. Above zero the town is taking power from the grid; below zero, local solar and wind are pushing power back up into it.'},
+  {at:300,hi:'chartbox',t:'The <b>green band is the firm zone</b>: what the network can carry if one transformer trips. Keep the line inside it. Amber is at risk, red is overload.'},
+  {at:300,hi:'chartbox',t:'The <b>dotted line is the forecast</b>. At 10:00 T2 comes out for maintenance and the firm zone halves, just as the sun peaks. That\'s today\'s problem.'},
+  {at:300,hi:'cards',t:'These are your flexibility providers. <b>+</b> pushes the line down, <b>−</b> pushes it up. Everything costs money, and spend comes off your score.'},
+  {at:470,hi:'card_batt',t:'The sun is building, and the line is heading down. Soak some of it up with the battery.',do:'Press Charge (−) on Kings Hill Battery three times.',wait:()=>S.val.batt<=-15},
+  {hi:'arm_solar',t:'Good: the battery stores that energy for the evening peak too. Now for the clever bit. <b>Arming</b> pays a provider a small fee to stand ready: if a transformer trips, it switches in by itself.',do:'Press Arm on Shocking Place Solar Farm.',wait:()=>S.armed.solar},
+  {hi:'chartbox',t:'See the pale teal band? That\'s your <b>armed cover</b>. The line can go past the green into it and still be secure, because the solar farm would curtail itself after a trip.'},
+  {at:602,hi:'card_solar',run:true,t:'T2 is out and the firm zone has shrunk to ±60 MW. Watch the pill at the top left: it must say <b>In the firm zone</b> or <b>Covered</b>.',do:'If it says At risk, curtail the solar farm (−) until it doesn\'t.',wait:()=>S.t>625&&zoneOk(S.zone)&&++tut.ok>=4},
+  {hi:null,t:'That\'s the job: watch the forecast, act early, cheapest first, arm what you can, and turn things down when you don\'t need them. The rest of the shift is yours. ⏸ pauses, and 2× speeds up quiet spells.',last:true}];
+function tutStart(){tut.on=true;tut.i=0;tut.ok=0;$('coach').hidden=true;}
+function tutEnd(){if(!tut.on)return;tut.on=false;$('coach').hidden=true;document.querySelectorAll('.hi').forEach(e=>e.classList.remove('hi'));}
+function tutShow(){const st=TUT[tut.i];document.querySelectorAll('.hi').forEach(e=>e.classList.remove('hi'));if(st.hi&&$(st.hi))$(st.hi).classList.add('hi');
+  $('coachT').innerHTML=st.t;setTxt('coachDo',st.do||'');$('coachNext').hidden=!!st.wait;setTxt('coachNext',st.last?'Play on':'Next');setTxt('coachN',`${tut.i+1} of ${TUT.length}`);$('coach').hidden=false;
+  if(!st.run){S.paused=true;}tut.shown=true;}
+function tutTick(){if(!tut.on||!S)return;const st=TUT[tut.i];if(!st)return;
+  if(!tut.shown){if(st.at==null||S.t>=st.at)tutShow();return;}
+  if(st.wait&&st.wait())tutNext();}
+function tutNext(){document.querySelectorAll('.hi').forEach(e=>e.classList.remove('hi'));$('coach').hidden=true;tut.shown=false;tut.ok=0;S.paused=false;lastFrame=performance.now();
+  tut.i++;if(tut.i>=TUT.length){ls('fcg-tut-done','1');tut.on=false;}}
+$('coachNext').addEventListener('click',tutNext);
+$('coachSkip').addEventListener('click',()=>{ls('fcg-tut-done','1');tutEnd();if(S){S.paused=false;lastFrame=performance.now();}});
+$('learnBtn').addEventListener('click',()=>startGame('tut'));$('tutBtn2').addEventListener('click',()=>startGame('tut'));
 
 /* ---------- Demo: the game plays itself, explaining each move ---------- */
-// As in Storm Day: cheapest first, a short look ahead with the forecast, and the battery charged cheaply in quiet spells for
-// the evening peak (sc.pre). On a day with an export problem it also empties the battery beforehand, so it can soak up the sun.
+// Cheapest first, a short look ahead, the battery charged in quiet spells for the evening (sc.pre), emptied before an export
+// problem, and flexibility armed whenever the forecast leaves the green, so that a trip is covered without running it.
 const DEMO_CAP={start:'Watch how a DSO keeps Blackout Canyon in the firm zone.',
   battUp:'Too much demand ahead: discharging the battery first. It\'s the cheapest way to bring the line down (£90/MWh).',
   chp:'The battery isn\'t enough, so the gas engine starts too. It\'s slow to ramp up, so call it early.',
@@ -914,17 +1153,28 @@ const DEMO_CAP={start:'Watch how a DSO keeps Blackout Canyon in the firm zone.',
   battDn:'Too much generation: charging the battery soaks it up, and stores it for the evening peak (£35/MWh).',
   solar:'Battery charging flat out, so the solar farm is curtailed to cut the export.',
   wind:'Still exporting too much: curtailing the wind farm as well.',
+  arm:'The line is heading out of the green, so flexibility is armed: it costs a little an hour, and switches in by itself if a transformer trips.',
+  disarm:'Back well inside the green: disarming to save the fees.',
   relax:'Back in the green with room to spare: turning flexibility down to save money.',
   pre:'A quiet spell: charging the battery cheaply now, ready for the evening peak.',
   dump:'Export is coming: emptying the battery first, so it has room to soak up the sun.',
   hold:'Inside the firm zone, with nothing to do but watch the forecast.'};
 let demoCapK='',demoCapT=0;
-function demoCap(k){if(k===demoCapK&&k!=='start')return;const now=performance.now();if(k==='hold'&&now-demoCapT<4000)return;demoCapK=k;demoCapT=now;
+function demoCap(k){if(!S||!S.demo)return;if(k===demoCapK&&k!=='start')return;const now=performance.now();if(k==='hold'&&now-demoCapT<4000)return;demoCapK=k;demoCapT=now;
   const c=$('demoCap');c.textContent=DEMO_CAP[k];c.classList.remove('fresh');void c.offsetWidth;c.classList.add('fresh');}
 function demoPress(id,d){if(!adjust(id,d))return false;const b=$((d>0?'up_':'dn_')+id);if(b){b.classList.add('demo-press');setTimeout(()=>b.classList.remove('demo-press'),260);}return true;}
-function demoAct(){if(!S||S.ended)return;const v=S.val,fc=forecast().slice(0,4),nets=[S.net,...fc.map(p=>p.net)],fa=fc[fc.length-1]||{n:S.n};
-  const nn=Math.min(S.n,fa.n),fm=firmOf(nn),hi=fm-8,lo=-fm+8,up=Math.max(...nets),dn=Math.min(...nets),fail=id=>S.failUntil[id]>S.t,cur=id=>id==='solar'?S.c.solar:S.c.wind;
+function demoArm(id,on){if(S.armed[id]===on)return false;toggleArm(id);const b=$('arm_'+id);if(b){b.classList.add('demo-press');setTimeout(()=>b.classList.remove('demo-press'),260);}return true;}
+function demoAct(){if(!S||S.ended)return;const v=S.val,all=forecast(),fc=all.slice(0,4),nets=[S.net,...fc.map(p=>p.net)],fa=fc[fc.length-1]||{n:S.n};
+  const nn=Math.min(S.n,fa.n),fail=id=>S.failUntil[id]>S.t,cur=id=>id==='solar'?S.c.solar:S.c.wind;
   if(S.n<2)return;
+  // arming: anything the next hour's forecast says leaves the firm zone gets armed; disarmed when the next two hours are clear
+  const ahead=[{net:S.net,n:S.n},...all.filter(p=>p.m<S.t+60)],needUp=ahead.some(p=>p.net>firmOf(p.n)-10),needDn=ahead.some(p=>p.net<-firmOf(p.n)+10);
+  const far=all.filter(p=>p.m<S.t+120),clearUp=far.every(p=>p.net<firmOf(p.n)-15)&&S.net<S.firm-15,clearDn=far.every(p=>p.net>-firmOf(p.n)+15)&&S.net>-S.firm+15;
+  if(needUp){for(const id of['batt','chp','dsr'])if(!S.armed[id]&&!(id==='batt'&&S.soc<8)&&demoArm(id,true))return demoCap('arm');}
+  if(needDn){for(const id of['batt','solar','wind'])if(!S.armed[id]&&(id!=='batt'||S.soc<SOC_MAX-8)&&(id==='batt'||(cur(id)>3&&S.allow[id]>0))&&demoArm(id,true))return demoCap('arm');}
+  if(clearUp&&clearDn){for(const id of['dsr','chp','wind','solar','batt'])if(S.armed[id]&&demoArm(id,false))return demoCap('disarm');}
+  // dispatch: keep the line inside what's secure (firm zone stretched by what's armed), with a margin
+  const hi=limit(nn,'up')-8,lo=-limit(nn,'dn')+8,up=Math.max(...nets),dn=Math.min(...nets);
   if(up>hi){
     if(v.solar!==null&&demoPress('solar',1))return demoCap('relax');if(v.wind!==null&&demoPress('wind',1))return demoCap('relax');
     if(v.batt<30&&S.soc>3&&!fail('batt')&&demoPress('batt',1))return demoCap('battUp');
@@ -938,49 +1188,66 @@ function demoAct(){if(!S||S.ended)return;const v=S.val,fc=forecast().slice(0,4),
   const room=hi-up>15&&dn-lo>15;
   if(room){if(v.dsr>0&&demoPress('dsr',-1))return demoCap('relax');if(v.chp>0&&demoPress('chp',-1))return demoCap('relax');
     if(v.wind!==null&&demoPress('wind',1))return demoCap('relax');if(v.solar!==null&&demoPress('solar',1))return demoCap('relax');
-    // export ahead (the whole forecast): empty the battery while there's room below
-    const exp=forecast().find(p=>p.m<S.t+240&&p.net<-firmOf(p.n)+8);
+    const exp=all.find(p=>p.m<S.t+240&&p.net<-firmOf(p.n)+8);
     if(exp&&S.soc>8&&dn-lo>35){if(v.batt<15&&demoPress('batt',1))return demoCap('dump');return demoCap('dump');}
     if(v.batt>0&&demoPress('batt',-1))return demoCap('relax');
     const pre=SC.pre&&S.t<SC.pre&&S.soc<SOC_MAX-6&&hi-up>30;
     if(pre&&v.batt>-15&&demoPress('batt',-1))return demoCap('pre');
     if(!pre&&v.batt<0&&(S.soc>=SOC_MAX-2||!SC.pre||S.t>=SC.pre)&&demoPress('batt',1))return demoCap('relax');}
   demoCap('hold');}
-function startDemo(){if(mode==='count'||mode==='play')return;audio();newGame(dayK,'demo');S.demo=true;clearTimeout(newsTimer);$('news').className='news';$('newsT').textContent='';$('newsM').textContent='Demo shift starting.';
+function startDemo(){if(mode==='count'||mode==='play')return;tutEnd();audio();newGame(dayK,'demo');S.demo=true;clearTimeout(newsTimer);$('news').className='news';$('newsT').textContent='';$('newsM').textContent='Demo shift starting.';
   show(null);document.documentElement.classList.add('demo');$('demoBar').hidden=false;demoCapK='';demoCap('start');mode='play';lastFrame=performance.now();speedAcc=0;render(true);
   toast('Demo · '+SC.intro(S),'warn');}
 function stopDemo(){document.documentElement.classList.remove('demo');$('demoBar').hidden=true;}
-function quit(){if(mode!=='play'||!S)return;if(S.demo||S.hist.length<30){toMenu();return;}S.ended=true;mode='ending';showResults(true);}
+function quit(){if(mode!=='play'||!S)return;if(S.demo||S.gm==='tut'||S.hist.length<30){toMenu();return;}S.ended=true;mode='ending';setPaused(false);showResults(true);}
 
 /* ---------- Results ---------- */
-const GR=[[97,'A','Rock solid','Inside the firm zone almost all shift. The network was ready for anything.'],[90,'B','Steady hands','A few wobbles, but Blackout Canyon stayed secure for most of the shift.'],
-  [80,'C','Weathered it','You were pushed out of the firm zone for a while. Plan ahead with the dotted forecast.'],[65,'D','Blown about','Too long outside the firm zone. One more trip and customers would have gone off.'],[0,'E','Losing control','The day won this one. Try getting flexibility in before the line leaves the green.']];
-const LESSON={may:'On a sunny, quiet day the problem runs the other way: power flows back up into the grid. Charging the battery and curtailing solar keeps the export inside firm capacity while a transformer is out.',
-  storm:'Flexibility you can call on in minutes is what keeps a network firm through a storm without building new transformers.',
-  jan:'A cold evening peak is where firm capacity runs short. A battery charged earlier in the day, plus generation and demand response, covers it without new transformers.'};
+const GR=[[97,'A','Rock solid','Secure almost all shift. The network was ready for anything.'],[90,'B','Steady hands','A few wobbles, but Blackout Canyon stayed secure for most of the shift.'],
+  [80,'C','Weathered it','You were pushed out of the green for a while. Plan ahead with the dotted forecast, and arm flexibility early.'],[65,'D','Blown about','Too long outside the firm zone. One more trip and customers would have gone off.'],[0,'E','Losing control','The day won this one. Try getting flexibility in, or armed, before the line leaves the green.']];
+const LESSON={may:'On a sunny, quiet day the problem runs the other way: power flows back up into the grid. Charging the battery, curtailing solar and arming curtailment keeps the export secure while a transformer is out.',
+  storm:'Flexibility you can call on in minutes is what keeps a network secure through a storm without building new transformers.',
+  jan:'A cold evening peak is where firm capacity runs short. A battery charged earlier in the day, plus armed generation and demand response, covers it without new transformers.',
+  heat:'Heat cuts every rating, so the same demand uses more of the network. Flexibility that can be armed for a trip stretches what the derated transformers can securely carry.',
+  ev:'The forecast only knows the demand it has seen. New load like electric cars arrives bigger and later than expected, so DSOs keep flexibility armed in reserve rather than trusting the forecast.'};
 function showResults(early){const tot=S.over?SHIFT:Math.max(1,S.hist.length),fp=Math.round(S.min.firm/tot*100),sc=scoreNow();let g=S.over?GR[4]:GR.find(x=>fp>=x[0]);
+  const tutRun=S.gm==='tut';setPaused(false);$('pausedOv').hidden=true;
   S.final={score:sc,firm:fp,grade:g[1]};
   $('rGrade').textContent=g[1];setTxt('rHead',S.over?'Game over':g[2]);setTxt('rSub',early?'Shift ended early.':S.over?`All three transformers tripped at ${fmtT(S.over.m)}, ${Math.floor((END-S.over.m)/60)} h ${(END-S.over.m)%60} min before the end of the shift.`:g[3]);setTxt('rScore',nf(sc));
   const sp=spendTot();
-  $('rStats').innerHTML=[['In the firm zone',fp+'%'],['Minutes at risk',nf(S.min.risk)],['Minutes overloaded',nf(S.min.over)],['Shift survived',S.over?fmtT(START)+'–'+fmtT(S.over.m):early?fmtT(START)+'–'+fmtT(S.t):'Whole shift'],['Flexibility spend',money(sp)],S.over?['Game over penalty','−2,000']:['Transformer trips',String(S.marks.filter(k=>/overload trip/.test(k.label)).length)]]
+  $('rStats').innerHTML=[['Secure',fp+'%'+(S.min.cov?`<small> · ${S.min.cov} min armed</small>`:'')],['Minutes at risk',nf(S.min.risk)],['Minutes overloaded',nf(S.min.over)],['Shift survived',S.over?fmtT(START)+'–'+fmtT(S.over.m):early?fmtT(START)+'–'+fmtT(S.t):'Whole shift'],['Flexibility spend',money(sp)+(S.armSpend>1?`<small> · ${money(S.armSpend)} arming</small>`:'')],S.over?['Game over penalty','−2,000']:['Transformer trips',String(S.trips||0)]]
     .map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
   const used=PROV.filter(p=>S.spend[p.id]>1).sort((a,b)=>S.spend[b.id]-S.spend[a.id]);
   $('rLesson').innerHTML=S.over?'Overloaded transformers trip, and the load lands on the ones left. That is how one fault becomes a blackout, and why DSOs keep demand inside firm capacity.':
     used.length?`Your biggest spend was <b>${esc(used[0].name)}</b> (${money(S.spend[used[0].id])}). ${LESSON[S.key]}`:
     'You used no flexibility at all. Without it, one more fault at the wrong moment would overload the network.';
-  // career: stars and the next day
-  const cb=$('cBox');cb.hidden=true;$('nextBtn').hidden=true;
-  if(!S.demo&&!early&&S.gm==='career'){const c=career(),before=starsOf(c),st=S.over?0:STARS[g[1]],old=c.stars[S.key]||0;
-    if(st>old){c.stars[S.key]=st;saveCareer(c);}
-    const n=starsOf(c),i=ORDER.indexOf(S.key),nk=ORDER[i+1],unl=nk&&st>=1&&!(old>=1)&&unlocked(c,nk);
-    cb.innerHTML=`<span class="stars">${starStr(st)}</span>${st>old?`New best on ${esc(SC.title)}.`:st?`Your best here is ${starStr(Math.max(st,old))}.`:'No stars this time: finish the shift with grade D or better.'}${unl?` <b>${esc(DAYS[nk].title)} is unlocked.</b>`:''}${rankOf(n)!==rankOf(before)?` Promoted to <b>${esc(rankOf(n))}</b>!`:''}<br><small>Rank: ${esc(rankOf(n))} · ${n} of 9 stars</small>`;cb.hidden=false;
-    if(nk&&unlocked(c,nk)){$('nextBtn').hidden=false;$('nextBtn').dataset.day=nk;setTxt('nextBtn',`Next: ${DAYS[nk].title}`);}}
-  const noSave=early||sc<=0||S.demo;$('saveBox').hidden=noSave;$('boardBox').hidden=!noSave;
+  // career stars, achievements and the daily streak
+  const cb=$('cBox');cb.hidden=true;$('nextBtn').hidden=true;let box='';
+  const real=!S.demo&&!tutRun,done=real&&!early&&!S.over;
+  if(real&&!early){const c=career(),before=starsOf(c),newA=[];
+    if(S.gm==='career'){const st=S.over?0:STARS[g[1]],old=c.stars[S.key]||0;if(st>old)c.stars[S.key]=st;
+      const n=starsOf(c),i=ORDER.indexOf(S.key),nk=ORDER[i+1],unl=nk&&st>=1&&!(old>=1)&&unlocked(c,nk);
+      box+=`<span class="stars">${starStr(st)}</span>${st>old?`New best on ${esc(SC.title)}.`:st?`Your best here is ${starStr(Math.max(st,old))}.`:'No stars this time: finish the shift with grade D or better.'}${unl?` <b>${esc(DAYS[nk].title)} is unlocked.</b>`:''}${rankOf(n)!==rankOf(before)?` Promoted to <b>${esc(rankOf(n))}</b>!`:''}<br><small>Rank: ${esc(rankOf(n))} · ${n} of ${ORDER.length*3} stars</small>`;
+      if(nk&&unlocked(c,nk)){$('nextBtn').hidden=false;$('nextBtn').dataset.day=nk;setTxt('nextBtn',`Next: ${DAYS[nk].title}`);}}
+    let stk=0;if(done&&S.gm==='daily'){stk=bumpStreak();box+=`${box?'<br>':''}<span class="streak">🔥 ${stk}-day streak</span> on today's challenge.`;}
+    c.done=c.done||{};if(done)c.done[S.key]=1;
+    const award=(id,ok)=>{if(ok&&!c.ach[id]){c.ach[id]=1;newA.push(ACH.find(a=>a.id===id));}};
+    const caught=S.catches.some(m=>!S.marks.some(k=>/overload trip/.test(k.label)&&k.m>=m&&k.m<=m+30));
+    award('first',done);award('solid',done&&!S.min.risk&&!S.min.over);award('nobody',done&&!S.min.dark);award('notrip',done&&!S.trips);
+    award('green',done&&fp>=100);award('armed',caught);award('cheap',done&&'ABC'.includes(g[1])&&sp<5000);award('regular',stk>=3);
+    award('rota',ORDER.every(k=>c.done[k]||c.stars[k]));award('textbook',ORDER.every(k=>c.stars[k]===3));
+    saveCareer(c);if(newA.length)box+=`${box?'<br>':''}Achievement${newA.length>1?'s':''}: ${newA.map(a=>`<b>${esc(a.name)}</b>`).join(', ')}`;
+    if(S.gm==='career'||newA.length)syncQuiet();}
+  if(tutRun){box='<b>Tutorial complete.</b> You\'re ready for your first career shift: Sunny Sunday, with real faults.';ls('fcg-tut-done','1');$('nextBtn').hidden=false;$('nextBtn').dataset.day='may';$('nextBtn').dataset.career='1';setTxt('nextBtn','Start your career');}
+  else delete $('nextBtn').dataset.career;
+  if(box){cb.innerHTML=box;cb.hidden=false;}
+  const noSave=early||sc<=0||S.demo||tutRun;$('saveBox').hidden=noSave;$('boardBox').hidden=!noSave;
   $('nameIn').value=ls('fc-name')||'';setTxt('nameErr','');
   if(noSave){renderBoard('boardR');fetchBoard();}
   setTxt('againBtn',S.demo?'Your turn: play now':'Play again');
-  if(S.demo){setTxt('rHead','Demo complete');setTxt('rSub','That\'s how it\'s done: act early, cheapest flexibility first, and turn it off when you don\'t need it.');stopDemo();}
-  setTxt('saveP',`${SC.title} · score ${nf(sc)} · ${fp}% in the firm zone`);show('results');mode='results';}
+  if(S.demo){setTxt('rHead','Demo complete');setTxt('rSub','That\'s how it\'s done: act early, cheapest flexibility first, arm what you can, and turn it off when you don\'t need it.');stopDemo();}
+  if(tutRun){setTxt('rHead','Tutorial done');}
+  setTxt('saveP',`${SC.title} · score ${nf(sc)} · ${fp}% secure`);show('results');mode='results';
+  requestAnimationFrame(drawDebrief);}
 
 /* ---------- Scoreboard: shared online through the Losing Control scoreboard (game 'gn'), kept on this device too ---------- */
 // Boards: one per day, for today's challenge (mode gn-daily-YYYY-MM-DD) and free play (gn-free, career scores too).
@@ -1001,23 +1268,22 @@ async function sendScore(r){
   }catch(e){netState='offline';}return null;}
 let sending=false;
 async function sendPending(){if(sending)return;sending=true;try{for(const r of board().filter(r=>!r.sent&&r.id&&(Date.now()-r.t)<2*86400000)){if(!await sendScore(r))break;}}finally{sending=false;}}
-const boardKey=()=>{const R=mode==='results'&&S?{k:S.key,gm:S.gm==='daily'?'daily':'free'}:{k:dayK,gm:gmode==='daily'?'daily':'free'};return{...R,mode:bMode(R.gm,todayUK())};};
+const boardKey=()=>{const R0=mode==='results'&&S?{k:S.key,gm:S.gm==='daily'?'daily':'free'}:{k:dayK,gm:gmode==='daily'?'daily':'free'};return{...R0,mode:bMode(R0.gm,todayUK())};};
 async function fetchBoard(){const B=boardKey();
   try{const res=await withTimeout(fetch(SCORE_URL+'?game=gn&day='+B.k+'&mode='+encodeURIComponent(B.mode)),10000);const j=await res.json();
     if(j&&j.ok&&Array.isArray(j.scores)){remote[B.k+'|'+B.mode]=j.scores;netState='online';}else netState='offline';}
   catch(e){netState='offline';}
   try{['boardA','boardR'].forEach(id=>{const el=$(id);if(el&&el.offsetParent)renderBoard(id);});}catch(e){}}
 let myRow=null;
-function renderBoard(id){const B=boardKey(),me=(ls('fc-name')||'').toLowerCase();
+function renderBoard(id){const B=boardKey(),me=(ls('fc-name')||'').toLowerCase();if(!DAYS[B.k])return;
   const mine=board().filter(r=>r.k===B.k&&r.mode===B.mode).map(r=>({id:r.id,n:r.n,s:r.s,f:r.f,t:r.t}));
   const online=(remote[B.k+'|'+B.mode]||[]).map(r=>({id:r.id,n:r.name,s:r.score,f:r.firm,t:r.t||0}));
   const seen=new Set(online.map(r=>r.id)),all=online.concat(mine.filter(r=>!seen.has(r.id))).sort((a,b)=>b.s-a.s||a.t-b.t);
-  // each player's best score only
   const names=new Set(),rows=[];all.forEach(r=>{const k=String(r.n).toLowerCase();if(names.has(k)&&r.id!==myRow)return;names.add(k);rows.push(r);});
   const title=`${DAYS[B.k].title} · ${B.gm==='daily'?"today's challenge":'free play'}`;
   const st=netState==='online'?'shared online':netState==='offline'?'this device (offline)':'';
   ['bdTitle','bdTitle2'].forEach(i=>setTxt(i,title));['bdDate','bdDate2'].forEach(i=>setTxt(i,(B.gm==='daily'?fmtDate(todayUK())+(st?' · ':''):'')+st));
-  $(id).innerHTML=rows.length?rows.slice(0,10).map(r=>`<li class="${r.id===myRow||(!myRow&&me&&String(r.n).toLowerCase()===me)?'me':''}"><span class="nm">${esc(r.n)}</span><span class="fz">${r.f}% firm</span><span class="sc">${nf(r.s)}</span></li>`).join(''):'<li class="empty">No scores yet. Be the first!</li>';}
+  $(id).innerHTML=rows.length?rows.slice(0,10).map(r=>`<li class="${r.id===myRow||(!myRow&&me&&String(r.n).toLowerCase()===me)?'me':''}"><span class="nm">${esc(r.n)}</span><span class="fz">${r.f}% secure</span><span class="sc">${nf(r.s)}</span></li>`).join(''):'<li class="empty">No scores yet. Be the first!</li>';}
 function saveScore(){const nm=$('nameIn').value.replace(/[^\p{L}\p{N} '_.-]/gu,'').replace(/\s+/g,' ').trim().slice(0,20);
   if(!nm){setTxt('nameErr','Type a name for the board.');$('nameIn').focus();return;}
   ls('fc-name',nm);const F=S.final,gm=S.gm==='daily'?'daily':'free';
@@ -1038,33 +1304,34 @@ $('fbForm').addEventListener('submit',async e=>{e.preventDefault();const msg=$('
 
 /* ---------- Main loop ---------- */
 function frame(now){const dt=Math.min(.25,(now-lastFrame)/1000||0);lastFrame=now;
-  if(mode==='play'&&S&&!S.ended){speedAcc+=dt*RATE;let k=0;while(speedAcc>=1&&k<12&&!S.ended){if(S.demo)demoAct();step();speedAcc-=1;k++;}render(false);}
+  if(mode==='play'&&S&&!S.ended){tutTick();if(!S.paused){speedAcc+=dt*RATE*(S.demo?1:speedMul)*(tut.on&&TUT[tut.i]&&TUT[tut.i].run?.5:1);let k=0;while(speedAcc>=1&&k<12&&!S.ended&&!S.paused){if(S.demo)demoAct();step();speedAcc-=1;k++;tutTick();}}render(false);}
   requestAnimationFrame(frame);}
 
-$('goBtn').addEventListener('click',startGame);
+$('goBtn').addEventListener('click',()=>startGame());
 $('demoBtn').addEventListener('click',e=>{e.stopPropagation();startDemo();});
 document.addEventListener('pointerdown',e=>{if(mode==='play'&&S&&S.demo&&!e.target.closest('.tools')){e.preventDefault();e.stopPropagation();S=null;mode='menu';startGame();}},true);
 document.addEventListener('keydown',e=>{if(!$('fbDlg').hidden){if(e.key==='Escape')$('fbDlg').hidden=true;return;}
   if(mode==='results'&&!$('saveBox').hidden&&e.key==='Enter'&&document.activeElement===$('nameIn')){saveScore();return;}
+  if(mode==='play'&&(e.key===' '||e.key==='p'||e.key==='P')&&!/INPUT|TEXTAREA|BUTTON/.test(document.activeElement.tagName)){e.preventDefault();togglePause();return;}
   if(mode==='play'&&e.key==='Escape')quit();});
 $('saveBtn').addEventListener('click',saveScore);
 $('skipBtn').addEventListener('click',()=>{$('saveBox').hidden=true;$('boardBox').hidden=false;myRow=null;renderBoard('boardR');fetchBoard();});
-$('againBtn').addEventListener('click',()=>{const k=S?S.key:dayK;if(S&&S.demo){gmode=gmode||'free';}dayK=k;S=null;mode='results-x';myRow=null;startGame();});
-$('nextBtn').addEventListener('click',()=>{dayK=$('nextBtn').dataset.day;S=null;mode='results-x';myRow=null;startGame();});
+$('againBtn').addEventListener('click',()=>{const k=S?S.key:dayK,gm=S&&S.gm==='tut'?'tut':null;dayK=k;S=null;mode='results-x';myRow=null;startGame(gm);});
+$('nextBtn').addEventListener('click',()=>{dayK=$('nextBtn').dataset.day;if($('nextBtn').dataset.career){gmode='career';ls('fc-gen-mode','career');}S=null;mode='results-x';myRow=null;startGame();});
 $('menuBtn').addEventListener('click',()=>{myRow=null;toMenu();});
-$('quitBtn').addEventListener('click',()=>{if(S&&S.demo){toMenu();return;}if(confirm('End this shift?'))quit();});
+$('quitBtn').addEventListener('click',()=>{if(S&&(S.demo||S.gm==='tut')){toMenu();return;}if(confirm('End this shift?'))quit();});
 $('muteBtn').addEventListener('click',()=>{SND.on=!SND.on;ls('fc-gen-sound',SND.on?'on':'off');$('muteBtn').setAttribute('aria-pressed',String(SND.on));});
 $('muteBtn').setAttribute('aria-pressed',String(SND.on));
 $('fsBtn').addEventListener('click',()=>{const d=document;if(!d.fullscreenElement)(d.documentElement.requestFullscreen||d.documentElement.webkitRequestFullscreen||(()=>{})).call(d.documentElement);else(d.exitFullscreen||d.webkitExitFullscreen).call(d);});
-window.addEventListener('resize',()=>{lastChart='';if(S)drawChart(true);});
+window.addEventListener('resize',()=>{lastChart='';if(S)drawChart(true);if(mode==='results'&&S)drawDebrief();});
 window.addEventListener('online',()=>sendPending());
-// opening the page: ?day=storm picks a day, ?mode=daily|free|career a mode, ?watch starts the demo
+// opening the page: ?day=storm picks a day, ?play=daily|free|career a mode, ?watch starts the demo, ?learn the tutorial
 {const m=Q.get('play')||ls('fc-gen-mode');if(['career','daily','free'].includes(m))gmode=m;const d=Q.get('day');if(DAYS[d]){dayK=d;if(gmode==='career'&&!unlocked(career(),d))gmode='free';}}
-bindHold();toMenu();sendPending();requestAnimationFrame(t=>{lastFrame=t;requestAnimationFrame(frame);});
-if(Q.has('watch'))setTimeout(startDemo,300);
+bindHold();toMenu();sendPending();syncQuiet();requestAnimationFrame(t=>{lastFrame=t;requestAnimationFrame(frame);});
+if(Q.has('watch'))setTimeout(startDemo,300);else if(Q.has('learn'))setTimeout(()=>startGame('tut'),300);
 // test hook
-window.__gen={DAYS,startDemo,demoAct,get S(){return S;},newGame:(k,gm)=>{dayK=k;newGame(k,gm||'free');mode='play';show(null);render(true);},step:n=>{for(let i=0;i<n&&S&&!S.ended;i++)step();render(true);},adjust,set:(id,v)=>{S.val[id]=v;},score:scoreNow,forecast,mode:()=>mode,
-  demo:k=>{dayK=k;newGame(k,'free');S.demo=true;mode='play';show(null);},showResults,career,toMenu};
+window.__gen={DAYS,startDemo,demoAct,get S(){return S;},newGame:(k,gm)=>{dayK=k;newGame(k,gm||'free');mode='play';show(null);render(true);},step:n=>{for(let i=0;i<n&&S&&!S.ended;i++)step();render(true);},adjust,toggleArm,set:(id,v)=>{S.val[id]=v;},score:scoreNow,forecast,mode:()=>mode,zoneOf,limit,
+  demo:k=>{dayK=k;newGame(k,'free');S.demo=true;mode='play';show(null);},showResults,career,toMenu,startGame,tut,tutTick,tutNext,ACH,streak,bumpStreak,mergeCareer};
 })();
 </script>
 <script>if('serviceWorker' in navigator&&/^https:/.test(location.protocol))addEventListener('load',function(){navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(function(){});});</script>

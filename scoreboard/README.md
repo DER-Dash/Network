@@ -210,3 +210,9 @@ shows on the board. The script works the score out itself from the minutes in ea
 Replace the code with the new `Code.gs`, save, then **Deploy → Manage deployments → pencil → Version: New version →
 Deploy** (same URL). Until it is deployed, the game keeps scores on the device that played them and sends them once
 the new version is live.
+
+## Updating to version 26 (Heatwave and EV evening generation shifts)
+
+Version 26 accepts two more days on the generation shift boards and in generation careers: **Heatwave** (`heat`) and
+**EV evening** (`ev`). If you haven't deployed version 25 yet, deploying 26 covers both. Deploy as before (**New
+version**, same URL).

@@ -38,13 +38,24 @@ other sites (see `scoreboard/README.md`, version 12).
 
 ## Generation shifts (`gen/`)
 
-The three days are data in `DAYS` in `gen/gen.html`: demand, sun, wind, faults, risk windows, planned work and
-curtailment allowances. They run 05:00–23:00 at 4 game minutes a second. Faults never overlap each other or planned
-work, and are moved or cut short if the gas engine and demand response couldn't win them (as in Storm Day).
-Career stars are kept in `fcg-career` (the old generation career). Scores go to the scoreboard as game `gn`
-(version 25). `node tests/gen-shifts.test.js` plays each day with the demo bot; `node tests/gen-scoreboard.test.js`
-checks the scoreboard. The old diagram version of the generation shifts is still in `game.js` (`GAME==='fc'`) for
-the test copy `build/generation.html`, but the published page redirects `?mode=gen` to `/generation/`.
+The five days are data in `DAYS` in `gen/gen.html` (career order in `ORDER`): Sunny Sunday, Storm day, Cold
+Thursday, Heatwave (ratings derated 15%, `derate`) and EV evening (a late `surge` the forecast only partly sees).
+Each has demand, sun, wind, faults, risk windows, planned work and curtailment allowances. They run 05:00–23:00
+at 4 game minutes a second (2× and pause in the header). Faults never overlap each other or planned work, and are
+moved or cut short if the gas engine and demand response couldn't win them (as in Storm Day); most give a
+protection alarm a few minutes before.
+
+**Armed flexibility**: each provider can be armed for an hourly fee (`arm`, £/MW/h). When a transformer trips,
+everything armed that helps switches in by itself. While what's armed would keep the remaining transformers inside
+their protection limits after a trip, the line is 'covered' (teal): secure, scoring like the firm zone.
+
+Also here: a guided tutorial (`TUT`, Sunny Sunday with no faults), achievements (`ACH`), a daily streak, the
+whole-shift debrief chart on the results screen, and career sync by name and PIN (shared `fc-sync` link, game `fc`
+careers). Career stars are in `fcg-career`. Scores go to the scoreboard as game `gn` (version 26).
+`node tests/gen-shifts.test.js` plays each day with the demo bot and runs the tutorial;
+`node tests/gen-scoreboard.test.js` checks the scoreboard. The old diagram version of the generation shifts is
+still in `game.js` (`GAME==='fc'`) for the test copy `build/generation.html`, but the published page redirects
+`?mode=gen` to `/generation/`.
 
 ## Adding a shift
 
